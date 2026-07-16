@@ -4,49 +4,53 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Search Las Vegas & Henderson homes for sale with The Roland Team at LPT Realty — hundreds of five-star reviews, No. 1 agent in Henderson (RealTrends 2026). MLS listings, community search, home valuation & market reports.">
-<meta name="theme-color" content="#07080F">
+<meta name="theme-color" content="#0A2540">
 <title>The Roland Team — Las Vegas & Henderson Homes for Sale | LPT Realty</title>
 <style>
   :root{
-    --night:#07080F; --night-2:#0C0D16; --panel:#11121D; --panel-2:#161826;
-    --line:rgba(212,183,122,.16);
-    --gold:#D8BC84; --gold-deep:#B8975A;
-    --accent:#E7C79B; --steel:#B7BDC9;
-    --ink:#F4EEE1; --muted:#9C9482; --muted-2:#726A5A;
-    --card:#101119; --card-hi:rgba(255,255,255,.03);
-    --hero-scrim:rgba(4,4,9,.6);
-    --shadow:0 30px 70px -28px rgba(0,0,0,.8);
+    --night:#FFFFFF; --night-2:#F3F6FA; --panel:#FFFFFF; --panel-2:#EAF0F7;
+    --navy:#0A2540; --navy-2:#0E3050;
+    --line:rgba(10,37,64,.13);
+    --gold:#B0842A; --gold-deep:#8A661E;
+    --accent:#0A2540; --steel:#6E86A8;
+    --ink:#14273D; --muted:#5B6B7C; --muted-2:#8593A2;
+    --card:#FFFFFF; --card-hi:rgba(10,37,64,.03);
+    --hero-scrim:rgba(6,12,22,.55);
+    --shadow:0 26px 54px -26px rgba(10,37,64,.20);
     --serif:'Iowan Old Style','Palatino Linotype','Book Antiqua',Georgia,'Times New Roman',serif;
     --sans:'Helvetica Neue','Segoe UI',system-ui,-apple-system,Arial,sans-serif;
   }
-  @media (prefers-color-scheme: light){
+  @media (prefers-color-scheme: dark){
     :root{
-      --night:#FBF7EF; --night-2:#F3ECDD; --panel:#FFFFFF; --panel-2:#F6EEE0;
-      --line:rgba(140,104,40,.18);
-      --gold:#8A6A2E; --gold-deep:#6E521F; --accent:#9A7A3E; --steel:#7C8494;
-      --ink:#241C10; --muted:#6A5C44; --muted-2:#8C7E64;
-      --card:#FFFFFF; --card-hi:rgba(140,104,40,.04);
-      --hero-scrim:rgba(30,22,8,.32);
-      --shadow:0 26px 54px -26px rgba(90,64,16,.28);
+      --night:#071726; --night-2:#0B2036; --panel:#0E2740; --panel-2:#123150;
+      --navy:#06121F; --navy-2:#0A2036;
+      --line:rgba(176,132,42,.18);
+      --gold:#D8BC84; --gold-deep:#B8975A; --accent:#D8BC84; --steel:#7FA0C4;
+      --ink:#EAF1F8; --muted:#9DB0C2; --muted-2:#6E8299;
+      --card:#0C2338; --card-hi:rgba(255,255,255,.03);
+      --hero-scrim:rgba(3,8,15,.6);
+      --shadow:0 30px 70px -28px rgba(0,0,0,.75);
     }
   }
   :root[data-theme="dark"]{
-    --night:#07080F; --night-2:#0C0D16; --panel:#11121D; --panel-2:#161826;
-    --line:rgba(212,183,122,.16);
-    --gold:#D8BC84; --gold-deep:#B8975A; --accent:#E7C79B; --steel:#B7BDC9;
-    --ink:#F4EEE1; --muted:#9C9482; --muted-2:#726A5A;
-    --card:#101119; --card-hi:rgba(255,255,255,.03);
-    --hero-scrim:rgba(4,4,9,.6);
-    --shadow:0 30px 70px -28px rgba(0,0,0,.8);
+    --night:#071726; --night-2:#0B2036; --panel:#0E2740; --panel-2:#123150;
+    --navy:#06121F; --navy-2:#0A2036;
+    --line:rgba(176,132,42,.18);
+    --gold:#D8BC84; --gold-deep:#B8975A; --accent:#D8BC84; --steel:#7FA0C4;
+    --ink:#EAF1F8; --muted:#9DB0C2; --muted-2:#6E8299;
+    --card:#0C2338; --card-hi:rgba(255,255,255,.03);
+    --hero-scrim:rgba(3,8,15,.6);
+    --shadow:0 30px 70px -28px rgba(0,0,0,.75);
   }
   :root[data-theme="light"]{
-    --night:#FBF7EF; --night-2:#F3ECDD; --panel:#FFFFFF; --panel-2:#F6EEE0;
-    --line:rgba(140,104,40,.18);
-    --gold:#8A6A2E; --gold-deep:#6E521F; --accent:#9A7A3E; --steel:#7C8494;
-    --ink:#241C10; --muted:#6A5C44; --muted-2:#8C7E64;
-    --card:#FFFFFF; --card-hi:rgba(140,104,40,.04);
-    --hero-scrim:rgba(30,22,8,.32);
-    --shadow:0 26px 54px -26px rgba(90,64,16,.28);
+    --night:#FFFFFF; --night-2:#F3F6FA; --panel:#FFFFFF; --panel-2:#EAF0F7;
+    --navy:#0A2540; --navy-2:#0E3050;
+    --line:rgba(10,37,64,.13);
+    --gold:#B0842A; --gold-deep:#8A661E; --accent:#0A2540; --steel:#6E86A8;
+    --ink:#14273D; --muted:#5B6B7C; --muted-2:#8593A2;
+    --card:#FFFFFF; --card-hi:rgba(10,37,64,.03);
+    --hero-scrim:rgba(6,12,22,.55);
+    --shadow:0 26px 54px -26px rgba(10,37,64,.20);
   }
 
   *{box-sizing:border-box}
@@ -75,8 +79,11 @@
   .util .sep{width:1px;height:16px;background:var(--line)}
 
   /* ---- Header ---- */
-  header{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--night) 88%,transparent);
-    backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  header{position:sticky;top:0;z-index:50;background:var(--navy);color:#EAF1F8;
+    border-bottom:1px solid rgba(255,255,255,.10)}
+  header .nav-links a{color:#EAF1F8}
+  header .theme-toggle{border-color:rgba(255,255,255,.24);color:#EAF1F8}
+  header .theme-toggle:hover{border-color:var(--gold);color:var(--gold)}
   .nav{display:flex;align-items:center;justify-content:space-between;height:70px}
   .brand{display:flex;align-items:center;gap:.6rem;font-family:var(--serif);font-size:1.3rem;letter-spacing:.02em}
   .brand .mark{width:28px;height:28px;flex:none;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--gold) 60%,transparent))}
@@ -102,15 +109,15 @@
   .hero-scrim{position:absolute;inset:0;z-index:1;
     background:radial-gradient(120% 80% at 50% -10%,transparent 45%,var(--hero-scrim) 100%),
       linear-gradient(180deg,color-mix(in srgb,var(--night) 40%,transparent),transparent 34%,var(--night) 98%)}
-  .hero-inner{position:relative;z-index:2;width:min(1200px,92vw);margin-inline:auto;text-align:center}
+  .hero-inner{position:relative;z-index:2;width:min(1200px,92vw);margin-inline:auto;text-align:center;color:#F4F1E8}
   .hero h1{font-size:clamp(2.6rem,6vw,5rem);font-weight:500;letter-spacing:-.015em;max-width:18ch;margin-inline:auto}
   .hero h1 .glow{font-style:italic;background:linear-gradient(120deg,#F3E2B6,var(--gold) 60%,var(--gold-deep));
     -webkit-background-clip:text;background-clip:text;color:transparent}
   .hero .lede{margin:1.3rem auto 0;font-size:clamp(1rem,1.6vw,1.22rem);max-width:52ch;opacity:.92}
 
   /* ---- Search widget ---- */
-  .searchbox{margin:2.4rem auto 0;max-width:760px;background:color-mix(in srgb,var(--panel) 82%,transparent);
-    backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+  .searchbox{margin:2.4rem auto 0;max-width:760px;background:var(--panel);color:var(--ink);
+    border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
   .tabs{display:flex;border-bottom:1px solid var(--line)}
   .tabs button{flex:1;background:none;border:none;cursor:pointer;color:var(--muted);font-family:var(--sans);
     font-weight:700;font-size:.76rem;letter-spacing:.12em;text-transform:uppercase;padding:.9rem 1rem;transition:.2s;position:relative}
@@ -128,8 +135,8 @@
     background:linear-gradient(135deg,#F0DCA9,var(--gold) 55%,var(--gold-deep));color:#1A140A;font-weight:800;
     letter-spacing:.12em;text-transform:uppercase;font-size:.8rem;padding:0 1.8rem;border-radius:11px;transition:.2s}
   .search-row .go:hover{transform:translateY(-1px)}
-  .hero-quick{margin-top:1.2rem;display:flex;gap:1.4rem;justify-content:center;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}
-  .hero-quick a{color:var(--ink);opacity:.85;border-bottom:1px dotted var(--line);padding-bottom:1px}
+  .hero-quick{margin-top:1.2rem;display:flex;gap:1.4rem;justify-content:center;flex-wrap:wrap;font-size:.82rem;color:rgba(244,241,232,.8)}
+  .hero-quick a{color:#F4F1E8;opacity:.9;border-bottom:1px dotted rgba(244,241,232,.4);padding-bottom:1px}
   .hero-quick a:hover{color:var(--gold)}
 
   /* ---- Trust bar ---- */
@@ -249,12 +256,17 @@
   .info-row .v{font-weight:600;margin-top:.1rem}
 
   /* ---- Footer ---- */
-  footer{background:var(--night-2);border-top:1px solid var(--line);padding:3.5rem 0 2rem}
+  footer{background:var(--navy);color:#EAF1F8;border-top:1px solid rgba(255,255,255,.08);padding:3.5rem 0 2rem}
+  footer p,footer .disclaimer,footer .foot-bottom{color:#A9BACB}
+  footer .brand{color:#fff}
+  footer .socials a{border-color:rgba(255,255,255,.18);color:#A9BACB}
+  footer .socials a:hover{border-color:var(--gold);color:var(--gold)}
+  footer .disclaimer{border-top-color:rgba(255,255,255,.12)}
   .foot{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:2.2rem}
   .foot p{color:var(--muted);font-size:.88rem;max-width:32ch;margin-top:.9rem}
   .foot h4{font-size:.7rem;text-transform:uppercase;letter-spacing:.14em;color:var(--gold);margin-bottom:.9rem;font-family:var(--sans)}
   .foot ul{list-style:none;padding:0;margin:0;display:grid;gap:.55rem}
-  .foot a{color:var(--muted);font-size:.88rem}.foot a:hover{color:var(--ink)}
+  .foot a{color:#A9BACB;font-size:.88rem}.foot a:hover{color:#fff}
   .socials{display:flex;gap:.6rem;margin-top:1.2rem}
   .socials a{width:34px;height:34px;border-radius:999px;border:1px solid var(--line);display:grid;place-items:center;color:var(--muted);transition:.2s}
   .socials a:hover{border-color:var(--gold);color:var(--gold)}
@@ -591,7 +603,7 @@
     for(var i=0;i<n;i++){var w=34+r()*70,h=90+r()*Math.min(360,H*0.55),t='tower';
       if(i===slot)t='pyramid';else if(i===slot-3)t='needle';else if(i===slot+3)t='wheel';
       buildings.push({x:x,w:w,h:h,type:t,base:base,lit:r()});x+=w+6+r()*10;} }
-  function drawSky(){ if(!W)return;var light=isLight();
+  function drawSky(){ if(!W)return;var light=false; /* hero stays night in both themes */
     var g=sctx.createLinearGradient(0,0,0,H);
     if(light){g.addColorStop(0,'#F6D9A0');g.addColorStop(.45,'#E9A88F');g.addColorStop(1,'#EFE4D0');}
     else{g.addColorStop(0,'#0A0D1E');g.addColorStop(.5,'#171436');g.addColorStop(1,'#2A1330');}
