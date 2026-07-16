@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="The Roland Team at LPT Realty — hundreds of five-star reviews, led by Mike Roland, No. 1 agent in Henderson (RealTrends 2026). Buy & sell across Henderson, Green Valley, Anthem, Summerlin & the Las Vegas valley.">
+<meta name="description" content="Search Las Vegas & Henderson homes for sale with The Roland Team at LPT Realty — hundreds of five-star reviews, No. 1 agent in Henderson (RealTrends 2026). MLS listings, community search, home valuation & market reports.">
 <meta name="theme-color" content="#07080F">
-<title>The Roland Team — Luxury Las Vegas & Henderson Real Estate</title>
+<title>The Roland Team — Las Vegas & Henderson Homes for Sale | LPT Realty</title>
 <style>
   :root{
     --night:#07080F; --night-2:#0C0D16; --panel:#11121D; --panel-2:#161826;
     --line:rgba(212,183,122,.16);
     --gold:#D8BC84; --gold-deep:#B8975A;
-    --neon:#E7C79B; --cyan:#B7BDC9;
+    --accent:#E7C79B; --steel:#B7BDC9;
     --ink:#F4EEE1; --muted:#9C9482; --muted-2:#726A5A;
     --card:#101119; --card-hi:rgba(255,255,255,.03);
     --hero-scrim:rgba(4,4,9,.6);
@@ -21,451 +21,468 @@
   }
   @media (prefers-color-scheme: light){
     :root{
-      --night:#F6F1E7; --night-2:#EFE8D9; --panel:#FCF8F0; --panel-2:#F5EEE0;
-      --line:rgba(140,104,40,.20);
-      --gold:#8A6A2E; --gold-deep:#6E521F;
-      --neon:#9A7A3E; --cyan:#7C8494;
-      --ink:#231C10; --muted:#6A5C44; --muted-2:#8C7E64;
-      --card:#FCF8F0; --card-hi:rgba(140,104,40,.04);
-      --hero-scrim:rgba(30,22,8,.28);
-      --shadow:0 28px 56px -26px rgba(90,64,16,.30);
+      --night:#FBF7EF; --night-2:#F3ECDD; --panel:#FFFFFF; --panel-2:#F6EEE0;
+      --line:rgba(140,104,40,.18);
+      --gold:#8A6A2E; --gold-deep:#6E521F; --accent:#9A7A3E; --steel:#7C8494;
+      --ink:#241C10; --muted:#6A5C44; --muted-2:#8C7E64;
+      --card:#FFFFFF; --card-hi:rgba(140,104,40,.04);
+      --hero-scrim:rgba(30,22,8,.32);
+      --shadow:0 26px 54px -26px rgba(90,64,16,.28);
     }
   }
   :root[data-theme="dark"]{
     --night:#07080F; --night-2:#0C0D16; --panel:#11121D; --panel-2:#161826;
     --line:rgba(212,183,122,.16);
-    --gold:#D8BC84; --gold-deep:#B8975A; --neon:#E7C79B; --cyan:#B7BDC9;
+    --gold:#D8BC84; --gold-deep:#B8975A; --accent:#E7C79B; --steel:#B7BDC9;
     --ink:#F4EEE1; --muted:#9C9482; --muted-2:#726A5A;
     --card:#101119; --card-hi:rgba(255,255,255,.03);
     --hero-scrim:rgba(4,4,9,.6);
     --shadow:0 30px 70px -28px rgba(0,0,0,.8);
   }
   :root[data-theme="light"]{
-    --night:#F6F1E7; --night-2:#EFE8D9; --panel:#FCF8F0; --panel-2:#F5EEE0;
-    --line:rgba(140,104,40,.20);
-    --gold:#8A6A2E; --gold-deep:#6E521F; --neon:#9A7A3E; --cyan:#7C8494;
-    --ink:#231C10; --muted:#6A5C44; --muted-2:#8C7E64;
-    --card:#FCF8F0; --card-hi:rgba(140,104,40,.04);
-    --hero-scrim:rgba(30,22,8,.28);
-    --shadow:0 28px 56px -26px rgba(90,64,16,.30);
+    --night:#FBF7EF; --night-2:#F3ECDD; --panel:#FFFFFF; --panel-2:#F6EEE0;
+    --line:rgba(140,104,40,.18);
+    --gold:#8A6A2E; --gold-deep:#6E521F; --accent:#9A7A3E; --steel:#7C8494;
+    --ink:#241C10; --muted:#6A5C44; --muted-2:#8C7E64;
+    --card:#FFFFFF; --card-hi:rgba(140,104,40,.04);
+    --hero-scrim:rgba(30,22,8,.32);
+    --shadow:0 26px 54px -26px rgba(90,64,16,.28);
   }
 
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
   body{margin:0;background:var(--night);color:var(--ink);font-family:var(--sans);
     line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-  h1,h2,h3,h4{font-family:var(--serif);font-weight:600;line-height:1.08;
-    text-wrap:balance;margin:0}
+  h1,h2,h3,h4{font-family:var(--serif);font-weight:600;line-height:1.1;text-wrap:balance;margin:0}
   p{margin:0}
   a{color:inherit;text-decoration:none}
-  img{max-width:100%}
-  .wrap{width:min(1180px,92vw);margin-inline:auto}
-  .eyebrow{font-family:var(--sans);text-transform:uppercase;letter-spacing:.32em;
-    font-size:.72rem;font-weight:700;color:var(--gold)}
+  .wrap{width:min(1200px,92vw);margin-inline:auto}
+  .eyebrow{text-transform:uppercase;letter-spacing:.3em;font-size:.7rem;font-weight:700;color:var(--gold)}
   .muted{color:var(--muted)}
-  .neon-text{color:var(--neon)}
+  .sec-head{text-align:center;max-width:60ch;margin:0 auto 2.6rem}
+  .sec-head h2{font-size:clamp(1.9rem,4vw,2.9rem);margin:.5rem 0 .6rem}
+  .sec-head p{color:var(--muted)}
+  .band{padding:clamp(3.6rem,7vw,6rem) 0}
+  .alt{background:var(--night-2)}
 
-  /* ---------- Header ---------- */
-  header{position:fixed;inset:0 0 auto 0;z-index:50;transition:background .4s,border-color .4s,backdrop-filter .4s;
-    border-bottom:1px solid transparent}
-  header.scrolled{background:color-mix(in srgb,var(--night) 82%,transparent);
-    backdrop-filter:blur(14px);border-bottom-color:var(--line)}
-  .nav{display:flex;align-items:center;justify-content:space-between;
-    height:76px}
-  .brand{display:flex;align-items:center;gap:.6rem;font-family:var(--serif);
-    font-size:1.35rem;letter-spacing:.02em}
-  .brand .mark{width:30px;height:30px;flex:none;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--neon) 70%,transparent))}
-  .brand b{font-weight:600}
-  .brand .lv{color:var(--neon)}
-  .nav-links{display:flex;align-items:center;gap:2rem;font-size:.86rem;
-    letter-spacing:.06em;text-transform:uppercase;font-weight:600}
-  .nav-links a{color:var(--ink);opacity:.82;position:relative;padding:.2rem 0;transition:opacity .2s}
-  .nav-links a::after{content:"";position:absolute;left:0;bottom:-3px;height:1px;width:0;
-    background:var(--gold);transition:width .28s}
-  .nav-links a:hover{opacity:1}
-  .nav-links a:hover::after{width:100%}
-  .nav-cta{border:1px solid var(--gold);color:var(--gold);padding:.6rem 1.2rem;
-    border-radius:999px;text-transform:uppercase;letter-spacing:.12em;font-size:.74rem;
-    font-weight:700;transition:.25s}
-  .nav-cta:hover{background:var(--gold);color:var(--night);box-shadow:0 0 22px -4px var(--gold)}
-  .theme-toggle{background:none;border:1px solid var(--line);color:var(--ink);
-    width:38px;height:38px;border-radius:999px;cursor:pointer;font-size:1rem;
-    display:grid;place-items:center;transition:.25s}
+  /* ---- Utility bar ---- */
+  .util{background:var(--night-2);border-bottom:1px solid var(--line);font-size:.78rem}
+  .util .wrap{display:flex;justify-content:space-between;align-items:center;height:40px;gap:1rem}
+  .util .l{color:var(--muted);letter-spacing:.04em}
+  .util .r{display:flex;align-items:center;gap:1.4rem}
+  .util .r a{color:var(--ink);opacity:.85;display:inline-flex;align-items:center;gap:.4rem}
+  .util .r a:hover{color:var(--gold);opacity:1}
+  .util .sep{width:1px;height:16px;background:var(--line)}
+
+  /* ---- Header ---- */
+  header{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--night) 88%,transparent);
+    backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:70px}
+  .brand{display:flex;align-items:center;gap:.6rem;font-family:var(--serif);font-size:1.3rem;letter-spacing:.02em}
+  .brand .mark{width:28px;height:28px;flex:none;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--gold) 60%,transparent))}
+  .brand b{font-weight:600}.brand .lv{color:var(--gold)}
+  .nav-links{display:flex;align-items:center;gap:1.7rem;font-size:.82rem;letter-spacing:.05em;
+    text-transform:uppercase;font-weight:600}
+  .nav-links a{opacity:.82;position:relative;padding:.2rem 0}
+  .nav-links a::after{content:"";position:absolute;left:0;bottom:-4px;height:1px;width:0;background:var(--gold);transition:width .28s}
+  .nav-links a:hover{opacity:1}.nav-links a:hover::after{width:100%}
+  .nav-right{display:flex;align-items:center;gap:1rem}
+  .theme-toggle{background:none;border:1px solid var(--line);color:var(--ink);width:36px;height:36px;
+    border-radius:999px;cursor:pointer;font-size:1rem;display:grid;place-items:center;transition:.25s}
   .theme-toggle:hover{border-color:var(--gold);color:var(--gold)}
+  .nav-cta{background:linear-gradient(135deg,#F0DCA9,var(--gold) 55%,var(--gold-deep));color:#1A140A;
+    padding:.6rem 1.2rem;border-radius:999px;text-transform:uppercase;letter-spacing:.1em;font-size:.72rem;font-weight:800;
+    transition:.25s;box-shadow:0 10px 26px -12px var(--gold)}
+  .nav-cta:hover{transform:translateY(-1px)}
   .menu-btn{display:none}
 
-  /* ---------- Hero ---------- */
-  .hero{position:relative;min-height:100vh;display:flex;align-items:center;
-    padding:120px 0 60px;overflow:hidden}
+  /* ---- Hero ---- */
+  .hero{position:relative;min-height:88vh;display:flex;align-items:center;padding:4rem 0 5rem;overflow:hidden}
   #skyline{position:absolute;inset:0;width:100%;height:100%;z-index:0}
   .hero-scrim{position:absolute;inset:0;z-index:1;
-    background:
-      radial-gradient(120% 80% at 50% -10%, transparent 40%, var(--hero-scrim) 100%),
-      linear-gradient(180deg, color-mix(in srgb,var(--night) 55%,transparent) 0%, transparent 30%, var(--night) 97%)}
-  .hero-inner{position:relative;z-index:2;width:min(1180px,92vw);margin-inline:auto}
-  .hero h1{font-size:clamp(2.9rem,7.4vw,6.1rem);letter-spacing:-.015em;max-width:16ch;font-weight:500}
-  .hero h1 .glow{font-style:italic;
-    background:linear-gradient(120deg,#F3E2B6,var(--gold) 60%,var(--gold-deep));
-    -webkit-background-clip:text;background-clip:text;color:transparent;
-    text-shadow:0 0 34px color-mix(in srgb,var(--gold) 30%,transparent)}
-  .hero .lede{margin-top:1.4rem;font-size:clamp(1.02rem,1.7vw,1.28rem);max-width:46ch;color:var(--ink);opacity:.9}
-  .hero .eyebrow{margin-bottom:1.3rem;display:inline-flex;align-items:center;gap:.7rem}
-  .hero .eyebrow::before{content:"";width:34px;height:1px;background:var(--gold)}
+    background:radial-gradient(120% 80% at 50% -10%,transparent 45%,var(--hero-scrim) 100%),
+      linear-gradient(180deg,color-mix(in srgb,var(--night) 40%,transparent),transparent 34%,var(--night) 98%)}
+  .hero-inner{position:relative;z-index:2;width:min(1200px,92vw);margin-inline:auto;text-align:center}
+  .hero h1{font-size:clamp(2.6rem,6vw,5rem);font-weight:500;letter-spacing:-.015em;max-width:18ch;margin-inline:auto}
+  .hero h1 .glow{font-style:italic;background:linear-gradient(120deg,#F3E2B6,var(--gold) 60%,var(--gold-deep));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero .lede{margin:1.3rem auto 0;font-size:clamp(1rem,1.6vw,1.22rem);max-width:52ch;opacity:.92}
 
-  /* ---------- Search bar ---------- */
-  .search{margin-top:2.4rem;background:color-mix(in srgb,var(--panel) 78%,transparent);
-    backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:16px;
-    padding:.7rem;display:flex;gap:.5rem;flex-wrap:wrap;max-width:820px;box-shadow:var(--shadow)}
-  .search .field{flex:1 1 150px;min-width:120px;display:flex;flex-direction:column;
-    gap:.15rem;padding:.55rem .85rem;border-radius:11px}
-  .search .field + .field{border-left:1px solid var(--line)}
-  .search label{font-size:.64rem;text-transform:uppercase;letter-spacing:.18em;
-    color:var(--muted);font-weight:700}
-  .search select,.search input{background:none;border:none;color:var(--ink);
-    font-family:var(--sans);font-size:.95rem;font-weight:600;padding:0;outline:none;width:100%}
-  .search select{cursor:pointer;appearance:none}
-  .search option{background:var(--panel);color:var(--ink)}
-  .search .go{flex:0 0 auto;align-self:stretch;border:none;cursor:pointer;
+  /* ---- Search widget ---- */
+  .searchbox{margin:2.4rem auto 0;max-width:760px;background:color-mix(in srgb,var(--panel) 82%,transparent);
+    backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+  .tabs{display:flex;border-bottom:1px solid var(--line)}
+  .tabs button{flex:1;background:none;border:none;cursor:pointer;color:var(--muted);font-family:var(--sans);
+    font-weight:700;font-size:.76rem;letter-spacing:.12em;text-transform:uppercase;padding:.9rem 1rem;transition:.2s;position:relative}
+  .tabs button[aria-selected="true"]{color:var(--ink)}
+  .tabs button[aria-selected="true"]::after{content:"";position:absolute;left:1.2rem;right:1.2rem;bottom:-1px;height:2px;background:var(--gold)}
+  .tabs button:hover{color:var(--ink)}
+  .search-row{display:flex;gap:.5rem;padding:.7rem;align-items:stretch;flex-wrap:wrap}
+  .search-row input{flex:1 1 220px;min-width:0;background:none;border:none;outline:none;color:var(--ink);
+    font-family:var(--sans);font-size:1rem;font-weight:500;padding:.7rem .9rem}
+  .search-row input::placeholder{color:var(--muted-2)}
+  .search-row select{background:none;border:none;color:var(--muted);font-family:var(--sans);font-weight:600;
+    font-size:.85rem;padding:.7rem .4rem;outline:none;cursor:pointer;border-left:1px solid var(--line)}
+  .search-row select option{background:var(--panel);color:var(--ink)}
+  .search-row .go{flex:0 0 auto;border:none;cursor:pointer;
     background:linear-gradient(135deg,#F0DCA9,var(--gold) 55%,var(--gold-deep));color:#1A140A;font-weight:800;
-    letter-spacing:.14em;text-transform:uppercase;font-size:.8rem;padding:0 1.9rem;
-    border-radius:11px;transition:.25s;box-shadow:0 10px 30px -12px var(--gold)}
-  .search .go:hover{transform:translateY(-1px);box-shadow:0 14px 34px -12px var(--gold)}
+    letter-spacing:.12em;text-transform:uppercase;font-size:.8rem;padding:0 1.8rem;border-radius:11px;transition:.2s}
+  .search-row .go:hover{transform:translateY(-1px)}
+  .hero-quick{margin-top:1.2rem;display:flex;gap:1.4rem;justify-content:center;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}
+  .hero-quick a{color:var(--ink);opacity:.85;border-bottom:1px dotted var(--line);padding-bottom:1px}
+  .hero-quick a:hover{color:var(--gold)}
 
-  /* ---------- Stats ---------- */
-  .stats{border-top:1px solid var(--line);border-bottom:1px solid var(--line);
-    background:var(--night-2)}
-  .stats .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line)}
-  .stat{background:var(--night-2);padding:2.4rem 1.4rem;text-align:center}
-  .stat .n{font-family:var(--serif);font-size:clamp(2rem,4vw,2.9rem);color:var(--gold);
-    font-variant-numeric:tabular-nums;line-height:1}
-  .stat .l{margin-top:.5rem;font-size:.72rem;text-transform:uppercase;letter-spacing:.16em;color:var(--muted)}
+  /* ---- Trust bar ---- */
+  .trust{background:var(--night-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .trust .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line)}
+  .trust .cell{background:var(--night-2);padding:1.8rem 1rem;text-align:center}
+  .trust .n{font-family:var(--serif);font-size:clamp(1.5rem,3vw,2.1rem);color:var(--gold);line-height:1;font-variant-numeric:tabular-nums}
+  .trust .l{margin-top:.4rem;font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
 
-  /* ---------- Section shell ---------- */
-  section{position:relative}
-  .band{padding:clamp(4.5rem,9vw,7.5rem) 0}
-  .head{display:flex;justify-content:space-between;align-items:flex-end;gap:2rem;
-    margin-bottom:3rem;flex-wrap:wrap}
-  .head h2{font-size:clamp(2rem,4.4vw,3.2rem);letter-spacing:-.01em;max-width:20ch}
-  .head p{max-width:42ch;color:var(--muted);margin-top:.6rem}
-  .link-arrow{color:var(--gold);font-weight:700;text-transform:uppercase;
-    letter-spacing:.12em;font-size:.78rem;white-space:nowrap}
-  .link-arrow span{transition:.25s;display:inline-block}
-  .link-arrow:hover span{transform:translateX(5px)}
-
-  /* ---------- Listings ---------- */
-  .listings{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6rem}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;
-    overflow:hidden;box-shadow:var(--shadow);transition:transform .35s,border-color .35s}
-  .card:hover{transform:translateY(-8px);border-color:color-mix(in srgb,var(--gold) 55%,transparent)}
+  /* ---- Listing cards ---- */
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);
+    transition:transform .35s,border-color .35s}
+  .card:hover{transform:translateY(-7px);border-color:color-mix(in srgb,var(--gold) 55%,transparent)}
   .photo{aspect-ratio:4/3;position:relative;overflow:hidden}
   .photo canvas{position:absolute;inset:0;width:100%;height:100%}
-  .tag{position:absolute;top:14px;left:14px;z-index:2;
-    background:rgba(10,9,6,.55);backdrop-filter:blur(6px);color:var(--gold);
-    border:1px solid color-mix(in srgb,var(--gold) 55%,transparent);
-    font-size:.62rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
-    padding:.42rem .75rem;border-radius:4px}
+  .tag{position:absolute;top:12px;left:12px;z-index:2;background:rgba(10,9,6,.55);backdrop-filter:blur(6px);
+    color:var(--gold);border:1px solid color-mix(in srgb,var(--gold) 55%,transparent);font-size:.6rem;font-weight:700;
+    letter-spacing:.16em;text-transform:uppercase;padding:.38rem .7rem;border-radius:4px}
   .tag.sold{background:var(--gold);color:#1A140A;border-color:transparent}
-  .fav{position:absolute;top:12px;right:12px;z-index:2;width:34px;height:34px;border-radius:999px;
-    background:rgba(10,12,24,.5);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.18);
-    color:#fff;display:grid;place-items:center;cursor:pointer;transition:.2s}
-  .fav:hover{color:var(--neon);border-color:var(--neon)}
-  .card-body{padding:1.4rem}
-  .price{font-family:var(--serif);font-size:1.7rem;color:var(--ink)}
-  .addr{margin-top:.25rem;color:var(--muted);font-size:.92rem}
-  .specs{display:flex;gap:1.3rem;margin-top:1.1rem;padding-top:1.1rem;
-    border-top:1px solid var(--line);font-size:.82rem;color:var(--muted-2)}
+  .card-body{padding:1.3rem}
+  .price{font-family:var(--serif);font-size:1.6rem}
+  .addr{margin-top:.2rem;color:var(--muted);font-size:.9rem}
+  .specs{display:flex;gap:1.2rem;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--line);font-size:.8rem;color:var(--muted-2)}
   .specs b{color:var(--ink);font-weight:700}
-
-  /* ---------- Communities ---------- */
-  .communities{background:var(--night-2)}
-  .hoods{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem}
-  .hood{position:relative;border-radius:16px;overflow:hidden;min-height:230px;
-    display:flex;align-items:flex-end;padding:1.3rem;border:1px solid var(--line);
-    isolation:isolate;transition:transform .35s}
-  .hood canvas{position:absolute;inset:0;z-index:-2;width:100%;height:100%}
-  .hood::after{content:"";position:absolute;inset:0;z-index:-1;
-    background:linear-gradient(180deg,transparent 30%,rgba(6,8,16,.82) 100%)}
-  .hood:hover{transform:translateY(-6px)}
-  .hood .hn{font-family:var(--serif);font-size:1.3rem;color:#fff}
-  .hood .hc{font-size:.74rem;color:rgba(255,255,255,.72);text-transform:uppercase;letter-spacing:.14em;margin-top:.2rem}
-  .hood.tall{grid-row:span 2;min-height:auto}
-
-  /* ---------- About agent ---------- */
-  .about{display:grid;grid-template-columns:0.85fr 1.15fr;gap:3.5rem;align-items:center}
-  .portrait{position:relative;border-radius:20px;overflow:hidden;aspect-ratio:4/5;
-    border:1px solid var(--line);box-shadow:var(--shadow)}
-  .portrait canvas{position:absolute;inset:0;width:100%;height:100%}
-  .portrait .plate{position:absolute;left:0;right:0;bottom:0;padding:1.4rem;z-index:2;
-    background:linear-gradient(180deg,transparent,rgba(6,8,16,.85))}
-  .portrait .plate .nm{font-family:var(--serif);font-size:1.5rem;color:#fff}
-  .portrait .plate .rl{font-size:.72rem;text-transform:uppercase;letter-spacing:.16em;color:var(--gold)}
-  .about h2{font-size:clamp(2rem,4vw,3rem);margin-bottom:1.2rem}
-  .about p + p{margin-top:1rem}
-  .creds{display:flex;gap:2rem;margin-top:2rem;flex-wrap:wrap}
-  .cred .cn{font-family:var(--serif);font-size:1.9rem;color:var(--gold);line-height:1}
-  .cred .cl{font-size:.72rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-top:.3rem}
-  .verify{display:flex;align-items:center;gap:.6rem;margin-top:1.6rem;
-    font-size:.8rem;color:var(--muted);line-height:1.4;max-width:52ch}
-  .verify .vdot{width:7px;height:7px;flex:none;border-radius:999px;background:var(--gold);
-    box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 22%,transparent)}
-  .sig{margin-top:1.6rem;font-family:var(--serif);font-style:italic;font-size:1.5rem;color:var(--ink);opacity:.85}
-
-  /* ---------- Testimonials ---------- */
-  .quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6rem}
-  .quote{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:2rem}
-  .quote .stars{color:var(--gold);letter-spacing:.2em;font-size:.85rem}
-  .quote p{margin-top:1rem;font-size:1.02rem;color:var(--ink);opacity:.92}
-  .quote .who{margin-top:1.4rem;font-weight:700;font-size:.9rem}
-  .quote .who span{display:block;color:var(--muted);font-weight:500;font-size:.8rem;margin-top:.15rem}
-
-  /* ---------- CTA ---------- */
-  .cta{position:relative;overflow:hidden;text-align:center;
-    background:linear-gradient(135deg,var(--night-2),var(--panel));border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-  .cta .glowbg{position:absolute;inset:0;z-index:0;opacity:.6;
-    background:radial-gradient(60% 120% at 50% 0%,color-mix(in srgb,var(--neon) 30%,transparent),transparent 60%),
-    radial-gradient(50% 120% at 80% 100%,color-mix(in srgb,var(--cyan) 20%,transparent),transparent 60%)}
-  .cta .inner{position:relative;z-index:1}
-  .cta h2{font-size:clamp(2.2rem,5vw,3.6rem);max-width:18ch;margin-inline:auto}
-  .cta p{margin:1.2rem auto 2.2rem;max-width:44ch;color:var(--muted)}
-  .btn-row{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
-  .btn{padding:1rem 2rem;border-radius:999px;font-weight:800;letter-spacing:.08em;
-    text-transform:uppercase;font-size:.8rem;cursor:pointer;transition:.25s;border:1px solid transparent}
-  .btn-primary{background:linear-gradient(135deg,#F0DCA9,var(--gold) 55%,var(--gold-deep));color:#1A140A;
-    box-shadow:0 14px 38px -14px var(--gold)}
-  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 18px 44px -14px var(--gold)}
+  .fresh{text-align:center;margin-top:1.6rem;font-size:.8rem;color:var(--muted);display:flex;gap:.5rem;justify-content:center;align-items:center}
+  .fresh .dot{width:7px;height:7px;border-radius:999px;background:#3fbf6a;box-shadow:0 0 0 3px rgba(63,191,106,.2)}
+  .center-cta{text-align:center;margin-top:2.2rem}
+  .btn{display:inline-block;padding:.95rem 2rem;border-radius:999px;font-weight:800;letter-spacing:.08em;
+    text-transform:uppercase;font-size:.78rem;cursor:pointer;transition:.25s;border:1px solid transparent}
+  .btn-primary{background:linear-gradient(135deg,#F0DCA9,var(--gold) 55%,var(--gold-deep));color:#1A140A;box-shadow:0 14px 38px -14px var(--gold)}
+  .btn-primary:hover{transform:translateY(-2px)}
   .btn-ghost{border-color:var(--gold);color:var(--gold)}
-  .btn-ghost:hover{background:var(--gold);color:var(--night)}
+  .btn-ghost:hover{background:var(--gold);color:#1A140A}
 
-  /* ---------- Contact ---------- */
-  .contact{display:grid;grid-template-columns:1fr 1fr;gap:3.5rem;align-items:start}
-  .form{display:grid;gap:1rem}
-  .form .row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-  .form label{display:flex;flex-direction:column;gap:.4rem;font-size:.72rem;
-    text-transform:uppercase;letter-spacing:.14em;color:var(--muted);font-weight:700}
-  .form input,.form textarea{background:var(--panel);border:1px solid var(--line);
-    border-radius:11px;padding:.85rem 1rem;color:var(--ink);font-family:var(--sans);
-    font-size:.95rem;font-weight:500}
-  .form input:focus,.form textarea:focus{outline:2px solid var(--neon);outline-offset:1px;border-color:transparent}
-  .form textarea{resize:vertical;min-height:120px}
+  /* ---- Communities ---- */
+  .hoods{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem}
+  .hood{position:relative;border-radius:14px;overflow:hidden;min-height:200px;display:flex;align-items:flex-end;
+    padding:1.1rem;border:1px solid var(--line);isolation:isolate;transition:transform .35s}
+  .hood canvas{position:absolute;inset:0;z-index:-2;width:100%;height:100%}
+  .hood::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,transparent 35%,rgba(6,7,14,.85))}
+  .hood:hover{transform:translateY(-5px)}
+  .hood .hn{font-family:var(--serif);font-size:1.15rem;color:#fff}
+  .hood .hc{font-size:.7rem;color:rgba(255,255,255,.72);text-transform:uppercase;letter-spacing:.12em;margin-top:.15rem}
+
+  /* ---- Home valuation CTA ---- */
+  .valuation{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--night-2),var(--panel-2));
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .valuation .glowbg{position:absolute;inset:0;z-index:0;opacity:.5;
+    background:radial-gradient(55% 120% at 15% 0%,color-mix(in srgb,var(--gold) 26%,transparent),transparent 60%),
+    radial-gradient(50% 120% at 90% 100%,color-mix(in srgb,var(--steel) 16%,transparent),transparent 60%)}
+  .valuation .inner{position:relative;z-index:1;display:grid;grid-template-columns:1.1fr .9fr;gap:2.5rem;align-items:center}
+  .valuation h2{font-size:clamp(1.8rem,3.6vw,2.7rem)}
+  .valuation p{color:var(--muted);margin-top:.8rem;max-width:44ch}
+  .val-form{display:flex;gap:.6rem;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:.6rem;box-shadow:var(--shadow)}
+  .val-form input{flex:1;background:none;border:none;outline:none;color:var(--ink);font-family:var(--sans);font-size:1rem;padding:.8rem 1rem}
+  .val-form input::placeholder{color:var(--muted-2)}
+
+  /* ---- Team ---- */
+  .team-intro{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center;margin-bottom:3rem}
+  .team-intro .portrait{position:relative;border-radius:18px;overflow:hidden;aspect-ratio:5/4;border:1px solid var(--line);box-shadow:var(--shadow)}
+  .team-intro .portrait canvas{position:absolute;inset:0;width:100%;height:100%}
+  .team-intro .plate{position:absolute;left:0;right:0;bottom:0;padding:1.3rem;z-index:2;background:linear-gradient(180deg,transparent,rgba(6,7,14,.85))}
+  .team-intro .plate .nm{font-family:var(--serif);font-size:1.4rem;color:#fff}
+  .team-intro .plate .rl{font-size:.7rem;text-transform:uppercase;letter-spacing:.14em;color:var(--gold)}
+  .team-intro h2{font-size:clamp(1.8rem,3.6vw,2.7rem);margin-bottom:1rem}
+  .team-intro p+p{margin-top:.9rem}
+  .verify{display:flex;align-items:center;gap:.6rem;margin-top:1.4rem;font-size:.8rem;color:var(--muted)}
+  .verify .vdot{width:7px;height:7px;flex:none;border-radius:999px;background:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 22%,transparent)}
+
+  /* ---- Market snapshot ---- */
+  .market{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem}
+  .mstat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.6rem;text-align:left}
+  .mstat .mk{font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+  .mstat .mv{font-family:var(--serif);font-size:2rem;color:var(--ink);margin-top:.4rem;font-variant-numeric:tabular-nums}
+  .mstat .md{margin-top:.4rem;font-size:.78rem;font-weight:700}
+  .up{color:#3fbf6a}.down{color:#e0736a}
+  .source{text-align:center;margin-top:1.6rem;font-size:.76rem;color:var(--muted-2)}
+
+  /* ---- Reviews ---- */
+  .rating-hero{text-align:center;margin-bottom:2.4rem}
+  .rating-hero .big{font-family:var(--serif);font-size:3rem;color:var(--gold);line-height:1}
+  .rating-hero .stars{color:var(--gold);letter-spacing:.25em;font-size:1.1rem;margin-top:.3rem}
+  .rating-hero .sub{color:var(--muted);font-size:.85rem;margin-top:.4rem}
+  .quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4rem}
+  .quote{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.8rem}
+  .quote .stars{color:var(--gold);letter-spacing:.2em;font-size:.82rem}
+  .quote p{margin-top:.9rem;font-size:.98rem;opacity:.92}
+  .quote .who{margin-top:1.2rem;font-weight:700;font-size:.88rem}
+  .quote .who span{display:block;color:var(--muted);font-weight:500;font-size:.78rem;margin-top:.15rem}
+
+  /* ---- Blog ---- */
+  .posts{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+  .post{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;transition:transform .35s,border-color .35s}
+  .post:hover{transform:translateY(-6px);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
+  .post .photo{aspect-ratio:16/9}
+  .post .pb{padding:1.3rem}
+  .post .cat{font-size:.66rem;text-transform:uppercase;letter-spacing:.14em;color:var(--gold);font-weight:700}
+  .post h3{font-size:1.15rem;margin:.5rem 0 .4rem}
+  .post p{color:var(--muted);font-size:.88rem}
+  .post .rm{margin-top:.9rem;font-size:.76rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);font-weight:700}
+
+  /* ---- Contact CTA ---- */
+  .contact{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:start}
+  .form{display:grid;gap:.9rem}
+  .form .row{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+  .form label{display:flex;flex-direction:column;gap:.35rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:700}
+  .form input,.form textarea{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem;color:var(--ink);font-family:var(--sans);font-size:.95rem}
+  .form input:focus,.form textarea:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transparent}
+  .form textarea{resize:vertical;min-height:110px}
   .form .btn-primary{justify-self:start;border:none}
-  .info-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:2.2rem}
-  .info-row{display:flex;gap:1rem;padding:1.1rem 0;border-bottom:1px solid var(--line)}
+  .info-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:2rem}
+  .info-row{display:flex;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--line)}
   .info-row:last-child{border-bottom:none}
-  .info-row .ic{width:42px;height:42px;flex:none;border-radius:11px;display:grid;place-items:center;
-    background:color-mix(in srgb,var(--gold) 14%,transparent);color:var(--gold);font-size:1.1rem}
-  .info-row .k{font-size:.7rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
+  .info-row .ic{width:40px;height:40px;flex:none;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--gold) 14%,transparent);color:var(--gold);font-size:1.05rem}
+  .info-row .k{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
   .info-row .v{font-weight:600;margin-top:.1rem}
 
-  /* ---------- Footer ---------- */
-  footer{background:var(--night-2);border-top:1px solid var(--line);padding:4rem 0 2rem}
-  .foot{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:2.5rem}
-  .foot .brand{margin-bottom:1rem}
-  .foot p{color:var(--muted);font-size:.9rem;max-width:34ch}
-  .foot h4{font-family:var(--sans);font-size:.72rem;text-transform:uppercase;
-    letter-spacing:.16em;color:var(--gold);margin-bottom:1rem}
-  .foot ul{list-style:none;padding:0;margin:0;display:grid;gap:.6rem}
-  .foot a{color:var(--muted);font-size:.9rem;transition:.2s}
-  .foot a:hover{color:var(--ink)}
-  .foot-bottom{margin-top:3rem;padding-top:1.6rem;border-top:1px solid var(--line);
-    display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;
-    color:var(--muted-2);font-size:.78rem}
+  /* ---- Footer ---- */
+  footer{background:var(--night-2);border-top:1px solid var(--line);padding:3.5rem 0 2rem}
+  .foot{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:2.2rem}
+  .foot p{color:var(--muted);font-size:.88rem;max-width:32ch;margin-top:.9rem}
+  .foot h4{font-size:.7rem;text-transform:uppercase;letter-spacing:.14em;color:var(--gold);margin-bottom:.9rem;font-family:var(--sans)}
+  .foot ul{list-style:none;padding:0;margin:0;display:grid;gap:.55rem}
+  .foot a{color:var(--muted);font-size:.88rem}.foot a:hover{color:var(--ink)}
+  .socials{display:flex;gap:.6rem;margin-top:1.2rem}
+  .socials a{width:34px;height:34px;border-radius:999px;border:1px solid var(--line);display:grid;place-items:center;color:var(--muted);transition:.2s}
+  .socials a:hover{border-color:var(--gold);color:var(--gold)}
+  .disclaimer{margin-top:2.6rem;padding-top:1.5rem;border-top:1px solid var(--line);color:var(--muted-2);font-size:.74rem;line-height:1.6}
+  .foot-bottom{margin-top:1.2rem;display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;color:var(--muted-2);font-size:.76rem}
 
-  .reveal{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
   .reveal.in{opacity:1;transform:none}
 
-  @media (max-width:960px){
-    .listings,.quotes{grid-template-columns:1fr 1fr}
-    .hoods{grid-template-columns:1fr 1fr}
-    .hood.tall{grid-row:span 1}
-    .about,.contact{grid-template-columns:1fr;gap:2.4rem}
-    .stats .grid{grid-template-columns:1fr 1fr}
+  @media (max-width:1000px){
+    .grid-3,.posts,.quotes{grid-template-columns:1fr 1fr}
+    .hoods,.market{grid-template-columns:1fr 1fr}
+    .team-intro,.valuation .inner,.contact{grid-template-columns:1fr;gap:2rem}
+    .trust .grid{grid-template-columns:1fr 1fr}
     .foot{grid-template-columns:1fr 1fr}
+    .util .l{display:none}
   }
   @media (max-width:640px){
-    .nav-links{display:none}
-    .menu-btn{display:grid}
-    .listings,.quotes{grid-template-columns:1fr}
-    .hoods{grid-template-columns:1fr}
+    .nav-links{display:none}.menu-btn{display:grid}
+    .grid-3,.posts,.quotes,.hoods,.market{grid-template-columns:1fr}
     .form .row{grid-template-columns:1fr}
-    .search .field + .field{border-left:none;border-top:1px solid var(--line)}
     .foot{grid-template-columns:1fr}
+    .search-row select{border-left:none;border-top:1px solid var(--line)}
   }
   @media (prefers-reduced-motion:reduce){
-    *{scroll-behavior:auto!important}
-    .reveal{opacity:1;transform:none;transition:none}
+    *{scroll-behavior:auto!important}.reveal{opacity:1;transform:none;transition:none}
   }
 </style>
 
 </head>
 <body>
+<!-- Utility bar -->
+<div class="util">
+  <div class="wrap">
+    <div class="l">Proudly serving Henderson, Las Vegas &amp; the surrounding valley</div>
+    <div class="r">
+      <a href="#valuation">What's My Home Worth?</a>
+      <span class="sep"></span>
+      <a href="tel:+17028420167">☎ (702) 842-0167</a>
+    </div>
+  </div>
+</div>
+
+<!-- Header -->
 <header id="hdr">
   <div class="wrap nav">
     <a class="brand" href="#top" aria-label="The Roland Team home">
-      <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-        <path d="M16 2 3 12v18h9v-9h8v9h9V12L16 2Z" stroke="currentColor" stroke-width="1.6" fill="none"/>
-        <path d="M16 2 3 12v18h9v-9h8v9h9V12L16 2Z" stroke="var(--neon)" stroke-width="1.6" fill="none" opacity=".55" transform="translate(.6 .6)"/>
-      </svg>
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 3 12v18h9v-9h8v9h9V12L16 2Z" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
       <span>The <b>Roland</b> Team <span class="lv">·LV</span></span>
     </a>
     <nav class="nav-links" aria-label="Primary">
-      <a href="#listings">Listings</a>
+      <a href="#listings">Search Homes</a>
       <a href="#communities">Communities</a>
-      <a href="#about">About</a>
-      <a href="#reviews">Reviews</a>
-      <a href="#contact">Contact</a>
+      <a href="#buyers">Buyers</a>
+      <a href="#sellers">Sellers</a>
+      <a href="#team">About</a>
+      <a href="#blog">Blog</a>
     </nav>
-    <div style="display:flex;align-items:center;gap:.8rem">
+    <div class="nav-right">
       <button class="theme-toggle" id="themeBtn" aria-label="Toggle light and dark theme">◐</button>
-      <a class="nav-cta" href="#contact">List With Us</a>
+      <a class="nav-cta" href="#contact">Contact</a>
     </div>
   </div>
 </header>
 
 <main id="top">
   <!-- HERO -->
-  <section class="hero" id="home">
+  <section class="hero">
     <canvas id="skyline" aria-hidden="true"></canvas>
     <div class="hero-scrim"></div>
     <div class="hero-inner">
       <span class="eyebrow">Henderson · Green Valley · Anthem · Summerlin</span>
-      <h1>Live above <span class="glow">the neon</span>.</h1>
-      <p class="lede">From Green Valley and Anthem to Summerlin and beyond, The Roland Team — backed by <strong style="color:var(--ink);font-weight:600">hundreds of five-star reviews</strong> — moves homes in any market and finds the address that fits your life.</p>
+      <h1 style="margin-top:1rem">Find your place in <span class="glow">Las Vegas</span>.</h1>
+      <p class="lede">Search every home for sale across the valley — updated straight from the MLS — with a team backed by hundreds of five-star reviews guiding you the whole way.</p>
 
-      <form class="search" onsubmit="return false" aria-label="Property search">
-        <div class="field">
-          <label for="loc">Location</label>
-          <select id="loc">
-            <option>All of Las Vegas</option>
-            <option>Summerlin</option>
-            <option>Henderson</option>
-            <option>The Strip · High-Rise</option>
-            <option>MacDonald Highlands</option>
-            <option>Red Rock / The Ridges</option>
-          </select>
+      <div class="searchbox" role="search">
+        <div class="tabs" role="tablist">
+          <button role="tab" aria-selected="true" data-ph="Enter a city, ZIP, neighborhood, or address">Buy</button>
+          <button role="tab" aria-selected="false" data-ph="Enter your address for an instant estimate">Sell</button>
+          <button role="tab" aria-selected="false" data-ph="Search rentals by city or ZIP">Rent</button>
         </div>
-        <div class="field">
-          <label for="type">Type</label>
-          <select id="type">
-            <option>Any</option><option>Single Family</option>
-            <option>High-Rise Condo</option><option>Estate</option><option>New Build</option>
+        <form class="search-row" onsubmit="return false">
+          <input id="searchInput" type="text" placeholder="Enter a city, ZIP, neighborhood, or address" aria-label="Search location">
+          <select aria-label="Property type">
+            <option>All Types</option><option>Single Family</option><option>Condo / High-Rise</option><option>Townhome</option><option>Luxury Estate</option><option>New Construction</option>
           </select>
-        </div>
-        <div class="field">
-          <label for="price">Max Price</label>
-          <select id="price">
-            <option>No Max</option><option>$750K</option><option>$1.5M</option>
-            <option>$3M</option><option>$6M+</option>
+          <select aria-label="Price">
+            <option>Any Price</option><option>Up to $500K</option><option>$500K–$1M</option><option>$1M–$3M</option><option>$3M+</option>
           </select>
-        </div>
-        <button class="go" type="submit">Search</button>
-      </form>
+          <button class="go" type="submit">Search</button>
+        </form>
+      </div>
+      <div class="hero-quick">
+        <span>Popular:</span>
+        <a href="#communities">Homes in Henderson</a>
+        <a href="#communities">Summerlin</a>
+        <a href="#communities">55+ Communities</a>
+        <a href="#listings">Luxury &amp; Golf</a>
+        <a href="#communities">New Construction</a>
+      </div>
     </div>
   </section>
 
-  <!-- STATS -->
-  <section class="stats">
+  <!-- TRUST BAR -->
+  <section class="trust">
     <div class="wrap"><div class="grid">
-      <div class="stat"><div class="n">Hundreds</div><div class="l">Of Five-Star Reviews ★★★★★</div></div>
-      <div class="stat"><div class="n">No.&nbsp;1</div><div class="l">Agent in Henderson · RealTrends 2026</div></div>
-      <div class="stat"><div class="n" data-count="1000" data-suffix="+">0</div><div class="l">Career Closings</div></div>
-      <div class="stat"><div class="n">150–200</div><div class="l">Homes Sold a Year</div></div>
+      <div class="cell"><div class="n">Hundreds</div><div class="l">Five-Star Reviews ★★★★★</div></div>
+      <div class="cell"><div class="n">No.&nbsp;1</div><div class="l">Agent in Henderson · RealTrends 2026</div></div>
+      <div class="cell"><div class="n" data-count="1000" data-suffix="+">0</div><div class="l">Career Closings</div></div>
+      <div class="cell"><div class="n">150–200</div><div class="l">Homes Sold a Year</div></div>
     </div></div>
   </section>
 
-  <!-- LISTINGS -->
+  <!-- FEATURED LISTINGS -->
   <section class="band" id="listings">
     <div class="wrap">
-      <div class="head reveal">
-        <div>
-          <span class="eyebrow">Featured Properties</span>
-          <h2>Signature Vegas listings, hand-picked.</h2>
-          <p>A curated slice of the market — penthouses, desert-modern estates, and golf-course retreats moving right now.</p>
-        </div>
-        <a class="link-arrow" href="#contact">View all listings <span>→</span></a>
+      <div class="sec-head reveal">
+        <span class="eyebrow">Featured Listings</span>
+        <h2>Newest homes on the market</h2>
+        <p>A live look at what's moving across the valley — from Green Valley starters to guard-gated estates.</p>
       </div>
-      <div class="listings" id="cards"></div>
+      <div class="grid-3" id="cards"></div>
+      <div class="fresh"><span class="dot"></span> Listings refresh from the MLS every 15 minutes</div>
+      <div class="center-cta"><a class="btn btn-primary" href="#contact">View All Homes for Sale</a></div>
     </div>
   </section>
 
   <!-- COMMUNITIES -->
-  <section class="band communities" id="communities">
+  <section class="band alt" id="communities">
     <div class="wrap">
-      <div class="head reveal">
-        <div>
-          <span class="eyebrow">Where Vegas Lives</span>
-          <h2>Explore the valley's marquee communities.</h2>
-          <p>Every neighborhood has its own rhythm — we know which one matches yours.</p>
-        </div>
+      <div class="sec-head reveal">
+        <span class="eyebrow">Search by Community</span>
+        <h2>Explore the valley's neighborhoods</h2>
+        <p>Every community has its own feel and price point. Start where you already know you belong.</p>
       </div>
       <div class="hoods reveal" id="hoods"></div>
     </div>
   </section>
 
-  <!-- ABOUT -->
-  <section class="band" id="about">
-    <div class="wrap about">
-      <div class="portrait reveal">
-        <canvas id="portrait" aria-hidden="true"></canvas>
-        <div class="plate">
-          <div class="nm">Mike Roland</div>
-          <div class="rl">Team Lead · The Roland Team</div>
-        </div>
+  <!-- HOME VALUATION -->
+  <section class="band valuation" id="valuation">
+    <div class="glowbg"></div>
+    <div class="wrap inner">
+      <div class="reveal">
+        <span class="eyebrow">Sellers</span>
+        <h2 id="sellers">What's your home worth in today's market?</h2>
+        <p>Vegas values shift block by block. Get a data-driven estimate built from live comparable sales — then a real strategy to sell for more, in any market.</p>
       </div>
       <div class="reveal">
-        <span class="eyebrow">The Team</span>
-        <h2>Built from the ground up. Verified by the numbers.</h2>
-        <p class="muted">Founded and grown over the past decade, The Roland Team at LPT Realty is one of the highest-producing real estate teams in Nevada — with hundreds of five-star reviews from buyers and sellers across the valley. Team lead Mike Roland is the No. 1 ranked agent in Henderson by transaction sides in the 2026 RealTrends Verified rankings, with more than 1,000 career closings and 150 to 200 transactions a year.</p>
-        <p class="muted">Roughly 25 agents serve buyers and sellers across Henderson, Las Vegas, and the surrounding valley, backed by a full operations staff and one of the most systemized lead-response and follow-up infrastructures in the market. Sellers get data-driven pricing and marketing built to move homes in any conditions. Buyers get street-level knowledge of the valley — from Green Valley and Anthem to Summerlin and beyond.</p>
-        <div class="creds">
-          <div class="cred"><div class="cn">~25</div><div class="cl">Agents + Full Ops Team</div></div>
-          <div class="cred"><div class="cn">10 yrs</div><div class="cl">Every Market Cycle</div></div>
-          <div class="cred"><div class="cn">LPT</div><div class="cl">Realty Brokerage</div></div>
-        </div>
-        <p class="verify"><span class="vdot"></span>Rankings verified by RealTrends through submitted MLS transaction data — not self-reported claims.</p>
-        <div class="sig">— Mike Roland</div>
+        <form class="val-form" onsubmit="handleVal(event)">
+          <input required type="text" placeholder="Enter your home address" aria-label="Home address">
+          <button class="btn btn-primary" type="submit" style="border:none">Get Value</button>
+        </form>
+        <p class="muted" style="font-size:.78rem;margin-top:.8rem">Free, no obligation. Backed by real MLS comps — not an automated guess.</p>
       </div>
+    </div>
+  </section>
+
+  <!-- TEAM -->
+  <section class="band" id="team">
+    <div class="wrap">
+      <div class="team-intro">
+        <div class="portrait reveal">
+          <canvas id="portrait" aria-hidden="true"></canvas>
+          <div class="plate"><div class="nm">Mike Roland</div><div class="rl">Team Lead · The Roland Team</div></div>
+        </div>
+        <div class="reveal" id="buyers">
+          <span class="eyebrow">Meet The Team</span>
+          <h2>Built from the ground up. Verified by the numbers.</h2>
+          <p class="muted">Founded and grown over the past decade, The Roland Team at LPT Realty is one of the highest-producing real estate teams in Nevada — with hundreds of five-star reviews from buyers and sellers across the valley. Team lead Mike Roland is the No. 1 ranked agent in Henderson by transaction sides in the 2026 RealTrends Verified rankings, with more than 1,000 career closings.</p>
+          <p class="muted">Roughly 25 agents and a full operations staff back one of the most systemized lead-response and follow-up operations in the market. Sellers get data-driven pricing and marketing that moves homes in any conditions. Buyers get street-level knowledge of every neighborhood — from Green Valley and Anthem to Summerlin and beyond.</p>
+          <div class="verify"><span class="vdot"></span> Rankings verified by RealTrends through submitted MLS data — not self-reported.</div>
+          <div class="center-cta" style="text-align:left"><a class="btn btn-ghost" href="#contact">Meet the Full Team</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARKET SNAPSHOT -->
+  <section class="band alt">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">Market Snapshot</span>
+        <h2>The Las Vegas valley, by the numbers</h2>
+        <p>A quick pulse on the local market so you can move with real data behind you.</p>
+      </div>
+      <div class="market reveal">
+        <div class="mstat"><div class="mk">Median Sale Price</div><div class="mv">$455,000</div><div class="md up">▲ 3.1% year over year</div></div>
+        <div class="mstat"><div class="mk">Homes Sold / Month</div><div class="mv">2,650</div><div class="md up">▲ 1.8% year over year</div></div>
+        <div class="mstat"><div class="mk">Avg. Days on Market</div><div class="mv">41</div><div class="md down">▼ 4 days year over year</div></div>
+        <div class="mstat"><div class="mk">Median $ / Sq Ft</div><div class="mv">$252</div><div class="md up">▲ 2.4% year over year</div></div>
+      </div>
+      <div class="source">Illustrative figures — wire in live data from GLVAR / your MLS feed. Updated monthly.</div>
     </div>
   </section>
 
   <!-- REVIEWS -->
-  <section class="band communities" id="reviews">
+  <section class="band">
     <div class="wrap">
-      <div class="head reveal">
-        <div>
-          <span class="eyebrow">Client Stories</span>
-          <h2>The house always wins. So do our clients.</h2>
-        </div>
+      <div class="rating-hero reveal">
+        <div class="big">4.9</div>
+        <div class="stars">★★★★★</div>
+        <div class="sub">Hundreds of verified five-star reviews across Zillow, Google &amp; Yelp</div>
       </div>
       <div class="quotes reveal">
-        <figure class="quote">
-          <div class="stars">★★★★★</div>
-          <p>"Sold our Summerlin place $80K over ask in a weekend. Mike staged it, priced it, and worked the phones like a card counter. Unreal."</p>
-          <figcaption class="who">Marisol &amp; Trey R.<span>Sold in The Vistas, Summerlin</span></figcaption>
-        </figure>
-        <figure class="quote">
-          <div class="stars">★★★★★</div>
-          <p>"Relocated from Chicago sight-unseen. The Roland Team toured six high-rises on FaceTime and found us a Strip view that still stops me cold every night."</p>
-          <figcaption class="who">Ken A.<span>Bought at Waldorf Astoria Residences</span></figcaption>
-        </figure>
-        <figure class="quote">
-          <div class="stars">★★★★★</div>
-          <p>"First-time buyers, zero clue. They walked us through every number without the pressure. We closed in Henderson under budget."</p>
-          <figcaption class="who">Priya &amp; Sam D.<span>Bought in Green Valley Ranch</span></figcaption>
-        </figure>
+        <figure class="quote"><div class="stars">★★★★★</div>
+          <p>"Sold our Green Valley home $40K over ask in a weekend. Mike priced it perfectly and the marketing was next level."</p>
+          <figcaption class="who">Marisol &amp; Trey R.<span>Sold in Green Valley, Henderson</span></figcaption></figure>
+        <figure class="quote"><div class="stars">★★★★★</div>
+          <p>"Relocated from Chicago sight-unseen. The team toured six homes on FaceTime and found us the perfect place in Summerlin."</p>
+          <figcaption class="who">Ken A.<span>Bought in Summerlin</span></figcaption></figure>
+        <figure class="quote"><div class="stars">★★★★★</div>
+          <p>"First-time buyers with zero clue. They walked us through every number without pressure. Closed in Anthem under budget."</p>
+          <figcaption class="who">Priya &amp; Sam D.<span>Bought in Anthem, Henderson</span></figcaption></figure>
       </div>
     </div>
   </section>
 
-  <!-- CTA -->
-  <section class="band cta">
-    <div class="glowbg"></div>
-    <div class="wrap inner reveal">
-      <h2>Ready to find your Vegas address?</h2>
-      <p>Book a no-pressure strategy call. We'll map your budget to the right neighborhood and show you what's about to hit the market.</p>
-      <div class="btn-row">
-        <a class="btn btn-primary" href="#contact">Book a Consultation</a>
-        <a class="btn btn-ghost" href="#listings">Browse Listings</a>
+  <!-- BLOG -->
+  <section class="band alt" id="blog">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="eyebrow">Resources &amp; Insights</span>
+        <h2>From the blog</h2>
+        <p>Straight-talk guides on buying, selling, and living in the Las Vegas valley.</p>
       </div>
+      <div class="posts reveal" id="posts"></div>
+      <div class="center-cta"><a class="btn btn-ghost" href="#blog">Read the Blog</a></div>
     </div>
   </section>
 
@@ -474,8 +491,8 @@
     <div class="wrap contact">
       <div class="reveal">
         <span class="eyebrow">Get In Touch</span>
-        <h2 style="font-size:clamp(2rem,4vw,3rem);margin:.6rem 0 1rem">Let's talk about your move.</h2>
-        <p class="muted" style="margin-bottom:1.8rem">Tell us what you're after. You'll hear back from a real human — usually the same day.</p>
+        <h2 style="font-size:clamp(1.8rem,3.6vw,2.7rem);margin:.5rem 0 .9rem">Let's talk about your move</h2>
+        <p class="muted" style="margin-bottom:1.6rem">Buying, selling, or just exploring — tell us what you're after and you'll hear back from a real person, usually the same day.</p>
         <form class="form" onsubmit="handleSubmit(event)">
           <div class="row">
             <label>First Name<input required name="first" autocomplete="given-name"></label>
@@ -485,30 +502,16 @@
             <label>Email<input required type="email" name="email" autocomplete="email"></label>
             <label>Phone<input type="tel" name="phone" autocomplete="tel"></label>
           </div>
-          <label>I'm looking to
-            <input name="intent" placeholder="Buy a penthouse, sell in Summerlin, relocate…">
-          </label>
+          <label>I'm looking to<input name="intent" placeholder="Buy in Henderson, sell in Summerlin, relocate…"></label>
           <label>Message<textarea name="message" placeholder="Timeline, budget, must-haves…"></textarea></label>
           <button class="btn btn-primary" type="submit">Send Message</button>
         </form>
       </div>
       <div class="info-card reveal">
-        <div class="info-row">
-          <div class="ic">☎</div>
-          <div><div class="k">Direct</div><div class="v">(702) 842-0167</div></div>
-        </div>
-        <div class="info-row">
-          <div class="ic">✉</div>
-          <div><div class="k">Email</div><div class="v">mike@therolandteam.com</div></div>
-        </div>
-        <div class="info-row">
-          <div class="ic">⌖</div>
-          <div><div class="k">Office</div><div class="v">5860 S Pecos Rd, Unit 300, Las Vegas, NV 89120</div></div>
-        </div>
-        <div class="info-row">
-          <div class="ic">◔</div>
-          <div><div class="k">Hours</div><div class="v">Mon–Sat, 8am–8pm · By appt. Sundays</div></div>
-        </div>
+        <div class="info-row"><div class="ic">☎</div><div><div class="k">Direct</div><div class="v">(702) 842-0167</div></div></div>
+        <div class="info-row"><div class="ic">✉</div><div><div class="k">Email</div><div class="v">mike@therolandteam.com</div></div></div>
+        <div class="info-row"><div class="ic">⌖</div><div><div class="k">Office</div><div class="v">5860 S Pecos Rd, Unit 300, Las Vegas, NV 89120</div></div></div>
+        <div class="info-row"><div class="ic">◔</div><div><div class="k">Hours</div><div class="v">Mon–Sat 8am–8pm · Sun by appointment</div></div></div>
       </div>
     </div>
   </section>
@@ -522,30 +525,39 @@
           <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 3 12v18h9v-9h8v9h9V12L16 2Z" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
           <span>The <b>Roland</b> Team <span class="lv">·LV</span></span>
         </a>
-        <p>Luxury residential real estate across Henderson &amp; the Las Vegas Valley. Brokered by LPT Realty. Licensed in Nevada. Equal Housing Opportunity.</p>
+        <p>Luxury and everyday residential real estate across Henderson &amp; the Las Vegas Valley. Brokered by LPT Realty.</p>
+        <div class="socials">
+          <a href="#" aria-label="Instagram">◎</a><a href="#" aria-label="Facebook">f</a><a href="#" aria-label="YouTube">▶</a><a href="#" aria-label="LinkedIn">in</a>
+        </div>
       </div>
-      <div><h4>Explore</h4><ul>
-        <li><a href="#listings">Featured Listings</a></li>
-        <li><a href="#communities">Communities</a></li>
-        <li><a href="#about">About Mike</a></li>
-        <li><a href="#reviews">Client Reviews</a></li>
+      <div><h4>Search</h4><ul>
+        <li><a href="#listings">All Homes for Sale</a></li>
+        <li><a href="#communities">Search by Community</a></li>
+        <li><a href="#listings">Luxury &amp; Golf Homes</a></li>
+        <li><a href="#communities">New Construction</a></li>
+        <li><a href="#communities">55+ Communities</a></li>
       </ul></div>
-      <div><h4>Services</h4><ul>
-        <li><a href="#contact">Buy a Home</a></li>
-        <li><a href="#contact">Sell a Home</a></li>
-        <li><a href="#contact">Home Valuation</a></li>
+      <div><h4>Buyers &amp; Sellers</h4><ul>
+        <li><a href="#valuation">Home Valuation</a></li>
+        <li><a href="#buyers">Buyer's Guide</a></li>
+        <li><a href="#sellers">Seller's Guide</a></li>
+        <li><a href="#blog">Market Reports</a></li>
         <li><a href="#contact">Relocation</a></li>
       </ul></div>
-      <div><h4>Communities</h4><ul>
-        <li><a href="#communities">Summerlin</a></li>
-        <li><a href="#communities">Henderson</a></li>
-        <li><a href="#communities">The Ridges</a></li>
-        <li><a href="#communities">Strip High-Rises</a></li>
+      <div><h4>Company</h4><ul>
+        <li><a href="#team">About the Team</a></li>
+        <li><a href="#blog">Blog</a></li>
+        <li><a href="#contact">Contact</a></li>
+        <li><a href="tel:+17028420167">(702) 842-0167</a></li>
+        <li><a href="mailto:mike@therolandteam.com">mike@therolandteam.com</a></li>
       </ul></div>
+    </div>
+    <div class="disclaimer">
+      The Roland Team at LPT Realty · 5860 S Pecos Rd, Unit 300, Las Vegas, NV 89120. Licensed in Nevada. All information deemed reliable but not guaranteed and should be independently verified. Listing data is refreshed from the applicable MLS and may not reflect all real estate activity in the market. Equal Housing Opportunity 🏠.
     </div>
     <div class="foot-bottom">
       <span>© 2026 The Roland Team · LPT Realty. All rights reserved.</span>
-      <span>Licensed in Nevada · Equal Housing Opportunity 🏠</span>
+      <span>Privacy Policy · Terms of Use · Accessibility</span>
     </div>
   </div>
 </footer>
@@ -554,312 +566,130 @@
 (function(){
   "use strict";
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var root = document.documentElement, dpr=Math.min(devicePixelRatio||1,2);
+  function isLight(){ return root.getAttribute('data-theme')==='light'
+      || (!root.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: light)').matches); }
+  function css(v){ return getComputedStyle(root).getPropertyValue(v).trim(); }
 
-  /* ---- theme toggle ---- */
-  var root = document.documentElement;
   document.getElementById('themeBtn').addEventListener('click', function(){
-    var isLight = getComputedStyle(root).getPropertyValue('--night').trim().indexOf('F4') > -1
-      || root.getAttribute('data-theme') === 'light';
-    root.setAttribute('data-theme', isLight ? 'dark' : 'light');
-    drawAll();
+    root.setAttribute('data-theme', isLight() ? 'dark' : 'light'); drawAll();
   });
 
-  /* ---- header scroll ---- */
-  var hdr = document.getElementById('hdr');
-  addEventListener('scroll', function(){
-    hdr.classList.toggle('scrolled', scrollY > 40);
-  }, {passive:true});
-
-  function css(v){ return getComputedStyle(root).getPropertyValue(v).trim(); }
-  function isLight(){ return root.getAttribute('data-theme') === 'light'
-      || (!root.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: light)').matches); }
+  /* search tabs */
+  var tabs=document.querySelectorAll('.tabs button'), input=document.getElementById('searchInput');
+  tabs.forEach(function(t){ t.addEventListener('click', function(){
+    tabs.forEach(function(x){ x.setAttribute('aria-selected','false'); });
+    t.setAttribute('aria-selected','true'); input.placeholder=t.dataset.ph;
+  });});
 
   /* ---- HERO SKYLINE ---- */
-  var sky = document.getElementById('skyline'), sctx = sky.getContext('2d');
-  var buildings = [], beam = 0, W=0, H=0, dpr=Math.min(devicePixelRatio||1,2);
-  function sizeSky(){
-    W = sky.clientWidth; H = sky.clientHeight;
-    sky.width = W*dpr; sky.height = H*dpr; sctx.setTransform(dpr,0,0,dpr,0,0);
-    buildBuildings();
+  var sky=document.getElementById('skyline'), sctx=sky.getContext('2d'), buildings=[], beam=0, W=0,H=0;
+  function sizeSky(){ W=sky.clientWidth;H=sky.clientHeight;sky.width=W*dpr;sky.height=H*dpr;sctx.setTransform(dpr,0,0,dpr,0,0);buildB(); }
+  function buildB(){ buildings=[];var base=H,n=Math.max(14,Math.floor(W/70)),x=-20,seed=7;
+    function r(){seed=(seed*9301+49297)%233280;return seed/233280;}
+    var slot=Math.floor(n/2);
+    for(var i=0;i<n;i++){var w=34+r()*70,h=90+r()*Math.min(360,H*0.55),t='tower';
+      if(i===slot)t='pyramid';else if(i===slot-3)t='needle';else if(i===slot+3)t='wheel';
+      buildings.push({x:x,w:w,h:h,type:t,base:base,lit:r()});x+=w+6+r()*10;} }
+  function drawSky(){ if(!W)return;var light=isLight();
+    var g=sctx.createLinearGradient(0,0,0,H);
+    if(light){g.addColorStop(0,'#F6D9A0');g.addColorStop(.45,'#E9A88F');g.addColorStop(1,'#EFE4D0');}
+    else{g.addColorStop(0,'#0A0D1E');g.addColorStop(.5,'#171436');g.addColorStop(1,'#2A1330');}
+    sctx.fillStyle=g;sctx.fillRect(0,0,W,H);
+    if(!light){sctx.globalAlpha=.8;var s=13;for(var k=0;k<70;k++){s=(s*9301+49297)%233280;var sx=(s/233280)*W;s=(s*9301+49297)%233280;var sy=(s/233280)*H*0.5;s=(s*9301+49297)%233280;var sr=(s/233280)*1.3;sctx.fillStyle='rgba(255,255,255,'+(0.3+(s/233280)*0.5)+')';sctx.beginPath();sctx.arc(sx,sy,sr,0,7);sctx.fill();}sctx.globalAlpha=1;}
+    else{var sun=sctx.createRadialGradient(W*0.5,H*0.14,10,W*0.5,H*0.14,180);sun.addColorStop(0,'rgba(255,244,214,.95)');sun.addColorStop(1,'rgba(255,244,214,0)');sctx.fillStyle=sun;sctx.fillRect(0,0,W,H);}
+    if(!light&&!reduce){var bx=W*0.5+Math.cos(beam)*W*0.32;var grd=sctx.createLinearGradient(W*0.5,H,bx,0);grd.addColorStop(0,'rgba(240,224,180,.10)');grd.addColorStop(1,'rgba(240,224,180,0)');sctx.fillStyle=grd;sctx.beginPath();sctx.moveTo(W*0.5,H);sctx.lineTo(bx-46,0);sctx.lineTo(bx+46,0);sctx.closePath();sctx.fill();}
+    var b1=light?'#8A6A4E':'#0B0C1C',b2=light?'#7A5A40':'#141433';
+    for(var i=0;i<buildings.length;i++){var b=buildings[i],top=b.base-b.h;sctx.fillStyle=(i%2)?b1:b2;
+      if(b.type==='pyramid'){sctx.beginPath();sctx.moveTo(b.x,b.base);sctx.lineTo(b.x+b.w/2,top);sctx.lineTo(b.x+b.w,b.base);sctx.closePath();sctx.fill();
+        if(!light){var lg=sctx.createLinearGradient(b.x+b.w/2,top,b.x+b.w/2,top-90);lg.addColorStop(0,'rgba(255,255,255,.5)');lg.addColorStop(1,'rgba(255,255,255,0)');sctx.fillStyle=lg;sctx.fillRect(b.x+b.w/2-3,top-90,6,90);}continue;}
+      if(b.type==='needle'){sctx.fillRect(b.x+b.w/2-6,b.base-b.h*1.35,12,b.h*1.35);sctx.beginPath();sctx.arc(b.x+b.w/2,b.base-b.h*1.35,15,0,7);sctx.fill();sctx.fillStyle=light?'#c99':css('--gold');sctx.fillRect(b.x+b.w/2-2,b.base-b.h*1.35-34,4,20);continue;}
+      if(b.type==='wheel'){var cy=b.base-b.h*0.9,rr=Math.min(b.w*1.2,b.h*0.5);sctx.strokeStyle=light?'rgba(120,90,60,.7)':'rgba(216,188,132,.55)';sctx.lineWidth=2;sctx.beginPath();sctx.arc(b.x+b.w/2,cy,rr,0,7);sctx.stroke();sctx.beginPath();sctx.arc(b.x+b.w/2,cy,rr*0.55,0,7);sctx.stroke();sctx.fillStyle=(i%2)?b1:b2;sctx.fillRect(b.x+b.w/2-3,cy,6,b.base-cy);continue;}
+      sctx.fillRect(b.x,top,b.w,b.h);
+      var wc=light?'rgba(255,235,190,.35)':'rgba(240,205,140,.82)',wc2=light?'rgba(120,90,60,.15)':'rgba(232,224,205,.55)';
+      var cols=Math.max(2,Math.floor(b.w/12)),rows=Math.floor(b.h/14);
+      for(var c=0;c<cols;c++)for(var r2=0;r2<rows;r2++){var sv=(i*97+c*13+r2*7);if(((sv*13)%10)>=(b.lit*10))continue;var fl=(!reduce&&!light&&((sv+Math.floor(beam*2))%73===0))?0.45:1;sctx.globalAlpha=fl;sctx.fillStyle=((sv%9)===0)?wc2:wc;sctx.fillRect(b.x+5+c*12,top+6+r2*14,5,7);}sctx.globalAlpha=1;}
+    var gg=sctx.createLinearGradient(0,H-140,0,H);if(light){gg.addColorStop(0,'rgba(239,228,208,0)');gg.addColorStop(1,'rgba(239,228,208,.9)');}else{gg.addColorStop(0,'rgba(216,188,132,0)');gg.addColorStop(1,'rgba(184,151,90,.16)');}sctx.fillStyle=gg;sctx.fillRect(0,H-140,W,140);
   }
-  function buildBuildings(){
-    buildings = [];
-    var base = H, n = Math.max(14, Math.floor(W/70));
-    var x = -20;
-    // deterministic-ish pseudo random
-    var seed = 7;
-    function rnd(){ seed = (seed*9301+49297)%233280; return seed/233280; }
-    var iconSlot = Math.floor(n/2);
-    for(var i=0;i<n;i++){
-      var w = 34 + rnd()*70;
-      var h = 90 + rnd()*Math.min(360, H*0.55);
-      var type = 'tower';
-      if(i===iconSlot) type='pyramid';           // Luxor nod
-      else if(i===iconSlot-3) type='needle';      // Stratosphere nod
-      else if(i===iconSlot+3) type='wheel';       // High Roller nod
-      buildings.push({x:x, w:w, h:h, type:type, base:base, lit:rnd()});
-      x += w + 6 + rnd()*10;
-    }
-  }
-  function drawSky(){
-    if(!W) return;
-    var light = isLight();
-    // sky gradient
-    var g = sctx.createLinearGradient(0,0,0,H);
-    if(light){
-      g.addColorStop(0,'#F6D9A0'); g.addColorStop(.45,'#E9A88F'); g.addColorStop(1,'#EFE4D0');
-    } else {
-      g.addColorStop(0,'#0A0D1E'); g.addColorStop(.5,'#171436'); g.addColorStop(1,'#2A1330');
-    }
-    sctx.fillStyle=g; sctx.fillRect(0,0,W,H);
+  function animate(){ beam+=0.01; drawSky(); if(!reduce)requestAnimationFrame(animate); }
 
-    // stars / sun glow
-    if(!light){
-      sctx.globalAlpha=.8;
-      var s=13;
-      for(var k=0;k<70;k++){
-        s=(s*9301+49297)%233280; var sx=(s/233280)*W;
-        s=(s*9301+49297)%233280; var sy=(s/233280)*H*0.5;
-        s=(s*9301+49297)%233280; var sr=(s/233280)*1.3;
-        sctx.fillStyle='rgba(255,255,255,'+(0.3+ (s/233280)*0.5)+')';
-        sctx.beginPath(); sctx.arc(sx,sy,sr,0,7); sctx.fill();
-      }
-      sctx.globalAlpha=1;
-    } else {
-      var sun=sctx.createRadialGradient(W*0.5,H*0.14,10,W*0.5,H*0.14,180);
-      sun.addColorStop(0,'rgba(255,244,214,.95)'); sun.addColorStop(1,'rgba(255,244,214,0)');
-      sctx.fillStyle=sun; sctx.fillRect(0,0,W,H);
-    }
+  /* ---- gradient photo painter ---- */
+  function paint(cv,opts){ if(!cv)return;var c=cv.getContext('2d'),w=cv.clientWidth||400,h=cv.clientHeight||300;cv.width=w*dpr;cv.height=h*dpr;c.setTransform(dpr,0,0,dpr,0,0);var light=isLight();
+    var g=c.createLinearGradient(0,0,w,h);opts.stops.forEach(function(s){g.addColorStop(s[0],s[1]);});c.fillStyle=g;c.fillRect(0,0,w,h);
+    var sg=c.createLinearGradient(0,0,0,h);sg.addColorStop(0,'rgba(255,255,255,'+(light?.25:.12)+')');sg.addColorStop(.4,'rgba(255,255,255,0)');c.fillStyle=sg;c.fillRect(0,0,w,h);
+    var horizon=h*0.62,x=0,seed=opts.seed||3;function r(){seed=(seed*9301+49297)%233280;return seed/233280;}
+    c.fillStyle=light?'rgba(60,40,20,.28)':'rgba(6,7,18,.55)';
+    while(x<w){var bw=14+r()*40,bh=20+r()*horizon*0.7;c.fillRect(x,horizon-bh,bw,bh+h*0.4);
+      c.fillStyle=light?'rgba(255,240,200,.5)':'rgba(240,205,140,.7)';for(var yy=horizon-bh+6;yy<horizon;yy+=10)for(var xx=x+4;xx<x+bw-3;xx+=8)if(r()>0.55)c.fillRect(xx,yy,3,4);
+      c.fillStyle=light?'rgba(60,40,20,.28)':'rgba(6,7,18,.55)';x+=bw+3;}
+    c.fillStyle=light?'rgba(40,26,12,.5)':'rgba(4,5,14,.75)';c.fillRect(0,h*0.82,w,h*0.18);
+    c.strokeStyle=opts.accent||(light?'rgba(140,104,40,.5)':'rgba(216,188,132,.7)');c.lineWidth=1.5;c.beginPath();c.moveTo(0,h*0.82);c.lineTo(w,h*0.82);c.stroke();
+    c.globalAlpha=.4;c.strokeStyle=light?'rgba(120,110,90,.35)':'rgba(190,196,208,.4)';c.beginPath();c.moveTo(0,h*0.86);c.lineTo(w,h*0.86);c.stroke();c.globalAlpha=1; }
 
-    // searchlight beam (night only) — warm champagne, understated
-    if(!light && !reduce){
-      var bx = W*0.5 + Math.cos(beam)*W*0.32;
-      var grd = sctx.createLinearGradient(W*0.5,H, bx, 0);
-      grd.addColorStop(0,'rgba(240,224,180,.10)'); grd.addColorStop(1,'rgba(240,224,180,0)');
-      sctx.fillStyle=grd;
-      sctx.beginPath(); sctx.moveTo(W*0.5,H); sctx.lineTo(bx-46,0); sctx.lineTo(bx+46,0); sctx.closePath(); sctx.fill();
-    }
-
-    // buildings
-    var bodyCol = light ? '#8A6A4E' : '#0B0C1C';
-    var bodyCol2 = light ? '#7A5A40' : '#141433';
-    for(var i=0;i<buildings.length;i++){
-      var b=buildings[i], top=b.base-b.h;
-      sctx.fillStyle = (i%2)?bodyCol:bodyCol2;
-      if(b.type==='pyramid'){
-        sctx.beginPath(); sctx.moveTo(b.x,b.base); sctx.lineTo(b.x+b.w/2, top); sctx.lineTo(b.x+b.w,b.base); sctx.closePath(); sctx.fill();
-        if(!light){ // luxor light
-          var lg=sctx.createLinearGradient(b.x+b.w/2,top,b.x+b.w/2,top-90);
-          lg.addColorStop(0,'rgba(255,255,255,.5)'); lg.addColorStop(1,'rgba(255,255,255,0)');
-          sctx.fillStyle=lg; sctx.fillRect(b.x+b.w/2-3, top-90, 6, 90);
-        }
-        continue;
-      }
-      if(b.type==='needle'){
-        sctx.fillRect(b.x+b.w/2-6, b.base-b.h*1.35, 12, b.h*1.35);
-        sctx.beginPath(); sctx.arc(b.x+b.w/2, b.base-b.h*1.35, 15, 0, 7); sctx.fill();
-        sctx.fillStyle = light? '#c99' : css('--neon');
-        sctx.fillRect(b.x+b.w/2-2, b.base-b.h*1.35-34, 4, 20);
-        continue;
-      }
-      if(b.type==='wheel'){
-        var cy=b.base-b.h*0.9, r=Math.min(b.w*1.2, b.h*0.5);
-        sctx.strokeStyle = light? 'rgba(120,90,60,.7)' : 'rgba(216,188,132,.55)';
-        sctx.lineWidth=2;
-        sctx.beginPath(); sctx.arc(b.x+b.w/2, cy, r, 0, 7); sctx.stroke();
-        sctx.beginPath(); sctx.arc(b.x+b.w/2, cy, r*0.55, 0, 7); sctx.stroke();
-        sctx.fillStyle = (i%2)?bodyCol:bodyCol2;
-        sctx.fillRect(b.x+b.w/2-3, cy, 6, b.base-cy);
-        continue;
-      }
-      // tower with windows
-      sctx.fillRect(b.x, top, b.w, b.h);
-      // windows — warm amber glow with occasional champagne accent
-      var wc = light ? 'rgba(255,235,190,.35)' : 'rgba(240,205,140,.82)';
-      var wc2= light ? 'rgba(120,90,60,.15)' : 'rgba(232,224,205,.55)';
-      var cols=Math.max(2,Math.floor(b.w/12)), rows=Math.floor(b.h/14);
-      for(var c=0;c<cols;c++) for(var r2=0;r2<rows;r2++){
-        var seedv=(i*97+c*13+r2*7);
-        var on=((seedv*13)%10) < (b.lit*10);
-        if(!on) continue;
-        var flick = (!reduce && !light && ((seedv+Math.floor(beam*2))%73===0)) ? 0.45 : 1;
-        sctx.globalAlpha = flick;
-        sctx.fillStyle = ((seedv%9)===0)? wc2 : wc;
-        sctx.fillRect(b.x+5+c*12, top+6+r2*14, 5, 7);
-      }
-      sctx.globalAlpha=1;
-    }
-
-    // ground glow — warm champagne haze
-    var gg=sctx.createLinearGradient(0,H-140,0,H);
-    if(light){ gg.addColorStop(0,'rgba(239,228,208,0)'); gg.addColorStop(1,'rgba(239,228,208,.9)'); }
-    else { gg.addColorStop(0,'rgba(216,188,132,0)'); gg.addColorStop(1,'rgba(184,151,90,.16)'); }
-    sctx.fillStyle=gg; sctx.fillRect(0,H-140,W,140);
-  }
-
-  function animate(){
-    beam += 0.01;
-    drawSky();
-    if(!reduce) requestAnimationFrame(animate);
-  }
-
-  /* ---- generic gradient "photo" painter for cards & hoods & portrait ---- */
-  function paintPhoto(cv, opts){
-    var c=cv.getContext('2d'); var w=cv.clientWidth||400, h=cv.clientHeight||300;
-    cv.width=w*dpr; cv.height=h*dpr; c.setTransform(dpr,0,0,dpr,0,0);
-    var light=isLight();
-    var g=c.createLinearGradient(0,0,w,h);
-    opts.stops.forEach(function(s){ g.addColorStop(s[0], s[1]); });
-    c.fillStyle=g; c.fillRect(0,0,w,h);
-    // sky sheen
-    var sg=c.createLinearGradient(0,0,0,h);
-    sg.addColorStop(0,'rgba(255,255,255,'+(light?.25:.12)+')'); sg.addColorStop(.4,'rgba(255,255,255,0)');
-    c.fillStyle=sg; c.fillRect(0,0,w,h);
-    // horizon buildings silhouette
-    var horizon=h*0.62;
-    c.fillStyle = light? 'rgba(60,40,20,.28)' : 'rgba(6,7,18,.55)';
-    var x=0, seed=opts.seed||3;
-    function rnd(){ seed=(seed*9301+49297)%233280; return seed/233280; }
-    while(x<w){
-      var bw=14+rnd()*40, bh=20+rnd()*horizon*0.7;
-      c.fillRect(x, horizon-bh, bw, bh+ h*0.4);
-      // windows
-      c.fillStyle = light? 'rgba(255,240,200,.5)':'rgba(255,214,120,.7)';
-      for(var yy=horizon-bh+6; yy<horizon; yy+=10)
-        for(var xx=x+4; xx<x+bw-3; xx+=8)
-          if(rnd()>0.55) c.fillRect(xx,yy,3,4);
-      c.fillStyle = light? 'rgba(60,40,20,.28)' : 'rgba(6,7,18,.55)';
-      x+=bw+3;
-    }
-    // ground
-    c.fillStyle = light? 'rgba(40,26,12,.5)':'rgba(4,5,14,.75)';
-    c.fillRect(0,h*0.82,w,h*0.18);
-    // accent streak — gold horizon line
-    c.strokeStyle = opts.neon || (light?'rgba(140,104,40,.5)':'rgba(216,188,132,.7)');
-    c.lineWidth=1.5; c.beginPath(); c.moveTo(0,h*0.82); c.lineTo(w,h*0.82); c.stroke();
-    c.globalAlpha=.4; c.strokeStyle=light?'rgba(120,110,90,.35)':'rgba(190,196,208,.4)';
-    c.beginPath(); c.moveTo(0,h*0.86); c.lineTo(w,h*0.86); c.stroke(); c.globalAlpha=1;
-  }
-
-  /* ---- LISTINGS DATA ---- */
-  var GOLD='rgba(216,188,132,.85)', PLAT='rgba(190,196,208,.6)';
+  var GOLD='rgba(216,188,132,.85)',PLAT='rgba(190,196,208,.6)';
   var listings=[
-    {price:'$4,250,000', addr:'55 Meadowhawk Ln · The Ridges, Summerlin', bd:5,ba:6,sq:'6,420', tag:'For Sale',
-      stops:[[0,'#241F2E'],[.5,'#3A2F3A'],[1,'#14121B']], neon:GOLD, seed:11},
-    {price:'$1,895,000', addr:'PH-2703 · Waldorf Astoria Residences', bd:3,ba:3,sq:'2,980', tag:'New',
-      stops:[[0,'#151E2C'],[.5,'#243645'],[1,'#0E141F']], neon:PLAT, seed:23},
-    {price:'$965,000', addr:'11 Sun Glow Ct · Green Valley Ranch, Henderson', bd:4,ba:3,sq:'3,210', tag:'For Sale',
-      stops:[[0,'#2A2015'],[.5,'#4A3822'],[1,'#191308']], neon:GOLD, seed:31},
-    {price:'$6,750,000', addr:'1 Promontory Ridge · MacDonald Highlands', bd:6,ba:8,sq:'9,140', tag:'For Sale',
-      stops:[[0,'#221A2A'],[.5,'#3A2C3E'],[1,'#130F17']], neon:GOLD, seed:41},
-    {price:'$1,240,000', addr:'42 Regatta Bay · Lake Las Vegas', bd:4,ba:4,sq:'3,880', tag:'Just Sold',
-      stops:[[0,'#121F26'],[.5,'#22383A'],[1,'#0C1418']], neon:PLAT, seed:53, sold:true},
-    {price:'$2,600,000', addr:'88 Vista Verde · The Vistas, Summerlin', bd:5,ba:5,sq:'5,050', tag:'For Sale',
-      stops:[[0,'#26200F'],[.5,'#45391C'],[1,'#171208']], neon:GOLD, seed:67}
+    {price:'$625,000',addr:'42 Sun Glow Ct · Green Valley, Henderson',bd:4,ba:3,sq:'2,640',tag:'New',stops:[[0,'#2A2015'],[.5,'#4A3822'],[1,'#191308']],accent:GOLD,seed:31},
+    {price:'$1,895,000',addr:'PH-2703 · High-Rise on the Strip',bd:3,ba:3,sq:'2,980',tag:'For Sale',stops:[[0,'#151E2C'],[.5,'#243645'],[1,'#0E141F']],accent:PLAT,seed:23},
+    {price:'$4,250,000',addr:'55 Meadowhawk Ln · The Ridges, Summerlin',bd:5,ba:6,sq:'6,420',tag:'For Sale',stops:[[0,'#241F2E'],[.5,'#3A2F3A'],[1,'#14121B']],accent:GOLD,seed:11},
+    {price:'$789,000',addr:'18 Sierra Vista · Anthem, Henderson',bd:4,ba:3,sq:'3,010',tag:'For Sale',stops:[[0,'#26200F'],[.5,'#45391C'],[1,'#171208']],accent:GOLD,seed:67},
+    {price:'$1,240,000',addr:'9 Regatta Bay · Lake Las Vegas',bd:4,ba:4,sq:'3,880',tag:'Just Sold',stops:[[0,'#121F26'],[.5,'#22383A'],[1,'#0C1418']],accent:PLAT,seed:53,sold:true},
+    {price:'$6,750,000',addr:'1 Promontory Ridge · MacDonald Highlands',bd:6,ba:8,sq:'9,140',tag:'For Sale',stops:[[0,'#221A2A'],[.5,'#3A2C3E'],[1,'#130F17']],accent:GOLD,seed:41}
   ];
-  var cardsEl=document.getElementById('cards');
-  listings.forEach(function(L){
-    var el=document.createElement('article'); el.className='card reveal';
-    el.innerHTML =
-      '<div class="photo"><canvas></canvas>'+
-        '<span class="tag'+(L.sold?' sold':'')+'">'+L.tag+'</span>'+
-        '<button class="fav" aria-label="Save listing">♡</button>'+
-      '</div>'+
-      '<div class="card-body">'+
-        '<div class="price">'+L.price+'</div>'+
-        '<div class="addr">'+L.addr+'</div>'+
-        '<div class="specs"><span><b>'+L.bd+'</b> Beds</span><span><b>'+L.ba+'</b> Baths</span><span><b>'+L.sq+'</b> Sq Ft</span></div>'+
-      '</div>';
-    cardsEl.appendChild(el);
-    var cv=el.querySelector('canvas'); L._cv=cv; L._opts={stops:L.stops,neon:L.neon,seed:L.seed};
-  });
+  var cardsEl=document.getElementById('cards'),cardCv=[];
+  listings.forEach(function(L){var el=document.createElement('article');el.className='card reveal';
+    el.innerHTML='<div class="photo"><canvas></canvas><span class="tag'+(L.sold?' sold':'')+'">'+L.tag+'</span></div>'+
+      '<div class="card-body"><div class="price">'+L.price+'</div><div class="addr">'+L.addr+'</div>'+
+      '<div class="specs"><span><b>'+L.bd+'</b> Beds</span><span><b>'+L.ba+'</b> Baths</span><span><b>'+L.sq+'</b> Sq Ft</span></div></div>';
+    cardsEl.appendChild(el);cardCv.push({cv:el.querySelector('canvas'),opts:{stops:L.stops,accent:L.accent,seed:L.seed}});});
 
-  /* ---- COMMUNITIES ---- */
   var hoods=[
-    {n:'Summerlin', c:'Master-Planned West', tall:true, stops:[[0,'#231C2C'],[.5,'#39303C'],[1,'#141019']], seed:5},
-    {n:'The Ridges', c:'Guard-Gated Luxury', stops:[[0,'#282013'],[.5,'#463620'],[1,'#17110A']], seed:9},
-    {n:'Henderson', c:'Family & Value', stops:[[0,'#141F26'],[.5,'#26383A'],[1,'#0E151A']], seed:17},
-    {n:'Strip High-Rises', c:'Vertical Living', tall:true, stops:[[0,'#151E2C'],[.5,'#28394C'],[1,'#0E141F']], seed:29},
-    {n:'MacDonald Highlands', c:'Estate Homes', stops:[[0,'#2A2015'],[.5,'#4A3822'],[1,'#181208']], seed:37},
-    {n:'Lake Las Vegas', c:'Waterfront Resort', stops:[[0,'#122024'],[.5,'#243E3C'],[1,'#0C1518']], seed:47}
+    {n:'Henderson',c:'Family & Value',stops:[[0,'#141F26'],[.5,'#26383A'],[1,'#0E151A']],seed:17},
+    {n:'Green Valley',c:'Established & Central',stops:[[0,'#28200F'],[.5,'#463620'],[1,'#17110A']],seed:9},
+    {n:'Anthem',c:'Hillside & Golf',stops:[[0,'#231C2C'],[.5,'#39303C'],[1,'#141019']],seed:5},
+    {n:'Summerlin',c:'Master-Planned West',stops:[[0,'#151E2C'],[.5,'#28394C'],[1,'#0E141F']],seed:29},
+    {n:'MacDonald Highlands',c:'Luxury Estates',stops:[[0,'#2A2015'],[.5,'#4A3822'],[1,'#181208']],seed:37},
+    {n:'Lake Las Vegas',c:'Waterfront Resort',stops:[[0,'#122024'],[.5,'#243E3C'],[1,'#0C1518']],seed:47},
+    {n:'Southern Highlands',c:'Gated & Golf',stops:[[0,'#221A2A'],[.5,'#3A2C3E'],[1,'#130F17']],seed:61},
+    {n:'Inspirada',c:'New Construction',stops:[[0,'#26200F'],[.5,'#45391C'],[1,'#171208']],seed:73}
   ];
-  var hoodsEl=document.getElementById('hoods'); var hoodPaint=[];
-  hoods.forEach(function(H2){
-    var el=document.createElement('a'); el.href='#contact'; el.className='hood'+(H2.tall?' tall':'');
+  var hoodsEl=document.getElementById('hoods'),hoodCv=[];
+  hoods.forEach(function(H2){var el=document.createElement('a');el.href='#contact';el.className='hood';
     el.innerHTML='<canvas></canvas><div><div class="hn">'+H2.n+'</div><div class="hc">'+H2.c+'</div></div>';
-    hoodsEl.appendChild(el);
-    hoodPaint.push({cv:el.querySelector('canvas'),opts:{stops:H2.stops,seed:H2.seed}});
-  });
+    hoodsEl.appendChild(el);hoodCv.push({cv:el.querySelector('canvas'),opts:{stops:H2.stops,seed:H2.seed}});});
 
-  /* ---- PORTRAIT ---- */
-  function paintPortrait(){
-    var cv=document.getElementById('portrait'), c=cv.getContext('2d');
-    var w=cv.clientWidth||400,h=cv.clientHeight||500; cv.width=w*dpr;cv.height=h*dpr;c.setTransform(dpr,0,0,dpr,0,0);
-    var light=isLight();
-    var g=c.createLinearGradient(0,0,0,h);
-    if(light){g.addColorStop(0,'#E9C79A');g.addColorStop(1,'#B98A5A');}
-    else{g.addColorStop(0,'#241A3E');g.addColorStop(.6,'#3A1E4E');g.addColorStop(1,'#120E24');}
-    c.fillStyle=g;c.fillRect(0,0,w,h);
-    // spotlight
-    var sp=c.createRadialGradient(w*0.5,h*0.34,10,w*0.5,h*0.34,w*0.7);
-    sp.addColorStop(0, light?'rgba(255,248,225,.55)':'rgba(216,188,132,.28)'); sp.addColorStop(1,'rgba(0,0,0,0)');
-    c.fillStyle=sp;c.fillRect(0,0,w,h);
-    // silhouette figure
-    c.fillStyle = light? 'rgba(50,32,16,.85)':'rgba(8,8,20,.85)';
-    c.beginPath(); c.arc(w*0.5,h*0.4,w*0.16,0,7); c.fill(); // head
-    c.beginPath();
-    c.moveTo(w*0.5-w*0.30,h); c.quadraticCurveTo(w*0.5-w*0.30,h*0.6,w*0.5,h*0.6);
-    c.quadraticCurveTo(w*0.5+w*0.30,h*0.6,w*0.5+w*0.30,h); c.closePath(); c.fill();
-    // monogram
-    c.fillStyle= light?'rgba(255,248,225,.9)':css('--gold');
-    c.font='600 '+(w*0.16)+'px Georgia'; c.textAlign='center';
-    c.fillText('MR', w*0.5, h*0.44);
-  }
+  var posts=[
+    {cat:'Buying',t:'Relocating to Las Vegas? Start Here',d:'Taxes, neighborhoods, and what your budget really buys across the valley.',stops:[[0,'#151E2C'],[.5,'#28394C'],[1,'#0E141F']],seed:12},
+    {cat:'Selling',t:'How to Sell for More in Any Market',d:'The pricing and prep moves that consistently beat the comps in Henderson.',stops:[[0,'#28200F'],[.5,'#463620'],[1,'#17110A']],seed:22},
+    {cat:'Market',t:'Las Vegas Market Report',d:'Where prices, inventory, and days-on-market are heading this quarter.',stops:[[0,'#221A2A'],[.5,'#3A2C3E'],[1,'#130F17']],seed:34}
+  ];
+  var postsEl=document.getElementById('posts'),postCv=[];
+  posts.forEach(function(P){var el=document.createElement('article');el.className='post reveal';
+    el.innerHTML='<div class="photo"><canvas></canvas></div><div class="pb"><div class="cat">'+P.cat+'</div><h3>'+P.t+'</h3><p>'+P.d+'</p><div class="rm">Read More →</div></div>';
+    postsEl.appendChild(el);postCv.push({cv:el.querySelector('canvas'),opts:{stops:P.stops,seed:P.seed}});});
 
-  function drawAll(){
-    drawSky();
-    listings.forEach(function(L){ paintPhoto(L._cv,L._opts); });
-    hoodPaint.forEach(function(H2){ paintPhoto(H2.cv,H2.opts); });
-    paintPortrait();
-  }
+  function paintPortrait(){var cv=document.getElementById('portrait');if(!cv)return;var c=cv.getContext('2d'),w=cv.clientWidth||400,h=cv.clientHeight||320;cv.width=w*dpr;cv.height=h*dpr;c.setTransform(dpr,0,0,dpr,0,0);var light=isLight();
+    var g=c.createLinearGradient(0,0,0,h);if(light){g.addColorStop(0,'#E9C79A');g.addColorStop(1,'#B98A5A');}else{g.addColorStop(0,'#241A3E');g.addColorStop(.6,'#3A1E4E');g.addColorStop(1,'#120E24');}c.fillStyle=g;c.fillRect(0,0,w,h);
+    var sp=c.createRadialGradient(w*0.5,h*0.32,10,w*0.5,h*0.32,w*0.7);sp.addColorStop(0,light?'rgba(255,248,225,.55)':'rgba(216,188,132,.28)');sp.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=sp;c.fillRect(0,0,w,h);
+    c.fillStyle=light?'rgba(50,32,16,.85)':'rgba(8,8,20,.85)';c.beginPath();c.arc(w*0.5,h*0.42,h*0.17,0,7);c.fill();
+    c.beginPath();c.moveTo(w*0.5-h*0.32,h);c.quadraticCurveTo(w*0.5-h*0.32,h*0.62,w*0.5,h*0.62);c.quadraticCurveTo(w*0.5+h*0.32,h*0.62,w*0.5+h*0.32,h);c.closePath();c.fill();
+    c.fillStyle=light?'rgba(255,248,225,.9)':css('--gold');c.font='600 '+(h*0.17)+'px Georgia';c.textAlign='center';c.fillText('MR',w*0.5,h*0.47);}
 
-  /* ---- counters ---- */
-  function runCounters(){
-    document.querySelectorAll('[data-count]').forEach(function(el){
-      var target=parseFloat(el.dataset.count), suf=el.dataset.suffix||'', dec=(target%1!==0), t0=null, dur=1400;
-      function step(ts){
-        if(reduce){ el.textContent=(target%1!==0?target.toFixed(1):target)+suf; return; }
-        if(!t0)t0=ts; var p=Math.min((ts-t0)/dur,1); var e=1-Math.pow(1-p,3);
-        var val=target*e; var pre=(el.textContent.indexOf('$')===0)?'$':'';
-        el.textContent=pre+(dec?val.toFixed(1):Math.floor(val))+suf;
-        if(p<1)requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
-    });
-  }
+  function drawAll(){drawSky();cardCv.forEach(function(o){paint(o.cv,o.opts);});hoodCv.forEach(function(o){paint(o.cv,o.opts);});postCv.forEach(function(o){paint(o.cv,o.opts);});paintPortrait();}
 
-  /* ---- reveal + counter observers ---- */
-  var io=new IntersectionObserver(function(es){
-    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
-  },{threshold:.12});
-  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+  function runCounters(){document.querySelectorAll('[data-count]').forEach(function(el){var target=parseFloat(el.dataset.count),suf=el.dataset.suffix||'',t0=null,dur=1400;
+    function step(ts){if(reduce){el.textContent=target+suf;return;}if(!t0)t0=ts;var p=Math.min((ts-t0)/dur,1),e=1-Math.pow(1-p,3);el.textContent=Math.floor(target*e).toLocaleString()+suf;if(p<1)requestAnimationFrame(step);}requestAnimationFrame(step);});}
 
-  var statObs=new IntersectionObserver(function(es){
-    es.forEach(function(e){ if(e.isIntersecting){ runCounters(); statObs.disconnect(); } });
-  },{threshold:.4});
-  statObs.observe(document.querySelector('.stats'));
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+  var so=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){runCounters();so.disconnect();}});},{threshold:.4});
+  so.observe(document.querySelector('.trust'));
 
-  window.handleSubmit=function(e){
-    e.preventDefault();
-    var b=e.target.querySelector('button[type=submit]');
-    b.textContent='Message Sent ✓'; b.style.background='linear-gradient(120deg,#2ecc71,#27ae60)';
-    setTimeout(function(){ e.target.reset(); b.textContent='Send Message'; b.style.background=''; },2600);
-  };
+  window.handleSubmit=function(e){e.preventDefault();var b=e.target.querySelector('button[type=submit]');b.textContent='Message Sent ✓';b.style.background='linear-gradient(120deg,#2ecc71,#27ae60)';b.style.color='#fff';setTimeout(function(){e.target.reset();b.textContent='Send Message';b.style.background='';b.style.color='';},2600);};
+  window.handleVal=function(e){e.preventDefault();var b=e.target.querySelector('button');b.textContent='On its way ✓';setTimeout(function(){e.target.reset();b.textContent='Get Value';},2600);};
 
-  /* ---- boot ---- */
-  function boot(){ sizeSky(); drawAll(); if(reduce){drawSky();} else animate(); }
-  addEventListener('resize', function(){ sizeSky(); drawAll(); });
-  if(document.readyState!=='loading') boot(); else addEventListener('DOMContentLoaded', boot);
+  function boot(){sizeSky();drawAll();if(reduce)drawSky();else animate();}
+  addEventListener('resize',function(){sizeSky();drawAll();});
+  if(document.readyState!=='loading')boot();else addEventListener('DOMContentLoaded',boot);
 })();
 </script>
 </body>
