@@ -4,50 +4,50 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="The Roland Team — Top 1% luxury real estate in Henderson & Las Vegas. Buy, sell, and relocate with Mike Roland, a Henderson native. Brokered by LPT Realty.">
-<meta name="theme-color" content="#0B0E1A">
+<meta name="theme-color" content="#07080F">
 <title>The Roland Team — Luxury Las Vegas & Henderson Real Estate</title>
 <style>
   :root{
-    --night:#0B0E1A; --night-2:#10142A; --panel:#151A34; --panel-2:#1B2140;
-    --line:rgba(232,200,120,.18);
-    --gold:#E8C878; --gold-deep:#C9A24B;
-    --neon:#FF3D8B; --cyan:#46E0FF;
-    --ink:#F5F1E8; --muted:#A6A2B8; --muted-2:#7C7994;
-    --card:#141834; --card-hi:rgba(255,255,255,.04);
-    --hero-scrim:rgba(7,9,18,.55);
-    --shadow:0 24px 60px -20px rgba(0,0,0,.7);
+    --night:#07080F; --night-2:#0C0D16; --panel:#11121D; --panel-2:#161826;
+    --line:rgba(212,183,122,.16);
+    --gold:#D8BC84; --gold-deep:#B8975A;
+    --neon:#E7C79B; --cyan:#B7BDC9;
+    --ink:#F4EEE1; --muted:#9C9482; --muted-2:#726A5A;
+    --card:#101119; --card-hi:rgba(255,255,255,.03);
+    --hero-scrim:rgba(4,4,9,.6);
+    --shadow:0 30px 70px -28px rgba(0,0,0,.8);
     --serif:'Iowan Old Style','Palatino Linotype','Book Antiqua',Georgia,'Times New Roman',serif;
     --sans:'Helvetica Neue','Segoe UI',system-ui,-apple-system,Arial,sans-serif;
   }
   @media (prefers-color-scheme: light){
     :root{
-      --night:#F4ECDD; --night-2:#EFE4D0; --panel:#FBF6EC; --panel-2:#F6EEDD;
-      --line:rgba(120,86,20,.18);
-      --gold:#9A6B12; --gold-deep:#7A520B;
-      --neon:#D01E6B; --cyan:#0E7FA8;
-      --ink:#20180C; --muted:#6C5C40; --muted-2:#8A7A5C;
-      --card:#FBF6EC; --card-hi:rgba(120,86,20,.05);
-      --hero-scrim:rgba(20,14,4,.30);
-      --shadow:0 24px 50px -22px rgba(80,55,10,.35);
+      --night:#F6F1E7; --night-2:#EFE8D9; --panel:#FCF8F0; --panel-2:#F5EEE0;
+      --line:rgba(140,104,40,.20);
+      --gold:#8A6A2E; --gold-deep:#6E521F;
+      --neon:#9A7A3E; --cyan:#7C8494;
+      --ink:#231C10; --muted:#6A5C44; --muted-2:#8C7E64;
+      --card:#FCF8F0; --card-hi:rgba(140,104,40,.04);
+      --hero-scrim:rgba(30,22,8,.28);
+      --shadow:0 28px 56px -26px rgba(90,64,16,.30);
     }
   }
   :root[data-theme="dark"]{
-    --night:#0B0E1A; --night-2:#10142A; --panel:#151A34; --panel-2:#1B2140;
-    --line:rgba(232,200,120,.18);
-    --gold:#E8C878; --gold-deep:#C9A24B; --neon:#FF3D8B; --cyan:#46E0FF;
-    --ink:#F5F1E8; --muted:#A6A2B8; --muted-2:#7C7994;
-    --card:#141834; --card-hi:rgba(255,255,255,.04);
-    --hero-scrim:rgba(7,9,18,.55);
-    --shadow:0 24px 60px -20px rgba(0,0,0,.7);
+    --night:#07080F; --night-2:#0C0D16; --panel:#11121D; --panel-2:#161826;
+    --line:rgba(212,183,122,.16);
+    --gold:#D8BC84; --gold-deep:#B8975A; --neon:#E7C79B; --cyan:#B7BDC9;
+    --ink:#F4EEE1; --muted:#9C9482; --muted-2:#726A5A;
+    --card:#101119; --card-hi:rgba(255,255,255,.03);
+    --hero-scrim:rgba(4,4,9,.6);
+    --shadow:0 30px 70px -28px rgba(0,0,0,.8);
   }
   :root[data-theme="light"]{
-    --night:#F4ECDD; --night-2:#EFE4D0; --panel:#FBF6EC; --panel-2:#F6EEDD;
-    --line:rgba(120,86,20,.18);
-    --gold:#9A6B12; --gold-deep:#7A520B; --neon:#D01E6B; --cyan:#0E7FA8;
-    --ink:#20180C; --muted:#6C5C40; --muted-2:#8A7A5C;
-    --card:#FBF6EC; --card-hi:rgba(120,86,20,.05);
-    --hero-scrim:rgba(20,14,4,.30);
-    --shadow:0 24px 50px -22px rgba(80,55,10,.35);
+    --night:#F6F1E7; --night-2:#EFE8D9; --panel:#FCF8F0; --panel-2:#F5EEE0;
+    --line:rgba(140,104,40,.20);
+    --gold:#8A6A2E; --gold-deep:#6E521F; --neon:#9A7A3E; --cyan:#7C8494;
+    --ink:#231C10; --muted:#6A5C44; --muted-2:#8C7E64;
+    --card:#FCF8F0; --card-hi:rgba(140,104,40,.04);
+    --hero-scrim:rgba(30,22,8,.28);
+    --shadow:0 28px 56px -26px rgba(90,64,16,.30);
   }
 
   *{box-sizing:border-box}
@@ -80,8 +80,8 @@
   .nav-links{display:flex;align-items:center;gap:2rem;font-size:.86rem;
     letter-spacing:.06em;text-transform:uppercase;font-weight:600}
   .nav-links a{color:var(--ink);opacity:.82;position:relative;padding:.2rem 0;transition:opacity .2s}
-  .nav-links a::after{content:"";position:absolute;left:0;bottom:-3px;height:1.5px;width:0;
-    background:linear-gradient(90deg,var(--neon),var(--cyan));transition:width .28s}
+  .nav-links a::after{content:"";position:absolute;left:0;bottom:-3px;height:1px;width:0;
+    background:var(--gold);transition:width .28s}
   .nav-links a:hover{opacity:1}
   .nav-links a:hover::after{width:100%}
   .nav-cta{border:1px solid var(--gold);color:var(--gold);padding:.6rem 1.2rem;
@@ -103,9 +103,11 @@
       radial-gradient(120% 80% at 50% -10%, transparent 40%, var(--hero-scrim) 100%),
       linear-gradient(180deg, color-mix(in srgb,var(--night) 55%,transparent) 0%, transparent 30%, var(--night) 97%)}
   .hero-inner{position:relative;z-index:2;width:min(1180px,92vw);margin-inline:auto}
-  .hero h1{font-size:clamp(2.9rem,7.4vw,6.1rem);letter-spacing:-.01em;max-width:16ch}
-  .hero h1 .glow{color:var(--neon);
-    text-shadow:0 0 24px color-mix(in srgb,var(--neon) 55%,transparent),0 0 48px color-mix(in srgb,var(--neon) 30%,transparent)}
+  .hero h1{font-size:clamp(2.9rem,7.4vw,6.1rem);letter-spacing:-.015em;max-width:16ch;font-weight:500}
+  .hero h1 .glow{font-style:italic;
+    background:linear-gradient(120deg,#F3E2B6,var(--gold) 60%,var(--gold-deep));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 34px color-mix(in srgb,var(--gold) 30%,transparent)}
   .hero .lede{margin-top:1.4rem;font-size:clamp(1.02rem,1.7vw,1.28rem);max-width:46ch;color:var(--ink);opacity:.9}
   .hero .eyebrow{margin-bottom:1.3rem;display:inline-flex;align-items:center;gap:.7rem}
   .hero .eyebrow::before{content:"";width:34px;height:1px;background:var(--gold)}
@@ -124,10 +126,10 @@
   .search select{cursor:pointer;appearance:none}
   .search option{background:var(--panel);color:var(--ink)}
   .search .go{flex:0 0 auto;align-self:stretch;border:none;cursor:pointer;
-    background:linear-gradient(120deg,var(--neon),#ff6aa6);color:#fff;font-weight:800;
-    letter-spacing:.1em;text-transform:uppercase;font-size:.8rem;padding:0 1.7rem;
-    border-radius:11px;transition:.25s;box-shadow:0 8px 26px -8px var(--neon)}
-  .search .go:hover{transform:translateY(-1px);box-shadow:0 12px 30px -8px var(--neon)}
+    background:linear-gradient(135deg,#F0DCA9,var(--gold) 55%,var(--gold-deep));color:#1A140A;font-weight:800;
+    letter-spacing:.14em;text-transform:uppercase;font-size:.8rem;padding:0 1.9rem;
+    border-radius:11px;transition:.25s;box-shadow:0 10px 30px -12px var(--gold)}
+  .search .go:hover{transform:translateY(-1px);box-shadow:0 14px 34px -12px var(--gold)}
 
   /* ---------- Stats ---------- */
   .stats{border-top:1px solid var(--line);border-bottom:1px solid var(--line);
@@ -157,10 +159,12 @@
   .card:hover{transform:translateY(-8px);border-color:color-mix(in srgb,var(--gold) 55%,transparent)}
   .photo{aspect-ratio:4/3;position:relative;overflow:hidden}
   .photo canvas{position:absolute;inset:0;width:100%;height:100%}
-  .tag{position:absolute;top:14px;left:14px;z-index:2;background:var(--neon);color:#fff;
-    font-size:.64rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
-    padding:.4rem .7rem;border-radius:6px;box-shadow:0 6px 18px -6px var(--neon)}
-  .tag.sold{background:var(--gold);color:var(--night)}
+  .tag{position:absolute;top:14px;left:14px;z-index:2;
+    background:rgba(10,9,6,.55);backdrop-filter:blur(6px);color:var(--gold);
+    border:1px solid color-mix(in srgb,var(--gold) 55%,transparent);
+    font-size:.62rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+    padding:.42rem .75rem;border-radius:4px}
+  .tag.sold{background:var(--gold);color:#1A140A;border-color:transparent}
   .fav{position:absolute;top:12px;right:12px;z-index:2;width:34px;height:34px;border-radius:999px;
     background:rgba(10,12,24,.5);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.18);
     color:#fff;display:grid;place-items:center;cursor:pointer;transition:.2s}
@@ -222,9 +226,9 @@
   .btn-row{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
   .btn{padding:1rem 2rem;border-radius:999px;font-weight:800;letter-spacing:.08em;
     text-transform:uppercase;font-size:.8rem;cursor:pointer;transition:.25s;border:1px solid transparent}
-  .btn-primary{background:linear-gradient(120deg,var(--neon),#ff6aa6);color:#fff;
-    box-shadow:0 12px 34px -10px var(--neon)}
-  .btn-primary:hover{transform:translateY(-2px)}
+  .btn-primary{background:linear-gradient(135deg,#F0DCA9,var(--gold) 55%,var(--gold-deep));color:#1A140A;
+    box-shadow:0 14px 38px -14px var(--gold)}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 18px 44px -14px var(--gold)}
   .btn-ghost{border-color:var(--gold);color:var(--gold)}
   .btn-ghost:hover{background:var(--gold);color:var(--night)}
 
@@ -622,13 +626,13 @@
       sctx.fillStyle=sun; sctx.fillRect(0,0,W,H);
     }
 
-    // searchlight beam (night only)
+    // searchlight beam (night only) — warm champagne, understated
     if(!light && !reduce){
       var bx = W*0.5 + Math.cos(beam)*W*0.32;
       var grd = sctx.createLinearGradient(W*0.5,H, bx, 0);
-      grd.addColorStop(0,'rgba(70,224,255,.16)'); grd.addColorStop(1,'rgba(70,224,255,0)');
+      grd.addColorStop(0,'rgba(240,224,180,.10)'); grd.addColorStop(1,'rgba(240,224,180,0)');
       sctx.fillStyle=grd;
-      sctx.beginPath(); sctx.moveTo(W*0.5,H); sctx.lineTo(bx-40,0); sctx.lineTo(bx+40,0); sctx.closePath(); sctx.fill();
+      sctx.beginPath(); sctx.moveTo(W*0.5,H); sctx.lineTo(bx-46,0); sctx.lineTo(bx+46,0); sctx.closePath(); sctx.fill();
     }
 
     // buildings
@@ -655,7 +659,7 @@
       }
       if(b.type==='wheel'){
         var cy=b.base-b.h*0.9, r=Math.min(b.w*1.2, b.h*0.5);
-        sctx.strokeStyle = light? 'rgba(120,90,60,.7)' : 'rgba(70,224,255,.5)';
+        sctx.strokeStyle = light? 'rgba(120,90,60,.7)' : 'rgba(216,188,132,.55)';
         sctx.lineWidth=2;
         sctx.beginPath(); sctx.arc(b.x+b.w/2, cy, r, 0, 7); sctx.stroke();
         sctx.beginPath(); sctx.arc(b.x+b.w/2, cy, r*0.55, 0, 7); sctx.stroke();
@@ -665,15 +669,15 @@
       }
       // tower with windows
       sctx.fillRect(b.x, top, b.w, b.h);
-      // windows
-      var wc = light ? 'rgba(255,235,190,.35)' : 'rgba(255,214,120,.85)';
-      var wc2= light ? 'rgba(120,90,60,.15)' : 'rgba(70,224,255,.6)';
+      // windows — warm amber glow with occasional champagne accent
+      var wc = light ? 'rgba(255,235,190,.35)' : 'rgba(240,205,140,.82)';
+      var wc2= light ? 'rgba(120,90,60,.15)' : 'rgba(232,224,205,.55)';
       var cols=Math.max(2,Math.floor(b.w/12)), rows=Math.floor(b.h/14);
       for(var c=0;c<cols;c++) for(var r2=0;r2<rows;r2++){
         var seedv=(i*97+c*13+r2*7);
         var on=((seedv*13)%10) < (b.lit*10);
         if(!on) continue;
-        var flick = (!reduce && !light && ((seedv+Math.floor(beam*3))%37===0)) ? 0.25 : 1;
+        var flick = (!reduce && !light && ((seedv+Math.floor(beam*2))%73===0)) ? 0.45 : 1;
         sctx.globalAlpha = flick;
         sctx.fillStyle = ((seedv%9)===0)? wc2 : wc;
         sctx.fillRect(b.x+5+c*12, top+6+r2*14, 5, 7);
@@ -681,11 +685,11 @@
       sctx.globalAlpha=1;
     }
 
-    // ground glow
-    var gg=sctx.createLinearGradient(0,H-120,0,H);
+    // ground glow — warm champagne haze
+    var gg=sctx.createLinearGradient(0,H-140,0,H);
     if(light){ gg.addColorStop(0,'rgba(239,228,208,0)'); gg.addColorStop(1,'rgba(239,228,208,.9)'); }
-    else { gg.addColorStop(0,'rgba(255,61,139,0)'); gg.addColorStop(1,'rgba(255,61,139,.14)'); }
-    sctx.fillStyle=gg; sctx.fillRect(0,H-120,W,120);
+    else { gg.addColorStop(0,'rgba(216,188,132,0)'); gg.addColorStop(1,'rgba(184,151,90,.16)'); }
+    sctx.fillStyle=gg; sctx.fillRect(0,H-140,W,140);
   }
 
   function animate(){
@@ -725,27 +729,28 @@
     // ground
     c.fillStyle = light? 'rgba(40,26,12,.5)':'rgba(4,5,14,.75)';
     c.fillRect(0,h*0.82,w,h*0.18);
-    // neon streak
-    c.strokeStyle = opts.neon || (light?'rgba(200,60,110,.5)':'rgba(255,61,139,.7)');
-    c.lineWidth=2; c.beginPath(); c.moveTo(0,h*0.82); c.lineTo(w,h*0.82); c.stroke();
-    c.globalAlpha=.5; c.strokeStyle=light?'rgba(14,127,168,.4)':'rgba(70,224,255,.5)';
+    // accent streak — gold horizon line
+    c.strokeStyle = opts.neon || (light?'rgba(140,104,40,.5)':'rgba(216,188,132,.7)');
+    c.lineWidth=1.5; c.beginPath(); c.moveTo(0,h*0.82); c.lineTo(w,h*0.82); c.stroke();
+    c.globalAlpha=.4; c.strokeStyle=light?'rgba(120,110,90,.35)':'rgba(190,196,208,.4)';
     c.beginPath(); c.moveTo(0,h*0.86); c.lineTo(w,h*0.86); c.stroke(); c.globalAlpha=1;
   }
 
   /* ---- LISTINGS DATA ---- */
+  var GOLD='rgba(216,188,132,.85)', PLAT='rgba(190,196,208,.6)';
   var listings=[
     {price:'$4,250,000', addr:'55 Meadowhawk Ln · The Ridges, Summerlin', bd:5,ba:6,sq:'6,420', tag:'For Sale',
-      stops:[[0,'#3A1E4E'],[.5,'#5A2A55'],[1,'#20213F']], neon:'rgba(255,61,139,.8)', seed:11},
+      stops:[[0,'#241F2E'],[.5,'#3A2F3A'],[1,'#14121B']], neon:GOLD, seed:11},
     {price:'$1,895,000', addr:'PH-2703 · Waldorf Astoria Residences', bd:3,ba:3,sq:'2,980', tag:'New',
-      stops:[[0,'#122A44'],[.5,'#1E4E63'],[1,'#101B37']], neon:'rgba(70,224,255,.8)', seed:23},
+      stops:[[0,'#151E2C'],[.5,'#243645'],[1,'#0E141F']], neon:PLAT, seed:23},
     {price:'$965,000', addr:'11 Sun Glow Ct · Green Valley Ranch, Henderson', bd:4,ba:3,sq:'3,210', tag:'For Sale',
-      stops:[[0,'#4A2E17'],[.5,'#7A4B22'],[1,'#2A2018']], neon:'rgba(232,200,120,.8)', seed:31},
+      stops:[[0,'#2A2015'],[.5,'#4A3822'],[1,'#191308']], neon:GOLD, seed:31},
     {price:'$6,750,000', addr:'1 Promontory Ridge · MacDonald Highlands', bd:6,ba:8,sq:'9,140', tag:'For Sale',
-      stops:[[0,'#2A1140'],[.5,'#45215C'],[1,'#181433']], neon:'rgba(255,61,139,.8)', seed:41},
+      stops:[[0,'#221A2A'],[.5,'#3A2C3E'],[1,'#130F17']], neon:GOLD, seed:41},
     {price:'$1,240,000', addr:'42 Regatta Bay · Lake Las Vegas', bd:4,ba:4,sq:'3,880', tag:'Just Sold',
-      stops:[[0,'#0E3140'],[.5,'#1C5C5A'],[1,'#0F2233']], neon:'rgba(70,224,255,.8)', seed:53, sold:true},
+      stops:[[0,'#121F26'],[.5,'#22383A'],[1,'#0C1418']], neon:PLAT, seed:53, sold:true},
     {price:'$2,600,000', addr:'88 Vista Verde · The Vistas, Summerlin', bd:5,ba:5,sq:'5,050', tag:'For Sale',
-      stops:[[0,'#3E2A12'],[.5,'#6A4A1E'],[1,'#241A12']], neon:'rgba(232,200,120,.8)', seed:67}
+      stops:[[0,'#26200F'],[.5,'#45391C'],[1,'#171208']], neon:GOLD, seed:67}
   ];
   var cardsEl=document.getElementById('cards');
   listings.forEach(function(L){
@@ -766,12 +771,12 @@
 
   /* ---- COMMUNITIES ---- */
   var hoods=[
-    {n:'Summerlin', c:'Master-Planned West', tall:true, stops:[[0,'#2A1447'],[.5,'#4A2660'],[1,'#181235']], seed:5},
-    {n:'The Ridges', c:'Guard-Gated Luxury', stops:[[0,'#3A1E2E'],[.5,'#6A2C44'],[1,'#201430']], seed:9},
-    {n:'Henderson', c:'Family & Value', stops:[[0,'#123040'],[.5,'#1E5A5A'],[1,'#101F33']], seed:17},
-    {n:'Strip High-Rises', c:'Vertical Living', tall:true, stops:[[0,'#122544'],[.5,'#254E7A'],[1,'#0E1836']], seed:29},
-    {n:'MacDonald Highlands', c:'Estate Homes', stops:[[0,'#3E2A12'],[.5,'#7A4E1E'],[1,'#241812']], seed:37},
-    {n:'Lake Las Vegas', c:'Waterfront Resort', stops:[[0,'#0E3140'],[.5,'#1C6058'],[1,'#0F2233']], seed:47}
+    {n:'Summerlin', c:'Master-Planned West', tall:true, stops:[[0,'#231C2C'],[.5,'#39303C'],[1,'#141019']], seed:5},
+    {n:'The Ridges', c:'Guard-Gated Luxury', stops:[[0,'#282013'],[.5,'#463620'],[1,'#17110A']], seed:9},
+    {n:'Henderson', c:'Family & Value', stops:[[0,'#141F26'],[.5,'#26383A'],[1,'#0E151A']], seed:17},
+    {n:'Strip High-Rises', c:'Vertical Living', tall:true, stops:[[0,'#151E2C'],[.5,'#28394C'],[1,'#0E141F']], seed:29},
+    {n:'MacDonald Highlands', c:'Estate Homes', stops:[[0,'#2A2015'],[.5,'#4A3822'],[1,'#181208']], seed:37},
+    {n:'Lake Las Vegas', c:'Waterfront Resort', stops:[[0,'#122024'],[.5,'#243E3C'],[1,'#0C1518']], seed:47}
   ];
   var hoodsEl=document.getElementById('hoods'); var hoodPaint=[];
   hoods.forEach(function(H2){
@@ -792,7 +797,7 @@
     c.fillStyle=g;c.fillRect(0,0,w,h);
     // spotlight
     var sp=c.createRadialGradient(w*0.5,h*0.34,10,w*0.5,h*0.34,w*0.7);
-    sp.addColorStop(0, light?'rgba(255,248,225,.55)':'rgba(255,61,139,.30)'); sp.addColorStop(1,'rgba(0,0,0,0)');
+    sp.addColorStop(0, light?'rgba(255,248,225,.55)':'rgba(216,188,132,.28)'); sp.addColorStop(1,'rgba(0,0,0,0)');
     c.fillStyle=sp;c.fillRect(0,0,w,h);
     // silhouette figure
     c.fillStyle = light? 'rgba(50,32,16,.85)':'rgba(8,8,20,.85)';
