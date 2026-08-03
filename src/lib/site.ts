@@ -21,6 +21,7 @@ export const site = {
     "https://www.linkedin.com/company/therolandteam",
   ],
   nav: [
+    { label: "Homes for Sale", href: "/listings" },
     { label: "Communities", href: "/communities" },
     { label: "Buyer Guides", href: "/guides" },
     { label: "Sell", href: "/sell" },

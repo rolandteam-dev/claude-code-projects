@@ -1,0 +1,70 @@
+/**
+ * Normalized listing model, aligned to the RESO Data Dictionary so any
+ * MLS/IDX provider (RESO Web API, Bridge/Trestle, Spark, SimplyRETS) maps
+ * cleanly onto it. The rest of the app only ever sees this shape — swapping
+ * providers never touches the UI.
+ */
+
+export type ListingStatus = "Active" | "Pending" | "Closed" | "Coming Soon";
+
+export type PropertyType =
+  | "Single Family"
+  | "Condo"
+  | "Townhouse"
+  | "Land"
+  | "Multi-Family";
+
+export type Listing = {
+  /** Stable provider id used in the URL, e.g. the MLS listing key */
+  id: string;
+  /** Human-facing MLS number (for display + attribution) */
+  mlsNumber: string;
+  status: ListingStatus;
+  listPrice: number;
+  address: {
+    line1: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    /** community slug if we can map it to one of our community pages */
+    communitySlug?: string;
+  };
+  beds: number;
+  baths: number;
+  /** interior square footage */
+  sqft: number;
+  /** lot size in acres (optional) */
+  lotAcres?: number;
+  yearBuilt?: number;
+  propertyType: PropertyType;
+  description: string;
+  /** absolute or app-relative photo URLs; empty array renders a placeholder */
+  photos: string[];
+  coords?: { lat: number; lng: number };
+  listedDate: string; // ISO date
+  /** Listing brokerage — REQUIRED for IDX attribution/compliance */
+  listingOffice: string;
+  /** true for our own team's listings (can be highlighted) */
+  isOurListing?: boolean;
+};
+
+export type ListingFilters = {
+  city?: string;
+  communitySlug?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minBeds?: number;
+  minBaths?: number;
+  propertyType?: PropertyType;
+  status?: ListingStatus;
+  /** result page size */
+  limit?: number;
+  offset?: number;
+};
+
+export type ListingResult = {
+  listings: Listing[];
+  total: number;
+  /** true when data is sample/placeholder rather than a live MLS feed */
+  isSampleData: boolean;
+};
