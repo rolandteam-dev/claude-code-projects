@@ -657,6 +657,371 @@ export const communities: Community[] = [
       },
     ],
   },
+
+  {
+    slug: "the-summit-club",
+    name: "The Summit Club",
+    city: "Las Vegas",
+    zip: "89135",
+    featured: true,
+    seoTitle: "The Summit Club Homes for Sale | Summerlin Ultra-Luxury",
+    seoDescription:
+      "The Summit Club homes for sale in Summerlin, Las Vegas — an ultra-exclusive private club community with a Tom Fazio golf course and custom estates against Red Rock.",
+    h1: "The Summit Club Homes for Sale in Summerlin, Las Vegas",
+    eyebrow: "Summerlin, Las Vegas · Private Club Community",
+    intro:
+      "One of the most exclusive private-club communities in the country — custom estates and a Tom Fazio course set against Red Rock Canyon.",
+    lead:
+      "The Summit Club is among the most exclusive addresses in the United States — a private, guard-gated club community developed within Summerlin against the dramatic backdrop of Red Rock Canyon. Home to a Tom Fazio-designed golf course and an ultra-luxury membership lifestyle, The Summit Club real estate consists of bespoke custom estates for buyers seeking the pinnacle of privacy, design, and service in Las Vegas.",
+    quickFacts: [
+      { label: "Location", value: "Summerlin, Las Vegas, NV 89135" },
+      { label: "Community Type", value: "Private, guard-gated club community" },
+      { label: "Signature Amenity", value: "Tom Fazio golf course" },
+      { label: "Home Types", value: "Ultra-luxury custom estates" },
+      { label: "Price Range", value: "Approx. $4M – $20M+" },
+      { label: "Setting", value: "Adjacent to Red Rock Canyon" },
+    ],
+    sections: [
+      {
+        heading: "About The Summit Club",
+        body: [
+          "Developed as a private club community within Summerlin, The Summit Club pairs a championship Tom Fazio golf course with a members-only lifestyle and an emphasis on architecture that responds to its extraordinary desert-and-mountain setting. Membership and privacy are central to the experience, making it one of the valley's most rarefied enclaves.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in The Summit Club",
+        body: [
+          "Residences are custom estates, and availability is limited by design. Pricing reflects the community's exclusivity, generally ranging from several million dollars into the double digits for the largest custom homes. Buyers work with a specialist to navigate the membership and purchase process.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is The Summit Club located?",
+        a: "The Summit Club is a private, guard-gated club community within Summerlin in Las Vegas, Nevada (ZIP 89135), adjacent to Red Rock Canyon on the western edge of the valley.",
+      },
+      {
+        q: "Is The Summit Club a private community?",
+        a: "Yes. The Summit Club is an ultra-exclusive, membership-based private club community with a guard-gated setting and a Tom Fazio golf course.",
+      },
+      {
+        q: "How much do homes in The Summit Club cost?",
+        a: "Prices generally range from approximately $4 million to more than $20 million for custom estates. Contact The Roland Team for current availability and membership details.",
+      },
+    ],
+  },
+
+  {
+    slug: "red-rock-country-club",
+    name: "Red Rock Country Club",
+    city: "Las Vegas",
+    zip: "89135",
+    seoTitle: "Red Rock Country Club Homes for Sale | Summerlin Golf",
+    seoDescription:
+      "Red Rock Country Club homes for sale in Summerlin, Las Vegas — a guard-gated golf community with two Arnold Palmer courses, custom estates, and resort amenities.",
+    h1: "Red Rock Country Club Homes for Sale in Summerlin",
+    eyebrow: "Summerlin, Las Vegas · Guard-Gated Golf",
+    intro:
+      "A guard-gated Summerlin golf community with two Arnold Palmer Signature courses and a full-service private club.",
+    lead:
+      "Red Rock Country Club is a guard-gated golf community within Summerlin, built around two Arnold Palmer Signature championship courses and a full-service country club. Offering everything from luxury single-family homes to custom estates with golf and mountain views, Red Rock Country Club real estate is a favorite for buyers who want a private, amenity-rich lifestyle on the valley's scenic west side.",
+    quickFacts: [
+      { label: "Location", value: "Summerlin, Las Vegas, NV 89135" },
+      { label: "Community Type", value: "Guard-gated golf community" },
+      { label: "Signature Amenity", value: "Two Arnold Palmer Signature courses" },
+      { label: "Home Types", value: "Luxury homes to custom estates" },
+      { label: "Price Range", value: "Approx. $600K – $6M+" },
+      { label: "Nearby", value: "Red Rock Canyon, Downtown Summerlin" },
+    ],
+    sections: [
+      {
+        heading: "About Red Rock Country Club",
+        body: [
+          "Set within Summerlin, Red Rock Country Club combines guard-gated privacy with a resort-style club experience — two Arnold Palmer Signature golf courses, a clubhouse, dining, fitness, tennis, and pools. Its west-side location places residents near Red Rock Canyon and the shopping and entertainment of Downtown Summerlin.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Red Rock Country Club",
+        body: [
+          "The community offers a mix of luxury single-family homes and larger custom estates, many with golf-course or mountain views. Pricing varies by location and finish, with premier estate homes commanding the top of the range.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Red Rock Country Club located?",
+        a: "Red Rock Country Club is a guard-gated golf community within Summerlin in Las Vegas, Nevada (ZIP 89135), on the western side of the valley near Red Rock Canyon.",
+      },
+      {
+        q: "Does Red Rock Country Club have golf?",
+        a: "Yes. The community features two Arnold Palmer Signature championship golf courses along with a full-service private country club.",
+      },
+      {
+        q: "How much do homes in Red Rock Country Club cost?",
+        a: "Prices generally range from around $600,000 to more than $6 million depending on the home and its views. Contact The Roland Team for current listings.",
+      },
+    ],
+  },
+
+  {
+    slug: "sun-city-summerlin",
+    name: "Sun City Summerlin",
+    city: "Las Vegas",
+    zip: "89134",
+    seoTitle: "Sun City Summerlin Homes for Sale | 55+ Las Vegas Community",
+    seoDescription:
+      "Sun City Summerlin homes for sale — a premier 55+ active-adult community in Las Vegas with three golf courses, recreation centers, and abundant amenities.",
+    h1: "Sun City Summerlin Homes for Sale in Las Vegas, NV",
+    eyebrow: "Summerlin, Las Vegas · Active Adult (55+)",
+    intro:
+      "A premier 55+ active-adult community with three golf courses, multiple recreation centers, and a full calendar of clubs and activities.",
+    lead:
+      "Sun City Summerlin is one of the Las Vegas Valley's premier age-qualified (55+) active-adult communities, originally developed by Del Webb within Summerlin. With three golf courses, several recreation centers, and an extensive roster of clubs, classes, and activities, Sun City Summerlin real estate is designed for active adults seeking an amenity-rich, low-maintenance lifestyle on the valley's west side.",
+    quickFacts: [
+      { label: "Location", value: "Summerlin, Las Vegas, NV 89134" },
+      { label: "Community Type", value: "Age-qualified 55+ active adult" },
+      { label: "Golf", value: "Three community golf courses" },
+      { label: "Amenities", value: "Multiple recreation centers" },
+      { label: "Home Types", value: "Single-family & attached homes" },
+      { label: "Price Range", value: "Approx. $350K – $1.2M+" },
+    ],
+    sections: [
+      {
+        heading: "About Sun City Summerlin",
+        body: [
+          "Built as a Del Webb active-adult community, Sun City Summerlin offers residents 55 and older a lifestyle centered on recreation and connection. Amenities include three golf courses, multiple community centers with fitness facilities and pools, and dozens of clubs and interest groups — all within the established, west-side setting of Summerlin.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Sun City Summerlin",
+        body: [
+          "The community features a range of single-family and attached homes across many floor plans, offering approachable entry points into the Summerlin area. Elevated sections provide valley and mountain views, and pricing varies by size, location, and updates.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Is Sun City Summerlin an age-restricted community?",
+        a: "Yes. Sun City Summerlin is an age-qualified (55+) active-adult community, meaning at least one resident of each household must generally meet the minimum age requirement.",
+      },
+      {
+        q: "What amenities does Sun City Summerlin offer?",
+        a: "Residents have access to three golf courses, multiple recreation centers with fitness and pools, and a wide variety of clubs, classes, and social activities.",
+      },
+      {
+        q: "How much do homes in Sun City Summerlin cost?",
+        a: "Prices generally range from around $350,000 to more than $1.2 million depending on floor plan, location, and condition. Contact The Roland Team for current availability.",
+      },
+    ],
+  },
+
+  {
+    slug: "mountains-edge",
+    name: "Mountain's Edge",
+    city: "Las Vegas",
+    zip: "89178",
+    seoTitle: "Mountain's Edge Homes for Sale | Southwest Las Vegas",
+    seoDescription:
+      "Mountain's Edge homes for sale in southwest Las Vegas — a large master-planned community with regional parks, trails, and a wide range of single-family homes.",
+    h1: "Mountain's Edge Homes for Sale in Las Vegas, NV",
+    eyebrow: "Southwest Las Vegas · Master-Planned Community",
+    intro:
+      "A large, amenity-rich southwest-valley master plan with regional parks, trails, and elevated mountain views.",
+    lead:
+      "Mountain's Edge is one of the largest master-planned communities in the southwest Las Vegas Valley, known for its regional parks, extensive trail system, and a broad selection of single-family homes. With its elevated setting against the southern mountains and convenient access to the 215 Beltway, Mountain's Edge real estate offers strong value and amenities for a wide range of buyers.",
+    quickFacts: [
+      { label: "Location", value: "Southwest Las Vegas, NV 89178" },
+      { label: "Community Type", value: "Large master-planned community" },
+      { label: "Highlights", value: "Exploration Peak & regional parks, trails" },
+      { label: "Home Types", value: "Single-family homes" },
+      { label: "Price Range", value: "Approx. $400K – $900K+" },
+      { label: "Access", value: "Near the 215 Beltway" },
+    ],
+    sections: [
+      {
+        heading: "About Mountain's Edge",
+        body: [
+          "Mountain's Edge is anchored by two large regional parks — including Exploration Peak Park and Mountain's Edge Regional Park — connected by paseos and trails that thread through the community. Its elevated, southern location provides mountain and valley views, and its size means a wide variety of neighborhoods and home styles.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Mountain's Edge",
+        body: [
+          "The community is composed primarily of single-family homes across many builders and floor plans, offering approachable pricing relative to the valley's luxury enclaves. It's a practical choice for buyers who want space, parks, and convenient freeway access.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Mountain's Edge located?",
+        a: "Mountain's Edge is a master-planned community in the southwest Las Vegas Valley (ZIP 89178), near the 215 Beltway and the southern mountains.",
+      },
+      {
+        q: "What parks are in Mountain's Edge?",
+        a: "The community features large regional parks including Exploration Peak Park and Mountain's Edge Regional Park, connected by an extensive trail and paseo system.",
+      },
+      {
+        q: "How much do homes in Mountain's Edge cost?",
+        a: "Prices generally range from around $400,000 to about $900,000 depending on size, location, and updates. Contact The Roland Team for current listings.",
+      },
+    ],
+  },
+
+  {
+    slug: "skye-canyon",
+    name: "Skye Canyon",
+    city: "Las Vegas",
+    zip: "89166",
+    seoTitle: "Skye Canyon Homes for Sale | Northwest Las Vegas",
+    seoDescription:
+      "Skye Canyon homes for sale in northwest Las Vegas — a newer master-planned community with an outdoor-focused lifestyle, parks, a fitness center, and new construction.",
+    h1: "Skye Canyon Homes for Sale in Las Vegas, NV",
+    eyebrow: "Northwest Las Vegas · Master-Planned Community",
+    intro:
+      "A newer, outdoor-focused master plan at higher elevation in the northwest valley — parks, fitness, and modern new construction.",
+    lead:
+      "Skye Canyon is a newer master-planned community in the northwest Las Vegas Valley, built around an active, outdoor-oriented lifestyle. At a higher elevation near the Sheep Mountains, it offers a signature community park, a fitness and event center, and ongoing new construction from a range of builders — making Skye Canyon real estate popular with buyers who want modern homes and recreation close to home.",
+    quickFacts: [
+      { label: "Location", value: "Northwest Las Vegas, NV 89166" },
+      { label: "Community Type", value: "Newer master-planned community" },
+      { label: "Highlights", value: "Skye Canyon Park, fitness & event center" },
+      { label: "Home Types", value: "Modern new-construction homes" },
+      { label: "Price Range", value: "Approx. $400K – $1M+" },
+      { label: "Setting", value: "Higher elevation near Sheep Mountains" },
+    ],
+    sections: [
+      {
+        heading: "About Skye Canyon",
+        body: [
+          "Skye Canyon leans into the outdoors: its central park hosts events and recreation, a community center offers fitness and gathering space, and nearby public lands provide hiking and trail access. Its northwest, higher-elevation location gives it a slightly cooler feel and open mountain views.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Skye Canyon",
+        body: [
+          "The community continues to grow with new construction from multiple homebuilders, offering modern floor plans and energy-efficient designs across a range of price points. It's one of the northwest valley's most active new-home markets.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Skye Canyon located?",
+        a: "Skye Canyon is a master-planned community in the northwest Las Vegas Valley (ZIP 89166), at a higher elevation near the Sheep Mountains.",
+      },
+      {
+        q: "Is Skye Canyon a new community?",
+        a: "Yes. Skye Canyon is one of the valley's newer master plans, with ongoing new construction and an outdoor-focused amenity package.",
+      },
+      {
+        q: "How much do homes in Skye Canyon cost?",
+        a: "Prices generally range from around $400,000 to more than $1 million depending on the builder, floor plan, and location. Contact The Roland Team for current availability.",
+      },
+    ],
+  },
+
+  {
+    slug: "cadence",
+    name: "Cadence",
+    city: "Henderson",
+    zip: "89011",
+    seoTitle: "Cadence Homes for Sale | Henderson, NV Master-Planned",
+    seoDescription:
+      "Cadence homes for sale in Henderson, NV — a newer master-planned community with a large central park, trails, events, and modern new-construction homes.",
+    h1: "Cadence Homes for Sale in Henderson, NV",
+    eyebrow: "Henderson, Nevada · Master-Planned Community",
+    intro:
+      "A newer Henderson master plan built around a central park and connected trails, with modern new construction and a full events calendar.",
+    lead:
+      "Cadence is one of Henderson's fastest-growing newer master-planned communities, designed around a large central park, connected trails, and an active community-events program. With modern homes from a range of builders and a location in eastern Henderson near the 215 Beltway, Cadence real estate offers new construction, amenities, and value in a fresh, well-planned setting.",
+    quickFacts: [
+      { label: "Location", value: "Henderson, NV 89011" },
+      { label: "Community Type", value: "Newer master-planned community" },
+      { label: "Highlights", value: "Central Park, trails, community events" },
+      { label: "Home Types", value: "Modern new-construction homes" },
+      { label: "Price Range", value: "Approx. $400K – $900K+" },
+      { label: "Access", value: "Near the 215 Beltway" },
+    ],
+    sections: [
+      {
+        heading: "About Cadence",
+        body: [
+          "Cadence is organized around Cadence Central Park and a network of trails and paseos that connect its neighborhoods. The community is known for its active events calendar and amenities, and it continues to expand with new construction across a variety of home styles and price points in eastern Henderson.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Cadence",
+        body: [
+          "Homes in Cadence are predominantly newer single-family residences from multiple builders, giving buyers access to modern layouts and efficient designs. Its convenient location and amenity focus make it one of Henderson's most popular newer communities.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Cadence located?",
+        a: "Cadence is a master-planned community in eastern Henderson, Nevada (ZIP 89011), near the 215 Beltway.",
+      },
+      {
+        q: "Is Cadence a newer community?",
+        a: "Yes. Cadence is one of Henderson's newer, still-growing master plans, with ongoing new construction and a large central park.",
+      },
+      {
+        q: "How much do homes in Cadence cost?",
+        a: "Prices generally range from around $400,000 to about $900,000 depending on the builder, floor plan, and location. Contact The Roland Team for current availability.",
+      },
+    ],
+  },
+
+  {
+    slug: "rhodes-ranch",
+    name: "Rhodes Ranch",
+    city: "Las Vegas",
+    zip: "89148",
+    seoTitle: "Rhodes Ranch Homes for Sale | Southwest Las Vegas Golf",
+    seoDescription:
+      "Rhodes Ranch homes for sale in southwest Las Vegas — a guard-gated master-planned golf community with a public course, clubhouse, parks, and family homes.",
+    h1: "Rhodes Ranch Homes for Sale in Las Vegas, NV",
+    eyebrow: "Southwest Las Vegas · Guard-Gated Golf",
+    intro:
+      "A guard-gated southwest-valley golf community with a public course, resort-style amenities, and a range of single-family homes.",
+    lead:
+      "Rhodes Ranch is a guard-gated master-planned golf community in the southwest Las Vegas Valley, built around the Rhodes Ranch Golf Club and a resort-style amenity center. With controlled-access security, parks, and a variety of single-family homes, Rhodes Ranch real estate offers a gated lifestyle and golf-community setting at an accessible price point.",
+    quickFacts: [
+      { label: "Location", value: "Southwest Las Vegas, NV 89148" },
+      { label: "Community Type", value: "Guard-gated master-planned golf" },
+      { label: "Signature Amenity", value: "Rhodes Ranch Golf Club" },
+      { label: "Home Types", value: "Single-family homes" },
+      { label: "Price Range", value: "Approx. $400K – $1M+" },
+      { label: "Access", value: "Near the 215 Beltway" },
+    ],
+    sections: [
+      {
+        heading: "About Rhodes Ranch",
+        body: [
+          "Rhodes Ranch pairs guard-gated security with a golf-community lifestyle in the southwest valley. Residents enjoy the Rhodes Ranch Golf Club, a clubhouse, a community amenity center with pools and recreation, and parks — all within a controlled-access setting convenient to the 215 Beltway.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Rhodes Ranch",
+        body: [
+          "The community consists mainly of single-family homes across a range of sizes and floor plans, offering gated living at approachable prices. Golf-course frontage and larger lots command a premium within the community.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Rhodes Ranch located?",
+        a: "Rhodes Ranch is a guard-gated master-planned community in the southwest Las Vegas Valley (ZIP 89148), near the 215 Beltway.",
+      },
+      {
+        q: "Is Rhodes Ranch a gated community?",
+        a: "Yes. Rhodes Ranch is a guard-gated community with controlled access, built around the Rhodes Ranch Golf Club and resort-style amenities.",
+      },
+      {
+        q: "How much do homes in Rhodes Ranch cost?",
+        a: "Prices generally range from around $400,000 to more than $1 million depending on size, lot, and golf-course frontage. Contact The Roland Team for current listings.",
+      },
+    ],
+  },
 ];
 
 export function getCommunity(slug: string): Community | undefined {
