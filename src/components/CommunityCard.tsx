@@ -18,9 +18,9 @@ export function CommunityCard({ c }: { c: Community }) {
       </div>
       <div className="p-5">
         <p className="text-[0.92rem] leading-relaxed text-[var(--color-ink-soft)]">{c.intro}</p>
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           {price && <span className="font-sans text-[0.82rem] font-semibold text-[var(--color-ink)]">{price}</span>}
-          <span className="font-sans text-[0.8rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-gold)] group-hover:underline">
+          <span className="ml-auto font-sans text-[0.8rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-gold)] group-hover:underline">
             Explore →
           </span>
         </div>
