@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+/* ============================================================
+   The Roland Team — brand design system
+   Luxury Las Vegas / Henderson real estate
+   Palette: graphite ink, desert gold, warm sand
+   ============================================================ */
+
+@theme {
+  --color-ink: #16181c;
+  --color-ink-soft: #3a3f47;
+  --color-muted: #5b6470;
+  --color-line: #e6e3dd;
+  --color-bg: #ffffff;
+  --color-sand: #f7f5f1;
+  --color-sand-deep: #efeae1;
+  --color-graphite: #20242c;
+  --color-graphite-2: #2f3540;
+  --color-gold: #9a7b3f;
+  --color-gold-2: #c2a36b;
+
+  --font-serif: Georgia, "Times New Roman", Cambria, serif;
+  --font-sans: "Helvetica Neue", Arial, system-ui, sans-serif;
+
+  --shadow-soft: 0 1px 2px rgba(22, 24, 28, 0.04), 0 8px 24px rgba(22, 24, 28, 0.06);
+}
+
+:root {
+  --background: var(--color-bg);
+  --foreground: var(--color-ink);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-serif);
+  line-height: 1.7;
+  font-size: 18px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, .font-sans, .eyebrow, nav, button, .btn {
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3 {
+  text-wrap: balance;
+  font-weight: 600;
+  color: var(--color-ink);
+  letter-spacing: -0.01em;
+}
+
+a { color: inherit; }
+
+.eyebrow {
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  color: var(--color-gold);
+  font-weight: 600;
+}
+
+.prose-body p {
+  margin: 0 0 1.1rem;
+  max-width: 68ch;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--color-gold);
+  color: #fff;
+  text-decoration: none;
+  padding: 0.9rem 2rem;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.btn:hover { background: #86692f; transform: translateY(-1px); }
+.btn-ghost {
+  background: transparent;
+  color: var(--color-ink);
+  border: 1px solid var(--color-line);
+}
+.btn-ghost:hover { background: var(--color-sand); }
+
+:where(a, button, summary):focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
