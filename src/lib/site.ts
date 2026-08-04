@@ -21,12 +21,12 @@ export const site = {
     "https://www.linkedin.com/company/therolandteam",
   ],
   nav: [
-    { label: "Homes for Sale", href: "/listings" },
+    { label: "Buy a Home", href: "/buy" },
+    { label: "Sell a Home", href: "/sell" },
+    { label: "New Construction", href: "/new-construction" },
     { label: "Communities", href: "/communities" },
-    { label: "Guides", href: "/guides" },
-    { label: "Market Report", href: "/market-report" },
-    { label: "Sell", href: "/sell" },
-    { label: "About", href: "/about" },
+    { label: "About Us", href: "/about" },
+    { label: "Blog", href: "/blog" },
   ],
   cta: { label: "Contact The Team", href: "/contact" },
 } as const;

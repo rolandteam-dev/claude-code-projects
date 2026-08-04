@@ -41,6 +41,8 @@ export default async function CommunityPage({
   const c = getCommunity(slug);
   if (!c) notFound();
 
+  const updated = new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
   return (
     <>
       <JsonLd
@@ -65,17 +67,49 @@ export default async function CommunityPage({
         </nav>
       </Container>
 
-      {/* Hero */}
-      <header className="mt-4 bg-gradient-to-b from-[var(--color-graphite)] to-[var(--color-graphite-2)] text-white">
-        <Container size="narrow" className="py-16 text-center md:py-20">
-          <div className="font-sans text-[0.78rem] uppercase tracking-[0.22em] text-[var(--color-gold-2)]">
-            {c.eyebrow}
+      {/* Hero — editorial, left-aligned */}
+      <header className="mt-3 bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)] text-white">
+        <Container size="wide" className="py-16 md:py-24">
+          <div className="max-w-[660px]">
+            <div className="font-sans text-[0.76rem] uppercase tracking-[0.24em] text-[var(--color-gold-2)]">
+              {c.eyebrow}
+            </div>
+            <h1 className="mt-4">
+              <span className="block font-serif text-[3rem] font-semibold leading-[1.02] text-white md:text-[4.25rem]">
+                {c.name}
+              </span>
+              <span className="mt-1 block font-serif text-[1.5rem] italic text-[var(--color-gold-2)] md:text-[1.9rem]">
+                Homes for Sale in {c.city}, NV
+              </span>
+            </h1>
+            <div className="mt-5 font-sans text-[0.74rem] uppercase tracking-[0.12em] text-white/55">
+              Updated {updated} · By The Roland Team
+            </div>
+            <p className="mt-5 max-w-[560px] text-[1.12rem] leading-relaxed text-[#d9dbe0]">{c.intro}</p>
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Link href={`/listings?city=${encodeURIComponent(c.city)}`} className="btn">
+                Browse {c.name} Homes
+              </Link>
+              <Link href={site.cta.href} className="btn btn-ghost !border-white/30 !text-white hover:!bg-white/10">
+                Talk to an Expert
+              </Link>
+            </div>
           </div>
-          <h1 className="mx-auto mt-4 max-w-[720px] text-[2.3rem] font-semibold leading-[1.15] text-white md:text-[2.7rem]">
-            {c.h1}
-          </h1>
-          <p className="mx-auto mt-4 max-w-[600px] text-[1.1rem] text-[#d9dbe0]">{c.intro}</p>
         </Container>
+
+        {/* Stat band */}
+        <div className="border-t border-white/10 bg-black/25">
+          <Container size="wide" className="grid grid-cols-2 gap-6 py-6 md:grid-cols-4">
+            {c.quickFacts.slice(0, 4).map((f) => (
+              <div key={f.label}>
+                <div className="font-sans text-[0.62rem] uppercase tracking-[0.12em] text-[var(--color-gold-2)]">
+                  {f.label}
+                </div>
+                <div className="mt-1 font-sans text-[1.05rem] font-semibold text-white">{f.value}</div>
+              </div>
+            ))}
+          </Container>
+        </div>
       </header>
 
       <Container size="narrow" className="prose-body py-12">

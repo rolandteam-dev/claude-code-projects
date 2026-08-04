@@ -3,11 +3,15 @@ import { absoluteUrl } from "@/lib/site";
 import { communities } from "@/content/communities";
 import { guides } from "@/content/guides";
 import { areas } from "@/content/areas";
+import { blogPosts } from "@/content/blog";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
-  const staticRoutes = ["/", "/listings", "/communities", "/areas", "/guides", "/market-report", "/sell", "/about", "/contact", "/blog"].map(
+  const staticRoutes = [
+    "/", "/buy", "/sell", "/new-construction", "/listings", "/communities",
+    "/areas", "/guides", "/market-report", "/about", "/contact", "/blog",
+  ].map(
     (path) => ({
       url: absoluteUrl(path),
       lastModified: now,
@@ -37,5 +41,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...communityRoutes, ...areaRoutes, ...guideRoutes];
+  const blogRoutes = blogPosts.map((p) => ({
+    url: absoluteUrl(`/blog/${p.slug}`),
+    lastModified: new Date(p.date + "T00:00:00"),
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
+
+  return [...staticRoutes, ...communityRoutes, ...areaRoutes, ...guideRoutes, ...blogRoutes];
 }
