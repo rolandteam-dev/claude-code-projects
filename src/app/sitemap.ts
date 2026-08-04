@@ -2,11 +2,12 @@ import type { MetadataRoute } from "next";
 import { absoluteUrl } from "@/lib/site";
 import { communities } from "@/content/communities";
 import { guides } from "@/content/guides";
+import { areas } from "@/content/areas";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
-  const staticRoutes = ["/", "/listings", "/communities", "/guides", "/market-report", "/sell", "/about", "/contact", "/blog"].map(
+  const staticRoutes = ["/", "/listings", "/communities", "/areas", "/guides", "/market-report", "/sell", "/about", "/contact", "/blog"].map(
     (path) => ({
       url: absoluteUrl(path),
       lastModified: now,
@@ -29,5 +30,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }));
 
-  return [...staticRoutes, ...communityRoutes, ...guideRoutes];
+  const areaRoutes = areas.map((a) => ({
+    url: absoluteUrl(`/areas/${a.slug}`),
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+
+  return [...staticRoutes, ...communityRoutes, ...areaRoutes, ...guideRoutes];
 }

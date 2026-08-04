@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { site } from "@/lib/site";
 import { communities } from "@/content/communities";
+import { areas } from "@/content/areas";
 import { Container } from "./Container";
 
 export function Footer() {
@@ -35,6 +36,16 @@ export function Footer() {
                 <li key={n.href}>
                   <Link href={n.href} className="text-[var(--color-ink-soft)] no-underline hover:text-[var(--color-gold)]">
                     {n.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <div className="eyebrow mb-3 mt-6">Areas</div>
+            <ul className="space-y-2 font-sans text-[0.9rem]">
+              {areas.map((a) => (
+                <li key={a.slug}>
+                  <Link href={`/areas/${a.slug}`} className="text-[var(--color-ink-soft)] no-underline hover:text-[var(--color-gold)]">
+                    {a.name}
                   </Link>
                 </li>
               ))}
