@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Container } from "@/components/Container";
 import { JsonLd } from "@/components/JsonLd";
 import { breadcrumbSchema } from "@/lib/schema";
-import { site } from "@/lib/site";
+import { LeadForm } from "@/components/LeadForm";
 
 export const metadata: Metadata = {
   title: "What's My Home Worth? Free Las Vegas Home Valuation",
@@ -11,9 +11,6 @@ export const metadata: Metadata = {
     "Get a free, no-obligation home valuation for your Las Vegas or Henderson home. The Roland Team delivers a precise, local market analysis — not an automated guess.",
   alternates: { canonical: "/home-value" },
 };
-
-const field =
-  "w-full rounded-md border border-[var(--color-line)] bg-white px-4 py-3 font-sans text-[0.95rem] text-[var(--color-ink)] focus:border-[var(--color-gold)] focus:outline-none";
 
 export default function HomeValuePage() {
   return (
@@ -45,24 +42,16 @@ export default function HomeValuePage() {
             </ul>
           </div>
 
-          {/* Valuation request form */}
+          {/* Valuation request form → Follow Up Boss */}
           <div className="rounded-[14px] bg-white p-7 text-[var(--color-ink)] shadow-[var(--shadow-soft)]">
-            <div className="font-sans text-[1.1rem] font-semibold">Request your free valuation</div>
-            <form className="mt-5 space-y-4" action="/contact" method="get">
-              <input className={field} name="address" placeholder="Property address" aria-label="Property address" required />
-              <div className="grid grid-cols-2 gap-4">
-                <input className={field} name="name" placeholder="Your name" aria-label="Your name" required />
-                <input className={field} name="phone" type="tel" placeholder="Phone" aria-label="Phone" />
-              </div>
-              <input className={field} name="email" type="email" placeholder="Email" aria-label="Email" required />
-              <textarea className={field} name="notes" rows={3} placeholder="Anything we should know? (optional)" aria-label="Notes" />
-              <button type="submit" className="btn w-full">Get My Home Value</button>
-            </form>
-            <p className="mt-3 font-sans text-[0.72rem] text-[var(--color-muted)]">
-              Prefer to talk now? Call{" "}
-              <a href={`tel:${site.phone}`} className="font-semibold text-[var(--color-gold)] no-underline">{site.phone}</a>.
-              Form submissions will route to the team once CRM lead routing is connected.
-            </p>
+            <div className="mb-5 font-sans text-[1.1rem] font-semibold">Request your free valuation</div>
+            <LeadForm
+              type="Seller Inquiry"
+              tag="Home Valuation"
+              source="Home Valuation Page"
+              showAddress
+              submitLabel="Get My Home Value"
+            />
           </div>
         </Container>
       </section>

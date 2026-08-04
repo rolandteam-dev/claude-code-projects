@@ -21,12 +21,59 @@ export const site = {
     "https://www.linkedin.com/company/therolandteam",
   ],
   nav: [
-    { label: "Buy a Home", href: "/buy" },
-    { label: "Sell a Home", href: "/sell" },
+    {
+      label: "Buy a Home",
+      href: "/buy",
+      children: [
+        { label: "Search Homes for Sale", href: "/listings" },
+        { label: "Communities", href: "/communities" },
+        { label: "Areas We Serve", href: "/areas" },
+        { label: "Buyer Guides", href: "/guides" },
+        { label: "First-Time Buyers", href: "/guides/first-time-home-buyer-las-vegas" },
+        { label: "Market Report", href: "/market-report" },
+      ],
+    },
+    {
+      label: "Sell a Home",
+      href: "/sell",
+      children: [
+        { label: "What's My Home Worth?", href: "/home-value" },
+        { label: "Selling Guide", href: "/guides/selling-your-home-in-las-vegas" },
+        { label: "Seller Net Proceeds", href: "/blog/las-vegas-luxury-seller-net-proceeds" },
+        { label: "Market Report", href: "/market-report" },
+      ],
+    },
     { label: "New Construction", href: "/new-construction" },
-    { label: "Communities", href: "/communities" },
-    { label: "About Us", href: "/about" },
-    { label: "Blog", href: "/blog" },
+    {
+      label: "Communities",
+      href: "/communities",
+      children: [
+        { label: "All Communities", href: "/communities" },
+        { label: "Henderson", href: "/areas/henderson" },
+        { label: "Las Vegas", href: "/areas/las-vegas" },
+        { label: "Boulder City", href: "/areas/boulder-city" },
+      ],
+    },
+    {
+      label: "About Us",
+      href: "/about",
+      children: [
+        { label: "About The Team", href: "/about" },
+        { label: "Testimonials", href: "/testimonials" },
+        { label: "Contact", href: "/contact" },
+      ],
+    },
+    {
+      label: "Blog",
+      href: "/blog",
+      children: [
+        { label: "All Posts", href: "/blog" },
+        { label: "New Construction", href: "/blog?category=New+Construction" },
+        { label: "Market Updates", href: "/blog?category=Market+Updates" },
+        { label: "Buying Guides", href: "/blog?category=Buying+Guides" },
+        { label: "Selling Guides", href: "/blog?category=Selling+Guides" },
+      ],
+    },
   ],
   cta: { label: "Contact The Team", href: "/contact" },
 } as const;

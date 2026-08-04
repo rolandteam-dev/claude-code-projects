@@ -1,0 +1,77 @@
+import { NextResponse } from "next/server";
+
+export const runtime = "nodejs";
+
+/**
+ * Lead intake → Follow Up Boss (FUB) Events API.
+ * Set FUB_API_KEY in Vercel → Settings → Environment Variables to go live.
+ * Until then the endpoint accepts submissions gracefully (queued:false) so
+ * the site's forms still work; no lead is stored until the key is present.
+ *
+ * FUB Events API: https://docs.followupboss.com/reference/events-post
+ */
+type LeadInput = {
+  name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  message?: string;
+  type?: string; // e.g. "General Inquiry", "Seller Inquiry", "Property Inquiry"
+  tag?: string;
+  source?: string;
+};
+
+export async function POST(req: Request) {
+  let data: LeadInput | null = null;
+  try {
+    data = (await req.json()) as LeadInput;
+  } catch {
+    return NextResponse.json({ ok: false, error: "Invalid request" }, { status: 400 });
+  }
+
+  if (!data || (!data.email && !data.phone)) {
+    return NextResponse.json({ ok: false, error: "An email or phone is required." }, { status: 400 });
+  }
+
+  const key = process.env.FUB_API_KEY;
+  if (!key) {
+    // CRM not configured yet — don't break the UX; Mike adds the key in Vercel.
+    return NextResponse.json({ ok: true, queued: false });
+  }
+
+  const [firstName, ...rest] = (data.name ?? "").trim().split(/\s+/);
+  const lastName = rest.join(" ");
+
+  const body = {
+    source: data.source || "The Roland Team Website",
+    system: "The Roland Team Website",
+    type: data.type || "General Inquiry",
+    message: [data.address ? `Property: ${data.address}` : "", data.message || ""].filter(Boolean).join("\n"),
+    person: {
+      firstName: firstName || undefined,
+      lastName: lastName || undefined,
+      emails: data.email ? [{ value: data.email }] : [],
+      phones: data.phone ? [{ value: data.phone }] : [],
+      tags: data.tag ? [data.tag] : [],
+    },
+  };
+
+  try {
+    const res = await fetch("https://api.followupboss.com/v1/events", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Basic ${Buffer.from(`${key}:`).toString("base64")}`,
+        "X-System": "TheRolandTeamWebsite",
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const detail = (await res.text()).slice(0, 300);
+      return NextResponse.json({ ok: false, error: `CRM error ${res.status}`, detail }, { status: 502 });
+    }
+    return NextResponse.json({ ok: true, queued: true });
+  } catch {
+    return NextResponse.json({ ok: false, error: "Could not reach CRM." }, { status: 502 });
+  }
+}
