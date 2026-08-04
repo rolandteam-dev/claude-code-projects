@@ -33,6 +33,12 @@ const communityHeroMap: Record<string, keyof typeof heroImages> = {
   cadence: "newConstruction",
   inspirada: "newConstruction",
   "mountains-edge": "newConstruction",
+  providence: "newConstruction",
+  "centennial-hills": "henderson",
+  aliante: "golf",
+  tuscany: "golf",
+  "silverado-ranch": "estate",
+  "spring-valley": "home",
 };
 
 export function communityHero(slug: string): string {

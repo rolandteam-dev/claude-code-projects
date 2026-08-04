@@ -1022,6 +1022,306 @@ export const communities: Community[] = [
       },
     ],
   },
+
+  {
+    slug: "providence",
+    name: "Providence",
+    city: "Las Vegas",
+    zip: "89166",
+    seoTitle: "Providence Homes for Sale | Northwest Las Vegas",
+    seoDescription:
+      "Providence homes for sale in northwest Las Vegas — a master-planned community with parks, trails, community centers, and modern homes near Skye Canyon.",
+    h1: "Providence Homes for Sale in Las Vegas, NV",
+    eyebrow: "Northwest Las Vegas · Master-Planned Community",
+    intro:
+      "An amenity-rich northwest-valley master plan with parks, trails, and community centers at higher elevation.",
+    lead:
+      "Providence is a popular master-planned community in the northwest Las Vegas Valley, known for its parks, trail system, and community centers. Set at a slightly higher elevation with mountain views, Providence offers a mix of established and newer homes and a well-planned, connected feel that draws buyers to this growing side of the valley.",
+    quickFacts: [
+      { label: "Location", value: "Northwest Las Vegas, NV 89166" },
+      { label: "Community Type", value: "Master-planned community" },
+      { label: "Highlights", value: "Parks, trails, community centers" },
+      { label: "Home Types", value: "Single-family homes" },
+      { label: "Price Range", value: "Approx. $400K – $900K+" },
+      { label: "Nearby", value: "Skye Canyon, the 215 Beltway" },
+    ],
+    sections: [
+      {
+        heading: "About Providence",
+        body: [
+          "Providence combines connected parks and paseos with two community centers and an active events calendar. Its northwest location offers elevation and open mountain views while staying convenient to shopping, dining, and the 215 Beltway.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Providence",
+        body: [
+          "The community offers a range of single-family homes across many floor plans, from approachable move-up homes to larger residences. It's a practical, amenity-focused choice for buyers who want value and lifestyle on the northwest side.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Providence located?",
+        a: "Providence is a master-planned community in the northwest Las Vegas Valley (ZIP 89166), near Skye Canyon and the 215 Beltway.",
+      },
+      {
+        q: "What amenities does Providence offer?",
+        a: "Providence features parks, an extensive trail system, and community centers with recreation and an active events calendar.",
+      },
+      {
+        q: "How much do homes in Providence cost?",
+        a: "Prices generally range from around $400,000 to about $900,000 depending on the home's size and location. Contact The Roland Team for current availability.",
+      },
+    ],
+  },
+
+  {
+    slug: "centennial-hills",
+    name: "Centennial Hills",
+    city: "Las Vegas",
+    zip: "89149",
+    seoTitle: "Centennial Hills Homes for Sale | Northwest Las Vegas",
+    seoDescription:
+      "Centennial Hills homes for sale in northwest Las Vegas — an established, amenity-rich area with parks, shopping, and a range of single-family homes.",
+    h1: "Centennial Hills Homes for Sale in Las Vegas, NV",
+    eyebrow: "Northwest Las Vegas · Established Community",
+    intro:
+      "A convenient, established northwest-valley area with parks, shopping, and a broad range of homes.",
+    lead:
+      "Centennial Hills is one of the northwest Las Vegas Valley's most established and convenient communities, offering parks, shopping, and a wide selection of single-family homes. With quick access to the 215 Beltway and US-95 and a range of price points, Centennial Hills real estate appeals to buyers who want space and amenities without a luxury-only price tag.",
+    quickFacts: [
+      { label: "Location", value: "Northwest Las Vegas, NV 89149 / 89131" },
+      { label: "Community Type", value: "Established master-planned area" },
+      { label: "Highlights", value: "Parks, shopping, easy freeway access" },
+      { label: "Home Types", value: "Single-family homes" },
+      { label: "Price Range", value: "Approx. $400K – $1M+" },
+      { label: "Nearby", value: "TPC Las Vegas, the 215 Beltway" },
+    ],
+    sections: [
+      {
+        heading: "About Centennial Hills",
+        body: [
+          "Centennial Hills has grown into a well-rounded northwest community with parks, retail centers, and a hospital campus, all connected by convenient freeway access. Its established neighborhoods and range of home styles make it one of the more versatile areas on the valley's northwest side.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Centennial Hills",
+        body: [
+          "Buyers will find everything from approachable family homes to larger residences on generous lots. The combination of amenities, value, and location keeps Centennial Hills consistently popular.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Centennial Hills located?",
+        a: "Centennial Hills is an established community in the northwest Las Vegas Valley, spanning ZIP codes including 89149 and 89131, near the 215 Beltway and US-95.",
+      },
+      {
+        q: "How much do homes in Centennial Hills cost?",
+        a: "Prices generally range from around $400,000 to more than $1 million depending on size, lot, and location. Contact The Roland Team for current listings.",
+      },
+    ],
+  },
+
+  {
+    slug: "aliante",
+    name: "Aliante",
+    city: "North Las Vegas",
+    zip: "89084",
+    seoTitle: "Aliante Homes for Sale | North Las Vegas Master-Planned",
+    seoDescription:
+      "Aliante homes for sale in North Las Vegas — a master-planned community with a golf course, parks, casino resort, and a wide range of family homes.",
+    h1: "Aliante Homes for Sale in North Las Vegas, NV",
+    eyebrow: "North Las Vegas · Master-Planned Community",
+    intro:
+      "A well-amenitized North Las Vegas master plan with golf, parks, and a resort at its center.",
+    lead:
+      "Aliante is a master-planned community in North Las Vegas built around the Aliante Golf Club, extensive parks, and the Aliante Casino + Hotel. With a nature discovery park, trails, and a broad range of single-family homes at approachable prices, Aliante real estate offers strong value and amenities on the valley's north side.",
+    quickFacts: [
+      { label: "Location", value: "North Las Vegas, NV 89084" },
+      { label: "Community Type", value: "Master-planned community" },
+      { label: "Signature Amenity", value: "Aliante Golf Club" },
+      { label: "Highlights", value: "Parks, trails, casino resort" },
+      { label: "Home Types", value: "Single-family homes" },
+      { label: "Price Range", value: "Approx. $350K – $800K+" },
+    ],
+    sections: [
+      {
+        heading: "About Aliante",
+        body: [
+          "Aliante is anchored by its golf course and a well-planned network of parks and trails, including a nature discovery park. The Aliante Casino + Hotel adds dining and entertainment right within the community, and freeway access via the 215 keeps the rest of the valley close.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Aliante",
+        body: [
+          "The community offers a wide range of single-family homes at accessible price points, making it a popular choice for buyers seeking amenities and value in North Las Vegas.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Aliante located?",
+        a: "Aliante is a master-planned community in North Las Vegas, Nevada (ZIP 89084), near the 215 Beltway.",
+      },
+      {
+        q: "Does Aliante have a golf course?",
+        a: "Yes. Aliante is built around the Aliante Golf Club and also features extensive parks, trails, and the Aliante Casino + Hotel.",
+      },
+      {
+        q: "How much do homes in Aliante cost?",
+        a: "Prices generally range from around $350,000 to about $800,000 depending on size and location. Contact The Roland Team for current availability.",
+      },
+    ],
+  },
+
+  {
+    slug: "tuscany",
+    name: "Tuscany",
+    city: "Henderson",
+    zip: "89044",
+    seoTitle: "Tuscany Homes for Sale | Henderson, NV Guard-Gated Golf",
+    seoDescription:
+      "Tuscany Village homes for sale in Henderson, NV — a guard-gated, Mediterranean-inspired master-planned community with a golf course and resort amenities.",
+    h1: "Tuscany Homes for Sale in Henderson, NV",
+    eyebrow: "Henderson, Nevada · Guard-Gated Community",
+    intro:
+      "A guard-gated, Mediterranean-inspired Henderson community with a golf course and resort-style amenities.",
+    lead:
+      "Tuscany Village is a guard-gated, Mediterranean-inspired master-planned community in Henderson, built around the Tuscany Golf Club and a resort-style clubhouse. With tile-roof architecture, parks, and a range of single-family homes, Tuscany real estate offers gated living and golf-community amenities at an accessible price point.",
+    quickFacts: [
+      { label: "Location", value: "Henderson, NV 89044" },
+      { label: "Community Type", value: "Guard-gated master-planned" },
+      { label: "Signature Amenity", value: "Tuscany Golf Club" },
+      { label: "Home Types", value: "Single-family homes" },
+      { label: "Price Range", value: "Approx. $350K – $900K+" },
+      { label: "Style", value: "Mediterranean / Tuscan-inspired" },
+    ],
+    sections: [
+      {
+        heading: "About Tuscany",
+        body: [
+          "Tuscany blends guard-gated security with a resort feel — a golf course, a clubhouse with dining, pools, and parks, all wrapped in Mediterranean-inspired architecture. Its Henderson location keeps residents close to shopping, dining, and the 215 Beltway.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Tuscany",
+        body: [
+          "The community offers single-family homes across a range of sizes and floor plans, giving buyers gated, amenity-rich living at approachable prices.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Tuscany located?",
+        a: "Tuscany (Tuscany Village) is a guard-gated master-planned community in Henderson, Nevada (ZIP 89044), near the 215 Beltway.",
+      },
+      {
+        q: "Is Tuscany a gated community?",
+        a: "Yes. Tuscany is guard-gated with controlled access, and it's built around the Tuscany Golf Club and a resort-style clubhouse.",
+      },
+      {
+        q: "How much do homes in Tuscany cost?",
+        a: "Prices generally range from around $350,000 to about $900,000 depending on size and location. Contact The Roland Team for current listings.",
+      },
+    ],
+  },
+
+  {
+    slug: "silverado-ranch",
+    name: "Silverado Ranch",
+    city: "Las Vegas",
+    zip: "89183",
+    seoTitle: "Silverado Ranch Homes for Sale | Southeast Las Vegas",
+    seoDescription:
+      "Silverado Ranch homes for sale in southeast Las Vegas — an established, convenient area with parks, shopping, and a range of single-family homes.",
+    h1: "Silverado Ranch Homes for Sale in Las Vegas, NV",
+    eyebrow: "Southeast Las Vegas · Established Community",
+    intro:
+      "An established, convenient southeast-valley area with parks, shopping, and easy access to the Strip and airport.",
+    lead:
+      "Silverado Ranch is an established community in the southeast Las Vegas Valley, valued for its convenience — quick access to the 215 Beltway, the Strip, and Harry Reid International Airport — along with parks, shopping, and a range of single-family homes. It's a practical, well-located choice for buyers who want established value close to everything.",
+    quickFacts: [
+      { label: "Location", value: "Southeast Las Vegas, NV 89183 / 89123" },
+      { label: "Community Type", value: "Established residential area" },
+      { label: "Highlights", value: "Parks, shopping, freeway access" },
+      { label: "Home Types", value: "Single-family homes" },
+      { label: "Price Range", value: "Approx. $400K – $800K+" },
+      { label: "Distance to Strip", value: "~10 miles / 15 minutes" },
+    ],
+    sections: [
+      {
+        heading: "About Silverado Ranch",
+        body: [
+          "Silverado Ranch offers established neighborhoods, parks, and convenient retail, all within a short drive of the Strip, the airport, and major freeways. Its central-southeast location is a big part of its appeal.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Silverado Ranch",
+        body: [
+          "The area features a range of single-family homes at accessible prices, making it popular with buyers who prioritize location and value.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Silverado Ranch located?",
+        a: "Silverado Ranch is an established community in the southeast Las Vegas Valley, spanning ZIP codes including 89183 and 89123, about 10 miles from the Strip.",
+      },
+      {
+        q: "How much do homes in Silverado Ranch cost?",
+        a: "Prices generally range from around $400,000 to about $800,000 depending on size and location. Contact The Roland Team for current availability.",
+      },
+    ],
+  },
+
+  {
+    slug: "spring-valley",
+    name: "Spring Valley",
+    city: "Las Vegas",
+    zip: "89147",
+    seoTitle: "Spring Valley Homes for Sale | Central-West Las Vegas",
+    seoDescription:
+      "Spring Valley homes for sale in Las Vegas — a centrally located, established area with diverse housing, shopping, and quick access to Summerlin and the Strip.",
+    h1: "Spring Valley Homes for Sale in Las Vegas, NV",
+    eyebrow: "Central-West Las Vegas · Established Community",
+    intro:
+      "A centrally located, established area with diverse housing and quick access to Summerlin and the Strip.",
+    lead:
+      "Spring Valley is a large, established community on the central-west side of the Las Vegas Valley, prized for its central location and diverse housing. From condos and townhomes to single-family homes and gated pockets, Spring Valley real estate offers something for nearly every buyer, with quick access to Summerlin, Chinatown, the Strip, and major freeways.",
+    quickFacts: [
+      { label: "Location", value: "Central-West Las Vegas, NV 89147 / 89117" },
+      { label: "Community Type", value: "Established residential area" },
+      { label: "Home Types", value: "Condos to single-family homes" },
+      { label: "Highlights", value: "Central location, diverse housing" },
+      { label: "Price Range", value: "Approx. $350K – $1M+" },
+      { label: "Nearby", value: "Summerlin, the Strip, Chinatown" },
+    ],
+    sections: [
+      {
+        heading: "About Spring Valley",
+        body: [
+          "Spring Valley's biggest draw is location — central to the entire valley, minutes from Summerlin, the Strip, and the dining of Las Vegas's Chinatown corridor. Its size and variety mean a wide range of neighborhoods and price points.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Spring Valley",
+        body: [
+          "Buyers will find everything from affordable condos and townhomes to established single-family homes and gated communities, making Spring Valley one of the most flexible areas in the valley for matching budget and lifestyle.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Spring Valley located?",
+        a: "Spring Valley is an established community on the central-west side of the Las Vegas Valley, spanning ZIP codes including 89147 and 89117, near Summerlin and the Strip.",
+      },
+      {
+        q: "How much do homes in Spring Valley cost?",
+        a: "Prices range widely — from around $350,000 for condos and townhomes to more than $1 million for larger or gated homes. Contact The Roland Team for current listings.",
+      },
+    ],
+  },
 ];
 
 export function getCommunity(slug: string): Community | undefined {
