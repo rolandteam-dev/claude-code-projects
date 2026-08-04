@@ -23,9 +23,9 @@ export const site = {
   nav: [
     { label: "Homes for Sale", href: "/listings" },
     { label: "Communities", href: "/communities" },
-    { label: "Buyer Guides", href: "/guides" },
+    { label: "Guides", href: "/guides" },
+    { label: "Market Report", href: "/market-report" },
     { label: "Sell", href: "/sell" },
-    { label: "Blog", href: "/blog" },
     { label: "About", href: "/about" },
   ],
   cta: { label: "Contact The Team", href: "/contact" },

@@ -242,6 +242,218 @@ export const guides: Guide[] = [
       },
     ],
   },
+
+  {
+    slug: "first-time-home-buyer-las-vegas",
+    title: "First-Time Home Buyer Guide for Las Vegas",
+    category: "Buying",
+    featured: true,
+    seoTitle: "First-Time Home Buyer Guide for Las Vegas (2026)",
+    seoDescription:
+      "A first-time buyer's guide to Las Vegas — down payment help, loan programs, the step-by-step process, and Nevada-specific tips to buy your first home with confidence.",
+    h1: "First-Time Home Buyer Guide for Las Vegas",
+    eyebrow: "Buyer Guide",
+    intro:
+      "Buying your first home in Las Vegas, demystified — what you need, what it costs, and how the process actually works.",
+    readMinutes: 8,
+    sections: [
+      {
+        heading: "Start With Your Budget and Pre-Approval",
+        body: [
+          "Before anything else, get pre-approved. A lender will look at your income, debts, and credit to tell you what you can realistically borrow and what your monthly payment looks like — including taxes, insurance, and any HOA dues. In Las Vegas, HOA fees are common in master-planned and gated communities, so factor them in from the start.",
+        ],
+      },
+      {
+        heading: "Down Payment Help for Nevada Buyers",
+        body: [
+          "First-time buyers often assume they need 20% down — you usually don't. Nevada offers down-payment assistance programs (such as those through the Nevada Housing Division's Home Is Possible), and loan programs like FHA (as low as 3.5% down), conventional (as low as 3%), and VA (zero down for eligible veterans) all lower the barrier. A local lender can match you to the right one.",
+        ],
+      },
+      {
+        heading: "The Step-by-Step Process",
+        body: ["Once you're pre-approved, the path is straightforward with the right agent guiding you:"],
+        bullets: [
+          "Tour homes and identify the right community and price point.",
+          "Make an offer with sensible inspection and appraisal contingencies.",
+          "Complete inspections and the lender's appraisal during escrow.",
+          "Do a final walkthrough, sign at title/escrow, and get your keys — typically about 30 days from accepted offer.",
+        ],
+      },
+      {
+        heading: "First-Timer Tips",
+        body: [
+          "Don't skip the inspection, don't make big purchases or open new credit before closing, and lean on your agent — a good one protects you through negotiation, disclosures, and deadlines so nothing catches you off guard.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "How much do I need to buy my first home in Las Vegas?",
+        a: "Less than most people think. Depending on the loan, down payments start around 3–3.5%, and VA loans can be zero down. Nevada also has down-payment assistance programs for eligible first-time buyers.",
+      },
+      {
+        q: "What credit score do I need to buy a home in Nevada?",
+        a: "It varies by loan program. FHA loans can allow lower scores than conventional loans. A local lender can review your credit and outline your options and any steps to improve your terms.",
+      },
+      {
+        q: "How long does buying a first home take?",
+        a: "Once you're under contract, most financed purchases close in about 30 days. The search itself depends on inventory and how specific your criteria are.",
+      },
+    ],
+  },
+
+  {
+    slug: "va-loans-nevada",
+    title: "VA Loans in Nevada: A Guide for Veterans & Military Buyers",
+    category: "Buying",
+    featured: false,
+    seoTitle: "VA Loans in Nevada: Guide for Veterans & Military Buyers",
+    seoDescription:
+      "How VA loans work in Nevada — zero down payment, no PMI, eligibility, funding fee, and tips for veterans and active military buying a home in Las Vegas.",
+    h1: "VA Loans in Nevada: A Guide for Veterans & Military Buyers",
+    eyebrow: "Buyer Guide",
+    intro:
+      "Las Vegas is a fantastic place to use your VA benefit. Here's how VA loans work and how to make the most of yours.",
+    readMinutes: 7,
+    sections: [
+      {
+        heading: "Why the VA Loan Is So Powerful",
+        body: [
+          "For eligible veterans, active-duty service members, and qualifying surviving spouses, the VA loan is one of the best financing tools available: zero down payment, no private mortgage insurance (PMI), and competitive interest rates. In a market like Las Vegas — home to a large veteran and military community near Nellis Air Force Base — it's widely used.",
+        ],
+      },
+      {
+        heading: "Eligibility and the Certificate of Eligibility",
+        body: [
+          "Eligibility is based on your service history. You'll obtain a Certificate of Eligibility (COE) to confirm your entitlement — a VA-savvy lender can pull this quickly. Occupancy is required, meaning the home must be your primary residence.",
+        ],
+      },
+      {
+        heading: "The Funding Fee and Costs",
+        body: [
+          "Most VA loans include a one-time funding fee (which can be financed into the loan), though some veterans — such as those with a service-connected disability rating — may be exempt. Because there's no down payment or PMI, VA buyers often have lower upfront and monthly costs than comparable conventional buyers.",
+        ],
+      },
+      {
+        heading: "Tips for VA Buyers in Las Vegas",
+        body: [
+          "Work with an agent and lender experienced in VA transactions — VA appraisals and the Minimum Property Requirements have their own nuances. Structuring the offer well (including who pays certain fees) keeps your transaction smooth.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Do VA loans really require no down payment?",
+        a: "Yes. For eligible buyers, VA loans allow 100% financing with no down payment and no monthly PMI, which is a major advantage over most other loan types.",
+      },
+      {
+        q: "Can I use a VA loan more than once?",
+        a: "Yes. VA entitlement can be reused, and in some cases you can have more than one VA loan at a time. A VA-experienced lender can explain how your entitlement applies to your situation.",
+      },
+      {
+        q: "Is there a loan limit on VA loans in Nevada?",
+        a: "Veterans with full entitlement generally have no VA loan limit, though your lender still qualifies you based on income and credit. Your lender can confirm how this applies to your purchase.",
+      },
+    ],
+  },
+
+  {
+    slug: "new-construction-vs-resale-las-vegas",
+    title: "New Construction vs. Resale Homes in Las Vegas",
+    category: "Buying",
+    featured: false,
+    seoTitle: "New Construction vs. Resale Homes in Las Vegas: Which Is Better?",
+    seoDescription:
+      "Should you buy a new-construction or resale home in Las Vegas? Compare price, timelines, upgrades, negotiation, and using your own agent with a builder.",
+    h1: "New Construction vs. Resale Homes in Las Vegas",
+    eyebrow: "Buyer Guide",
+    intro:
+      "Las Vegas has both booming new-build communities and established resale neighborhoods. Here's how to choose.",
+    readMinutes: 7,
+    sections: [
+      {
+        heading: "The Case for New Construction",
+        body: [
+          "Las Vegas has abundant new construction, especially in growing communities like Skye Canyon, Cadence, Inspirada, and Summerlin's newer villages. New homes offer modern floor plans, energy efficiency, warranties, and the chance to select finishes. Trade-offs: build timelines, fewer mature trees/landscaping, and lots that may be smaller.",
+        ],
+      },
+      {
+        heading: "The Case for Resale",
+        body: [
+          "Established resale homes often mean larger lots, mature landscaping, and locations closer to the valley's core amenities — plus you can see exactly what you're buying and move in sooner. Trade-offs: possible updates or maintenance, and more competition for well-priced homes.",
+        ],
+      },
+      {
+        heading: "Bring Your Own Agent to the Builder",
+        body: [
+          "One of the most important tips: when buying new construction, register with your own agent on your first visit to the builder. The on-site representative works for the builder — your agent represents you, helps you compare incentives, review the contract, and choose upgrades wisely, usually at no cost to you.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Is new construction more expensive than resale in Las Vegas?",
+        a: "It depends on the community and finishes. New builds can carry a premium for being new and customizable, while resale can offer more space or better locations for the money. Comparing specific homes is the only real answer.",
+      },
+      {
+        q: "Do I need my own agent to buy new construction?",
+        a: "Yes — it's strongly recommended. Register your agent on your first builder visit. The builder's rep represents the builder; your agent represents your interests through pricing, contract, and upgrades, typically at no cost to you.",
+      },
+      {
+        q: "Can you negotiate with home builders?",
+        a: "Often, yes — though builders may prefer incentives (upgrades, closing-cost help, rate buydowns) over price cuts to protect community comps. An experienced agent knows how to maximize builder incentives.",
+      },
+    ],
+  },
+
+  {
+    slug: "cost-of-living-las-vegas",
+    title: "Cost of Living in Las Vegas: What to Expect",
+    category: "Relocation",
+    featured: false,
+    seoTitle: "Cost of Living in Las Vegas: Taxes, Housing & What to Expect",
+    seoDescription:
+      "A breakdown of the cost of living in Las Vegas — no state income tax, housing costs, utilities, and how Southern Nevada compares for relocating buyers.",
+    h1: "Cost of Living in Las Vegas: What to Expect",
+    eyebrow: "Relocation Guide",
+    intro:
+      "One of the biggest reasons people move to Las Vegas is the numbers. Here's an honest look at the cost of living.",
+    readMinutes: 6,
+    sections: [
+      {
+        heading: "No State Income Tax",
+        body: [
+          "Nevada is one of a handful of states with no state income tax. For households relocating from higher-tax states, this is often the single biggest financial reason to make the move, and it meaningfully changes take-home pay.",
+        ],
+      },
+      {
+        heading: "Housing Costs",
+        body: [
+          "Housing is the largest line item for most households. Las Vegas generally offers more home for the money than many coastal metros, though prices vary widely by community — from approachable master plans to multimillion-dollar guard-gated estates. Property taxes in Nevada are relatively moderate compared with many states.",
+        ],
+      },
+      {
+        heading: "Utilities, Transportation, and Everyday Costs",
+        body: [
+          "Summer cooling drives up utility bills, so energy efficiency matters — one reason newer construction is popular. Everyday costs like groceries and transportation are broadly in line with national averages, and the lack of state income tax helps offset them.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Does Las Vegas have a state income tax?",
+        a: "No. Nevada has no state income tax, which is one of the most cited financial reasons people relocate to Las Vegas.",
+      },
+      {
+        q: "Is Las Vegas cheaper than California?",
+        a: "For many households, yes — particularly on housing and taxes. The absence of a state income tax and generally lower home prices than major California metros are frequent motivators for relocating buyers.",
+      },
+      {
+        q: "Are property taxes high in Las Vegas?",
+        a: "Nevada's property taxes are relatively moderate compared to many states. Your exact amount depends on the home's assessed value and location; we can help you estimate it for any property.",
+      },
+    ],
+  },
 ];
 
 export function getGuide(slug: string): Guide | undefined {

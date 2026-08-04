@@ -6,7 +6,7 @@ import { guides } from "@/content/guides";
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
-  const staticRoutes = ["/", "/listings", "/communities", "/guides", "/sell", "/about", "/contact", "/blog"].map(
+  const staticRoutes = ["/", "/listings", "/communities", "/guides", "/market-report", "/sell", "/about", "/contact", "/blog"].map(
     (path) => ({
       url: absoluteUrl(path),
       lastModified: now,
