@@ -49,6 +49,7 @@ const areaHeroMap: Record<string, keyof typeof heroImages> = {
   henderson: "henderson",
   "las-vegas": "redRock",
   "boulder-city": "estate",
+  "north-las-vegas": "golf",
 };
 
 export function areaHero(slug: string): string {

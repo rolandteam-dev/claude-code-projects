@@ -83,6 +83,26 @@ export const areas: Area[] = [
       "One of only two Nevada cities without casino gaming",
     ],
   },
+  {
+    slug: "north-las-vegas",
+    city: "North Las Vegas",
+    name: "North Las Vegas",
+    seoTitle: "North Las Vegas Homes for Sale | Communities & Real Estate",
+    seoDescription:
+      "Explore North Las Vegas real estate — master-planned communities like Aliante, newer construction, and strong value, with The Roland Team.",
+    h1: "North Las Vegas Homes for Sale & Communities",
+    eyebrow: "Southern Nevada · City Guide",
+    intro:
+      "Value, new construction, and master-planned amenities on the fast-growing north side of the valley.",
+    lead:
+      "North Las Vegas has grown into one of the valley's best areas for value and new construction, anchored by master-planned communities like Aliante with its golf course, parks, and resort. With approachable pricing, ongoing development, and convenient freeway access, North Las Vegas real estate appeals to first-time buyers, families, and investors alike.",
+    highlights: [
+      "Master-planned living at Aliante — golf, parks, and a casino resort",
+      "Strong value and a high share of newer construction",
+      "Convenient access via the 215 Beltway and I-15",
+      "One of the valley's fastest-growing areas",
+    ],
+  },
 ];
 
 export function getArea(slug: string): Area | undefined {
