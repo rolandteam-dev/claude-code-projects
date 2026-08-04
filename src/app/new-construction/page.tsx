@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Container } from "@/components/Container";
 import { CommunityCard } from "@/components/CommunityCard";
 import { JsonLd } from "@/components/JsonLd";
+import { HeroBg } from "@/components/HeroBg";
+import { heroImages } from "@/lib/heroImages";
 import { breadcrumbSchema } from "@/lib/schema";
 import { communities } from "@/content/communities";
 import { site } from "@/lib/site";
@@ -29,8 +31,9 @@ export default function NewConstructionHub() {
         ])}
       />
 
-      <section className="bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)] text-white">
-        <Container size="wide" className="py-16 md:py-20">
+      <section className="relative overflow-hidden bg-[var(--color-graphite)] text-white">
+        <HeroBg src={heroImages.newConstruction} priority />
+        <Container size="wide" className="relative z-10 py-16 md:py-20">
           <div className="max-w-[660px]">
             <div className="font-sans text-[0.76rem] uppercase tracking-[0.24em] text-[var(--color-gold-2)]">
               New Construction

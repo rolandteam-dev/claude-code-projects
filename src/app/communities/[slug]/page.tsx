@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Container } from "@/components/Container";
 import { JsonLd } from "@/components/JsonLd";
+import { HeroBg } from "@/components/HeroBg";
+import { communityHero } from "@/lib/heroImages";
 import { breadcrumbSchema, faqSchema } from "@/lib/schema";
 import { communities, getCommunity } from "@/content/communities";
 import { site } from "@/lib/site";
@@ -68,8 +70,9 @@ export default async function CommunityPage({
       </Container>
 
       {/* Hero — editorial, left-aligned */}
-      <header className="mt-3 bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)] text-white">
-        <Container size="wide" className="py-16 md:py-24">
+      <header className="relative mt-3 overflow-hidden bg-[var(--color-graphite)] text-white">
+        <HeroBg src={communityHero(c.slug)} priority />
+        <Container size="wide" className="relative z-10 py-16 md:py-24">
           <div className="max-w-[660px]">
             <div className="font-sans text-[0.76rem] uppercase tracking-[0.24em] text-[var(--color-gold-2)]">
               {c.eyebrow}
@@ -98,7 +101,7 @@ export default async function CommunityPage({
         </Container>
 
         {/* Stat band */}
-        <div className="border-t border-white/10 bg-black/25">
+        <div className="relative z-10 border-t border-white/10 bg-black/35 backdrop-blur-sm">
           <Container size="wide" className="grid grid-cols-2 gap-6 py-6 md:grid-cols-4">
             {c.quickFacts.slice(0, 4).map((f) => (
               <div key={f.label}>

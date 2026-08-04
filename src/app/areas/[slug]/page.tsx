@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Container } from "@/components/Container";
 import { CommunityCard } from "@/components/CommunityCard";
 import { JsonLd } from "@/components/JsonLd";
+import { HeroBg } from "@/components/HeroBg";
+import { areaHero } from "@/lib/heroImages";
 import { breadcrumbSchema } from "@/lib/schema";
 import { areas, getArea, communitiesInArea } from "@/content/areas";
 import { site } from "@/lib/site";
@@ -44,8 +46,9 @@ export default async function AreaPage({ params }: { params: Promise<{ slug: str
         ])}
       />
 
-      <header className="bg-gradient-to-b from-[var(--color-graphite)] to-[var(--color-graphite-2)] text-white">
-        <Container size="wide" className="py-16 text-center">
+      <header className="relative overflow-hidden bg-[var(--color-graphite)] text-white">
+        <HeroBg src={areaHero(a.slug)} priority />
+        <Container size="wide" className="relative z-10 py-16 text-center">
           <div className="font-sans text-[0.78rem] uppercase tracking-[0.22em] text-[var(--color-gold-2)]">
             {a.eyebrow}
           </div>

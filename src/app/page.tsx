@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Container } from "@/components/Container";
 import { CommunityCard } from "@/components/CommunityCard";
+import { HeroBg } from "@/components/HeroBg";
+import { heroImages } from "@/lib/heroImages";
 import { featuredCommunities } from "@/content/communities";
 import { featuredGuides } from "@/content/guides";
 import { site } from "@/lib/site";
@@ -9,8 +11,9 @@ export default function Home() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-gradient-to-b from-[var(--color-graphite)] to-[var(--color-graphite-2)] text-white">
-        <Container size="wide" className="py-24 text-center md:py-32">
+      <section className="relative overflow-hidden bg-[var(--color-graphite)] text-white">
+        <HeroBg src={heroImages.home} priority />
+        <Container size="wide" className="relative z-10 py-24 text-center md:py-32">
           <div className="font-sans text-[0.8rem] uppercase tracking-[0.24em] text-[var(--color-gold-2)]">
             Las Vegas · Henderson · Summerlin
           </div>
