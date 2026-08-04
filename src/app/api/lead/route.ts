@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   }
 
   const body = {
-    source: "Custom Website",
+    source: "Luxury Website",
     system: "The Roland Team Website",
     type: data.type || "General Inquiry",
     message: [data.address ? `Property: ${data.address}` : "", data.message || ""].filter(Boolean).join("\n"),

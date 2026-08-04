@@ -10,9 +10,9 @@ export const site = {
   // Update to the production domain before launch (currently a placeholder).
   url: "https://www.therolandteam.com",
   locale: "en_US",
-  // Contact — replace with real values before launch.
-  phone: "+1-702-555-0100",
-  email: "info@therolandteam.com",
+  // Contact
+  phone: "(702) 793-2158",
+  email: "mike@therolandteam.com",
   areaServed: ["Las Vegas", "Henderson", "Summerlin", "Boulder City", "Clark County"],
   sameAs: [
     "https://www.facebook.com/therolandteam",
