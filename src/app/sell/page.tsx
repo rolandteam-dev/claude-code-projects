@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/Container";
+import { JsonLd } from "@/components/JsonLd";
+import { breadcrumbSchema } from "@/lib/schema";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Sell Your Las Vegas Home",
+  title: "Sell a Home in Las Vegas & Henderson",
   description:
-    "Thinking of selling your Las Vegas or Henderson home? The Roland Team delivers luxury marketing, sharp pricing, and expert negotiation to maximize your sale.",
+    "Sell your Las Vegas or Henderson home for more, with less stress. Get a free home valuation, luxury marketing, and expert negotiation from The Roland Team.",
   alternates: { canonical: "/sell" },
 };
 
@@ -16,19 +18,43 @@ const points = [
   { h: "Expert negotiation", p: "We protect your equity and your timeline, negotiating terms that work for you from offer to close." },
 ];
 
-export default function SellPage() {
+const resources = [
+  { title: "What's My Home Worth?", desc: "Get a free, precise home valuation from real local experts.", href: "/home-value" },
+  { title: "Preparing Your Home to Sell", desc: "Where to focus before you list for the strongest offers.", href: "/blog/preparing-your-las-vegas-home-to-sell" },
+  { title: "Seller Net Proceeds", desc: "Understand what you'll actually take home from your sale.", href: "/blog/las-vegas-luxury-seller-net-proceeds" },
+  { title: "Selling Guide", desc: "The full step-by-step guide to selling in Las Vegas.", href: "/guides/selling-your-home-in-las-vegas" },
+  { title: "Market Report", desc: "See where prices, pace, and inventory stand this month.", href: "/market-report" },
+];
+
+export default function SellHub() {
   return (
     <>
-      <section className="bg-gradient-to-b from-[var(--color-graphite)] to-[var(--color-graphite-2)] text-white">
-        <Container size="narrow" className="py-20 text-center">
-          <div className="eyebrow" style={{ color: "var(--color-gold-2)" }}>Sellers</div>
-          <h1 className="mx-auto mt-3 max-w-[640px] text-[2.5rem] font-semibold leading-[1.15] text-white">
-            Sell for more, with less stress
-          </h1>
-          <p className="mx-auto mt-4 max-w-[560px] text-[1.1rem] text-[#d9dbe0]">
-            Las Vegas luxury marketing and local expertise that gets your home sold — on your terms.
-          </p>
-          <Link href={site.cta.href} className="btn mt-8">Request a Home Valuation</Link>
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: "Home", path: "/" },
+          { name: "Sell a Home", path: "/sell" },
+        ])}
+      />
+
+      <section className="bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)] text-white">
+        <Container size="wide" className="py-16 md:py-20">
+          <div className="max-w-[620px]">
+            <div className="font-sans text-[0.76rem] uppercase tracking-[0.24em] text-[var(--color-gold-2)]">
+              Sellers
+            </div>
+            <h1 className="mt-3 font-serif text-[2.8rem] font-semibold leading-[1.05] text-white md:text-[3.6rem]">
+              Sell for more, with less stress
+            </h1>
+            <p className="mt-5 max-w-[560px] text-[1.12rem] text-[#d9dbe0]">
+              Las Vegas luxury marketing and local expertise that gets your home sold — on your terms.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Link href="/home-value" className="btn">What&apos;s My Home Worth?</Link>
+              <Link href={site.cta.href} className="btn btn-ghost !border-white/30 !text-white hover:!bg-white/10">
+                Talk to an Expert
+              </Link>
+            </div>
+          </div>
         </Container>
       </section>
 
@@ -39,6 +65,23 @@ export default function SellPage() {
               <h2 className="text-[1.25rem]">{pt.h}</h2>
               <p className="mt-2 text-[0.95rem] text-[var(--color-ink-soft)]">{pt.p}</p>
             </div>
+          ))}
+        </div>
+
+        <h2 className="mt-16 text-[1.7rem]">Seller resources</h2>
+        <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {resources.map((r) => (
+            <Link
+              key={r.href}
+              href={r.href}
+              className="block rounded-[12px] border border-[var(--color-line)] bg-white p-7 no-underline shadow-[var(--shadow-soft)] transition-transform hover:-translate-y-1"
+            >
+              <h3 className="text-[1.15rem]">{r.title}</h3>
+              <p className="mt-2 text-[0.95rem] text-[var(--color-ink-soft)]">{r.desc}</p>
+              <span className="mt-3 inline-block font-sans text-[0.8rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-gold)]">
+                Explore →
+              </span>
+            </Link>
           ))}
         </div>
       </Container>

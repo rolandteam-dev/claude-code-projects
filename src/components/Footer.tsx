@@ -39,6 +39,21 @@ export function Footer() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link href="/listings" className="text-[var(--color-ink-soft)] no-underline hover:text-[var(--color-gold)]">
+                  Homes for Sale
+                </Link>
+              </li>
+              <li>
+                <Link href="/home-value" className="text-[var(--color-ink-soft)] no-underline hover:text-[var(--color-gold)]">
+                  Home Valuation
+                </Link>
+              </li>
+              <li>
+                <Link href="/testimonials" className="text-[var(--color-ink-soft)] no-underline hover:text-[var(--color-gold)]">
+                  Testimonials
+                </Link>
+              </li>
             </ul>
             <div className="eyebrow mb-3 mt-6">Areas</div>
             <ul className="space-y-2 font-sans text-[0.9rem]">
