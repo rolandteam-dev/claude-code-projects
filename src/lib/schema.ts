@@ -1,23 +1,57 @@
 /**
- * JSON-LD structured-data builders. Rich results (breadcrumbs, FAQ,
- * business info) improve both Google SERP presence and AI answer citations.
+ * JSON-LD structured-data builders. Rich, consistent entity data improves
+ * Google rich results AND how AI assistants (ChatGPT, Claude, Perplexity,
+ * AI Overviews) understand and cite the business.
  */
 import { site, absoluteUrl } from "./site";
 import type { Faq } from "@/content/communities";
 
+/** The core business entity — referenced by @id across the site. */
 export function realEstateAgentSchema() {
+  const hasStreet = Boolean(site.address.streetAddress);
   return {
     "@context": "https://schema.org",
-    "@type": "RealEstateAgent",
+    "@type": ["RealEstateAgent", "LocalBusiness"],
     "@id": absoluteUrl("/#organization"),
     name: site.name,
     legalName: site.legalName,
     url: site.url,
     telephone: site.phone,
     email: site.email,
+    priceRange: "$$$",
+    description: `${site.name} — ${site.tagline}. Specialists in luxury and guard-gated communities across Las Vegas and Henderson, Nevada, led by ${site.founder} with ${site.brokerage}.`,
+    slogan: site.tagline,
+    founder: { "@type": "Person", name: site.founder },
+    parentOrganization: { "@type": "Organization", name: site.brokerage },
+    address: {
+      "@type": "PostalAddress",
+      ...(hasStreet ? { streetAddress: site.address.streetAddress } : {}),
+      addressLocality: site.address.addressLocality,
+      addressRegion: site.address.addressRegion,
+      ...(site.address.postalCode ? { postalCode: site.address.postalCode } : {}),
+      addressCountry: site.address.addressCountry,
+    },
     areaServed: site.areaServed.map((name) => ({ "@type": "City", name })),
-    sameAs: site.sameAs,
-    description: `${site.name} — ${site.tagline}. Specialists in luxury and guard-gated communities across Las Vegas and Henderson, Nevada.`,
+    knowsAbout: site.knowsAbout,
+    sameAs: site.sameAs.filter(Boolean),
+    // NOTE: add aggregateRating/review ONLY from real, verified reviews.
+  };
+}
+
+/** WebSite entity with a sitewide search action. */
+export function webSiteSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": absoluteUrl("/#website"),
+    url: site.url,
+    name: site.name,
+    publisher: { "@id": absoluteUrl("/#organization") },
+    potentialAction: {
+      "@type": "SearchAction",
+      target: { "@type": "EntryPoint", urlTemplate: `${absoluteUrl("/listings")}?city={search_term_string}` },
+      "query-input": "required name=search_term_string",
+    },
   };
 }
 

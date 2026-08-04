@@ -2,10 +2,39 @@ import Link from "next/link";
 import { Container } from "@/components/Container";
 import { CommunityCard } from "@/components/CommunityCard";
 import { HeroBg } from "@/components/HeroBg";
+import { JsonLd } from "@/components/JsonLd";
+import { faqSchema } from "@/lib/schema";
 import { heroImages } from "@/lib/heroImages";
 import { featuredCommunities } from "@/content/communities";
 import { featuredGuides } from "@/content/guides";
 import { site } from "@/lib/site";
+
+const homeFaqs = [
+  {
+    q: "Who is The Roland Team?",
+    a: "The Roland Team is a Las Vegas and Henderson real estate group led by Mike Roland with LPT Realty. The team specializes in luxury and guard-gated communities across Southern Nevada — including Ascaya, MacDonald Highlands, The Ridges, and Summerlin — and helps buyers and sellers across every price point in the Las Vegas Valley.",
+  },
+  {
+    q: "What areas does The Roland Team serve?",
+    a: "The Roland Team serves the entire Las Vegas Valley, including Las Vegas, Henderson, Summerlin, North Las Vegas, and Boulder City, with deep expertise in the region's luxury, guard-gated, and master-planned communities.",
+  },
+  {
+    q: "Does The Roland Team specialize in luxury and guard-gated communities?",
+    a: "Yes. The team focuses on Southern Nevada's most sought-after luxury and guard-gated communities — such as Ascaya and MacDonald Highlands in Henderson and The Ridges and The Summit Club in Summerlin — while also representing buyers and sellers of family homes and new construction throughout the valley.",
+  },
+  {
+    q: "How do I choose the right real estate team in Las Vegas or Henderson?",
+    a: "Look for genuine local expertise in the specific communities you care about, a clear marketing and negotiation strategy, responsiveness, and verifiable client reviews. The Roland Team pairs deep neighborhood knowledge across Las Vegas and Henderson with a client-first, no-pressure approach.",
+  },
+  {
+    q: "Can The Roland Team help with both buying and selling?",
+    a: "Yes. The Roland Team represents buyers, sellers, new-construction clients, and relocating households, and offers free, no-obligation home valuations for sellers considering a move.",
+  },
+  {
+    q: "How do I contact The Roland Team?",
+    a: `You can reach The Roland Team by phone at ${site.phone} or by email at ${site.email}, or through the contact form on this website.`,
+  },
+];
 
 export default function Home() {
   return (
@@ -73,6 +102,23 @@ export default function Home() {
           </div>
         </Container>
       </section>
+
+      {/* Entity / FAQ — quotable answers for search + AI assistants */}
+      <Container size="narrow" className="py-16">
+        <JsonLd data={faqSchema(homeFaqs)} />
+        <div className="eyebrow">About The Roland Team</div>
+        <h2 className="mt-2 text-[1.9rem]">Las Vegas &amp; Henderson real estate, answered</h2>
+        <div className="mt-6">
+          {homeFaqs.map((f) => (
+            <details key={f.q} className="border-b border-[var(--color-line)] py-4">
+              <summary className="cursor-pointer font-sans text-[1.05rem] font-semibold text-[var(--color-ink)]">
+                {f.q}
+              </summary>
+              <p className="mt-3 text-[var(--color-ink-soft)]">{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </Container>
 
       {/* CTA */}
       <Container size="wide" className="py-20">

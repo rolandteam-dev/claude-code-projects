@@ -13,12 +13,37 @@ export const site = {
   // Contact
   phone: "(702) 793-2158",
   email: "mike@therolandteam.com",
-  areaServed: ["Las Vegas", "Henderson", "Summerlin", "Boulder City", "Clark County"],
+  founder: "Mike Roland",
+  brokerage: "LPT Realty",
+  // City-level location (accurate). Add the real office street address in
+  // `address.streetAddress` once confirmed — needed for strongest local SEO.
+  address: {
+    streetAddress: "", // TODO: add real office street address
+    addressLocality: "Las Vegas",
+    addressRegion: "NV",
+    postalCode: "",
+    addressCountry: "US",
+  },
+  areaServed: ["Las Vegas", "Henderson", "Summerlin", "North Las Vegas", "Boulder City", "Clark County"],
+  // Entity topics — reinforces what the brand is known for (for AI + Google).
+  knowsAbout: [
+    "Las Vegas luxury real estate",
+    "Henderson guard-gated communities",
+    "Summerlin homes for sale",
+    "Ascaya and MacDonald Highlands luxury estates",
+    "new construction homes in Las Vegas",
+    "selling a home in Las Vegas",
+    "relocating to Las Vegas",
+    "home valuation",
+  ],
+  // Add your real profile URLs — these are prime AI/Google trust signals.
   sameAs: [
     "https://www.facebook.com/therolandteam",
     "https://www.instagram.com/therolandteam",
     "https://www.youtube.com/@therolandteam",
     "https://www.linkedin.com/company/therolandteam",
+    // TODO: add real profile URLs when available:
+    // Google Business Profile, Zillow, Realtor.com, Homes.com, Yelp
   ],
   nav: [
     {

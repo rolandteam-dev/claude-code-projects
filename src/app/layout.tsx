@@ -4,7 +4,7 @@ import { site } from "@/lib/site";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { JsonLd } from "@/components/JsonLd";
-import { realEstateAgentSchema } from "@/lib/schema";
+import { realEstateAgentSchema, webSiteSchema } from "@/lib/schema";
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
@@ -48,7 +48,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" className="h-full">
       <body className="flex min-h-full flex-col">
-        <JsonLd data={realEstateAgentSchema()} />
+        <JsonLd data={[realEstateAgentSchema(), webSiteSchema()]} />
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
