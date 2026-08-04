@@ -11,7 +11,9 @@ export const runtime = "nodejs";
  * FUB Events API: https://docs.followupboss.com/reference/events-post
  */
 type LeadInput = {
-  name?: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string; // legacy single-field fallback
   email?: string;
   phone?: string;
   address?: string;
@@ -39,11 +41,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, queued: false });
   }
 
-  const [firstName, ...rest] = (data.name ?? "").trim().split(/\s+/);
-  const lastName = rest.join(" ");
+  // Prefer explicit first/last fields; fall back to splitting a single name.
+  let firstName = (data.firstName ?? "").trim();
+  let lastName = (data.lastName ?? "").trim();
+  if (!firstName && !lastName && data.name) {
+    const parts = data.name.trim().split(/\s+/);
+    firstName = parts[0] ?? "";
+    lastName = parts.slice(1).join(" ");
+  }
 
   const body = {
-    source: data.source || "The Roland Team Website",
+    source: "Custom Website",
     system: "The Roland Team Website",
     type: data.type || "General Inquiry",
     message: [data.address ? `Property: ${data.address}` : "", data.message || ""].filter(Boolean).join("\n"),
@@ -51,7 +59,7 @@ export async function POST(req: Request) {
       firstName: firstName || undefined,
       lastName: lastName || undefined,
       emails: data.email ? [{ value: data.email }] : [],
-      phones: data.phone ? [{ value: data.phone }] : [],
+      phones: data.phone ? [{ value: data.phone, type: "mobile" }] : [],
       tags: data.tag ? [data.tag] : [],
     },
   };

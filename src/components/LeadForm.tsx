@@ -57,10 +57,13 @@ export function LeadForm({
         <input className={field} name="address" placeholder="Property address" aria-label="Property address" required />
       )}
       <div className="grid grid-cols-2 gap-4">
-        <input className={field} name="name" placeholder="Your name" aria-label="Your name" required />
+        <input className={field} name="firstName" placeholder="First name" aria-label="First name" required />
+        <input className={field} name="lastName" placeholder="Last name" aria-label="Last name" required />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <input className={field} name="email" type="email" placeholder="Email" aria-label="Email" required />
         <input className={field} name="phone" type="tel" placeholder="Phone" aria-label="Phone" />
       </div>
-      <input className={field} name="email" type="email" placeholder="Email" aria-label="Email" required />
       <textarea className={field} name="message" rows={3} placeholder="How can we help? (optional)" aria-label="Message" />
       <button type="submit" disabled={status === "sending"} className="btn w-full disabled:opacity-60">
         {status === "sending" ? "Sending…" : submitLabel}
