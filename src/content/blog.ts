@@ -171,6 +171,96 @@ export const blogPosts: BlogPost[] = [
       },
     ],
   },
+
+  {
+    slug: "is-now-a-good-time-to-buy-las-vegas",
+    title: "Is Now a Good Time to Buy in Las Vegas?",
+    category: "Market Updates",
+    excerpt:
+      "The honest answer to the question every buyer asks — and the factors that actually matter more than trying to time the market.",
+    date: "2026-07-18",
+    author: "The Roland Team",
+    readMinutes: 5,
+    seoTitle: "Is Now a Good Time to Buy a Home in Las Vegas?",
+    seoDescription:
+      "Should you buy a home in Las Vegas now? An honest look at timing, rates, inventory, and the factors that matter more than trying to time the market.",
+    sections: [
+      {
+        heading: "Timing the market rarely works",
+        body: [
+          "Everyone wants to buy at the bottom, but waiting for a perfect moment usually costs more than it saves — in rent paid, equity missed, and stress. The better question isn't \"is the market perfect?\" but \"is this the right home and the right payment for my situation?\"",
+        ],
+      },
+      {
+        heading: "What actually matters",
+        body: [
+          "Focus on the things within your control: your budget and pre-approval, how long you plan to stay, and finding a home you'll be happy in. In a steady market like Las Vegas, buyers who purchase a home they can comfortably afford and hold tend to do well regardless of short-term swings.",
+        ],
+      },
+    ],
+  },
+
+  {
+    slug: "guard-gated-vs-master-planned-las-vegas",
+    title: "Guard-Gated vs. Master-Planned: What's the Difference?",
+    category: "Buying Guides",
+    excerpt:
+      "Two terms you'll hear constantly in Las Vegas real estate — here's what they actually mean and how to choose.",
+    date: "2026-07-15",
+    author: "The Roland Team",
+    readMinutes: 5,
+    seoTitle: "Guard-Gated vs. Master-Planned Communities in Las Vegas",
+    seoDescription:
+      "Understand the difference between guard-gated and master-planned communities in Las Vegas — security, amenities, privacy, and how to choose the right fit.",
+    sections: [
+      {
+        heading: "Master-planned communities",
+        body: [
+          "A master-planned community is a large, thoughtfully designed development with its own parks, trails, amenities, and often schools and retail. Summerlin and Green Valley are classic examples. The appeal is lifestyle and cohesion — everything is planned to work together.",
+        ],
+      },
+      {
+        heading: "Guard-gated communities",
+        body: [
+          "Guard-gated means controlled access with staffed entry, offering an added layer of privacy and security. Some guard-gated enclaves sit within larger master plans; others, like Ascaya, are standalone luxury communities. The trade-off is typically higher HOA dues for that exclusivity.",
+        ],
+      },
+      {
+        heading: "Which is right for you?",
+        body: [
+          "It comes down to what you value — amenities and community feel, maximum privacy and security, or both. We can help you weigh the options and find the community that fits your lifestyle and budget.",
+        ],
+      },
+    ],
+  },
+
+  {
+    slug: "buying-new-construction-what-to-know-las-vegas",
+    title: "Buying New Construction in Las Vegas: What to Know",
+    category: "New Construction",
+    excerpt:
+      "New builds are a big part of the Las Vegas market. Here's how the process differs from buying resale — and how to protect yourself.",
+    date: "2026-07-12",
+    author: "The Roland Team",
+    readMinutes: 6,
+    seoTitle: "Buying New Construction in Las Vegas: What Buyers Should Know",
+    seoDescription:
+      "A guide to buying new construction in Las Vegas — builder incentives, timelines, upgrades, and why you should bring your own agent to the builder.",
+    sections: [
+      {
+        heading: "The builder's rep works for the builder",
+        body: [
+          "The friendly agent in the model home represents the builder's interests, not yours. Register your own agent on your first visit and you get an advocate who compares incentives, reviews the contract, and helps you make smart upgrade decisions — usually at no cost to you.",
+        ],
+      },
+      {
+        heading: "Incentives over price cuts",
+        body: [
+          "Builders often prefer to offer incentives — upgrades, closing-cost credits, or rate buydowns — rather than cut the base price, which protects the community's comparable sales. Knowing how to negotiate these can add real value.",
+        ],
+      },
+    ],
+  },
 ];
 
 export function getPost(slug: string): BlogPost | undefined {

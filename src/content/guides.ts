@@ -454,6 +454,157 @@ export const guides: Guide[] = [
       },
     ],
   },
+
+  {
+    slug: "getting-a-mortgage-in-las-vegas",
+    title: "Getting a Mortgage in Las Vegas: Financing Your Home",
+    category: "Buying",
+    featured: false,
+    seoTitle: "Getting a Mortgage in Las Vegas: Home Financing Guide",
+    seoDescription:
+      "A guide to financing a home in Las Vegas — loan types, pre-approval, down payments, rates, and how to choose the right lender for your purchase.",
+    h1: "Getting a Mortgage in Las Vegas",
+    eyebrow: "Buyer Guide",
+    intro:
+      "Financing is the foundation of your purchase. Here's a plain-English guide to getting a mortgage in Las Vegas.",
+    readMinutes: 7,
+    sections: [
+      {
+        heading: "Start With Pre-Approval",
+        body: [
+          "Pre-approval is the first real step. A lender reviews your income, assets, debts, and credit, then issues a letter stating how much you can borrow. It defines your budget and, in a competitive market, signals to sellers that you're a serious buyer.",
+        ],
+      },
+      {
+        heading: "Common Loan Types",
+        body: ["Most Las Vegas buyers use one of these programs:"],
+        bullets: [
+          "Conventional — flexible terms, often as little as 3–5% down for qualified buyers.",
+          "FHA — lower credit and down-payment thresholds (commonly 3.5% down).",
+          "VA — zero down and no PMI for eligible veterans and military.",
+          "Jumbo — for luxury purchases above conforming loan limits, with stricter qualifying.",
+        ],
+      },
+      {
+        heading: "Choosing a Lender",
+        body: [
+          "Rates and fees vary between lenders, so it pays to compare. A responsive, local lender who closes on time is worth a lot in a competitive deal. We're happy to recommend trusted local lenders who know the Las Vegas market.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "What credit score do I need for a mortgage in Las Vegas?",
+        a: "It depends on the loan program — FHA loans can allow lower scores than conventional loans, and each lender sets its own overlays. A lender can review your credit and outline options.",
+      },
+      {
+        q: "How much down payment do I need?",
+        a: "It varies: conventional loans can start around 3–5%, FHA around 3.5%, and VA can be zero down for eligible buyers. Luxury and jumbo purchases typically require more.",
+      },
+      {
+        q: "Should I get pre-approved before house hunting?",
+        a: "Yes. Pre-approval defines your budget, surfaces any issues early, and makes your offers far stronger in a competitive market.",
+      },
+    ],
+  },
+
+  {
+    slug: "understanding-hoas-las-vegas",
+    title: "Understanding HOAs in Las Vegas Communities",
+    category: "Buying",
+    featured: false,
+    seoTitle: "Understanding HOAs in Las Vegas: A Buyer's Guide",
+    seoDescription:
+      "What Las Vegas buyers should know about HOAs — what dues cover, guard-gated communities, CC&Rs, and how to factor HOA fees into your budget.",
+    h1: "Understanding HOAs in Las Vegas Communities",
+    eyebrow: "Buyer Guide",
+    intro:
+      "Many of the valley's best neighborhoods are governed by HOAs. Here's what that means for you as a buyer.",
+    readMinutes: 6,
+    sections: [
+      {
+        heading: "What an HOA Does",
+        body: [
+          "A homeowners association maintains shared amenities and common areas and enforces community standards through its CC&Rs (covenants, conditions & restrictions). In Las Vegas, HOAs are what keep master-planned and guard-gated communities looking sharp and functioning smoothly — from landscaping and parks to security and clubhouses.",
+        ],
+      },
+      {
+        heading: "Budgeting for HOA Dues",
+        body: [
+          "HOA dues are a real part of your monthly cost, and they vary widely — modest in some master plans, higher in luxury guard-gated communities with extensive amenities. Always factor dues into your affordability math, and review what they cover so you understand the value you're getting.",
+        ],
+      },
+      {
+        heading: "Review the CC&Rs Before You Buy",
+        body: [
+          "During escrow you'll receive the HOA's governing documents and resale package. Read them — they cover rules on rentals, exterior changes, parking, and more. Your agent will help you review them so there are no surprises after closing.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "How much are HOA fees in Las Vegas?",
+        a: "They vary widely by community and amenities — from modest monthly dues in some master plans to higher fees in luxury guard-gated communities. Always confirm the current dues for any specific home.",
+      },
+      {
+        q: "What do HOA dues cover?",
+        a: "Typically common-area maintenance, landscaping, amenities (pools, parks, clubhouses), and in guard-gated communities, security. The specifics are spelled out in the community's governing documents.",
+      },
+      {
+        q: "Can I review HOA rules before buying?",
+        a: "Yes. During escrow you receive the CC&Rs and resale package. Reviewing them is an important step, and your agent will help you understand the rules before you close.",
+      },
+    ],
+  },
+
+  {
+    slug: "schools-las-vegas-henderson",
+    title: "Schools in Las Vegas & Henderson: What Buyers Should Know",
+    category: "Relocation",
+    featured: false,
+    seoTitle: "Schools in Las Vegas & Henderson: A Buyer's Guide",
+    seoDescription:
+      "How schools work in Las Vegas and Henderson — the Clark County School District, magnet and charter options, private schools, and how to verify attendance zones.",
+    h1: "Schools in Las Vegas & Henderson",
+    eyebrow: "Relocation Guide",
+    intro:
+      "School options matter to many buyers. Here's how the system works and how to verify the right information for any home.",
+    readMinutes: 6,
+    sections: [
+      {
+        heading: "The Clark County School District",
+        body: [
+          "Most of the Las Vegas Valley — including Henderson — is served by the Clark County School District (CCSD), one of the largest districts in the country. Public school assignment is generally based on your home's address, so attendance zones are tied to specific neighborhoods.",
+        ],
+      },
+      {
+        heading: "Magnet, Charter, and Private Options",
+        body: [
+          "Beyond zoned public schools, the area offers magnet programs, public charter schools, and a range of private and parochial schools. Availability and admission vary, so if a specific program matters to you, research its enrollment process early.",
+        ],
+      },
+      {
+        heading: "Always Verify Attendance Zones",
+        body: [
+          "School boundaries can and do change. Before buying based on a specific school, confirm the current attendance zone directly with CCSD and the school for the exact address — don't rely on third-party listings. We can help you locate the current zoning information for any home you're considering.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "What school district is Las Vegas in?",
+        a: "Most of the Las Vegas Valley, including Henderson, is served by the Clark County School District (CCSD). Public school assignment is generally based on your home's address.",
+      },
+      {
+        q: "How do I find out which school a home is zoned for?",
+        a: "Verify the current attendance zone directly with CCSD and the specific school using the property's exact address, since boundaries can change. We're glad to help you confirm zoning for any home.",
+      },
+      {
+        q: "Are there charter and private schools in Las Vegas?",
+        a: "Yes. In addition to zoned public schools, the area has magnet programs, public charter schools, and private and parochial options, each with its own enrollment process.",
+      },
+    ],
+  },
 ];
 
 export function getGuide(slug: string): Guide | undefined {
