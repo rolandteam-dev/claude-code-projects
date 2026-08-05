@@ -41,6 +41,10 @@ const communityHeroMap: Record<string, keyof typeof heroImages> = {
   "spring-valley": "home",
   "solera-at-anthem": "golf",
   "sun-city-aliante": "estate",
+  queensridge: "luxuryEstate",
+  "the-lakes": "lake",
+  "roma-hills": "luxuryEstate",
+  "peccole-ranch": "henderson",
 };
 
 export function communityHero(slug: string): string {

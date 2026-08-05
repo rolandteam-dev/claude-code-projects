@@ -1422,6 +1422,210 @@ export const communities: Community[] = [
       },
     ],
   },
+
+  {
+    slug: "queensridge",
+    name: "Queensridge",
+    city: "Las Vegas",
+    zip: "89145",
+    featured: false,
+    seoTitle: "Queensridge Homes for Sale | West Las Vegas Luxury",
+    seoDescription:
+      "Queensridge homes for sale in west Las Vegas — an upscale, European-inspired guard-gated community and home to the One Queensridge Place luxury towers.",
+    h1: "Queensridge Homes for Sale in Las Vegas, NV",
+    eyebrow: "West Las Vegas · Guard-Gated Luxury",
+    intro:
+      "European-inspired luxury on the west side — elegant estates and the landmark One Queensridge Place towers.",
+    lead:
+      "Queensridge is an upscale, European-inspired community on the west side of the Las Vegas Valley, known for its elegant architecture, mature landscaping, and guard-gated enclaves. It's also home to One Queensridge Place, a pair of landmark luxury high-rise towers offering full-service condominium living. Queensridge real estate appeals to buyers seeking refined luxury close to Summerlin and Downtown Summerlin.",
+    quickFacts: [
+      { label: "Location", value: "West Las Vegas, NV 89145" },
+      { label: "Community Type", value: "Guard-gated luxury; luxury high-rise" },
+      { label: "Landmark", value: "One Queensridge Place towers" },
+      { label: "Home Types", value: "Estates & luxury condominiums" },
+      { label: "Price Range", value: "Approx. $700K – $5M+" },
+      { label: "Nearby", value: "Summerlin, Downtown Summerlin" },
+    ],
+    sections: [
+      {
+        heading: "About Queensridge",
+        body: [
+          "Queensridge stands out for its European-inspired design, lush landscaping, and mix of guard-gated estate enclaves and full-service luxury condominium living at One Queensridge Place. Its west-side location keeps residents close to Summerlin's shopping, dining, and entertainment.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Queensridge",
+        body: [
+          "Buyers can choose from elegant single-family estates to luxury high-rise residences with concierge services. Pricing spans a wide range depending on home type, size, and view.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Queensridge located?",
+        a: "Queensridge is an upscale community on the west side of Las Vegas, Nevada (ZIP 89145), near Summerlin and Downtown Summerlin.",
+      },
+      {
+        q: "What is One Queensridge Place?",
+        a: "One Queensridge Place is a landmark pair of luxury high-rise towers within Queensridge, offering full-service, concierge condominium living.",
+      },
+      {
+        q: "How much do homes in Queensridge cost?",
+        a: "Prices generally range from around $700,000 to more than $5 million depending on whether it's an estate or a luxury condominium, plus size and views. Contact The Roland Team for current listings.",
+      },
+    ],
+  },
+
+  {
+    slug: "the-lakes",
+    name: "The Lakes",
+    city: "Las Vegas",
+    zip: "89117",
+    seoTitle: "The Lakes Homes for Sale | West Las Vegas Waterfront",
+    seoDescription:
+      "The Lakes homes for sale in west Las Vegas — an established master-planned community built around a man-made lake, with waterfront homes and central convenience.",
+    h1: "The Lakes Homes for Sale in Las Vegas, NV",
+    eyebrow: "West Las Vegas · Waterfront Community",
+    intro:
+      "An established west-valley community built around a man-made lake, with rare waterfront homes.",
+    lead:
+      "The Lakes is an established master-planned community on the west side of Las Vegas, built around a man-made lake that gives the neighborhood its name and a handful of rare waterfront homes. Centrally located and mature, The Lakes offers a distinctive setting with quick access to Summerlin, the 215 Beltway, and the rest of the valley.",
+    quickFacts: [
+      { label: "Location", value: "West Las Vegas, NV 89117" },
+      { label: "Community Type", value: "Established master-planned community" },
+      { label: "Signature Feature", value: "Man-made lake & waterfront homes" },
+      { label: "Home Types", value: "Single-family homes & condos" },
+      { label: "Price Range", value: "Approx. $450K – $2M+" },
+      { label: "Nearby", value: "Summerlin, the 215 Beltway" },
+    ],
+    sections: [
+      {
+        heading: "About The Lakes",
+        body: [
+          "The Lakes is centered on its namesake lake, with lakeside streets and a limited number of sought-after waterfront homes. As one of the west valley's established communities, it combines mature landscaping and a central location with a setting that's rare in the desert.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in The Lakes",
+        body: [
+          "The community offers single-family homes and condominiums across a range of price points, with waterfront and lake-view homes commanding a premium. Its convenience and character keep it consistently in demand.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is The Lakes located?",
+        a: "The Lakes is an established master-planned community in west Las Vegas, Nevada (ZIP 89117), near Summerlin and the 215 Beltway.",
+      },
+      {
+        q: "Does The Lakes have waterfront homes?",
+        a: "Yes. The Lakes is built around a man-made lake and includes a limited number of sought-after waterfront and lake-view homes.",
+      },
+      {
+        q: "How much do homes in The Lakes cost?",
+        a: "Prices generally range from around $450,000 to more than $2 million depending on the home and whether it has lake frontage. Contact The Roland Team for current availability.",
+      },
+    ],
+  },
+
+  {
+    slug: "roma-hills",
+    name: "Roma Hills",
+    city: "Henderson",
+    zip: "89052",
+    seoTitle: "Roma Hills Homes for Sale | Henderson, NV Guard-Gated",
+    seoDescription:
+      "Roma Hills homes for sale in Henderson, NV — an intimate guard-gated community of custom and semi-custom homes set in the foothills with valley views.",
+    h1: "Roma Hills Homes for Sale in Henderson, NV",
+    eyebrow: "Henderson, Nevada · Guard-Gated Community",
+    intro:
+      "An intimate guard-gated community of custom and semi-custom homes in the Henderson foothills.",
+    lead:
+      "Roma Hills is a smaller guard-gated community in the Henderson foothills, offering custom and semi-custom homes with elevated valley views and a private, exclusive feel. For buyers seeking guard-gated privacy in an intimate setting close to Henderson's amenities, Roma Hills real estate is a distinctive option.",
+    quickFacts: [
+      { label: "Location", value: "Henderson, NV 89052" },
+      { label: "Community Type", value: "Guard-gated, custom & semi-custom" },
+      { label: "Setting", value: "Elevated foothills with valley views" },
+      { label: "Home Types", value: "Custom & semi-custom homes" },
+      { label: "Price Range", value: "Approx. $700K – $3M+" },
+    ],
+    sections: [
+      {
+        heading: "About Roma Hills",
+        body: [
+          "Roma Hills offers guard-gated privacy in an intimate, elevated setting. Its custom and semi-custom homes enjoy valley views and a quiet, exclusive atmosphere, all within easy reach of Henderson's shopping, dining, and freeways.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Roma Hills",
+        body: [
+          "The community's limited size means inventory is scarce, and its custom homes vary in size and finish. Buyers value the combination of privacy, views, and Henderson convenience.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Roma Hills located?",
+        a: "Roma Hills is a guard-gated community in the Henderson foothills (ZIP 89052), with elevated valley views.",
+      },
+      {
+        q: "Is Roma Hills a gated community?",
+        a: "Yes. Roma Hills is a guard-gated community of custom and semi-custom homes with a private, intimate feel.",
+      },
+      {
+        q: "How much do homes in Roma Hills cost?",
+        a: "Prices generally range from around $700,000 to more than $3 million depending on size and finish. Because the community is small, inventory can be limited. Contact The Roland Team for current listings.",
+      },
+    ],
+  },
+
+  {
+    slug: "peccole-ranch",
+    name: "Peccole Ranch",
+    city: "Las Vegas",
+    zip: "89117",
+    seoTitle: "Peccole Ranch Homes for Sale | West Las Vegas",
+    seoDescription:
+      "Peccole Ranch homes for sale in west Las Vegas — an established master-planned community with parks, trails, and convenient access near Summerlin.",
+    h1: "Peccole Ranch Homes for Sale in Las Vegas, NV",
+    eyebrow: "West Las Vegas · Master-Planned Community",
+    intro:
+      "An established west-valley master plan with parks, trails, and convenience next to Summerlin.",
+    lead:
+      "Peccole Ranch is an established master-planned community on the west side of Las Vegas, known for its parks, trails, and mature, tree-lined neighborhoods. Bordering Summerlin and centrally located, Peccole Ranch real estate offers established value and a convenient lifestyle for a wide range of buyers.",
+    quickFacts: [
+      { label: "Location", value: "West Las Vegas, NV 89117 / 89147" },
+      { label: "Community Type", value: "Established master-planned community" },
+      { label: "Highlights", value: "Parks, trails, mature landscaping" },
+      { label: "Home Types", value: "Single-family homes & condos" },
+      { label: "Price Range", value: "Approx. $450K – $1M+" },
+      { label: "Nearby", value: "Summerlin, Downtown Summerlin" },
+    ],
+    sections: [
+      {
+        heading: "About Peccole Ranch",
+        body: [
+          "Peccole Ranch offers a well-established, connected community with parks, paseos, and trails, bordering Summerlin on the valley's west side. Its mature landscaping and central location make it a practical, desirable choice.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Peccole Ranch",
+        body: [
+          "The community includes single-family homes and condominiums, including some gated pockets, across a range of price points — offering established value near Summerlin's amenities.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Peccole Ranch located?",
+        a: "Peccole Ranch is an established master-planned community in west Las Vegas (ZIP 89117 / 89147), bordering Summerlin.",
+      },
+      {
+        q: "How much do homes in Peccole Ranch cost?",
+        a: "Prices generally range from around $450,000 to more than $1 million depending on size, location, and whether the home is in a gated pocket. Contact The Roland Team for current availability.",
+      },
+    ],
+  },
 ];
 
 export function getCommunity(slug: string): Community | undefined {
