@@ -54,6 +54,7 @@ export const site = {
         { label: "Luxury Real Estate", href: "/las-vegas-luxury-real-estate" },
         { label: "Communities", href: "/communities" },
         { label: "Areas We Serve", href: "/areas" },
+        { label: "Moving to Las Vegas", href: "/moving-to-las-vegas" },
         { label: "Buyer Guides", href: "/guides" },
         { label: "First-Time Buyers", href: "/guides/first-time-home-buyer-las-vegas" },
         { label: "Market Report", href: "/market-report" },

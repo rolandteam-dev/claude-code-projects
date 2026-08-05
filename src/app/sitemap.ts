@@ -10,8 +10,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const staticRoutes = [
     "/", "/buy", "/sell", "/home-value", "/new-construction", "/las-vegas-luxury-real-estate",
-    "/guard-gated-communities-las-vegas", "/listings", "/communities", "/areas", "/guides",
-    "/market-report", "/about", "/contact", "/blog",
+    "/guard-gated-communities-las-vegas", "/moving-to-las-vegas", "/listings", "/communities",
+    "/areas", "/guides", "/market-report", "/about", "/contact", "/blog",
   ].map(
     (path) => ({
       url: absoluteUrl(path),
