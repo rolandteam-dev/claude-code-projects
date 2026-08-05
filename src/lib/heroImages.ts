@@ -39,6 +39,8 @@ const communityHeroMap: Record<string, keyof typeof heroImages> = {
   tuscany: "golf",
   "silverado-ranch": "estate",
   "spring-valley": "home",
+  "solera-at-anthem": "golf",
+  "sun-city-aliante": "estate",
 };
 
 export function communityHero(slug: string): string {

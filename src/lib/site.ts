@@ -78,6 +78,7 @@ export const site = {
         { label: "All Communities", href: "/communities" },
         { label: "Luxury Real Estate", href: "/las-vegas-luxury-real-estate" },
         { label: "Guard-Gated Communities", href: "/guard-gated-communities-las-vegas" },
+        { label: "55+ / Active Adult", href: "/active-adult-communities-las-vegas" },
         { label: "Henderson", href: "/areas/henderson" },
         { label: "Las Vegas", href: "/areas/las-vegas" },
         { label: "Boulder City", href: "/areas/boulder-city" },

@@ -1322,6 +1322,106 @@ export const communities: Community[] = [
       },
     ],
   },
+
+  {
+    slug: "solera-at-anthem",
+    name: "Solera at Anthem",
+    city: "Henderson",
+    zip: "89052",
+    seoTitle: "Solera at Anthem Homes for Sale | 55+ Henderson Community",
+    seoDescription:
+      "Solera at Anthem homes for sale — a guard-gated 55+ active-adult community in Henderson with a recreation center, clubs, and low-maintenance living.",
+    h1: "Solera at Anthem Homes for Sale in Henderson, NV",
+    eyebrow: "Henderson, Nevada · Active Adult (55+)",
+    intro:
+      "A guard-gated 55+ active-adult community in Henderson with a recreation center and an active lifestyle.",
+    lead:
+      "Solera at Anthem is a guard-gated, age-qualified (55+) active-adult community in Henderson, built by Del Webb within the Anthem area. With a private recreation center, pools, fitness, and a full calendar of clubs and activities, Solera offers low-maintenance living and elevated valley views for active adults seeking community and convenience.",
+    quickFacts: [
+      { label: "Location", value: "Henderson, NV 89052" },
+      { label: "Community Type", value: "Guard-gated 55+ active adult" },
+      { label: "Amenities", value: "Recreation center, pools, fitness" },
+      { label: "Home Types", value: "Single-family & attached homes" },
+      { label: "Price Range", value: "Approx. $400K – $900K+" },
+      { label: "Setting", value: "Elevated, near the Anthem area" },
+    ],
+    sections: [
+      {
+        heading: "About Solera at Anthem",
+        body: [
+          "Solera pairs guard-gated security with a resort-style, age-qualified lifestyle. Residents enjoy a private recreation center with pools and fitness, plus dozens of clubs and social activities — all in an elevated Henderson setting with valley views and low-maintenance homes.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Solera at Anthem",
+        body: [
+          "The community offers single-family and attached homes across a range of floor plans designed for active-adult living, giving buyers approachable, lock-and-leave options within a gated setting.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Is Solera at Anthem an age-restricted community?",
+        a: "Yes. Solera at Anthem is a guard-gated, age-qualified (55+) active-adult community in Henderson, meaning at least one resident of each household must generally meet the minimum age requirement.",
+      },
+      {
+        q: "What amenities does Solera at Anthem offer?",
+        a: "Residents have access to a private recreation center with pools and fitness facilities, plus a wide range of clubs, classes, and social activities.",
+      },
+      {
+        q: "How much do homes in Solera at Anthem cost?",
+        a: "Prices generally range from around $400,000 to about $900,000 depending on floor plan and location. Contact The Roland Team for current availability.",
+      },
+    ],
+  },
+
+  {
+    slug: "sun-city-aliante",
+    name: "Sun City Aliante",
+    city: "North Las Vegas",
+    zip: "89031",
+    seoTitle: "Sun City Aliante Homes for Sale | 55+ North Las Vegas",
+    seoDescription:
+      "Sun City Aliante homes for sale — a 55+ active-adult community in North Las Vegas with a recreation center, golf nearby, and low-maintenance living.",
+    h1: "Sun City Aliante Homes for Sale in North Las Vegas, NV",
+    eyebrow: "North Las Vegas · Active Adult (55+)",
+    intro:
+      "A 55+ active-adult community in North Las Vegas with a recreation center and an easygoing lifestyle.",
+    lead:
+      "Sun City Aliante is an age-qualified (55+) active-adult community in North Las Vegas, built by Del Webb. With a private recreation center, pools, fitness, and abundant clubs and activities — plus golf and the amenities of the Aliante area nearby — Sun City Aliante offers approachable, low-maintenance living for active adults.",
+    quickFacts: [
+      { label: "Location", value: "North Las Vegas, NV 89031" },
+      { label: "Community Type", value: "Age-qualified 55+ active adult" },
+      { label: "Amenities", value: "Recreation center, pools, fitness" },
+      { label: "Nearby", value: "Aliante Golf Club & casino" },
+      { label: "Home Types", value: "Single-family & attached homes" },
+      { label: "Price Range", value: "Approx. $350K – $700K+" },
+    ],
+    sections: [
+      {
+        heading: "About Sun City Aliante",
+        body: [
+          "Sun City Aliante offers residents 55 and older a lifestyle centered on recreation and connection — a private community center with fitness and pools, plus dozens of clubs and interest groups. Its North Las Vegas location keeps golf, dining, and everyday conveniences close.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Sun City Aliante",
+        body: [
+          "The community features single-family and attached homes across many floor plans, offering approachable entry points into age-qualified living on the valley's north side.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Is Sun City Aliante age-restricted?",
+        a: "Yes. Sun City Aliante is an age-qualified (55+) active-adult community in North Las Vegas, meaning at least one resident of each household must generally meet the minimum age requirement.",
+      },
+      {
+        q: "How much do homes in Sun City Aliante cost?",
+        a: "Prices generally range from around $350,000 to about $700,000 depending on floor plan and location. Contact The Roland Team for current availability.",
+      },
+    ],
+  },
 ];
 
 export function getCommunity(slug: string): Community | undefined {
