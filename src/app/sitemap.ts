@@ -9,8 +9,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
   const staticRoutes = [
-    "/", "/buy", "/sell", "/home-value", "/new-construction", "/listings", "/communities",
-    "/areas", "/guides", "/market-report", "/about", "/contact", "/blog",
+    "/", "/buy", "/sell", "/home-value", "/new-construction", "/las-vegas-luxury-real-estate",
+    "/listings", "/communities", "/areas", "/guides", "/market-report", "/about", "/contact", "/blog",
   ].map(
     (path) => ({
       url: absoluteUrl(path),

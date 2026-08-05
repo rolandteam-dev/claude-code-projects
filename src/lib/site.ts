@@ -51,6 +51,7 @@ export const site = {
       href: "/buy",
       children: [
         { label: "Search Homes for Sale", href: "/listings" },
+        { label: "Luxury Real Estate", href: "/las-vegas-luxury-real-estate" },
         { label: "Communities", href: "/communities" },
         { label: "Areas We Serve", href: "/areas" },
         { label: "Buyer Guides", href: "/guides" },
