@@ -261,6 +261,63 @@ export const blogPosts: BlogPost[] = [
       },
     ],
   },
+
+  {
+    slug: "las-vegas-luxury-market-what-makes-it-unique",
+    title: "The Las Vegas Luxury Market: What Makes It Unique",
+    category: "Market Updates",
+    excerpt:
+      "Southern Nevada's luxury tier plays by its own rules. Here's what sets the Las Vegas high-end market apart from the rest of the valley.",
+    date: "2026-07-10",
+    author: "The Roland Team",
+    readMinutes: 6,
+    seoTitle: "The Las Vegas Luxury Real Estate Market: What Makes It Unique",
+    seoDescription:
+      "What makes the Las Vegas luxury real estate market unique — guard-gated exclusivity, custom estates, no state income tax, and its own pricing dynamics.",
+    sections: [
+      {
+        heading: "A market within a market",
+        body: [
+          "The luxury tier moves on a different timeline than the broader valley. With a thin set of true comparable sales, unique custom estates, and a global buyer pool, valley-wide averages tell you very little about what a specific guard-gated home is worth. Pricing and marketing strategy matter far more here than in the mainstream market.",
+          "For a deeper look at the communities and price tiers, see our Las Vegas luxury real estate guide.",
+        ],
+      },
+      {
+        heading: "Why buyers choose Las Vegas luxury",
+        body: [
+          "No state income tax, dramatic desert-contemporary architecture, elevated Strip and mountain views, and world-class amenities minutes from the door — all combine to draw high-end buyers from higher-tax, higher-density markets. Communities like Ascaya, MacDonald Highlands, The Ridges, and The Summit Club anchor the top of the market.",
+        ],
+      },
+    ],
+  },
+
+  {
+    slug: "off-market-luxury-homes-las-vegas",
+    title: "Off-Market Luxury Homes in Las Vegas: How to Find Them",
+    category: "Buying Guides",
+    excerpt:
+      "Some of the best luxury homes never hit the public market. Here's how off-market and coming-soon opportunities work — and how to access them.",
+    date: "2026-07-08",
+    author: "The Roland Team",
+    readMinutes: 5,
+    seoTitle: "Off-Market Luxury Homes in Las Vegas: How to Find Them",
+    seoDescription:
+      "How off-market and coming-soon luxury homes work in Las Vegas — why sellers use them, and how buyers access these private opportunities.",
+    sections: [
+      {
+        heading: "Why luxury sellers go off-market",
+        body: [
+          "At the top of the market, discretion is often worth more than maximum exposure. Some owners prefer to sell privately — to protect their privacy, test pricing quietly, or avoid days-on-market showing publicly. That means a meaningful share of luxury inventory is never listed on the public sites.",
+        ],
+      },
+      {
+        heading: "How buyers get access",
+        body: [
+          "Off-market and coming-soon opportunities move through relationships, not portals. A well-connected local specialist hears about these homes through their network of agents and past clients — which is why working with a team embedded in the valley's luxury communities is the single best way to see what the public never will.",
+        ],
+      },
+    ],
+  },
 ];
 
 export function getPost(slug: string): BlogPost | undefined {
