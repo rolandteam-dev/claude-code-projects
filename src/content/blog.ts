@@ -346,6 +346,118 @@ export const blogPosts: BlogPost[] = [
       },
     ],
   },
+
+  {
+    slug: "las-vegas-property-taxes-explained",
+    title: "Las Vegas Property Taxes Explained",
+    category: "Buying Guides",
+    excerpt:
+      "Nevada's property taxes are a pleasant surprise for many buyers. Here's how they work in Las Vegas and Henderson.",
+    date: "2026-07-03",
+    author: "The Roland Team",
+    readMinutes: 5,
+    seoTitle: "Las Vegas Property Taxes Explained: A Buyer's Guide",
+    seoDescription:
+      "How property taxes work in Las Vegas and Henderson — Nevada's moderate rates, how assessments work, and why the tax picture attracts relocating buyers.",
+    sections: [
+      {
+        heading: "A moderate tax picture",
+        body: [
+          "Combined with no state income tax, Nevada's relatively moderate property taxes are a major reason buyers relocate to Las Vegas from higher-tax states. Property tax is based on the assessed value of your home and the local rates for your area, and Nevada has provisions that can limit large year-over-year increases on owner-occupied homes.",
+        ],
+      },
+      {
+        heading: "Estimating your taxes",
+        body: [
+          "Because rates and assessments vary by location, the best way to know your likely property tax is to estimate it for the specific home you're considering. We're glad to help you estimate taxes and total monthly costs for any property.",
+        ],
+      },
+    ],
+  },
+
+  {
+    slug: "best-time-to-buy-or-sell-las-vegas",
+    title: "The Best Time to Buy or Sell a Home in Las Vegas",
+    category: "Market Updates",
+    excerpt:
+      "Is there a best season to buy or sell in Las Vegas? Here's how seasonality really works in the valley — and why your situation matters more.",
+    date: "2026-07-01",
+    author: "The Roland Team",
+    readMinutes: 5,
+    seoTitle: "The Best Time to Buy or Sell a Home in Las Vegas",
+    seoDescription:
+      "When is the best time to buy or sell a home in Las Vegas? How seasonality affects the market — and why your personal timeline usually matters more.",
+    sections: [
+      {
+        heading: "Seasonality in the valley",
+        body: [
+          "Las Vegas sees more activity in spring and early summer, when inventory and buyer demand both rise, and a quieter pace in the hottest months and around the holidays. Sellers often see more traffic in spring; buyers sometimes find less competition in the slower months.",
+        ],
+      },
+      {
+        heading: "Your timeline matters more than the calendar",
+        body: [
+          "In practice, the 'best time' is when it's right for you. A well-priced, well-presented home sells in any season, and a buyer who finds the right home at the right payment does well regardless of the month. Trying to perfectly time the market rarely beats acting when you're ready.",
+        ],
+      },
+    ],
+  },
+
+  {
+    slug: "understanding-escrow-closing-nevada",
+    title: "Understanding Escrow and Closing in Nevada",
+    category: "Buying Guides",
+    excerpt:
+      "Nevada uses escrow and title companies to close real estate deals. Here's what happens between accepted offer and keys in hand.",
+    date: "2026-06-28",
+    author: "The Roland Team",
+    readMinutes: 5,
+    seoTitle: "Understanding Escrow and Closing in Nevada",
+    seoDescription:
+      "How escrow and closing work in Nevada real estate — the role of escrow and title companies, timelines, and what buyers and sellers can expect.",
+    sections: [
+      {
+        heading: "The role of escrow",
+        body: [
+          "In Nevada, a neutral escrow (and title) company manages the closing — holding funds and documents, coordinating between the parties and lender, and ensuring clear title before the transaction records. It's a safeguard that protects both buyer and seller.",
+        ],
+      },
+      {
+        heading: "The typical timeline",
+        body: [
+          "Once an offer is accepted, buyers complete inspections and the lender's appraisal during the escrow period. Most financed purchases close in about 30 days; cash deals can be faster. Your agent guides you through deadlines, contingencies, and the final walkthrough and signing.",
+        ],
+      },
+    ],
+  },
+
+  {
+    slug: "pool-homes-in-las-vegas-what-to-know",
+    title: "Pool Homes in Las Vegas: What to Know",
+    category: "Buying Guides",
+    excerpt:
+      "In the desert, a backyard pool is a lifestyle. Here's what to consider when buying a pool home in Las Vegas.",
+    date: "2026-06-25",
+    author: "The Roland Team",
+    readMinutes: 5,
+    seoTitle: "Buying a Pool Home in Las Vegas: What to Know",
+    seoDescription:
+      "What to know before buying a pool home in Las Vegas — desert lifestyle appeal, maintenance and cost considerations, and inspection tips.",
+    sections: [
+      {
+        heading: "Why pool homes are popular here",
+        body: [
+          "With long, hot summers, a private pool is one of the most sought-after features in Las Vegas. Pool homes offer a real lifestyle upgrade and can broaden a home's appeal at resale, particularly in family and luxury segments.",
+        ],
+      },
+      {
+        heading: "What to consider",
+        body: [
+          "Factor in maintenance, energy, and insurance costs, and be sure the pool and equipment are inspected as part of your due diligence. In luxury and guard-gated communities, resort-style pools are common — we can help you weigh the options and costs for any home.",
+        ],
+      },
+    ],
+  },
 ];
 
 export function getPost(slug: string): BlogPost | undefined {
