@@ -75,6 +75,8 @@ export const site = {
       href: "/communities",
       children: [
         { label: "All Communities", href: "/communities" },
+        { label: "Luxury Real Estate", href: "/las-vegas-luxury-real-estate" },
+        { label: "Guard-Gated Communities", href: "/guard-gated-communities-las-vegas" },
         { label: "Henderson", href: "/areas/henderson" },
         { label: "Las Vegas", href: "/areas/las-vegas" },
         { label: "Boulder City", href: "/areas/boulder-city" },

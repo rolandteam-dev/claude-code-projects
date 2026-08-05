@@ -318,6 +318,34 @@ export const blogPosts: BlogPost[] = [
       },
     ],
   },
+
+  {
+    slug: "are-guard-gated-communities-worth-it-las-vegas",
+    title: "Are Guard-Gated Communities Worth It in Las Vegas?",
+    category: "Buying Guides",
+    excerpt:
+      "Guard-gated living comes with real perks and real costs. Here's an honest look at whether it's worth it in Las Vegas and Henderson.",
+    date: "2026-07-05",
+    author: "The Roland Team",
+    readMinutes: 5,
+    seoTitle: "Are Guard-Gated Communities Worth It in Las Vegas?",
+    seoDescription:
+      "Are guard-gated communities worth it in Las Vegas? An honest look at the privacy, security, amenities, and HOA costs of gated living in Southern Nevada.",
+    sections: [
+      {
+        heading: "What you get",
+        body: [
+          "Guard-gated communities offer staffed 24-hour entry, added privacy, exclusivity, and often extensive private amenities — clubs, golf, pools, and clubhouses. For many buyers, that peace of mind and lifestyle is the whole point, and guard-gated addresses tend to hold their appeal well over time.",
+        ],
+      },
+      {
+        heading: "What it costs",
+        body: [
+          "The trade-off is higher HOA dues to fund the security staffing and amenities. Whether it's worth it comes down to your priorities and budget. Explore the valley's options on our guard-gated communities guide, and review any community's HOA documents carefully before you buy.",
+        ],
+      },
+    ],
+  },
 ];
 
 export function getPost(slug: string): BlogPost | undefined {
