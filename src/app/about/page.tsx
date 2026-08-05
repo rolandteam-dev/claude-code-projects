@@ -57,6 +57,20 @@ export default function AboutPage() {
         </p>
       </Container>
 
+      {/* Stats band */}
+      <Container size="wide" className="pb-6">
+        <div className="grid grid-cols-2 gap-6 rounded-[14px] border border-[var(--color-line)] bg-[var(--color-sand)] p-8 md:grid-cols-4">
+          {site.stats.map((s) => (
+            <div key={s.label} className="text-center">
+              <div className="font-sans text-[1.9rem] font-semibold text-[var(--color-gold)]">{s.value}</div>
+              <div className="mt-1 font-sans text-[0.78rem] uppercase tracking-[0.08em] text-[var(--color-muted)]">
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Container>
+
       {/* Meet the team */}
       <Container size="wide" className="pb-8">
         <h2 className="text-[1.7rem]">Meet the team</h2>
@@ -67,9 +81,13 @@ export default function AboutPage() {
               <span className="font-sans text-[0.7rem] uppercase tracking-[0.14em] text-white/70">Add photo</span>
             </div>
             <div className="mt-4 font-sans text-[1.1rem] font-semibold text-[var(--color-ink)]">Mike Roland</div>
-            <div className="font-sans text-[0.82rem] text-[var(--color-gold)]">Team Lead · The Roland Team | LPT Realty</div>
+            <div className="font-sans text-[0.82rem] text-[var(--color-gold)]">Founder &amp; Team Lead · The Roland Team | LPT Realty</div>
             <p className="mt-2 text-[0.9rem] text-[var(--color-ink-soft)]">
-              [Add Mike&apos;s bio — background, specialties, and what clients can expect.]
+              Mike Roland earned his real estate license in 2015 and quickly discovered a talent for the business
+              of selling homes. He built The Roland Team into one of the Las Vegas Valley&apos;s top-producing
+              groups — now a Top 1% team with 1,000+ homes sold, 800+ five-star reviews, and a roster of
+              dedicated buyer and seller specialists. Mike has been featured in the Las Vegas Review-Journal on
+              the forces shaping the local housing market.
             </p>
           </div>
 

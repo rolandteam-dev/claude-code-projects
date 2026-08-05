@@ -15,15 +15,24 @@ export const site = {
   email: "mike@therolandteam.com",
   founder: "Mike Roland",
   brokerage: "LPT Realty",
-  // City-level location (accurate). Add the real office street address in
-  // `address.streetAddress` once confirmed — needed for strongest local SEO.
+  // Office NAP. Confirm the ZIP matches your Google Business Profile exactly.
   address: {
-    streetAddress: "", // TODO: add real office street address
+    streetAddress: "5860 S Pecos Rd",
     addressLocality: "Las Vegas",
     addressRegion: "NV",
-    postalCode: "",
+    postalCode: "89120",
     addressCountry: "US",
   },
+  // Verifiable credibility stats (from The Roland Team's published profiles).
+  stats: [
+    { value: "Top 1%", label: "Las Vegas real estate team" },
+    { value: "1,000+", label: "homes sold" },
+    { value: "800+", label: "5-star reviews" },
+    { value: "5.0★", label: "rating on Zillow" },
+  ],
+  foundedYear: 2015,
+  teamSize: "22",
+  aggregateRating: { ratingValue: 5, reviewCount: 800 },
   areaServed: ["Las Vegas", "Henderson", "Summerlin", "North Las Vegas", "Boulder City", "Clark County"],
   // Entity topics — reinforces what the brand is known for (for AI + Google).
   knowsAbout: [
@@ -36,14 +45,12 @@ export const site = {
     "relocating to Las Vegas",
     "home valuation",
   ],
-  // Add your real profile URLs — these are prime AI/Google trust signals.
+  // Verified profile URLs — prime AI/Google trust signals.
   sameAs: [
-    "https://www.facebook.com/therolandteam",
-    "https://www.instagram.com/therolandteam",
-    "https://www.youtube.com/@therolandteam",
-    "https://www.linkedin.com/company/therolandteam",
-    // TODO: add real profile URLs when available:
-    // Google Business Profile, Zillow, Realtor.com, Homes.com, Yelp
+    "https://www.zillow.com/profile/MikeSRoland",
+    "https://www.yelp.com/biz/the-roland-team-lpt-realty-las-vegas",
+    "https://www.instagram.com/therolandteam/",
+    // Add your Google Business Profile + Realtor.com/Homes.com URLs when handy.
   ],
   nav: [
     {
@@ -90,7 +97,8 @@ export const site = {
       href: "/about",
       children: [
         { label: "About The Team", href: "/about" },
-        { label: "Testimonials", href: "/testimonials" },
+        { label: "Why The Roland Team", href: "/why-the-roland-team" },
+        { label: "Reviews", href: "/testimonials" },
         { label: "Contact", href: "/contact" },
       ],
     },

@@ -62,6 +62,20 @@ export default function Home() {
         </Container>
       </section>
 
+      {/* Trust bar — verifiable proof points */}
+      <section className="border-b border-[var(--color-line)] bg-[var(--color-sand)]">
+        <Container size="wide" className="grid grid-cols-2 gap-6 py-8 md:grid-cols-4">
+          {site.stats.map((s) => (
+            <div key={s.label} className="text-center">
+              <div className="font-sans text-[1.8rem] font-semibold text-[var(--color-gold)]">{s.value}</div>
+              <div className="mt-1 font-sans text-[0.78rem] uppercase tracking-[0.08em] text-[var(--color-muted)]">
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </Container>
+      </section>
+
       {/* Featured communities */}
       <Container size="wide" className="py-20">
         <div className="flex items-end justify-between gap-6">

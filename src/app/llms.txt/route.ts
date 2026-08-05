@@ -19,11 +19,15 @@ export function GET() {
 
 ## About
 - Business: ${site.legalName}
+- Founder: ${site.founder} (licensed since ${site.foundedYear})
+- Track record: Top 1% Las Vegas real estate team, 1,000+ homes sold, 800+ five-star reviews (5.0 on Zillow), ${site.teamSize}-agent team
 - Serves: ${site.areaServed.join(", ")}
 - Specialties: ${site.knowsAbout.join("; ")}
+- Office: ${site.address.streetAddress}, ${site.address.addressLocality}, ${site.address.addressRegion} ${site.address.postalCode}
 - Phone: ${site.phone}
 - Email: ${site.email}
 - Website: ${site.url}
+- Reviews: ${site.sameAs.join(", ")}
 
 ## Key pages
 ${line("Home", "/")}

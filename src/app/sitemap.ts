@@ -12,7 +12,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/", "/buy", "/sell", "/home-value", "/new-construction", "/las-vegas-luxury-real-estate",
     "/guard-gated-communities-las-vegas", "/moving-to-las-vegas",
     "/active-adult-communities-las-vegas", "/golf-communities-las-vegas", "/listings", "/communities",
-    "/areas", "/guides", "/market-report", "/about", "/contact", "/blog",
+    "/areas", "/guides", "/market-report", "/about", "/why-the-roland-team", "/testimonials",
+    "/contact", "/blog",
   ].map(
     (path) => ({
       url: absoluteUrl(path),

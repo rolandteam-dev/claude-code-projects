@@ -36,6 +36,25 @@ export default function TestimonialsPage() {
       </section>
 
       <Container size="wide" className="py-14">
+        {/* Aggregate rating + links to full reviews */}
+        <div className="mb-10 flex flex-col items-center gap-4 rounded-[14px] border border-[var(--color-line)] bg-[var(--color-sand)] p-8 text-center">
+          <div className="font-sans text-[3rem] font-semibold leading-none text-[var(--color-gold)]">5.0★</div>
+          <p className="font-sans text-[1.05rem] font-semibold text-[var(--color-ink)]">
+            800+ five-star reviews across Zillow, Google &amp; Yelp
+          </p>
+          <p className="max-w-[560px] text-[0.95rem] text-[var(--color-ink-soft)]">
+            A Top 1% Las Vegas real estate team with 1,000+ homes sold — and the reviews to back it up.
+          </p>
+          <div className="mt-2 flex flex-wrap justify-center gap-3">
+            <a href="https://www.zillow.com/profile/MikeSRoland" target="_blank" rel="noopener noreferrer" className="btn !py-2.5 !px-5">
+              Read Zillow Reviews
+            </a>
+            <a href="https://www.yelp.com/biz/the-roland-team-lpt-realty-las-vegas" target="_blank" rel="noopener noreferrer" className="btn btn-ghost !py-2.5 !px-5">
+              Read Yelp Reviews
+            </a>
+          </div>
+        </div>
+
         {testimonialsAreSample && (
           <div className="mb-8 rounded-[10px] border border-dashed border-[var(--color-gold-2)] bg-[var(--color-sand)] p-4 font-sans text-[0.82rem] text-[var(--color-muted)]">
             <strong>Placeholder content.</strong> The quotes below are samples for layout only — replace them
