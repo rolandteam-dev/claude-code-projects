@@ -71,18 +71,27 @@ export default function AboutPage() {
         </div>
       </Container>
 
-      {/* Meet the team */}
+      {/* Meet the team — brand-first (no per-agent profiles by design) */}
       <Container size="wide" className="pb-8">
-        <h2 className="text-[1.7rem]">Meet the team</h2>
-        <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Lead */}
-          <div className="rounded-[12px] border border-[var(--color-line)] bg-white p-6 shadow-[var(--shadow-soft)]">
-            <div className="flex h-40 items-end rounded-[10px] bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)] p-4">
-              <span className="font-sans text-[0.7rem] uppercase tracking-[0.14em] text-white/70">Add photo</span>
-            </div>
-            <div className="mt-4 font-sans text-[1.1rem] font-semibold text-[var(--color-ink)]">Mike Roland</div>
-            <div className="font-sans text-[0.82rem] text-[var(--color-gold)]">Founder &amp; Team Lead · The Roland Team | LPT Realty</div>
-            <p className="mt-2 text-[0.9rem] text-[var(--color-ink-soft)]">
+        <div className="eyebrow">Our Team</div>
+        <h2 className="mt-2 text-[1.7rem]">Meet The Roland Team</h2>
+        <p className="mt-3 max-w-[660px] text-[var(--color-ink-soft)]">
+          A 22-agent team of dedicated buyer and seller specialists, led by founder Mike Roland — so you always
+          work with someone focused on exactly what you need.
+        </p>
+
+        {/* Team group photo (swap the graphite block for the real photo) */}
+        <div className="mt-8 flex aspect-[2/1] w-full items-end overflow-hidden rounded-[14px] bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)] p-6 md:aspect-[2.4/1]">
+          <span className="font-sans text-[0.72rem] uppercase tracking-[0.16em] text-white/55">The Roland Team</span>
+        </div>
+
+        {/* Founder feature */}
+        <div className="mt-10 grid gap-8 md:grid-cols-[260px_1fr] md:items-center">
+          <div className="aspect-[3/4] w-full overflow-hidden rounded-[14px] bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)]" />
+          <div>
+            <div className="font-sans text-[1.35rem] font-semibold text-[var(--color-ink)]">Mike Roland</div>
+            <div className="font-sans text-[0.85rem] text-[var(--color-gold)]">Founder &amp; Team Lead · The Roland Team | LPT Realty</div>
+            <p className="mt-3 text-[var(--color-ink-soft)]">
               Mike Roland earned his real estate license in 2015 and quickly discovered a talent for the business
               of selling homes. He built The Roland Team into one of the Las Vegas Valley&apos;s top-producing
               groups — now a Top 1% team with 1,000+ homes sold, 800+ five-star reviews, and a roster of
@@ -90,22 +99,7 @@ export default function AboutPage() {
               the forces shaping the local housing market.
             </p>
           </div>
-
-          {/* Placeholder slots for real agents */}
-          {[1, 2].map((n) => (
-            <div key={n} className="rounded-[12px] border border-dashed border-[var(--color-line)] bg-[var(--color-sand)] p-6">
-              <div className="flex h-40 items-center justify-center rounded-[10px] border border-dashed border-[var(--color-line)] text-center">
-                <span className="font-sans text-[0.78rem] text-[var(--color-muted)]">Add team member</span>
-              </div>
-              <div className="mt-4 font-sans text-[1.05rem] font-semibold text-[var(--color-muted)]">Agent name</div>
-              <p className="mt-2 text-[0.88rem] text-[var(--color-muted)]">Add a real agent bio, role, and photo.</p>
-            </div>
-          ))}
         </div>
-        <p className="mt-4 font-sans text-[0.78rem] text-[var(--color-muted)]">
-          Team bios and photos are placeholders — send real names, roles, headshots, and bios and I&apos;ll drop
-          them in.
-        </p>
       </Container>
 
       <Container size="wide" className="pb-20">
