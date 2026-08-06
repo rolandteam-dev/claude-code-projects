@@ -10,7 +10,7 @@ import { site } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Sell a Home in Las Vegas & Henderson",
   description:
-    "Sell your Las Vegas or Henderson home for more, with less stress. Get a free home valuation, luxury marketing, and expert negotiation from The Roland Team.",
+    "Sell your Las Vegas or Henderson home for more, with less stress. Get a free home valuation, luxury marketing, and expert negotiation from Roland Luxury.",
   alternates: { canonical: "/sell" },
 };
 

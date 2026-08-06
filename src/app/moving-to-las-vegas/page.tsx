@@ -11,7 +11,7 @@ import { site, absoluteUrl } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Moving to Las Vegas: The Complete Relocation Guide",
   description:
-    "Thinking of moving to Las Vegas? The complete relocation guide — no state income tax, cost of living, the best areas to live, schools, and weather, from The Roland Team.",
+    "Thinking of moving to Las Vegas? The complete relocation guide — no state income tax, cost of living, the best areas to live, schools, and weather, from Roland Luxury.",
   alternates: { canonical: "/moving-to-las-vegas" },
 };
 
@@ -168,7 +168,7 @@ export default function MovingPillar() {
         <div className="mt-12 rounded-[14px] bg-[var(--color-graphite)] px-7 py-12 text-center text-white">
           <h2 className="text-[1.7rem] text-white">Planning your move to Las Vegas?</h2>
           <p className="mx-auto mt-2 max-w-[520px] text-[#cfd3da]">
-            The Roland Team helps relocating buyers find the right area and home across the valley.
+            Roland Luxury helps relocating buyers find the right area and home across the valley.
           </p>
           <Link href={site.cta.href} className="btn mt-6">{site.cta.label}</Link>
         </div>

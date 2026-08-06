@@ -19,11 +19,14 @@ export function realEstateAgentSchema() {
     telephone: site.phone,
     email: site.email,
     priceRange: "$$$",
-    description: `${site.name} — ${site.tagline}. A Top 1% Las Vegas real estate team with 1,000+ homes sold, specializing in luxury and guard-gated communities across Las Vegas and Henderson, Nevada, led by ${site.founder} with ${site.brokerage}.`,
+    description: `${site.name} is the luxury division of ${site.parentBrand} | ${site.brokerage} — a Top 1% Las Vegas real estate team with 1,000+ homes sold, specializing in luxury and guard-gated communities across Las Vegas and Henderson, Nevada, led by ${site.founder}.`,
     slogan: site.tagline,
     founder: { "@type": "Person", name: site.founder },
     foundingDate: String(site.foundedYear),
-    parentOrganization: { "@type": "Organization", name: site.brokerage },
+    parentOrganization: {
+      "@type": "Organization",
+      name: `${site.parentBrand} | ${site.brokerage}`,
+    },
     aggregateRating: {
       "@type": "AggregateRating",
       ratingValue: site.aggregateRating.ratingValue,

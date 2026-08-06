@@ -14,7 +14,7 @@ export function Header() {
       <Container size="wide">
         <div className="flex h-16 items-center justify-between gap-4">
           <Link href="/" className="shrink-0 font-sans font-semibold tracking-tight no-underline">
-            <span className="whitespace-nowrap text-[1.02rem] text-[var(--color-ink)]">The Roland Team</span>
+            <span className="whitespace-nowrap text-[1.02rem] text-[var(--color-ink)]">Roland Luxury</span>
             <span className="ml-2 hidden text-[var(--color-gold)] xl:inline">·</span>
             <span className="ml-2 hidden whitespace-nowrap text-[0.68rem] uppercase tracking-[0.18em] text-[var(--color-muted)] xl:inline">
               Las Vegas Luxury

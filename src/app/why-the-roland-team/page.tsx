@@ -8,16 +8,16 @@ import { heroImages } from "@/lib/heroImages";
 import { site, absoluteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Why The Roland Team | Top 1% Las Vegas Real Estate Team",
+  title: "Why Roland Luxury | Top 1% Las Vegas Real Estate Team",
   description:
-    "Why work with The Roland Team — a Top 1% Las Vegas real estate team with 1,000+ homes sold, 800+ five-star reviews, and dedicated buyer and seller specialists.",
+    "Why work with Roland Luxury — a Top 1% Las Vegas real estate team with 1,000+ homes sold, 800+ five-star reviews, and dedicated buyer and seller specialists.",
   alternates: { canonical: "/why-the-roland-team" },
 };
 
 const reasons = [
   {
     h: "A proven track record",
-    p: "A Top 1% Las Vegas real estate team with 1,000+ homes sold. Experience across every price point and community in the valley — from first homes to guard-gated estates.",
+    p: "Roland Luxury is the luxury division of The Roland Team | LPT Realty — a Top 1% Las Vegas real estate team with 1,000+ homes sold. Experience across every price point and community in the valley, from first homes to guard-gated estates.",
   },
   {
     h: "800+ five-star reviews",
@@ -45,7 +45,7 @@ export default function WhyPage() {
   const article = {
     "@context": "https://schema.org",
     "@type": "Article",
-    headline: "Why The Roland Team",
+    headline: "Why Roland Luxury",
     author: { "@type": "Organization", name: site.name },
     publisher: { "@type": "Organization", name: site.name },
     url: absoluteUrl("/why-the-roland-team"),
@@ -57,7 +57,7 @@ export default function WhyPage() {
         data={[
           breadcrumbSchema([
             { name: "Home", path: "/" },
-            { name: "Why The Roland Team", path: "/why-the-roland-team" },
+            { name: "Why Roland Luxury", path: "/why-the-roland-team" },
           ]),
           article,
         ]}
@@ -71,7 +71,7 @@ export default function WhyPage() {
               Why Choose Us
             </div>
             <h1 className="mt-4 font-serif text-[2.8rem] font-semibold leading-[1.04] text-white md:text-[3.9rem]">
-              Why The Roland Team
+              Why Roland Luxury
             </h1>
             <p className="mt-5 max-w-[560px] text-[1.15rem] leading-relaxed text-[#d9dbe0]">
               A Top 1% Las Vegas real estate team with 1,000+ homes sold and 800+ five-star reviews — and the
@@ -112,7 +112,7 @@ export default function WhyPage() {
         <div className="mt-14 rounded-[14px] bg-[var(--color-graphite)] px-7 py-12 text-center text-white">
           <h2 className="text-[1.8rem] text-white">Ready to work with a team that delivers?</h2>
           <p className="mx-auto mt-2 max-w-[520px] text-[#cfd3da]">
-            Whether you&apos;re buying or selling in Las Vegas or Henderson, The Roland Team is ready to help.
+            Whether you&apos;re buying or selling in Las Vegas or Henderson, Roland Luxury is ready to help.
           </p>
           <Link href={site.cta.href} className="btn mt-6">{site.cta.label}</Link>
         </div>

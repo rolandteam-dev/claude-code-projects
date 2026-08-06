@@ -12,7 +12,7 @@ import { site, absoluteUrl } from "@/lib/site";
 export const metadata: Metadata = {
   title: "55+ & Active Adult Communities in Las Vegas & Henderson",
   description:
-    "The guide to 55+ and active-adult communities in Las Vegas and Henderson — Sun City Summerlin, Sun City Aliante, Solera at Anthem, and more, with The Roland Team.",
+    "The guide to 55+ and active-adult communities in Las Vegas and Henderson — Sun City Summerlin, Sun City Aliante, Solera at Anthem, and more, with Roland Luxury.",
   alternates: { canonical: "/active-adult-communities-las-vegas" },
 };
 
@@ -33,7 +33,7 @@ const faqs = [
   },
   {
     q: "How much do homes in Las Vegas 55+ communities cost?",
-    a: "Prices vary by community and floor plan but generally range from the mid-$300,000s to around $1 million or more for larger or premium homes. Contact The Roland Team for current availability in any specific community.",
+    a: "Prices vary by community and floor plan but generally range from the mid-$300,000s to around $1 million or more for larger or premium homes. Contact Roland Luxury for current availability in any specific community.",
   },
 ];
 
@@ -135,7 +135,7 @@ export default function ActiveAdultPillar() {
         <div className="mt-12 rounded-[14px] bg-[var(--color-graphite)] px-7 py-12 text-center text-white">
           <h2 className="text-[1.7rem] text-white">Find your active-adult community</h2>
           <p className="mx-auto mt-2 max-w-[520px] text-[#cfd3da]">
-            The Roland Team can help you compare the valley&apos;s 55+ communities and find the right fit.
+            Roland Luxury can help you compare the valley&apos;s 55+ communities and find the right fit.
           </p>
           <Link href={site.cta.href} className="btn mt-6">{site.cta.label}</Link>
         </div>

@@ -8,17 +8,18 @@ export const dynamic = "force-static";
 /**
  * /llms.txt — a concise, AI-crawler-friendly summary of the site so
  * assistants (ChatGPT, Claude, Perplexity) can accurately describe and
- * cite The Roland Team. See https://llmstxt.org/
+ * cite Roland Luxury. See https://llmstxt.org/
  */
 export function GET() {
   const line = (label: string, path: string) => `- [${label}](${absoluteUrl(path)})`;
 
   const body = `# ${site.name}
 
-> ${site.tagline}. ${site.name} is a Las Vegas and Henderson, Nevada real estate group led by ${site.founder} with ${site.brokerage}, specializing in luxury, guard-gated, and master-planned communities across Southern Nevada.
+> ${site.tagline}. ${site.name} is the luxury division of ${site.parentBrand} | ${site.brokerage} — a Las Vegas and Henderson, Nevada real estate group led by ${site.founder}, specializing in luxury, guard-gated, and master-planned communities across Southern Nevada.
 
 ## About
 - Business: ${site.legalName}
+- Part of: ${site.parentBrand} | ${site.brokerage} (${site.name} is its dedicated luxury division)
 - Founder: ${site.founder} (licensed since ${site.foundedYear})
 - Track record: Top 1% Las Vegas real estate team, 1,000+ homes sold, 800+ five-star reviews (5.0 on Zillow), ${site.teamSize}-agent team
 - Serves: ${site.areaServed.join(", ")}

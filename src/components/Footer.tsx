@@ -10,9 +10,12 @@ export function Footer() {
       <Container size="wide" className="py-14">
         <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-4">
           <div>
-            <div className="font-sans text-[1.05rem] font-semibold">The Roland Team</div>
+            <div className="font-sans text-[1.05rem] font-semibold">Roland Luxury</div>
             <p className="mt-2 text-[0.9rem] text-[var(--color-muted)]">
               {site.tagline}. Specialists in Las Vegas & Henderson luxury and guard-gated communities.
+            </p>
+            <p className="mt-2 text-[0.8rem] text-[var(--color-muted)]">
+              The luxury division of {site.parentBrand} | {site.brokerage}.
             </p>
           </div>
 

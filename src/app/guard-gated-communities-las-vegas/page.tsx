@@ -12,7 +12,7 @@ import { site, absoluteUrl } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Guard-Gated Communities in Las Vegas & Henderson",
   description:
-    "The complete guide to guard-gated communities in Las Vegas and Henderson — the valley's most private, secure neighborhoods, from Ascaya to The Summit Club, with The Roland Team.",
+    "The complete guide to guard-gated communities in Las Vegas and Henderson — the valley's most private, secure neighborhoods, from Ascaya to The Summit Club, with Roland Luxury.",
   alternates: { canonical: "/guard-gated-communities-las-vegas" },
 };
 
@@ -166,7 +166,7 @@ export default function GuardGatedPillar() {
         <div className="mt-12 rounded-[14px] bg-[var(--color-graphite)] px-7 py-12 text-center text-white">
           <h2 className="text-[1.7rem] text-white">Find your guard-gated home</h2>
           <p className="mx-auto mt-2 max-w-[520px] text-[#cfd3da]">
-            The Roland Team knows every gate on the hill. Let&apos;s find the right community for you.
+            Roland Luxury knows every gate on the hill. Let&apos;s find the right community for you.
           </p>
           <Link href={site.cta.href} className="btn mt-6">{site.cta.label}</Link>
         </div>

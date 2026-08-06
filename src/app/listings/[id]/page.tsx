@@ -145,7 +145,7 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
         <aside className="h-fit rounded-[14px] border border-[var(--color-line)] bg-[var(--color-sand)] p-6">
           <div className="font-sans text-[1.05rem] font-semibold">Interested in this home?</div>
           <p className="mt-2 text-[0.9rem] text-[var(--color-ink-soft)]">
-            The Roland Team can arrange a private showing and share current details.
+            Roland Luxury can arrange a private showing and share current details.
           </p>
           <Link href={site.cta.href} className="btn mt-4 w-full">Request a Showing</Link>
           <a href={`tel:${site.phone}`} className="mt-3 block text-center font-sans text-[0.85rem] font-semibold text-[var(--color-gold)] no-underline">

@@ -100,7 +100,7 @@ export default async function GuidePage({
         <div className="mt-12 rounded-[14px] bg-[var(--color-graphite)] px-7 py-12 text-center text-white">
           <h2 className="text-[1.7rem] text-white">Have questions about your move?</h2>
           <p className="mx-auto mt-2 max-w-[520px] text-[#cfd3da]">
-            The Roland Team is here to guide you through every step. Reach out for personalized advice.
+            Roland Luxury is here to guide you through every step. Reach out for personalized advice.
           </p>
           <Link href={site.cta.href} className="btn mt-6">{site.cta.label}</Link>
         </div>

@@ -11,28 +11,28 @@ import { site } from "@/lib/site";
 
 const homeFaqs = [
   {
-    q: "Who is The Roland Team?",
-    a: "The Roland Team is a Las Vegas and Henderson real estate group led by Mike Roland with LPT Realty. The team specializes in luxury and guard-gated communities across Southern Nevada — including Ascaya, MacDonald Highlands, The Ridges, and Summerlin — and helps buyers and sellers across every price point in the Las Vegas Valley.",
+    q: "Who is Roland Luxury?",
+    a: "Roland Luxury is the luxury division of The Roland Team | LPT Realty, led by Mike Roland — a Top 1% Las Vegas real estate team with 1,000+ homes sold. Roland Luxury specializes in luxury and guard-gated communities across Southern Nevada — including Ascaya, MacDonald Highlands, The Ridges, and Summerlin — and helps buyers and sellers across every price point in the Las Vegas Valley.",
   },
   {
-    q: "What areas does The Roland Team serve?",
-    a: "The Roland Team serves the entire Las Vegas Valley, including Las Vegas, Henderson, Summerlin, North Las Vegas, and Boulder City, with deep expertise in the region's luxury, guard-gated, and master-planned communities.",
+    q: "What areas does Roland Luxury serve?",
+    a: "Roland Luxury serves the entire Las Vegas Valley, including Las Vegas, Henderson, Summerlin, North Las Vegas, and Boulder City, with deep expertise in the region's luxury, guard-gated, and master-planned communities.",
   },
   {
-    q: "Does The Roland Team specialize in luxury and guard-gated communities?",
+    q: "Does Roland Luxury specialize in luxury and guard-gated communities?",
     a: "Yes. The team focuses on Southern Nevada's most sought-after luxury and guard-gated communities — such as Ascaya and MacDonald Highlands in Henderson and The Ridges and The Summit Club in Summerlin — while also representing buyers and sellers of family homes and new construction throughout the valley.",
   },
   {
     q: "How do I choose the right real estate team in Las Vegas or Henderson?",
-    a: "Look for genuine local expertise in the specific communities you care about, a clear marketing and negotiation strategy, responsiveness, and verifiable client reviews. The Roland Team pairs deep neighborhood knowledge across Las Vegas and Henderson with a client-first, no-pressure approach.",
+    a: "Look for genuine local expertise in the specific communities you care about, a clear marketing and negotiation strategy, responsiveness, and verifiable client reviews. Roland Luxury pairs deep neighborhood knowledge across Las Vegas and Henderson with a client-first, no-pressure approach.",
   },
   {
-    q: "Can The Roland Team help with both buying and selling?",
-    a: "Yes. The Roland Team represents buyers, sellers, new-construction clients, and relocating households, and offers free, no-obligation home valuations for sellers considering a move.",
+    q: "Can Roland Luxury help with both buying and selling?",
+    a: "Yes. Roland Luxury represents buyers, sellers, new-construction clients, and relocating households, and offers free, no-obligation home valuations for sellers considering a move.",
   },
   {
-    q: "How do I contact The Roland Team?",
-    a: `You can reach The Roland Team by phone at ${site.phone} or by email at ${site.email}, or through the contact form on this website.`,
+    q: "How do I contact Roland Luxury?",
+    a: `You can reach Roland Luxury by phone at ${site.phone} or by email at ${site.email}, or through the contact form on this website.`,
   },
 ];
 
@@ -120,7 +120,7 @@ export default function Home() {
       {/* Entity / FAQ — quotable answers for search + AI assistants */}
       <Container size="narrow" className="py-16">
         <JsonLd data={faqSchema(homeFaqs)} />
-        <div className="eyebrow">About The Roland Team</div>
+        <div className="eyebrow">About Roland Luxury</div>
         <h2 className="mt-2 text-[1.9rem]">Las Vegas &amp; Henderson real estate, answered</h2>
         <div className="mt-6">
           {homeFaqs.map((f) => (
@@ -139,7 +139,7 @@ export default function Home() {
         <div className="rounded-[16px] bg-[var(--color-graphite)] px-8 py-16 text-center text-white">
           <h2 className="text-[2rem] text-white">Ready to make your move?</h2>
           <p className="mx-auto mt-3 max-w-[560px] text-[#cfd3da]">
-            Whether you&apos;re buying your first home or your forever estate, The Roland Team knows Las Vegas
+            Whether you&apos;re buying your first home or your forever estate, Roland Luxury knows Las Vegas
             luxury inside and out. Let&apos;s talk.
           </p>
           <Link href={site.cta.href} className="btn mt-8">{site.cta.label}</Link>

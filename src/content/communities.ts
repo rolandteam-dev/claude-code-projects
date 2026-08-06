@@ -108,7 +108,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Ascaya cost?",
-        a: "Ascaya homes and homesites for sale generally range from about $5 million to more than $12 million, depending on lot size, elevation, square footage, and custom finishes. Contact The Roland Team for current availability and pricing.",
+        a: "Ascaya homes and homesites for sale generally range from about $5 million to more than $12 million, depending on lot size, elevation, square footage, and custom finishes. Contact Roland Luxury for current availability and pricing.",
       },
       {
         q: "Is Ascaya a guard-gated community?",
@@ -174,7 +174,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in MacDonald Highlands cost?",
-        a: "Prices generally range from approximately $1.5 million to more than $10 million depending on home size, elevation, and custom finishes. Contact The Roland Team for current listings and pricing.",
+        a: "Prices generally range from approximately $1.5 million to more than $10 million depending on home size, elevation, and custom finishes. Contact Roland Luxury for current listings and pricing.",
       },
     ],
   },
@@ -227,7 +227,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Seven Hills cost?",
-        a: "Prices generally range from around $600,000 to more than $4 million depending on the enclave, home size, and finishes. Contact The Roland Team for current availability.",
+        a: "Prices generally range from around $600,000 to more than $4 million depending on the enclave, home size, and finishes. Contact Roland Luxury for current availability.",
       },
     ],
   },
@@ -280,7 +280,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in The Ridges cost?",
-        a: "Prices generally range from approximately $2 million to more than $15 million depending on size, enclave, and finish level. Contact The Roland Team for current listings.",
+        a: "Prices generally range from approximately $2 million to more than $15 million depending on size, enclave, and finish level. Contact Roland Luxury for current listings.",
       },
     ],
   },
@@ -335,7 +335,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Lake Las Vegas cost?",
-        a: "Prices generally range from about $400,000 for condominiums to more than $10 million for waterfront custom estates. Contact The Roland Team for current availability.",
+        a: "Prices generally range from about $400,000 for condominiums to more than $10 million for waterfront custom estates. Contact Roland Luxury for current availability.",
       },
     ],
   },
@@ -390,7 +390,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Summerlin cost?",
-        a: "Prices range from around $400,000 for condos and townhomes to more than $10 million for luxury estates in enclaves like The Ridges and The Summit. Contact The Roland Team for current listings.",
+        a: "Prices range from around $400,000 for condos and townhomes to more than $10 million for luxury estates in enclaves like The Ridges and The Summit. Contact Roland Luxury for current listings.",
       },
     ],
   },
@@ -442,7 +442,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Anthem cost?",
-        a: "Prices generally range from around $400,000 to more than $3 million depending on the neighborhood, elevation, and whether the home is in the guard-gated country club. Contact The Roland Team for current availability.",
+        a: "Prices generally range from around $400,000 to more than $3 million depending on the neighborhood, elevation, and whether the home is in the guard-gated country club. Contact Roland Luxury for current availability.",
       },
     ],
   },
@@ -494,7 +494,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Southern Highlands cost?",
-        a: "Prices generally range from around $450,000 to more than $8 million depending on the neighborhood and whether the home is in a guard-gated enclave. Contact The Roland Team for current listings.",
+        a: "Prices generally range from around $450,000 to more than $8 million depending on the neighborhood and whether the home is in a guard-gated enclave. Contact Roland Luxury for current listings.",
       },
     ],
   },
@@ -546,7 +546,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Inspirada cost?",
-        a: "Prices generally range from around $400,000 to about $1.2 million depending on the home size, builder, and location. Contact The Roland Team for current availability.",
+        a: "Prices generally range from around $400,000 to about $1.2 million depending on the home size, builder, and location. Contact Roland Luxury for current availability.",
       },
     ],
   },
@@ -599,7 +599,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Green Valley cost?",
-        a: "Prices generally range from around $400,000 to more than $3 million depending on the neighborhood and whether the home is in a guard-gated enclave. Contact The Roland Team for current listings.",
+        a: "Prices generally range from around $400,000 to more than $3 million depending on the neighborhood and whether the home is in a guard-gated enclave. Contact Roland Luxury for current listings.",
       },
     ],
   },
@@ -653,7 +653,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Boulder City cost?",
-        a: "Prices generally range from around $400,000 to more than $2 million depending on location, age, and size. Because growth is limited, inventory can be scarce. Contact The Roland Team for current availability.",
+        a: "Prices generally range from around $400,000 to more than $2 million depending on location, age, and size. Because growth is limited, inventory can be scarce. Contact Roland Luxury for current availability.",
       },
     ],
   },
@@ -706,7 +706,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in The Summit Club cost?",
-        a: "Prices generally range from approximately $4 million to more than $20 million for custom estates. Contact The Roland Team for current availability and membership details.",
+        a: "Prices generally range from approximately $4 million to more than $20 million for custom estates. Contact Roland Luxury for current availability and membership details.",
       },
     ],
   },
@@ -758,7 +758,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Red Rock Country Club cost?",
-        a: "Prices generally range from around $600,000 to more than $6 million depending on the home and its views. Contact The Roland Team for current listings.",
+        a: "Prices generally range from around $600,000 to more than $6 million depending on the home and its views. Contact Roland Luxury for current listings.",
       },
     ],
   },
@@ -810,7 +810,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Sun City Summerlin cost?",
-        a: "Prices generally range from around $350,000 to more than $1.2 million depending on floor plan, location, and condition. Contact The Roland Team for current availability.",
+        a: "Prices generally range from around $350,000 to more than $1.2 million depending on floor plan, location, and condition. Contact Roland Luxury for current availability.",
       },
     ],
   },
@@ -862,7 +862,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Mountain's Edge cost?",
-        a: "Prices generally range from around $400,000 to about $900,000 depending on size, location, and updates. Contact The Roland Team for current listings.",
+        a: "Prices generally range from around $400,000 to about $900,000 depending on size, location, and updates. Contact Roland Luxury for current listings.",
       },
     ],
   },
@@ -914,7 +914,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Skye Canyon cost?",
-        a: "Prices generally range from around $400,000 to more than $1 million depending on the builder, floor plan, and location. Contact The Roland Team for current availability.",
+        a: "Prices generally range from around $400,000 to more than $1 million depending on the builder, floor plan, and location. Contact Roland Luxury for current availability.",
       },
     ],
   },
@@ -966,7 +966,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Cadence cost?",
-        a: "Prices generally range from around $400,000 to about $900,000 depending on the builder, floor plan, and location. Contact The Roland Team for current availability.",
+        a: "Prices generally range from around $400,000 to about $900,000 depending on the builder, floor plan, and location. Contact Roland Luxury for current availability.",
       },
     ],
   },
@@ -1018,7 +1018,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Rhodes Ranch cost?",
-        a: "Prices generally range from around $400,000 to more than $1 million depending on size, lot, and golf-course frontage. Contact The Roland Team for current listings.",
+        a: "Prices generally range from around $400,000 to more than $1 million depending on size, lot, and golf-course frontage. Contact Roland Luxury for current listings.",
       },
     ],
   },
@@ -1070,7 +1070,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Providence cost?",
-        a: "Prices generally range from around $400,000 to about $900,000 depending on the home's size and location. Contact The Roland Team for current availability.",
+        a: "Prices generally range from around $400,000 to about $900,000 depending on the home's size and location. Contact Roland Luxury for current availability.",
       },
     ],
   },
@@ -1118,7 +1118,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Centennial Hills cost?",
-        a: "Prices generally range from around $400,000 to more than $1 million depending on size, lot, and location. Contact The Roland Team for current listings.",
+        a: "Prices generally range from around $400,000 to more than $1 million depending on size, lot, and location. Contact Roland Luxury for current listings.",
       },
     ],
   },
@@ -1170,7 +1170,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Aliante cost?",
-        a: "Prices generally range from around $350,000 to about $800,000 depending on size and location. Contact The Roland Team for current availability.",
+        a: "Prices generally range from around $350,000 to about $800,000 depending on size and location. Contact Roland Luxury for current availability.",
       },
     ],
   },
@@ -1222,7 +1222,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Tuscany cost?",
-        a: "Prices generally range from around $350,000 to about $900,000 depending on size and location. Contact The Roland Team for current listings.",
+        a: "Prices generally range from around $350,000 to about $900,000 depending on size and location. Contact Roland Luxury for current listings.",
       },
     ],
   },
@@ -1270,7 +1270,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Silverado Ranch cost?",
-        a: "Prices generally range from around $400,000 to about $800,000 depending on size and location. Contact The Roland Team for current availability.",
+        a: "Prices generally range from around $400,000 to about $800,000 depending on size and location. Contact Roland Luxury for current availability.",
       },
     ],
   },
@@ -1318,7 +1318,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Spring Valley cost?",
-        a: "Prices range widely — from around $350,000 for condos and townhomes to more than $1 million for larger or gated homes. Contact The Roland Team for current listings.",
+        a: "Prices range widely — from around $350,000 for condos and townhomes to more than $1 million for larger or gated homes. Contact Roland Luxury for current listings.",
       },
     ],
   },
@@ -1370,7 +1370,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Solera at Anthem cost?",
-        a: "Prices generally range from around $400,000 to about $900,000 depending on floor plan and location. Contact The Roland Team for current availability.",
+        a: "Prices generally range from around $400,000 to about $900,000 depending on floor plan and location. Contact Roland Luxury for current availability.",
       },
     ],
   },
@@ -1418,7 +1418,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Sun City Aliante cost?",
-        a: "Prices generally range from around $350,000 to about $700,000 depending on floor plan and location. Contact The Roland Team for current availability.",
+        a: "Prices generally range from around $350,000 to about $700,000 depending on floor plan and location. Contact Roland Luxury for current availability.",
       },
     ],
   },
@@ -1471,7 +1471,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Queensridge cost?",
-        a: "Prices generally range from around $700,000 to more than $5 million depending on whether it's an estate or a luxury condominium, plus size and views. Contact The Roland Team for current listings.",
+        a: "Prices generally range from around $700,000 to more than $5 million depending on whether it's an estate or a luxury condominium, plus size and views. Contact Roland Luxury for current listings.",
       },
     ],
   },
@@ -1523,7 +1523,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in The Lakes cost?",
-        a: "Prices generally range from around $450,000 to more than $2 million depending on the home and whether it has lake frontage. Contact The Roland Team for current availability.",
+        a: "Prices generally range from around $450,000 to more than $2 million depending on the home and whether it has lake frontage. Contact Roland Luxury for current availability.",
       },
     ],
   },
@@ -1574,7 +1574,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Roma Hills cost?",
-        a: "Prices generally range from around $700,000 to more than $3 million depending on size and finish. Because the community is small, inventory can be limited. Contact The Roland Team for current listings.",
+        a: "Prices generally range from around $700,000 to more than $3 million depending on size and finish. Because the community is small, inventory can be limited. Contact Roland Luxury for current listings.",
       },
     ],
   },
@@ -1622,7 +1622,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Peccole Ranch cost?",
-        a: "Prices generally range from around $450,000 to more than $1 million depending on size, location, and whether the home is in a gated pocket. Contact The Roland Team for current availability.",
+        a: "Prices generally range from around $450,000 to more than $1 million depending on size, location, and whether the home is in a gated pocket. Contact Roland Luxury for current availability.",
       },
     ],
   },

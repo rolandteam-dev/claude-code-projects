@@ -8,7 +8,7 @@ import { BLOG_CATEGORIES, postsByCategory } from "@/content/blog";
 export const metadata: Metadata = {
   title: "Las Vegas Real Estate Blog",
   description:
-    "Market updates, new construction, and buyer & seller guides for Las Vegas and Henderson real estate from The Roland Team.",
+    "Market updates, new construction, and buyer & seller guides for Las Vegas and Henderson real estate from Roland Luxury.",
   alternates: { canonical: "/blog" },
 };
 
@@ -71,7 +71,7 @@ export default async function BlogIndex({
               className="group block overflow-hidden rounded-[12px] border border-[var(--color-line)] bg-white no-underline shadow-[var(--shadow-soft)] transition-transform hover:-translate-y-1"
             >
               <div className="relative flex h-44 flex-col justify-between bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)] p-5">
-                <div className="font-sans text-[0.6rem] uppercase tracking-[0.2em] text-white/60">The Roland Team</div>
+                <div className="font-sans text-[0.6rem] uppercase tracking-[0.2em] text-white/60">Roland Luxury</div>
                 <div className="font-serif text-[1.3rem] italic leading-tight text-[var(--color-gold-2)]">
                   {p.category}
                 </div>

@@ -36,7 +36,7 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Southern Nevada is one of the nation's most active new-home markets. Here are the growing communities where builders are most active right now — and what to know before you buy new.",
     date: "2026-08-01",
-    author: "The Roland Team",
+    author: "Roland Luxury",
     readMinutes: 7,
     seoTitle: "New Construction Las Vegas 2026: Builder Communities to Watch",
     seoDescription:
@@ -69,7 +69,7 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "A quick read on where the Las Vegas Valley market stands — prices, pace, and inventory — and what it means whether you're buying or selling.",
     date: "2026-07-30",
-    author: "The Roland Team",
+    author: "Roland Luxury",
     readMinutes: 6,
     seoTitle: "Las Vegas Housing Market Update — Summer 2026",
     seoDescription:
@@ -97,7 +97,7 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Before you shop, know your number. Here's how lenders think about affordability in Las Vegas — including the local costs buyers often forget.",
     date: "2026-07-27",
-    author: "The Roland Team",
+    author: "Roland Luxury",
     readMinutes: 6,
     seoTitle: "How Much Home Can You Afford in Las Vegas? A Buyer's Guide",
     seoDescription:
@@ -124,7 +124,7 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "The work you do before listing has an outsized effect on your final price. Here's where to focus when preparing a Las Vegas home to sell.",
     date: "2026-07-24",
-    author: "The Roland Team",
+    author: "Roland Luxury",
     readMinutes: 6,
     seoTitle: "Preparing Your Las Vegas Home to Sell for Top Dollar",
     seoDescription:
@@ -151,7 +151,7 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Your list price isn't your take-home. Here's how to think about net proceeds when selling a home in Las Vegas.",
     date: "2026-07-20",
-    author: "The Roland Team",
+    author: "Roland Luxury",
     readMinutes: 5,
     seoTitle: "Seller Net Proceeds on a Las Vegas Home: What to Expect",
     seoDescription:
@@ -179,7 +179,7 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "The honest answer to the question every buyer asks — and the factors that actually matter more than trying to time the market.",
     date: "2026-07-18",
-    author: "The Roland Team",
+    author: "Roland Luxury",
     readMinutes: 5,
     seoTitle: "Is Now a Good Time to Buy a Home in Las Vegas?",
     seoDescription:
@@ -207,7 +207,7 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Two terms you'll hear constantly in Las Vegas real estate — here's what they actually mean and how to choose.",
     date: "2026-07-15",
-    author: "The Roland Team",
+    author: "Roland Luxury",
     readMinutes: 5,
     seoTitle: "Guard-Gated vs. Master-Planned Communities in Las Vegas",
     seoDescription:
@@ -241,7 +241,7 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "New builds are a big part of the Las Vegas market. Here's how the process differs from buying resale — and how to protect yourself.",
     date: "2026-07-12",
-    author: "The Roland Team",
+    author: "Roland Luxury",
     readMinutes: 6,
     seoTitle: "Buying New Construction in Las Vegas: What Buyers Should Know",
     seoDescription:
@@ -269,7 +269,7 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Southern Nevada's luxury tier plays by its own rules. Here's what sets the Las Vegas high-end market apart from the rest of the valley.",
     date: "2026-07-10",
-    author: "The Roland Team",
+    author: "Roland Luxury",
     readMinutes: 6,
     seoTitle: "The Las Vegas Luxury Real Estate Market: What Makes It Unique",
     seoDescription:
@@ -298,7 +298,7 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Some of the best luxury homes never hit the public market. Here's how off-market and coming-soon opportunities work — and how to access them.",
     date: "2026-07-08",
-    author: "The Roland Team",
+    author: "Roland Luxury",
     readMinutes: 5,
     seoTitle: "Off-Market Luxury Homes in Las Vegas: How to Find Them",
     seoDescription:
@@ -326,7 +326,7 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Guard-gated living comes with real perks and real costs. Here's an honest look at whether it's worth it in Las Vegas and Henderson.",
     date: "2026-07-05",
-    author: "The Roland Team",
+    author: "Roland Luxury",
     readMinutes: 5,
     seoTitle: "Are Guard-Gated Communities Worth It in Las Vegas?",
     seoDescription:
@@ -354,7 +354,7 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Nevada's property taxes are a pleasant surprise for many buyers. Here's how they work in Las Vegas and Henderson.",
     date: "2026-07-03",
-    author: "The Roland Team",
+    author: "Roland Luxury",
     readMinutes: 5,
     seoTitle: "Las Vegas Property Taxes Explained: A Buyer's Guide",
     seoDescription:
@@ -382,7 +382,7 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Is there a best season to buy or sell in Las Vegas? Here's how seasonality really works in the valley — and why your situation matters more.",
     date: "2026-07-01",
-    author: "The Roland Team",
+    author: "Roland Luxury",
     readMinutes: 5,
     seoTitle: "The Best Time to Buy or Sell a Home in Las Vegas",
     seoDescription:
@@ -410,7 +410,7 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "Nevada uses escrow and title companies to close real estate deals. Here's what happens between accepted offer and keys in hand.",
     date: "2026-06-28",
-    author: "The Roland Team",
+    author: "Roland Luxury",
     readMinutes: 5,
     seoTitle: "Understanding Escrow and Closing in Nevada",
     seoDescription:
@@ -438,7 +438,7 @@ export const blogPosts: BlogPost[] = [
     excerpt:
       "In the desert, a backyard pool is a lifestyle. Here's what to consider when buying a pool home in Las Vegas.",
     date: "2026-06-25",
-    author: "The Roland Team",
+    author: "Roland Luxury",
     readMinutes: 5,
     seoTitle: "Buying a Pool Home in Las Vegas: What to Know",
     seoDescription:

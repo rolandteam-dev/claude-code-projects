@@ -86,7 +86,7 @@ export default async function CommunityPage({
               </span>
             </h1>
             <div className="mt-5 font-sans text-[0.74rem] uppercase tracking-[0.12em] text-white/55">
-              Updated {updated} · By The Roland Team
+              Updated {updated} · By Roland Luxury
             </div>
             <p className="mt-5 max-w-[560px] text-[1.12rem] leading-relaxed text-[#d9dbe0]">{c.intro}</p>
             <div className="mt-8 flex flex-wrap gap-4">
@@ -165,7 +165,7 @@ export default async function CommunityPage({
         <div className="mt-12 rounded-[14px] bg-[var(--color-graphite)] px-7 py-12 text-center text-white">
           <h2 className="text-[1.7rem] text-white">Explore {c.name} Homes for Sale</h2>
           <p className="mx-auto mt-2 max-w-[520px] text-[#cfd3da]">
-            Ready to see current {c.name} listings and homesites? The Roland Team specializes in {c.city}&apos;s
+            Ready to see current {c.name} listings and homesites? Roland Luxury specializes in {c.city}&apos;s
             luxury and guard-gated communities.
           </p>
           <Link href={site.cta.href} className="btn mt-6">{site.cta.label}</Link>

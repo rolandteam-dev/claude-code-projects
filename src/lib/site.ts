@@ -4,11 +4,12 @@
  */
 
 export const site = {
-  name: "The Roland Team",
-  legalName: "The Roland Team | LPT Realty",
-  tagline: "Luxury Las Vegas & Henderson Real Estate",
-  // Update to the production domain before launch (currently a placeholder).
-  url: "https://www.therolandteam.com",
+  name: "Roland Luxury",
+  legalName: "Roland Luxury | LPT Realty",
+  // Positioning line: the luxury division of the established Roland Team brand.
+  parentBrand: "The Roland Team",
+  tagline: "The Luxury Division of The Roland Team",
+  url: "https://www.rolandluxury.com",
   locale: "en_US",
   // Contact
   phone: "(702) 793-2158",
@@ -97,7 +98,7 @@ export const site = {
       href: "/about",
       children: [
         { label: "About The Team", href: "/about" },
-        { label: "Why The Roland Team", href: "/why-the-roland-team" },
+        { label: "Why Roland Luxury", href: "/why-the-roland-team" },
         { label: "Reviews", href: "/testimonials" },
         { label: "Contact", href: "/contact" },
       ],

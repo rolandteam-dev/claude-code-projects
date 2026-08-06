@@ -10,7 +10,7 @@ import { site } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Buy a Home in Las Vegas & Henderson",
   description:
-    "Everything you need to buy a home in Las Vegas and Henderson — search listings, explore communities, and get expert buyer guidance from The Roland Team.",
+    "Everything you need to buy a home in Las Vegas and Henderson — search listings, explore communities, and get expert buyer guidance from Roland Luxury.",
   alternates: { canonical: "/buy" },
 };
 

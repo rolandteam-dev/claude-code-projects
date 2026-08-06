@@ -8,7 +8,7 @@ import { areas, communitiesInArea } from "@/content/areas";
 export const metadata: Metadata = {
   title: "Areas We Serve — Las Vegas, Henderson & Beyond",
   description:
-    "Explore the cities and areas The Roland Team serves across Southern Nevada — Las Vegas, Henderson, Boulder City, and their communities.",
+    "Explore the cities and areas Roland Luxury serves across Southern Nevada — Las Vegas, Henderson, Boulder City, and their communities.",
   alternates: { canonical: "/areas" },
 };
 

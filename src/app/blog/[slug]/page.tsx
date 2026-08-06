@@ -99,7 +99,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <div className="mt-12 rounded-[14px] bg-[var(--color-graphite)] px-7 py-10 text-center text-white">
           <h2 className="text-[1.5rem] text-white">Have a question about your move?</h2>
           <p className="mx-auto mt-2 max-w-[500px] text-[#cfd3da]">
-            The Roland Team is here to help you buy or sell with confidence in Las Vegas and Henderson.
+            Roland Luxury is here to help you buy or sell with confidence in Las Vegas and Henderson.
           </p>
           <Link href={site.cta.href} className="btn mt-6">{site.cta.label}</Link>
         </div>

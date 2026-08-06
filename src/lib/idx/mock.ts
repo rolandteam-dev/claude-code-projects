@@ -18,7 +18,7 @@ const SAMPLE: Listing[] = [
     description:
       "A modern desert masterpiece in Ascaya, cantilevered into Black Mountain with walls of glass framing the Las Vegas Strip. Sample listing for layout preview.",
     photos: [], coords: { lat: 35.985, lng: -115.03 }, listedDate: "2026-07-15",
-    listingOffice: "The Roland Team | LPT Realty", isOurListing: true,
+    listingOffice: "Roland Luxury | LPT Realty", isOurListing: true,
   },
   {
     id: "sample-1002",
@@ -31,7 +31,7 @@ const SAMPLE: Listing[] = [
     description:
       "Contemporary estate in MacDonald Highlands overlooking DragonRidge, with an infinity pool and Strip views. Sample listing for layout preview.",
     photos: [], coords: { lat: 36.0, lng: -115.05 }, listedDate: "2026-07-20",
-    listingOffice: "The Roland Team | LPT Realty", isOurListing: true,
+    listingOffice: "Roland Luxury | LPT Realty", isOurListing: true,
   },
   {
     id: "sample-1003",

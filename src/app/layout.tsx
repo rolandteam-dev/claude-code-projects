@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     "luxury homes Las Vegas",
     "guard-gated communities Henderson",
     "Summerlin homes for sale",
-    "The Roland Team",
+    "Roland Luxury",
   ],
   authors: [{ name: site.name, url: site.url }],
   alternates: { canonical: "/" },
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: `${site.name} | ${site.tagline}`,
-    description: `Luxury Las Vegas & Henderson real estate with The Roland Team.`,
+    description: `Luxury Las Vegas & Henderson real estate with Roland Luxury.`,
   },
   robots: {
     index: true,

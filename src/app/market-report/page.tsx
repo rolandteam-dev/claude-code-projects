@@ -136,7 +136,7 @@ export default function MarketReportPage() {
         <div className="mt-12 rounded-[14px] bg-[var(--color-graphite)] px-7 py-12 text-center text-white">
           <h2 className="text-[1.7rem] text-white">Want a report for your neighborhood?</h2>
           <p className="mx-auto mt-2 max-w-[520px] text-[#cfd3da]">
-            Valley averages only tell part of the story. The Roland Team can pull a precise market analysis for
+            Valley averages only tell part of the story. Roland Luxury can pull a precise market analysis for
             your street, community, or price point.
           </p>
           <Link href={site.cta.href} className="btn mt-6">Request a Market Analysis</Link>

@@ -10,7 +10,7 @@ import { LeadForm } from "@/components/LeadForm";
 export const metadata: Metadata = {
   title: "What's My Home Worth? Free Las Vegas Home Valuation",
   description:
-    "Get a free, no-obligation home valuation for your Las Vegas or Henderson home. The Roland Team delivers a precise, local market analysis — not an automated guess.",
+    "Get a free, no-obligation home valuation for your Las Vegas or Henderson home. Roland Luxury delivers a precise, local market analysis — not an automated guess.",
   alternates: { canonical: "/home-value" },
 };
 

@@ -27,7 +27,7 @@ export const areas: Area[] = [
     name: "Henderson",
     seoTitle: "Henderson, NV Homes for Sale | Communities & Real Estate",
     seoDescription:
-      "Explore Henderson, NV real estate — luxury and guard-gated communities, master plans, and homes for sale, with local expertise from The Roland Team.",
+      "Explore Henderson, NV real estate — luxury and guard-gated communities, master plans, and homes for sale, with local expertise from Roland Luxury.",
     h1: "Henderson, NV Homes for Sale & Communities",
     eyebrow: "Southern Nevada · City Guide",
     intro:
@@ -48,7 +48,7 @@ export const areas: Area[] = [
     name: "Las Vegas",
     seoTitle: "Las Vegas Homes for Sale | Communities & Real Estate",
     seoDescription:
-      "Explore Las Vegas real estate — from Summerlin master plans to guard-gated luxury and southwest-valley communities — with The Roland Team.",
+      "Explore Las Vegas real estate — from Summerlin master plans to guard-gated luxury and southwest-valley communities — with Roland Luxury.",
     h1: "Las Vegas Homes for Sale & Communities",
     eyebrow: "Southern Nevada · City Guide",
     intro:
@@ -69,7 +69,7 @@ export const areas: Area[] = [
     name: "Boulder City",
     seoTitle: "Boulder City, NV Homes for Sale | Real Estate & Community",
     seoDescription:
-      "Explore Boulder City, NV real estate — a historic small town near Lake Mead with controlled growth and distinctive character, with The Roland Team.",
+      "Explore Boulder City, NV real estate — a historic small town near Lake Mead with controlled growth and distinctive character, with Roland Luxury.",
     h1: "Boulder City, NV Homes for Sale",
     eyebrow: "Southern Nevada · City Guide",
     intro:
@@ -89,7 +89,7 @@ export const areas: Area[] = [
     name: "North Las Vegas",
     seoTitle: "North Las Vegas Homes for Sale | Communities & Real Estate",
     seoDescription:
-      "Explore North Las Vegas real estate — master-planned communities like Aliante, newer construction, and strong value, with The Roland Team.",
+      "Explore North Las Vegas real estate — master-planned communities like Aliante, newer construction, and strong value, with Roland Luxury.",
     h1: "North Las Vegas Homes for Sale & Communities",
     eyebrow: "Southern Nevada · City Guide",
     intro:

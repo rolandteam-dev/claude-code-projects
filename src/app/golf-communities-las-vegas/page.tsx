@@ -12,7 +12,7 @@ import { site, absoluteUrl } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Golf Communities in Las Vegas & Henderson",
   description:
-    "The guide to golf communities in Las Vegas and Henderson — guard-gated country clubs and golf-course homes, from MacDonald Highlands to Red Rock Country Club, with The Roland Team.",
+    "The guide to golf communities in Las Vegas and Henderson — guard-gated country clubs and golf-course homes, from MacDonald Highlands to Red Rock Country Club, with Roland Luxury.",
   alternates: { canonical: "/golf-communities-las-vegas" },
 };
 
@@ -42,7 +42,7 @@ const faqs = [
   },
   {
     q: "How much do golf-course homes cost in Las Vegas?",
-    a: "Pricing varies widely — from around $400,000 in public-course communities to well over $10 million for custom estates in private country clubs. Golf-course frontage and views typically command a premium. Contact The Roland Team for current availability.",
+    a: "Pricing varies widely — from around $400,000 in public-course communities to well over $10 million for custom estates in private country clubs. Golf-course frontage and views typically command a premium. Contact Roland Luxury for current availability.",
   },
 ];
 
@@ -143,7 +143,7 @@ export default function GolfPillar() {
         <div className="mt-12 rounded-[14px] bg-[var(--color-graphite)] px-7 py-12 text-center text-white">
           <h2 className="text-[1.7rem] text-white">Find your golf-course home</h2>
           <p className="mx-auto mt-2 max-w-[520px] text-[#cfd3da]">
-            The Roland Team can help you find the right golf community and home across Las Vegas and Henderson.
+            Roland Luxury can help you find the right golf community and home across Las Vegas and Henderson.
           </p>
           <Link href={site.cta.href} className="btn mt-6">{site.cta.label}</Link>
         </div>
