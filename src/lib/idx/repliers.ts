@@ -56,36 +56,59 @@ function cdnImage(path: string): string {
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+const n = (...vals: any[]): number => {
+  for (const v of vals) {
+    if (v != null && v !== "") {
+      const x = Number(v);
+      if (Number.isFinite(x)) return x;
+    }
+  }
+  return 0;
+};
+const s = (...vals: any[]): string => {
+  for (const v of vals) if (v != null && v !== "") return String(v);
+  return "";
+};
+
+function mapImages(images: any): string[] {
+  if (!Array.isArray(images)) return [];
+  return images
+    .map((im) => cdnImage(typeof im === "string" ? im : s(im?.url, im?.image, im?.src, im?.path)))
+    .filter(Boolean);
+}
+
 function mapRecord(r: any): Listing {
   const addr = r.address ?? {};
   const details = r.details ?? {};
-  const map = r.map ?? {};
-  const line1 = [addr.streetNumber, addr.streetName, addr.streetSuffix].filter(Boolean).join(" ").trim();
+  const map = r.map ?? r.coordinates ?? {};
+  const office = r.office ?? r.brokerage ?? {};
+  const line1 =
+    [addr.streetNumber, addr.streetDirection, addr.streetName, addr.streetSuffix].filter(Boolean).join(" ").trim() ||
+    s(addr.unparsedAddress, addr.address, typeof r.address === "string" ? r.address : "");
+  const lat = n(map.latitude, map.lat);
+  const lng = n(map.longitude, map.lng, map.long);
   return {
-    id: String(r.mlsNumber ?? r.id),
-    mlsNumber: String(r.mlsNumber ?? r.id),
-    status: mapStatus(r.lastStatus ?? r.status),
-    listPrice: Number(r.listPrice ?? 0),
+    id: s(r.mlsNumber, r.id, r.listingId),
+    mlsNumber: s(r.mlsNumber, r.listingId, r.id),
+    status: mapStatus(s(r.lastStatus, r.status)),
+    listPrice: n(r.listPrice, r.price),
     address: {
-      line1: line1 || (addr.unparsedAddress ?? ""),
-      city: addr.city ?? "",
-      state: addr.state ?? "NV",
-      postalCode: addr.zip ?? addr.postalCode ?? "",
+      line1,
+      city: s(addr.city, addr.municipality),
+      state: s(addr.state, addr.province) || "NV",
+      postalCode: s(addr.zip, addr.postalCode, addr.zipCode),
     },
-    beds: Number(details.numBedrooms ?? 0),
-    baths: Number(details.numBathrooms ?? 0),
-    sqft: Number(details.sqft ?? details.squareFootage ?? 0),
-    lotAcres: details.lotSizeAcres != null ? Number(details.lotSizeAcres) : undefined,
-    yearBuilt: details.yearBuilt != null ? Number(details.yearBuilt) : undefined,
-    propertyType: mapType(details.propertyType ?? r.class),
-    description: details.description ?? "",
-    photos: Array.isArray(r.images) ? r.images.map(cdnImage).filter(Boolean) : [],
-    coords:
-      map.latitude != null && map.longitude != null
-        ? { lat: Number(map.latitude), lng: Number(map.longitude) }
-        : undefined,
-    listedDate: r.listDate ?? r.listedDate ?? new Date().toISOString().slice(0, 10),
-    listingOffice: r.office?.brokerageName ?? "",
+    beds: n(details.numBedrooms, details.numBeds, details.bedrooms, details.beds),
+    baths: n(details.numBathrooms, details.numBaths, details.bathrooms, details.baths),
+    sqft: n(details.sqft, details.squareFootage, details.livingArea, details.squareFeet),
+    lotAcres: n(details.lotSizeAcres, details.lotAcres) || undefined,
+    yearBuilt: n(details.yearBuilt) || undefined,
+    propertyType: mapType(s(details.propertyType, details.propertySubType, details.style, r.class)),
+    description: s(details.description, details.remarks, r.description),
+    photos: mapImages(r.images ?? r.photos),
+    coords: lat && lng ? { lat, lng } : undefined,
+    listedDate: s(r.listDate, r.listedDate, r.onMarketDate) || new Date().toISOString().slice(0, 10),
+    listingOffice: s(office.brokerageName, office.name, r.listOfficeName),
   };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
