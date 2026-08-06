@@ -9,6 +9,7 @@
 import type { Listing, ListingFilters, ListingResult } from "./types";
 import { mockProvider } from "./mock";
 import { resoProvider } from "./reso";
+import { repliersProvider } from "./repliers";
 
 export interface ListingProvider {
   getListings(filters?: ListingFilters): Promise<ListingResult>;
@@ -18,6 +19,8 @@ export interface ListingProvider {
 function selectProvider(): ListingProvider {
   const choice = (process.env.IDX_PROVIDER ?? "mock").toLowerCase();
   switch (choice) {
+    case "repliers":
+      return repliersProvider;
     case "reso":
       return resoProvider;
     case "mock":

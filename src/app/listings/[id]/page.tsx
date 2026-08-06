@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Container } from "@/components/Container";
 import { JsonLd } from "@/components/JsonLd";
 import { IdxDisclaimer } from "@/components/IdxDisclaimer";
@@ -74,10 +75,16 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
         </nav>
       </Container>
 
-      {/* Gallery placeholder */}
+      {/* Gallery */}
       <Container size="wide" className="pt-4">
-        <div className="flex h-[320px] items-end rounded-[14px] bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)] p-6 md:h-[420px]">
-          <div>
+        <div className="relative flex h-[320px] items-end overflow-hidden rounded-[14px] bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)] p-6 md:h-[460px]">
+          {l.photos[0] && (
+            <>
+              <Image src={l.photos[0]} alt={l.address.line1} fill priority sizes="100vw" className="object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-black/10" />
+            </>
+          )}
+          <div className="relative z-10">
             {l.status !== "Active" && (
               <span className="mb-2 inline-block rounded bg-[var(--color-gold)] px-2 py-1 font-sans text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white">
                 {l.status}
@@ -89,6 +96,17 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
             </div>
           </div>
         </div>
+
+        {/* Thumbnail strip */}
+        {l.photos.length > 1 && (
+          <div className="mt-3 grid grid-cols-4 gap-3">
+            {l.photos.slice(1, 5).map((p, i) => (
+              <div key={i} className="relative aspect-[4/3] overflow-hidden rounded-[10px] bg-[var(--color-sand-deep)]">
+                <Image src={p} alt={`${l.address.line1} photo ${i + 2}`} fill sizes="25vw" className="object-cover" />
+              </div>
+            ))}
+          </div>
+        )}
       </Container>
 
       <Container size="wide" className="grid gap-10 py-10 md:grid-cols-[1fr_320px]">
