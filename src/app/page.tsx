@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Container } from "@/components/Container";
 import { CommunityCard } from "@/components/CommunityCard";
 import { HeroBg } from "@/components/HeroBg";
@@ -39,36 +40,40 @@ const homeFaqs = [
 export default function Home() {
   return (
     <>
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-[var(--color-graphite)] text-white">
+      {/* ============ HERO ============ */}
+      <section className="relative flex min-h-[90vh] items-center overflow-hidden bg-[var(--color-graphite-3)] text-white">
         <HeroBg src={heroImages.home} priority />
-        <Container size="wide" className="relative z-10 py-24 text-center md:py-32">
-          <div className="font-sans text-[0.8rem] uppercase tracking-[0.24em] text-[var(--color-gold-2)]">
-            Las Vegas · Henderson · Summerlin
+        <Container size="wide" className="relative z-10 py-28 text-center">
+          <div className="flex items-center justify-center gap-3 font-sans text-[0.72rem] uppercase tracking-[0.32em] text-[var(--color-gold-3)]">
+            <span className="hairline" /> Las Vegas · Henderson · Summerlin <span className="hairline" />
           </div>
-          <h1 className="mx-auto mt-5 max-w-[820px] text-[2.6rem] font-semibold leading-[1.1] md:text-[3.4rem]">
-            Luxury Las Vegas real estate, guided by people who know every gate on the hill.
+          <h1 className="mx-auto mt-7 max-w-[960px] font-serif text-[3rem] font-medium leading-[1.04] md:text-[4.6rem]">
+            The valley&apos;s most extraordinary residences, represented with discretion.
           </h1>
-          <p className="mx-auto mt-6 max-w-[620px] text-[1.15rem] text-[#d9dbe0]">
-            Explore Southern Nevada&apos;s most sought-after guard-gated communities, get expert buyer and seller
-            guidance, and find a home that fits the life you&apos;re building.
+          <p className="mx-auto mt-7 max-w-[640px] text-[1.2rem] leading-relaxed text-[#d6d8de]">
+            Roland Luxury is the luxury division of The Roland Team — specialists in Southern Nevada&apos;s
+            guard-gated communities, custom estates, and landmark properties, for buyers and sellers who expect more.
           </p>
-          <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
-            <Link href="/communities" className="btn">Explore Communities</Link>
-            <Link href="/guides" className="btn btn-ghost !text-white !border-white/30 hover:!bg-white/10">
-              Buyer Guides
-            </Link>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+            <Link href="/listings" className="btn">Explore Residences</Link>
+            <Link href="/home-value" className="btn btn-outline">Request a Private Valuation</Link>
+          </div>
+          <div className="mt-8 font-sans text-[0.82rem] tracking-[0.05em] text-[#aeb2ba]">
+            Private representation ·{" "}
+            <a href={`tel:${site.phone}`} className="text-[var(--color-gold-3)] no-underline hover:underline">
+              {site.phone}
+            </a>
           </div>
         </Container>
       </section>
 
-      {/* Trust bar — verifiable proof points */}
-      <section className="border-b border-[var(--color-line)] bg-[var(--color-sand)]">
-        <Container size="wide" className="grid grid-cols-2 gap-6 py-8 md:grid-cols-4">
+      {/* ============ TRUST BAR ============ */}
+      <section className="border-b border-[var(--color-line-dark)] bg-[var(--color-graphite)] text-white">
+        <Container size="wide" className="grid grid-cols-2 gap-6 py-10 md:grid-cols-4">
           {site.stats.map((s) => (
             <div key={s.label} className="text-center">
-              <div className="font-sans text-[1.8rem] font-semibold text-[var(--color-gold)]">{s.value}</div>
-              <div className="mt-1 font-sans text-[0.78rem] uppercase tracking-[0.08em] text-[var(--color-muted)]">
+              <div className="font-serif text-[2.3rem] font-medium leading-none text-[var(--color-gold-3)]">{s.value}</div>
+              <div className="mt-2 font-sans text-[0.68rem] uppercase tracking-[0.16em] text-[#9aa0aa]">
                 {s.label}
               </div>
             </div>
@@ -76,55 +81,151 @@ export default function Home() {
         </Container>
       </section>
 
-      {/* Featured communities */}
-      <Container size="wide" className="py-20">
+      {/* ============ POSITIONING STATEMENT ============ */}
+      <Container size="narrow" className="py-24 text-center">
+        <div className="eyebrow">The Roland Luxury Standard</div>
+        <p className="mx-auto mt-6 max-w-[760px] font-serif text-[1.7rem] font-medium leading-[1.4] text-[var(--color-ink)] md:text-[2.1rem]">
+          A residence at this level is never just a transaction. It is a threshold — into a community, a lifestyle,
+          and a life well lived. We represent it with the discretion, market command, and quiet resolve it deserves.
+        </p>
+        <div className="mt-8">
+          <span className="hairline !w-16" />
+        </div>
+      </Container>
+
+      {/* ============ FEATURED COLLECTIONS ============ */}
+      <Container size="wide" className="pb-24">
         <div className="flex items-end justify-between gap-6">
           <div>
-            <div className="eyebrow">Featured Communities</div>
-            <h2 className="mt-2 text-[1.9rem]">Where Las Vegas lives well</h2>
+            <div className="eyebrow">The Collection</div>
+            <h2 className="mt-3 text-[2.4rem]">Signature communities</h2>
           </div>
-          <Link href="/communities" className="hidden font-sans text-[0.85rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-gold)] no-underline hover:underline sm:inline">
-            View all →
+          <Link href="/communities" className="link-gold hidden sm:inline">
+            View all communities →
           </Link>
         </div>
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
           {featuredCommunities.map((c) => (
             <CommunityCard key={c.slug} c={c} />
           ))}
         </div>
       </Container>
 
-      {/* Guides */}
-      <section className="bg-[var(--color-sand)]">
-        <Container size="wide" className="py-20">
+      {/* ============ BUYERS + SELLERS (dark, balanced) ============ */}
+      <section className="bg-[var(--color-graphite-3)] py-24 text-white">
+        <Container size="wide">
+          <div className="text-center">
+            <div className="eyebrow">Buyers &amp; Sellers</div>
+            <h2 className="mt-3 text-[2.4rem] text-white">Two paths, one standard of representation</h2>
+          </div>
+          <div className="mt-12 grid gap-7 md:grid-cols-2">
+            {/* Buyers */}
+            <div className="group relative overflow-hidden rounded-[4px] border border-[var(--color-line-dark)]">
+              <div className="img-zoom relative h-[420px]">
+                <Image src={heroImages.luxuryEstate} alt="Luxury estate in Las Vegas" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[rgba(14,16,20,0.94)] via-[rgba(14,16,20,0.55)] to-[rgba(14,16,20,0.25)]" />
+              </div>
+              <div className="absolute inset-x-0 bottom-0 p-8">
+                <div className="font-sans text-[0.7rem] uppercase tracking-[0.24em] text-[var(--color-gold-3)]">For Buyers</div>
+                <h3 className="mt-2 font-serif text-[2rem] font-medium text-white">Acquire a landmark residence</h3>
+                <p className="mt-3 max-w-[440px] text-[1.02rem] leading-relaxed text-[#cbcfd6]">
+                  Private access to guard-gated estates, off-market opportunities, and the counsel to move decisively
+                  when the right home appears.
+                </p>
+                <Link href="/listings" className="btn btn-outline mt-6">Browse Residences</Link>
+              </div>
+            </div>
+            {/* Sellers */}
+            <div className="group relative overflow-hidden rounded-[4px] border border-[var(--color-line-dark)]">
+              <div className="img-zoom relative h-[420px]">
+                <Image src={heroImages.estate} alt="Selling a luxury home in Henderson" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[rgba(14,16,20,0.94)] via-[rgba(14,16,20,0.55)] to-[rgba(14,16,20,0.25)]" />
+              </div>
+              <div className="absolute inset-x-0 bottom-0 p-8">
+                <div className="font-sans text-[0.7rem] uppercase tracking-[0.24em] text-[var(--color-gold-3)]">For Sellers</div>
+                <h3 className="mt-2 font-serif text-[2rem] font-medium text-white">Sell with reach and discretion</h3>
+                <p className="mt-3 max-w-[440px] text-[1.02rem] leading-relaxed text-[#cbcfd6]">
+                  Cinematic marketing, a qualified buyer network, and the negotiation of a Top 1% team — with the
+                  privacy a signature sale requires.
+                </p>
+                <Link href="/home-value" className="btn btn-outline mt-6">What&apos;s My Home Worth?</Link>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* ============ AI CONCIERGE FEATURE ============ */}
+      <Container size="wide" className="py-24">
+        <div className="grid items-center gap-12 rounded-[6px] border border-[var(--color-line)] bg-[var(--color-sand)] px-8 py-14 md:grid-cols-[1.1fr_0.9fr] md:px-14">
+          <div>
+            <div className="eyebrow">New · Always Available</div>
+            <h2 className="mt-3 text-[2.3rem] text-[var(--color-ink)]">Meet your private AI concierge</h2>
+            <p className="mt-5 max-w-[520px] text-[1.08rem] leading-relaxed text-[var(--color-ink-soft)]">
+              Ask anything — about Ascaya price trends, guard-gated communities, the selling process, or which
+              neighborhood fits your life. Our concierge answers instantly, day or night, and connects you with
+              Mike&apos;s team the moment you&apos;re ready.
+            </p>
+            <ul className="mt-6 space-y-2 font-sans text-[0.95rem] text-[var(--color-ink-soft)]">
+              <li className="flex items-start gap-2"><span className="text-[var(--color-gold)]">✦</span> Instant answers on communities, pricing &amp; process</li>
+              <li className="flex items-start gap-2"><span className="text-[var(--color-gold)]">✦</span> Curated recommendations to match your brief</li>
+              <li className="flex items-start gap-2"><span className="text-[var(--color-gold)]">✦</span> A direct line to private, human representation</li>
+            </ul>
+            <p className="mt-7 font-sans text-[0.82rem] text-[var(--color-muted)]">
+              Look for the concierge at the bottom-right of your screen.
+            </p>
+          </div>
+          <div className="relative">
+            <div className="rounded-[8px] border border-[var(--color-line)] bg-white p-5 shadow-[var(--shadow-lift)]">
+              <div className="flex items-center gap-2 border-b border-[var(--color-line)] pb-3">
+                <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-gold)]" />
+                <span className="font-sans text-[0.82rem] font-semibold text-[var(--color-ink)]">Roland Luxury Concierge</span>
+              </div>
+              <div className="mt-4 space-y-3 text-[0.95rem]">
+                <div className="ml-auto max-w-[80%] rounded-[10px] rounded-br-sm bg-[var(--color-graphite)] px-4 py-2.5 font-sans text-[0.9rem] text-white">
+                  What&apos;s available in MacDonald Highlands under $4M?
+                </div>
+                <div className="mr-auto max-w-[88%] rounded-[10px] rounded-bl-sm bg-[var(--color-sand-deep)] px-4 py-2.5 text-[var(--color-ink)]">
+                  Beautiful question — the Highlands has several contemporary estates in that range with DragonRidge
+                  and Strip views. Shall I have Mike&apos;s team send you the current selection?
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+
+      {/* ============ GUIDES ============ */}
+      <section className="bg-[var(--color-graphite)] py-24 text-white">
+        <Container size="wide">
           <div className="eyebrow">Resources</div>
-          <h2 className="mt-2 text-[1.9rem]">Guides for buyers &amp; sellers</h2>
-          <div className="mt-8 grid gap-6 md:grid-cols-2">
+          <h2 className="mt-3 text-[2.2rem] text-white">Guidance for buyers &amp; sellers</h2>
+          <div className="mt-10 grid gap-6 md:grid-cols-2">
             {featuredGuides.map((g) => (
               <Link
                 key={g.slug}
                 href={`/guides/${g.slug}`}
-                className="block rounded-[12px] border border-[var(--color-line)] bg-white p-7 no-underline shadow-[var(--shadow-soft)] transition-transform hover:-translate-y-1"
+                className="block rounded-[4px] border border-[var(--color-line-dark)] bg-[var(--color-graphite-2)] p-7 no-underline transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(216,189,132,0.4)]"
               >
-                <div className="font-sans text-[0.72rem] uppercase tracking-[0.18em] text-[var(--color-gold)]">
+                <div className="font-sans text-[0.68rem] uppercase tracking-[0.2em] text-[var(--color-gold-3)]">
                   {g.category} · {g.readMinutes} min read
                 </div>
-                <h3 className="mt-2 text-[1.35rem]">{g.title}</h3>
-                <p className="mt-2 text-[0.95rem] text-[var(--color-ink-soft)]">{g.intro}</p>
+                <h3 className="mt-2 font-serif text-[1.6rem] font-medium text-white">{g.title}</h3>
+                <p className="mt-2 text-[0.98rem] leading-relaxed text-[#c2c6ce]">{g.intro}</p>
               </Link>
             ))}
           </div>
         </Container>
       </section>
 
-      {/* Entity / FAQ — quotable answers for search + AI assistants */}
-      <Container size="narrow" className="py-16">
+      {/* ============ FAQ (entity / SEO / AI-quotable) ============ */}
+      <Container size="narrow" className="py-24">
         <JsonLd data={faqSchema(homeFaqs)} />
         <div className="eyebrow">About Roland Luxury</div>
-        <h2 className="mt-2 text-[1.9rem]">Las Vegas &amp; Henderson real estate, answered</h2>
-        <div className="mt-6">
+        <h2 className="mt-3 text-[2.2rem]">Las Vegas &amp; Henderson luxury, answered</h2>
+        <div className="mt-8">
           {homeFaqs.map((f) => (
-            <details key={f.q} className="border-b border-[var(--color-line)] py-4">
+            <details key={f.q} className="border-b border-[var(--color-line)] py-5">
               <summary className="cursor-pointer font-sans text-[1.05rem] font-semibold text-[var(--color-ink)]">
                 {f.q}
               </summary>
@@ -134,15 +235,24 @@ export default function Home() {
         </div>
       </Container>
 
-      {/* CTA */}
-      <Container size="wide" className="py-20">
-        <div className="rounded-[16px] bg-[var(--color-graphite)] px-8 py-16 text-center text-white">
-          <h2 className="text-[2rem] text-white">Ready to make your move?</h2>
-          <p className="mx-auto mt-3 max-w-[560px] text-[#cfd3da]">
-            Whether you&apos;re buying your first home or your forever estate, Roland Luxury knows Las Vegas
-            luxury inside and out. Let&apos;s talk.
-          </p>
-          <Link href={site.cta.href} className="btn mt-8">{site.cta.label}</Link>
+      {/* ============ FINAL CTA ============ */}
+      <Container size="wide" className="pb-24">
+        <div className="relative overflow-hidden rounded-[6px] bg-[var(--color-graphite-3)] px-8 py-20 text-center text-white">
+          <HeroBg src={heroImages.redRock} />
+          <div className="relative z-10">
+            <div className="eyebrow">By Appointment</div>
+            <h2 className="mx-auto mt-4 max-w-[640px] text-[2.4rem] text-white">
+              A conversation is where every great move begins
+            </h2>
+            <p className="mx-auto mt-4 max-w-[540px] text-[1.08rem] text-[#cfd3da]">
+              Whether you&apos;re acquiring your forever estate or preparing a signature sale, Mike Roland and the
+              Roland Luxury team are ready when you are.
+            </p>
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
+              <Link href={site.cta.href} className="btn">{site.cta.label}</Link>
+              <a href={`tel:${site.phone}`} className="btn btn-outline">{site.phone}</a>
+            </div>
+          </div>
         </div>
       </Container>
     </>
