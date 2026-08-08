@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Container } from "@/components/Container";
 import { ListingCard } from "@/components/ListingCard";
 import { IdxDisclaimer } from "@/components/IdxDisclaimer";
@@ -10,11 +11,13 @@ import type { ListingFilters, PropertyType } from "@/lib/idx/types";
 export const metadata: Metadata = {
   title: "Homes for Sale in Las Vegas & Henderson",
   description:
-    "Search homes for sale in Las Vegas, Henderson, and Summerlin — luxury estates, guard-gated communities, condos, and more with Roland Luxury.",
+    "Search live MLS homes for sale in Las Vegas, Henderson, North Las Vegas, and Summerlin — luxury estates, guard-gated communities, condos, and more with Roland Luxury.",
   alternates: { canonical: "/listings" },
 };
 
 const PROPERTY_TYPES: PropertyType[] = ["Single Family", "Condo", "Townhouse", "Land", "Multi-Family"];
+const CITIES = ["Henderson", "Las Vegas", "North Las Vegas", "Boulder City"];
+const PAGE_SIZE = 24;
 
 function num(v: string | string[] | undefined): number | undefined {
   const s = Array.isArray(v) ? v[0] : v;
@@ -26,21 +29,37 @@ function str(v: string | string[] | undefined): string | undefined {
   return s && s.length ? s : undefined;
 }
 
+/** Preserve the current filters while changing only the page. */
+function pageHref(sp: Record<string, string | string[] | undefined>, page: number): string {
+  const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(sp)) {
+    if (k === "page") continue;
+    const val = Array.isArray(v) ? v[0] : v;
+    if (val) p.set(k, val);
+  }
+  if (page > 1) p.set("page", String(page));
+  const qs = p.toString();
+  return qs ? `/listings?${qs}` : "/listings";
+}
+
 export default async function ListingsPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
+  const page = Math.max(1, num(sp.page) ?? 1);
   const filters: ListingFilters = {
     city: str(sp.city),
     minPrice: num(sp.minPrice),
     maxPrice: num(sp.maxPrice),
     minBeds: num(sp.minBeds),
     propertyType: str(sp.propertyType) as PropertyType | undefined,
-    limit: 24,
+    limit: PAGE_SIZE,
+    offset: (page - 1) * PAGE_SIZE,
   };
-  const { listings, total, isSampleData } = await getListings(filters);
+  const { listings, total, lastUpdated, error } = await getListings(filters);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const field =
     "font-sans text-[0.85rem] rounded-md border border-[var(--color-line)] bg-white px-3 py-2 text-[var(--color-ink)]";
@@ -59,18 +78,18 @@ export default async function ListingsPage({
           <div className="eyebrow">Homes for Sale</div>
           <h1 className="mt-2 text-[2.2rem]">Search Las Vegas &amp; Henderson listings</h1>
           <p className="mt-3 max-w-[620px] text-[var(--color-ink-soft)]">
-            Browse available homes across the valley&apos;s most sought-after communities.
+            Browse live MLS homes across the valley&apos;s most sought-after communities.
           </p>
 
           {/* Filter bar (GET form → server component re-renders) */}
           <form className="mt-6 flex flex-wrap gap-3" action="/listings" method="get">
             <select name="city" defaultValue={filters.city ?? ""} className={field} aria-label="City">
               <option value="">All cities</option>
-              <option>Henderson</option>
-              <option>Las Vegas</option>
-              <option>Boulder City</option>
+              {CITIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
             </select>
-            <select name="minBeds" defaultValue={sp.minBeds as string ?? ""} className={field} aria-label="Minimum beds">
+            <select name="minBeds" defaultValue={(sp.minBeds as string) ?? ""} className={field} aria-label="Minimum beds">
               <option value="">Beds (any)</option>
               <option value="2">2+ beds</option>
               <option value="3">3+ beds</option>
@@ -83,7 +102,7 @@ export default async function ListingsPage({
                 <option key={t} value={t}>{t}</option>
               ))}
             </select>
-            <select name="maxPrice" defaultValue={sp.maxPrice as string ?? ""} className={field} aria-label="Max price">
+            <select name="maxPrice" defaultValue={(sp.maxPrice as string) ?? ""} className={field} aria-label="Max price">
               <option value="">Max price</option>
               <option value="750000">Up to $750K</option>
               <option value="1500000">Up to $1.5M</option>
@@ -97,10 +116,19 @@ export default async function ListingsPage({
 
       <Container size="wide" className="py-12">
         <div className="mb-6 font-sans text-[0.85rem] text-[var(--color-muted)]">
-          {total} {total === 1 ? "home" : "homes"} found
+          {total.toLocaleString()} {total === 1 ? "home" : "homes"} found
+          {totalPages > 1 && <> · page {page} of {totalPages}</>}
         </div>
 
-        {listings.length === 0 ? (
+        {error ? (
+          <div className="rounded-[12px] border border-[var(--color-line)] bg-[var(--color-sand)] p-8 text-center">
+            <p className="text-[var(--color-ink-soft)]">
+              We&apos;re having trouble loading live listings right now. Please try again in a moment, or{" "}
+              <Link href="/contact" className="font-semibold text-[var(--color-gold)]">contact us</Link> and we&apos;ll
+              send matching homes directly.
+            </p>
+          </div>
+        ) : listings.length === 0 ? (
           <p className="text-[var(--color-ink-soft)]">No homes match your search. Try widening your filters.</p>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -110,7 +138,24 @@ export default async function ListingsPage({
           </div>
         )}
 
-        <IdxDisclaimer isSampleData={isSampleData} />
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <nav className="mt-10 flex items-center justify-center gap-3 font-sans text-[0.85rem]" aria-label="Pagination">
+            {page > 1 ? (
+              <Link href={pageHref(sp, page - 1)} className="btn btn-ghost !py-2 !px-5">‹ Prev</Link>
+            ) : (
+              <span className="btn btn-ghost !py-2 !px-5 opacity-40" aria-disabled="true">‹ Prev</span>
+            )}
+            <span className="text-[var(--color-muted)]">Page {page} of {totalPages}</span>
+            {page < totalPages ? (
+              <Link href={pageHref(sp, page + 1)} className="btn btn-ghost !py-2 !px-5">Next ›</Link>
+            ) : (
+              <span className="btn btn-ghost !py-2 !px-5 opacity-40" aria-disabled="true">Next ›</span>
+            )}
+          </nav>
+        )}
+
+        <IdxDisclaimer lastUpdated={lastUpdated} />
       </Container>
     </>
   );

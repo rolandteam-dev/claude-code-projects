@@ -42,6 +42,8 @@ export type Listing = {
   photos: string[];
   coords?: { lat: number; lng: number };
   listedDate: string; // ISO date
+  /** last feed update for this listing (ISO), for the IDX "last updated" line */
+  updatedAt?: string;
   /** Listing brokerage — REQUIRED for IDX attribution/compliance */
   listingOffice: string;
   /** true for our own team's listings (can be highlighted) */
@@ -56,10 +58,18 @@ export type Listing = {
   style?: string;
   /** subdivision / neighborhood name from the feed */
   subdivision?: string;
+  /** county the property is in (e.g. "Clark") */
+  county?: string;
+  /** assigned school district */
+  schoolDistrict?: string;
+  /** assigned/nearby schools when the feed provides them */
+  schools?: string[];
   /** days on market (derived from listedDate if the feed omits it) */
   daysOnMarket?: number;
-  /** monthly HOA / association fee */
+  /** HOA / association fee amount */
   hoaFee?: number;
+  /** how often the HOA fee is charged, e.g. "Monthly", "Quarterly" */
+  hoaFrequency?: string;
   /** annual property tax amount */
   annualTax?: number;
   heating?: string;
@@ -94,4 +104,8 @@ export type ListingResult = {
   total: number;
   /** true when data is sample/placeholder rather than a live MLS feed */
   isSampleData: boolean;
+  /** most-recent feed update timestamp (ISO) for the IDX "last updated" line */
+  lastUpdated?: string;
+  /** true when the upstream feed errored and results are a safe empty fallback */
+  error?: boolean;
 };

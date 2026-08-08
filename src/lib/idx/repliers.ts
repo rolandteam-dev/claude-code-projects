@@ -20,15 +20,33 @@ import { matchCommunitySlug } from "@/content/communities";
 const API_BASE = "https://api.repliers.io";
 const CDN_BASE = "https://cdn.repliers.io";
 
+/**
+ * GLVAR / Las Vegas REALTORS® (IDX PLUS) dataset. Repliers requires a boardId
+ * on every request when the API key can see more than one MLS, so all queries
+ * are scoped to this board. Overridable via REPLIERS_BOARD_ID without a deploy.
+ */
+const DEFAULT_BOARD_ID = "193";
+
+function boardId(): string {
+  return (process.env.REPLIERS_BOARD_ID ?? DEFAULT_BOARD_ID).trim();
+}
+
 function apiKey(): string {
   const key = process.env.REPLIERS_API_KEY;
   if (!key) {
     throw new Error(
       "Repliers provider selected (IDX_PROVIDER=repliers) but REPLIERS_API_KEY is not set. " +
-        "Create a Repliers account and add the key in Vercel env vars.",
+        "Add REPLIERS_API_KEY in Vercel → Settings → Environment Variables.",
     );
   }
   return key;
+}
+
+/** Map our normalized PropertyType to a Repliers `class`, when it maps cleanly. */
+function mapClassParam(t?: PropertyType): string | undefined {
+  if (t === "Condo") return "CondoProperty";
+  if (t === "Single Family" || t === "Townhouse" || t === "Multi-Family") return "ResidentialProperty";
+  return undefined; // Land / unknown → don't over-constrain the query
 }
 
 function mapStatus(v: string | undefined): ListingStatus {
@@ -173,6 +191,7 @@ function mapRecord(r: any): Listing {
     photos: mapImages(r.images ?? r.photos),
     coords: lat && lng ? { lat, lng } : undefined,
     listedDate: s(r.listDate, r.listedDate, r.onMarketDate) || new Date().toISOString().slice(0, 10),
+    updatedAt: s(r.updatedOn, r.timestamps?.listingUpdate, r.timestamps?.repliersUpdatedOn) || undefined,
     listingOffice: s(office.brokerageName, office.name, r.listOfficeName),
     garageSpaces: numOpt(details.numGarageSpaces, details.garageSpaces, details.garage),
     stories: numOpt(details.numStories, details.stories, details.numFloors),
@@ -183,7 +202,22 @@ function mapRecord(r: any): Listing {
       n(r.daysOnMarket, r.dom),
     ),
     hoaFee: numOpt(details.associationFee, details.hoaFee, details.maintenanceFee, r.condominium?.fees?.maintenance),
+    hoaFrequency:
+      s(
+        details.associationFeeFrequency,
+        details.hoaFeeFrequency,
+        details.maintenanceFeeFrequency,
+        r.condominium?.fees?.maintenanceFrequency,
+      ) || undefined,
     annualTax: numOpt(r.taxes?.annualAmount, details.taxAnnualAmount, r.taxes?.amount),
+    county: s(addr.county, r.county, details.county) || undefined,
+    schoolDistrict:
+      s(details.schoolDistrict, details.highSchoolDistrict, r.schoolDistrict, details.district) || undefined,
+    schools: collect(
+      details.schools,
+      [details.elementarySchool, details.middleSchool, details.juniorSchool, details.highSchool],
+      [details.elementarySchoolName, details.middleSchoolName, details.highSchoolName],
+    ),
     heating: s(details.heating, details.heatType) || undefined,
     cooling: s(details.airConditioning, details.cooling, details.coolingType) || undefined,
     pool: s(details.swimmingPool, details.pool) || undefined,
@@ -204,16 +238,22 @@ function mapRecord(r: any): Listing {
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 function buildQuery(f: ListingFilters): string {
+  const limit = f.limit ?? 24;
   const p = new URLSearchParams();
+  // Always scope to the licensed GLVAR board and for-sale inventory.
+  p.set("boardId", boardId());
+  p.set("type", "sale");
   p.set("status", f.status && f.status !== "Active" ? "U" : "A");
-  p.set("resultsPerPage", String(f.limit ?? 24));
-  p.set("pageNum", String(Math.floor((f.offset ?? 0) / (f.limit ?? 24)) + 1));
+  p.set("resultsPerPage", String(limit));
+  p.set("pageNum", String(Math.floor((f.offset ?? 0) / limit) + 1));
   p.set("sortBy", "listPriceDesc");
   if (f.city) p.set("city", f.city);
   if (f.minPrice) p.set("minPrice", String(f.minPrice));
   if (f.maxPrice) p.set("maxPrice", String(f.maxPrice));
   if (f.minBeds) p.set("minBeds", String(f.minBeds));
   if (f.minBaths) p.set("minBaths", String(f.minBaths));
+  const cls = mapClassParam(f.propertyType);
+  if (cls) p.set("class", cls);
   return p.toString();
 }
 
@@ -226,6 +266,18 @@ async function query(path: string): Promise<unknown> {
   return res.json();
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/** Most-recent listing-update timestamp across a result set (for IDX "last updated"). */
+function latestUpdate(rows: any[]): string | undefined {
+  let best = 0;
+  for (const r of rows) {
+    const t = Date.parse(s(r?.updatedOn, r?.timestamps?.listingUpdate, r?.timestamps?.repliersUpdatedOn, r?.lastStatusUpdate));
+    if (Number.isFinite(t) && t > best) best = t;
+  }
+  return best ? new Date(best).toISOString() : undefined;
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 export const repliersProvider: ListingProvider = {
   async getListings(filters = {}) {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -233,14 +285,18 @@ export const repliersProvider: ListingProvider = {
     const rows: unknown[] = data.listings ?? [];
     return {
       listings: rows.map(mapRecord),
-      total: Number(data.count ?? rows.length),
+      total: Number(data.count ?? data.total ?? rows.length),
       isSampleData: false,
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      lastUpdated: latestUpdate(rows as any[]),
     } satisfies ListingResult;
   },
 
   async getListing(id) {
+    // boardId is required to resolve a single MLS number to the right dataset.
+    const p = new URLSearchParams({ boardId: boardId() });
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    const data: any = await query(`/listings/${encodeURIComponent(id)}`);
+    const data: any = await query(`/listings/${encodeURIComponent(id)}?${p.toString()}`);
     if (!data || (!data.mlsNumber && !data.id)) return null;
     return mapRecord(data);
   },

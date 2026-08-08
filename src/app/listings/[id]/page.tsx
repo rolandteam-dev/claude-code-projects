@@ -7,7 +7,6 @@ import { IdxDisclaimer } from "@/components/IdxDisclaimer";
 import { ListingGallery } from "@/components/ListingGallery";
 import { breadcrumbSchema } from "@/lib/schema";
 import { getListing } from "@/lib/idx/provider";
-import { getListings } from "@/lib/idx/provider";
 import { formatPrice } from "@/components/ListingCard";
 import { getCommunity } from "@/content/communities";
 import { absoluteUrl, site } from "@/lib/site";
@@ -29,12 +28,17 @@ export async function generateMetadata({
   };
 }
 
+type Row = { label: string; value: string };
+type MaybeRow = Row | false | "" | 0 | undefined | null;
+function rows(...items: MaybeRow[]): Row[] {
+  return items.filter(Boolean) as Row[];
+}
+
 export default async function ListingDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const l = await getListing(id);
   if (!l) notFound();
 
-  const { isSampleData } = await getListings({ limit: 1 });
   const community = l.address.communitySlug ? getCommunity(l.address.communitySlug) : undefined;
 
   const listingSchema = {
@@ -53,26 +57,61 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
   };
 
   const pricePerSqft = l.sqft > 0 ? Math.round(l.listPrice / l.sqft) : undefined;
-  const detailRows = (
-    [
-      { label: "Property Type", value: l.propertyType },
-      l.style && { label: "Style", value: l.style },
-      l.yearBuilt != null && { label: "Year Built", value: String(l.yearBuilt) },
-      l.sqft > 0 && { label: "Living Area", value: `${l.sqft.toLocaleString()} sq ft` },
-      pricePerSqft && { label: "Price / Sq Ft", value: `$${pricePerSqft.toLocaleString()}` },
-      l.lotAcres != null && { label: "Lot Size", value: `${l.lotAcres} acres` },
-      l.garageSpaces != null && { label: "Garage", value: `${l.garageSpaces} space${l.garageSpaces === 1 ? "" : "s"}` },
-      l.stories != null && { label: "Stories", value: String(l.stories) },
-      l.hoaFee != null && { label: "HOA", value: `${formatPrice(l.hoaFee)}/mo` },
-      l.annualTax != null && { label: "Annual Taxes", value: formatPrice(l.annualTax) },
-      l.heating && { label: "Heating", value: l.heating },
-      l.cooling && { label: "Cooling", value: l.cooling },
-      l.pool && { label: "Pool", value: l.pool },
-      l.view && { label: "View", value: l.view },
-      l.subdivision && { label: "Subdivision", value: l.subdivision },
-      l.daysOnMarket != null && { label: "Days on Market", value: String(l.daysOnMarket) },
-    ] as Array<{ label: string; value: string } | false | "" | undefined>
-  ).filter(Boolean) as Array<{ label: string; value: string }>;
+  const hoaValue =
+    l.hoaFee != null
+      ? `${formatPrice(l.hoaFee)}${l.hoaFrequency ? `/${l.hoaFrequency.toLowerCase().replace(/ly$/, "")}` : "/mo"}`
+      : undefined;
+
+  const overview = rows(
+    { label: "Property Type", value: l.propertyType },
+    l.style && { label: "Style", value: l.style },
+    l.status && { label: "Status", value: l.status },
+    l.yearBuilt != null && { label: "Year Built", value: String(l.yearBuilt) },
+    l.sqft > 0 && { label: "Living Area", value: `${l.sqft.toLocaleString()} sq ft` },
+    pricePerSqft && { label: "Price / Sq Ft", value: `$${pricePerSqft.toLocaleString()}` },
+    l.daysOnMarket != null && { label: "Days on Market", value: String(l.daysOnMarket) },
+    (l.subdivision || community) && {
+      label: "Community",
+      value: l.subdivision || community!.name,
+    },
+    l.mlsNumber && { label: "MLS #", value: l.mlsNumber },
+  );
+
+  const interior = rows(
+    l.beds > 0 && { label: "Bedrooms", value: String(l.beds) },
+    l.baths > 0 && { label: "Bathrooms", value: String(l.baths) },
+    l.stories != null && { label: "Stories", value: String(l.stories) },
+    l.heating && { label: "Heating", value: l.heating },
+    l.cooling && { label: "Cooling", value: l.cooling },
+  );
+
+  const exterior = rows(
+    l.lotAcres != null && { label: "Lot Size", value: `${l.lotAcres} acres` },
+    l.garageSpaces != null && { label: "Garage", value: `${l.garageSpaces} space${l.garageSpaces === 1 ? "" : "s"}` },
+    l.pool && { label: "Pool", value: l.pool },
+    l.view && { label: "View", value: l.view },
+  );
+
+  const hoaFees = rows(
+    hoaValue && { label: "HOA Fee", value: hoaValue },
+    l.hoaFrequency && l.hoaFee != null && { label: "HOA Frequency", value: l.hoaFrequency },
+    l.annualTax != null && { label: "Annual Taxes", value: formatPrice(l.annualTax) },
+  );
+
+  const location = rows(
+    l.address.city && { label: "City", value: l.address.city },
+    l.address.postalCode && { label: "ZIP", value: l.address.postalCode },
+    l.county && { label: "County", value: l.county },
+    l.subdivision && { label: "Subdivision", value: l.subdivision },
+  );
+
+  const sections: Array<{ title: string; rows: Row[] }> = [
+    { title: "Overview", rows: overview },
+    { title: "Interior", rows: interior },
+    { title: "Exterior & Lot", rows: exterior },
+    { title: "HOA & Fees", rows: hoaFees },
+    { title: "Location", rows: location },
+  ].filter((s) => s.rows.length > 0);
 
   return (
     <>
@@ -97,7 +136,7 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
         </nav>
       </Container>
 
-      {/* Gallery */}
+      {/* Gallery — renders every photo the feed returns via the lightbox */}
       <Container size="wide" className="pt-4">
         <ListingGallery
           photos={l.photos}
@@ -135,18 +174,38 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
             </a>
           )}
 
-          {/* Full property details */}
-          <section>
-            <h2 className="mt-10 text-[1.6rem]">Property Details</h2>
-            <dl className="mt-4 grid grid-cols-2 gap-x-8 gap-y-4 font-sans text-[0.95rem] sm:grid-cols-3">
-              {detailRows.map((r) => (
-                <div key={r.label}>
-                  <dt className="text-[0.7rem] uppercase tracking-[0.05em] text-[var(--color-muted)]">{r.label}</dt>
-                  <dd className="m-0 font-semibold text-[var(--color-ink)]">{r.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </section>
+          {/* Grouped property details */}
+          {sections.map((sec) => (
+            <DetailSection key={sec.title} title={sec.title} rows={sec.rows} />
+          ))}
+
+          {/* Schools */}
+          {(l.schoolDistrict || (l.schools && l.schools.length > 0)) && (
+            <section>
+              <h2 className="mt-10 text-[1.6rem]">Schools</h2>
+              {l.schoolDistrict && (
+                <p className="mt-2 font-sans text-[0.95rem] text-[var(--color-ink-soft)]">
+                  School District: <span className="font-semibold text-[var(--color-ink)]">{l.schoolDistrict}</span>
+                </p>
+              )}
+              {l.schools && l.schools.length > 0 && (
+                <ul className="mt-3 flex flex-wrap gap-2 p-0">
+                  {l.schools.map((sch) => (
+                    <li
+                      key={sch}
+                      className="list-none rounded-full border border-[var(--color-line)] bg-[var(--color-sand)] px-3 py-1 font-sans text-[0.8rem] text-[var(--color-ink-soft)]"
+                    >
+                      {sch}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="mt-2 font-sans text-[0.68rem] text-[var(--color-muted)]">
+                School information is provided by the MLS and deemed reliable but not guaranteed. Verify enrollment
+                eligibility directly with the school district.
+              </p>
+            </section>
+          )}
 
           {/* Features & amenities */}
           {l.features && l.features.length > 0 && (
@@ -209,12 +268,8 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
             </section>
           )}
 
-          <div className="mt-8 font-sans text-[0.82rem] text-[var(--color-muted)]">
-            MLS #{l.mlsNumber} · Status: {l.status} · Listed {l.listedDate}
-          </div>
-
           {community && (
-            <p className="mt-6">
+            <p className="mt-8">
               Located in{" "}
               <Link href={`/communities/${community.slug}`} className="font-semibold text-[var(--color-gold)]">
                 {community.name}
@@ -223,7 +278,8 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
             </p>
           )}
 
-          <IdxDisclaimer isSampleData={isSampleData} listingOffice={l.listingOffice} />
+          {/* De-emphasized MLS meta + IDX attribution (compliance minimum) */}
+          <IdxDisclaimer listingOffice={l.listingOffice} lastUpdated={l.updatedAt ?? l.listedDate} />
         </div>
 
         {/* Contact rail */}
@@ -236,9 +292,28 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
           <a href={`tel:${site.phone}`} className="mt-3 block text-center font-sans text-[0.85rem] font-semibold text-[var(--color-gold)] no-underline">
             {site.phone}
           </a>
+          <p className="mt-4 border-t border-[var(--color-line)] pt-3 font-sans text-[0.72rem] text-[var(--color-muted)]">
+            {site.parentBrand} · brokered by {site.brokerage}
+          </p>
         </aside>
       </Container>
     </>
+  );
+}
+
+function DetailSection({ title, rows }: { title: string; rows: Row[] }) {
+  return (
+    <section>
+      <h2 className="mt-10 text-[1.6rem]">{title}</h2>
+      <dl className="mt-4 grid grid-cols-2 gap-x-8 gap-y-4 font-sans text-[0.95rem] sm:grid-cols-3">
+        {rows.map((r) => (
+          <div key={r.label}>
+            <dt className="text-[0.7rem] uppercase tracking-[0.05em] text-[var(--color-muted)]">{r.label}</dt>
+            <dd className="m-0 font-semibold text-[var(--color-ink)]">{r.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   );
 }
 

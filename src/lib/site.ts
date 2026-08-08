@@ -90,6 +90,7 @@ export const site = {
         { label: "Golf Communities", href: "/golf-communities-las-vegas" },
         { label: "Henderson", href: "/areas/henderson" },
         { label: "Las Vegas", href: "/areas/las-vegas" },
+        { label: "North Las Vegas", href: "/areas/north-las-vegas" },
         { label: "Boulder City", href: "/areas/boulder-city" },
       ],
     },
