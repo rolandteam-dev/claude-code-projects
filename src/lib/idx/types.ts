@@ -46,6 +46,33 @@ export type Listing = {
   listingOffice: string;
   /** true for our own team's listings (can be highlighted) */
   isOurListing?: boolean;
+
+  /* ---- Extended detail (all optional; render only when present) ---- */
+  /** covered garage spaces */
+  garageSpaces?: number;
+  /** number of levels/stories */
+  stories?: number;
+  /** architectural style, e.g. "Contemporary", "Two Story" */
+  style?: string;
+  /** subdivision / neighborhood name from the feed */
+  subdivision?: string;
+  /** days on market (derived from listedDate if the feed omits it) */
+  daysOnMarket?: number;
+  /** monthly HOA / association fee */
+  hoaFee?: number;
+  /** annual property tax amount */
+  annualTax?: number;
+  heating?: string;
+  cooling?: string;
+  /** pool description, e.g. "Private", "Community", "None" */
+  pool?: string;
+  view?: string;
+  /** flattened interior/exterior features + amenities for a chip list */
+  features?: string[];
+  /** individual rooms with dimensions, when the feed provides them */
+  rooms?: { name: string; dimensions?: string; level?: string }[];
+  /** 3D tour / video walkthrough URL */
+  virtualTourUrl?: string;
 };
 
 export type ListingFilters = {

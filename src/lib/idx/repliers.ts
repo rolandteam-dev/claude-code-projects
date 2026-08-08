@@ -73,9 +73,66 @@ const s = (...vals: any[]): string => {
 
 function mapImages(images: any): string[] {
   if (!Array.isArray(images)) return [];
-  return images
-    .map((im) => cdnImage(typeof im === "string" ? im : s(im?.url, im?.image, im?.src, im?.path)))
-    .filter(Boolean);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const im of images) {
+    const url = cdnImage(typeof im === "string" ? im : s(im?.url, im?.image, im?.src, im?.path));
+    if (url && !seen.has(url)) {
+      seen.add(url);
+      out.push(url);
+    }
+  }
+  return out;
+}
+
+/** Optional positive number, else undefined. */
+const numOpt = (...vals: any[]): number | undefined => {
+  const x = n(...vals);
+  return x > 0 ? x : undefined;
+};
+
+/** Flatten a set of array/comma-string sources into a unique, trimmed list. */
+function collect(...sources: any[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const src of sources) {
+    const parts = Array.isArray(src)
+      ? src.map((v) => (typeof v === "string" ? v : s(v?.name, v?.value)))
+      : typeof src === "string"
+        ? src.split(/[,;|]/)
+        : [];
+    for (const p of parts) {
+      const t = p.trim();
+      const key = t.toLowerCase();
+      if (t && t.toLowerCase() !== "none" && !seen.has(key)) {
+        seen.add(key);
+        out.push(t);
+      }
+    }
+  }
+  return out;
+}
+
+function mapRooms(rooms: any): Listing["rooms"] {
+  if (!Array.isArray(rooms)) return undefined;
+  const out = rooms
+    .map((rm) => {
+      const name = s(rm?.description, rm?.roomType, rm?.name, rm?.type);
+      if (!name) return null;
+      const dims = s(rm?.dimensions) || [rm?.length, rm?.width].filter(Boolean).join(" × ");
+      const level = s(rm?.level, rm?.floor);
+      return { name, dimensions: dims || undefined, level: level || undefined };
+    })
+    .filter(Boolean) as NonNullable<Listing["rooms"]>;
+  return out.length ? out : undefined;
+}
+
+function daysOnMarket(listedISO: string, provided?: number): number | undefined {
+  if (provided && provided > 0) return provided;
+  const t = Date.parse(listedISO);
+  if (!Number.isFinite(t)) return undefined;
+  const days = Math.floor((Date.now() - t) / 86_400_000);
+  return days >= 0 ? days : undefined;
 }
 
 function mapRecord(r: any): Listing {
@@ -117,6 +174,31 @@ function mapRecord(r: any): Listing {
     coords: lat && lng ? { lat, lng } : undefined,
     listedDate: s(r.listDate, r.listedDate, r.onMarketDate) || new Date().toISOString().slice(0, 10),
     listingOffice: s(office.brokerageName, office.name, r.listOfficeName),
+    garageSpaces: numOpt(details.numGarageSpaces, details.garageSpaces, details.garage),
+    stories: numOpt(details.numStories, details.stories, details.numFloors),
+    style: s(details.style, details.architecturalStyle) || undefined,
+    subdivision: s(details.subdivision, addr.neighborhood, addr.neighbourhood) || undefined,
+    daysOnMarket: daysOnMarket(
+      s(r.listDate, r.listedDate, r.onMarketDate),
+      n(r.daysOnMarket, r.dom),
+    ),
+    hoaFee: numOpt(details.associationFee, details.hoaFee, details.maintenanceFee, r.condominium?.fees?.maintenance),
+    annualTax: numOpt(r.taxes?.annualAmount, details.taxAnnualAmount, r.taxes?.amount),
+    heating: s(details.heating, details.heatType) || undefined,
+    cooling: s(details.airConditioning, details.cooling, details.coolingType) || undefined,
+    pool: s(details.swimmingPool, details.pool) || undefined,
+    view: s(details.view) || undefined,
+    features: collect(
+      details.exteriorFeatures,
+      details.interiorFeatures,
+      details.features,
+      details.amenities,
+      details.appliances,
+      details.flooring,
+      r.condominium?.amenities,
+    ),
+    rooms: mapRooms(r.rooms),
+    virtualTourUrl: s(r.virtualTourUrl, details.virtualTourUrl, r.tour, details.tourUrl) || undefined,
   };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
