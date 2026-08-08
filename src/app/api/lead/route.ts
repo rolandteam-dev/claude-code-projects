@@ -23,22 +23,32 @@ type LeadInput = {
   source?: string;
 };
 
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS });
+}
+
 export async function POST(req: Request) {
   let data: LeadInput | null = null;
   try {
     data = (await req.json()) as LeadInput;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid request" }, { status: 400, headers: CORS });
   }
 
   if (!data || (!data.email && !data.phone)) {
-    return NextResponse.json({ ok: false, error: "An email or phone is required." }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "An email or phone is required." }, { status: 400, headers: CORS });
   }
 
   const key = process.env.FUB_API_KEY;
   if (!key) {
     // CRM not configured yet — don't break the UX; Mike adds the key in Vercel.
-    return NextResponse.json({ ok: true, queued: false });
+    return NextResponse.json({ ok: true, queued: false }, { headers: CORS });
   }
 
   // Prefer explicit first/last fields; fall back to splitting a single name.
@@ -51,7 +61,7 @@ export async function POST(req: Request) {
   }
 
   const body = {
-    source: "Luxury Website",
+    source: data.source || "Luxury Website",
     system: "Roland Luxury Website",
     type: data.type || "General Inquiry",
     message: [data.address ? `Property: ${data.address}` : "", data.message || ""].filter(Boolean).join("\n"),
@@ -76,10 +86,10 @@ export async function POST(req: Request) {
     });
     if (!res.ok) {
       const detail = (await res.text()).slice(0, 300);
-      return NextResponse.json({ ok: false, error: `CRM error ${res.status}`, detail }, { status: 502 });
+      return NextResponse.json({ ok: false, error: `CRM error ${res.status}`, detail }, { status: 502, headers: CORS });
     }
-    return NextResponse.json({ ok: true, queued: true });
+    return NextResponse.json({ ok: true, queued: true }, { headers: CORS });
   } catch {
-    return NextResponse.json({ ok: false, error: "Could not reach CRM." }, { status: 502 });
+    return NextResponse.json({ ok: false, error: "Could not reach CRM." }, { status: 502, headers: CORS });
   }
 }

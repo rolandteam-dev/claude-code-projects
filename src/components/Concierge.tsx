@@ -71,7 +71,7 @@ export function Concierge() {
           message: lead.message,
           type: "General Inquiry",
           tag: "AI Concierge",
-          source: "Luxury Website",
+          source: "Luxury ChatBot",
         }),
       });
       const data = await res.json();

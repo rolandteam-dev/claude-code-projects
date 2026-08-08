@@ -18,6 +18,16 @@ const MAX_TURNS = 16; // cap conversation length we forward
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
 
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS });
+}
+
 /** Compact, factual knowledge base built from the site's own content. */
 function knowledgeBase(): string {
   const communityLines = communities
@@ -60,7 +70,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as { messages?: ChatMsg[] };
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid request" }, { status: 400, headers: CORS });
   }
 
   const messages = (body?.messages ?? [])
@@ -69,13 +79,13 @@ export async function POST(req: Request) {
     .map((m) => ({ role: m.role, content: m.content.slice(0, 2000) }));
 
   if (messages.length === 0) {
-    return NextResponse.json({ ok: false, error: "No message provided." }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "No message provided." }, { status: 400, headers: CORS });
   }
 
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) {
     // Not configured yet — graceful, on-brand degrade.
-    return NextResponse.json({ ok: true, reply: FALLBACK, configured: false });
+    return NextResponse.json({ ok: true, reply: FALLBACK, configured: false }, { headers: CORS });
   }
 
   try {
@@ -95,7 +105,7 @@ export async function POST(req: Request) {
     });
 
     if (!res.ok) {
-      return NextResponse.json({ ok: true, reply: FALLBACK, configured: true, degraded: true });
+      return NextResponse.json({ ok: true, reply: FALLBACK, configured: true, degraded: true }, { headers: CORS });
     }
 
     const json = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
@@ -106,8 +116,8 @@ export async function POST(req: Request) {
         .join("\n")
         .trim() || FALLBACK;
 
-    return NextResponse.json({ ok: true, reply, configured: true });
+    return NextResponse.json({ ok: true, reply, configured: true }, { headers: CORS });
   } catch {
-    return NextResponse.json({ ok: true, reply: FALLBACK, configured: true, degraded: true });
+    return NextResponse.json({ ok: true, reply: FALLBACK, configured: true, degraded: true }, { headers: CORS });
   }
 }
