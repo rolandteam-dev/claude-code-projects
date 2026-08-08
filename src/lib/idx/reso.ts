@@ -16,6 +16,7 @@
  */
 import type { Listing, ListingFilters, ListingResult, PropertyType, ListingStatus } from "./types";
 import type { ListingProvider } from "./provider";
+import { matchCommunitySlug } from "@/content/communities";
 
 function config() {
   const base = process.env.RESO_API_BASE;
@@ -60,6 +61,11 @@ function mapRecord(r: any): Listing {
       city: r.City ?? "",
       state: r.StateOrProvince ?? "NV",
       postalCode: r.PostalCode ?? "",
+      communitySlug: matchCommunitySlug([
+        r.SubdivisionName,
+        r.MLSAreaMajor ?? r.MLSAreaMinor,
+        r.UnparsedAddress ?? r.StreetName,
+      ]),
     },
     beds: Number(r.BedroomsTotal ?? 0),
     baths: Number(r.BathroomsTotalInteger ?? r.BathroomsFull ?? 0),

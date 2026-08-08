@@ -1633,3 +1633,37 @@ export function getCommunity(slug: string): Community | undefined {
 }
 
 export const featuredCommunities = communities.filter((c) => c.featured);
+
+/** Longest names first so "Sun City Summerlin" wins over "Summerlin". */
+const communitiesByNameLength = [...communities].sort(
+  (a, b) => b.name.length - a.name.length,
+);
+
+function normalize(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+/**
+ * Best-effort mapping of a live MLS listing to one of our community pages so
+ * IDX listings cross-link into the site's community content (the "Located in
+ * …" block on the listing detail page + community-filtered browsing).
+ *
+ * Match the community name against STRUCTURED location fields only
+ * (subdivision / neighborhood / area / street) — never the free-text public
+ * remarks, which would produce false positives. Whole-token match against the
+ * longest (most specific) community name wins.
+ */
+export function matchCommunitySlug(
+  parts: Array<string | null | undefined>,
+): string | undefined {
+  const haystacks = parts
+    .filter((p): p is string => Boolean(p))
+    .map((p) => ` ${normalize(p)} `);
+  if (haystacks.length === 0) return undefined;
+  for (const c of communitiesByNameLength) {
+    const name = normalize(c.name);
+    if (name.length < 4) continue; // guard against short/ambiguous names
+    if (haystacks.some((h) => h.includes(` ${name} `))) return c.slug;
+  }
+  return undefined;
+}

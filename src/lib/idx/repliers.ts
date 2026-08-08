@@ -15,6 +15,7 @@
  */
 import type { Listing, ListingFilters, ListingResult, PropertyType, ListingStatus } from "./types";
 import type { ListingProvider } from "./provider";
+import { matchCommunitySlug } from "@/content/communities";
 
 const API_BASE = "https://api.repliers.io";
 const CDN_BASE = "https://cdn.repliers.io";
@@ -97,6 +98,13 @@ function mapRecord(r: any): Listing {
       city: s(addr.city, addr.municipality),
       state: s(addr.state, addr.province) || "NV",
       postalCode: s(addr.zip, addr.postalCode, addr.zipCode),
+      communitySlug: matchCommunitySlug([
+        s(addr.neighborhood, addr.neighbourhood),
+        s(addr.area, addr.district),
+        s(details.subdivision, details.subdivisionName, r.subdivision),
+        s(details.community, addr.community),
+        line1,
+      ]),
     },
     beds: n(details.numBedrooms, details.numBeds, details.bedrooms, details.beds),
     baths: n(details.numBathrooms, details.numBaths, details.bathrooms, details.baths),
