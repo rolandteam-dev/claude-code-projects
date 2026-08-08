@@ -20,23 +20,32 @@ export const heroImages = {
   estate: `${BASE}/${P}62683b9d-ddbc-4606-a8aa-e0ac75caeb58.png`,
 } as const;
 
+// NOTE: only 8 background images exist, so ~30 communities cannot each be
+// unique yet (see communityImage below for the pending real-photo fix). This
+// map at least keeps the most-visited / featured communities visually distinct
+// and spreads repeats apart so no two adjacent cards on /communities collide.
 const communityHeroMap: Record<string, keyof typeof heroImages> = {
-  "lake-las-vegas": "lake",
+  // Featured / top of the index grid — each distinct
+  ascaya: "luxuryEstate",
+  "macdonald-highlands": "estate",
+  "seven-hills": "henderson",
   "the-ridges-summerlin": "redRock",
-  summerlin: "redRock",
-  "sun-city-summerlin": "redRock",
+  "lake-las-vegas": "lake",
+  summerlin: "home",
+  // Remaining communities, distributed to avoid adjacent repeats
+  "sun-city-summerlin": "estate",
   "red-rock-country-club": "golf",
   "southern-highlands": "golf",
-  "rhodes-ranch": "golf",
+  "rhodes-ranch": "newConstruction",
   anthem: "golf",
   "skye-canyon": "newConstruction",
-  cadence: "newConstruction",
+  cadence: "home",
   inspirada: "newConstruction",
-  "mountains-edge": "newConstruction",
+  "mountains-edge": "redRock",
   providence: "newConstruction",
   "centennial-hills": "henderson",
   aliante: "golf",
-  tuscany: "golf",
+  tuscany: "luxuryEstate",
   "silverado-ranch": "estate",
   "spring-valley": "home",
   "solera-at-anthem": "golf",
@@ -45,6 +54,9 @@ const communityHeroMap: Record<string, keyof typeof heroImages> = {
   "the-lakes": "lake",
   "roma-hills": "luxuryEstate",
   "peccole-ranch": "henderson",
+  "green-valley": "henderson",
+  "boulder-city": "estate",
+  "the-summit-club": "golf",
 };
 
 export function communityHero(slug: string): string {
