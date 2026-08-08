@@ -85,10 +85,17 @@ export default async function ListingsPage({
             </select>
             <select name="maxPrice" defaultValue={sp.maxPrice as string ?? ""} className={field} aria-label="Max price">
               <option value="">Max price</option>
-              <option value="750000">Up to $750K</option>
+            <option value="750000">Up to $750K</option>
+              <option value="1000000">Up to $1M</option>
               <option value="1500000">Up to $1.5M</option>
+              <option value="2000000">Up to $2M</option>
               <option value="3000000">Up to $3M</option>
+              <option value="5000000">Up to $5M</option>
+              <option value="7500000">Up to $7.5M</option>
               <option value="10000000">Up to $10M</option>
+              <option value="15000000">Up to $15M</option>
+              <option value="20000000">Up to $20M</option>
+              <option value="30000000">Up to $30M</option>
             </select>
             <button type="submit" className="btn !py-2 !px-6">Search</button>
           </form>
