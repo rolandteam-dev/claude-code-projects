@@ -4,12 +4,25 @@ export const runtime = "nodejs";
 
 /**
  * Lead intake → Follow Up Boss (FUB) Events API.
- * Set FUB_API_KEY in Vercel → Settings → Environment Variables to go live.
- * Until then the endpoint accepts submissions gracefully (queued:false) so
- * the site's forms still work; no lead is stored until the key is present.
+ *
+ * To go live, set these in Vercel → Settings → Environment Variables:
+ *   FUB_API_KEY     (required) — Follow Up Boss → Admin → API → your API key
+ *   FUB_SYSTEM_KEY  (optional) — the X-System-Key from registering this site
+ *                                as a system with FUB (recommended by FUB for
+ *                                registered integrations; improves lead
+ *                                attribution + avoids partner rate limits)
+ *   FUB_SYSTEM      (optional) — the X-System name; defaults below
+ *
+ * Until FUB_API_KEY is present the endpoint accepts submissions gracefully
+ * (queued:false) so the site's forms still work; no lead is stored until the
+ * key is set.
  *
  * FUB Events API: https://docs.followupboss.com/reference/events-post
  */
+
+// Identifies this website to Follow Up Boss. Override with FUB_SYSTEM if you
+// register a different system name with FUB.
+const DEFAULT_SYSTEM = "TheRolandTeamWebsite";
 type LeadInput = {
   firstName?: string;
   lastName?: string;
@@ -74,14 +87,21 @@ export async function POST(req: Request) {
     },
   };
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Basic ${Buffer.from(`${key}:`).toString("base64")}`,
+    "X-System": process.env.FUB_SYSTEM || DEFAULT_SYSTEM,
+  };
+  // FUB recommends sending X-System-Key for registered integrations. Only send
+  // it when configured so a plain personal API key still works out of the box.
+  if (process.env.FUB_SYSTEM_KEY) {
+    headers["X-System-Key"] = process.env.FUB_SYSTEM_KEY;
+  }
+
   try {
     const res = await fetch("https://api.followupboss.com/v1/events", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Basic ${Buffer.from(`${key}:`).toString("base64")}`,
-        "X-System": "TheRolandTeamWebsite",
-      },
+      headers,
       body: JSON.stringify(body),
     });
     if (!res.ok) {
