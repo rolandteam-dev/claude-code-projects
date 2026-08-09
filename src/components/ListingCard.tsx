@@ -14,11 +14,20 @@ export function ListingCard({ l }: { l: Listing }) {
       className="group block overflow-hidden rounded-[12px] border border-[var(--color-line)] bg-white no-underline shadow-[var(--shadow-soft)] transition-transform hover:-translate-y-1"
     >
       <div className="relative flex h-44 items-end bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)] p-4">
-        {photo && (
+        {photo ? (
           <>
-            <Image src={photo} alt={l.address.line1} fill sizes="(max-width:640px) 100vw, 33vw" className="object-cover" />
+            <Image src={photo} alt={l.address.line1} fill loading="lazy" sizes="(max-width:640px) 100vw, 33vw" className="object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
           </>
+        ) : (
+          // Neutral placeholder — only when a listing genuinely has no photo.
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-white/25" aria-hidden="true">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 10.5 12 3l9 7.5" />
+              <path d="M5 9.5V21h14V9.5" />
+            </svg>
+            <span className="font-sans text-[0.62rem] uppercase tracking-[0.14em]">Photo coming soon</span>
+          </div>
         )}
         {l.status !== "Active" && (
           <span className="absolute left-3 top-3 z-10 rounded bg-[var(--color-gold)] px-2 py-1 font-sans text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-white">

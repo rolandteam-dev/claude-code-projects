@@ -237,7 +237,18 @@ function mapRecord(r: any): Listing {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-function buildQuery(f: ListingFilters): string {
+/**
+ * Fields requested for search-result cards. The Repliers /listings SEARCH
+ * endpoint omits the `images` array unless it's explicitly requested, which is
+ * why cards rendered without a photo while the single-listing detail endpoint
+ * (which returns images by default) worked. `images[1]` asks for ONLY the
+ * primary photo so cards get a thumbnail without pulling every image on every
+ * result. The other keys cover everything a card renders.
+ */
+const LIST_FIELDS =
+  "mlsNumber,status,lastStatus,listPrice,listDate,updatedOn,class,type,address,map,details,office,images[1]";
+
+function buildQuery(f: ListingFilters, opts: { fields?: string } = {}): string {
   const limit = f.limit ?? 24;
   const p = new URLSearchParams();
   // Always scope to the licensed GLVAR board and for-sale inventory.
@@ -254,6 +265,7 @@ function buildQuery(f: ListingFilters): string {
   if (f.minBaths) p.set("minBaths", String(f.minBaths));
   const cls = mapClassParam(f.propertyType);
   if (cls) p.set("class", cls);
+  if (opts.fields) p.set("fields", opts.fields);
   return p.toString();
 }
 
@@ -281,7 +293,16 @@ function latestUpdate(rows: any[]): string | undefined {
 export const repliersProvider: ListingProvider = {
   async getListings(filters = {}) {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    const data: any = await query(`/listings?${buildQuery(filters)}`);
+    let data: any;
+    try {
+      // Request the primary image (and card fields) so search cards get a photo.
+      data = await query(`/listings?${buildQuery(filters, { fields: LIST_FIELDS })}`);
+    } catch {
+      // If a board/plan rejects the fields whitelist, fall back to the default
+      // response so the page still renders (cards may lack a photo, but never
+      // an empty page).
+      data = await query(`/listings?${buildQuery(filters)}`);
+    }
     const rows: unknown[] = data.listings ?? [];
     return {
       listings: rows.map(mapRecord),
