@@ -19,6 +19,23 @@ const PROPERTY_TYPES: PropertyType[] = ["Single Family", "Condo", "Townhouse", "
 const CITIES = ["Henderson", "Las Vegas", "North Las Vegas", "Boulder City"];
 const PAGE_SIZE = 24;
 
+// Price tiers span entry-level to ultra-luxury so both ends of the valley's
+// market are covered. Used for the Min and Max price dropdowns.
+const PRICE_POINTS = [
+  300_000, 400_000, 500_000, 600_000, 750_000, 900_000, 1_000_000, 1_250_000,
+  1_500_000, 2_000_000, 2_500_000, 3_000_000, 4_000_000, 5_000_000, 7_500_000,
+  10_000_000, 15_000_000, 20_000_000,
+];
+
+/** Compact price label, e.g. 1_500_000 -> "$1.5M", 750_000 -> "$750K". */
+function priceLabel(n: number): string {
+  if (n >= 1_000_000) {
+    const m = n / 1_000_000;
+    return `$${Number.isInteger(m) ? m : m.toFixed(1)}M`;
+  }
+  return `$${Math.round(n / 1_000)}K`;
+}
+
 function num(v: string | string[] | undefined): number | undefined {
   const s = Array.isArray(v) ? v[0] : v;
   const n = s ? Number(s) : NaN;
@@ -102,12 +119,17 @@ export default async function ListingsPage({
                 <option key={t} value={t}>{t}</option>
               ))}
             </select>
-            <select name="maxPrice" defaultValue={(sp.maxPrice as string) ?? ""} className={field} aria-label="Max price">
+            <select name="minPrice" defaultValue={(sp.minPrice as string) ?? ""} className={field} aria-label="Minimum price">
+              <option value="">Min price</option>
+              {PRICE_POINTS.map((p) => (
+                <option key={p} value={p}>{priceLabel(p)}+</option>
+              ))}
+            </select>
+            <select name="maxPrice" defaultValue={(sp.maxPrice as string) ?? ""} className={field} aria-label="Maximum price">
               <option value="">Max price</option>
-              <option value="750000">Up to $750K</option>
-              <option value="1500000">Up to $1.5M</option>
-              <option value="3000000">Up to $3M</option>
-              <option value="10000000">Up to $10M</option>
+              {PRICE_POINTS.map((p) => (
+                <option key={p} value={p}>Up to {priceLabel(p)}</option>
+              ))}
             </select>
             <button type="submit" className="btn !py-2 !px-6">Search</button>
           </form>
