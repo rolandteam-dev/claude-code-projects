@@ -9,12 +9,14 @@ const field =
 export function LeadForm({
   type = "General Inquiry",
   tag,
+  tags,
   source,
   showAddress = false,
   submitLabel = "Send",
 }: {
   type?: string;
   tag?: string;
+  tags?: string[];
   source?: string;
   showAddress?: boolean;
   submitLabel?: string;
@@ -30,7 +32,7 @@ export function LeadForm({
       const res = await fetch("/api/lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...payload, type, tag, source }),
+        body: JSON.stringify({ ...payload, type, tag, tags, source }),
       });
       const json = await res.json().catch(() => ({ ok: false }));
       setStatus(res.ok && json.ok ? "ok" : "error");

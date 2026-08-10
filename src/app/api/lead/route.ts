@@ -19,7 +19,8 @@ type LeadInput = {
   address?: string;
   message?: string;
   type?: string; // e.g. "General Inquiry", "Seller Inquiry", "Property Inquiry"
-  tag?: string;
+  tag?: string; // single tag (back-compat)
+  tags?: string[] | string; // one or more tags (array or comma-separated)
   source?: string;
 };
 
@@ -60,17 +61,28 @@ export async function POST(req: Request) {
     lastName = parts.slice(1).join(" ");
   }
 
+  // Merge single `tag` and/or `tags` (array or comma-separated) into a unique list.
+  const rawTags = [
+    ...(Array.isArray(data.tags) ? data.tags : typeof data.tags === "string" ? data.tags.split(",") : []),
+    ...(data.tag ? [data.tag] : []),
+  ].map((t) => String(t).trim());
+  const tags = [...new Set(rawTags.filter(Boolean))];
+
+  const address = data.address?.trim();
+
   const body = {
     source: data.source || "Luxury Website",
     system: "Roland Luxury Website",
     type: data.type || "General Inquiry",
-    message: [data.address ? `Property: ${data.address}` : "", data.message || ""].filter(Boolean).join("\n"),
+    message: [address ? `Property address: ${address}` : "", data.message || ""].filter(Boolean).join("\n"),
     person: {
       firstName: firstName || undefined,
       lastName: lastName || undefined,
       emails: data.email ? [{ value: data.email }] : [],
       phones: data.phone ? [{ value: data.phone, type: "mobile" }] : [],
-      tags: data.tag ? [data.tag] : [],
+      // Structured address so it lands in FUB's address field (not just notes).
+      addresses: address ? [{ type: "home", street: address }] : undefined,
+      tags,
     },
   };
 
