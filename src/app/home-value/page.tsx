@@ -50,8 +50,8 @@ export default function HomeValuePage() {
             <div className="mb-5 font-sans text-[1.1rem] font-semibold">Request your free valuation</div>
             <LeadForm
               type="Seller Inquiry"
-              tag="Home Valuation"
-              source="Home Valuation Page"
+              tags={["Luxury Seller", "Home Valuation"]}
+              source="Luxury Home Valuation"
               showAddress
               submitLabel="Get My Home Value"
             />
