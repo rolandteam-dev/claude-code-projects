@@ -45,7 +45,7 @@ export default function ContactPage() {
 
         <div className="rounded-[14px] border border-[var(--color-line)] bg-white p-7 shadow-[var(--shadow-soft)]">
           <div className="mb-5 font-sans text-[1.1rem] font-semibold">Send us a message</div>
-          <LeadForm type="General Inquiry" tag="Website Contact" source="Contact Page" submitLabel="Send Message" />
+          <LeadForm type="General Inquiry" tag="Website Contact" source="Luxury Website" submitLabel="Send Message" />
         </div>
       </Container>
     </>
