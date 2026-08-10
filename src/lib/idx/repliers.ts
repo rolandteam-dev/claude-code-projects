@@ -258,6 +258,9 @@ function buildQuery(f: ListingFilters, opts: { fields?: string } = {}): string {
   p.set("resultsPerPage", String(limit));
   p.set("pageNum", String(Math.floor((f.offset ?? 0) / limit) + 1));
   p.set("sortBy", "listPriceDesc");
+  // Free-text keyword search (address, street, subdivision). Repliers matches
+  // this across address + listing text; harmless if the visitor leaves it blank.
+  if (f.q) p.set("search", f.q.trim());
   if (f.city) p.set("city", f.city);
   if (f.minPrice) p.set("minPrice", String(f.minPrice));
   if (f.maxPrice) p.set("maxPrice", String(f.maxPrice));

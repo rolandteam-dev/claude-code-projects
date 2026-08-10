@@ -54,6 +54,7 @@ export const site = {
     // Add your Google Business Profile + Realtor.com/Homes.com URLs when handy.
   ],
   nav: [
+    { label: "Search", href: "/listings" },
     {
       label: "Buy a Home",
       href: "/buy",
