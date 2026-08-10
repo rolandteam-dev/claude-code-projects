@@ -71,9 +71,9 @@ const GREETING: Msg = {
 };
 
 const SUGGESTIONS = [
-  "Tell me about guard-gated communities",
-  "How's the luxury market right now?",
-  "I'm thinking of selling my home",
+  "Show me 4-bed homes under $2M",
+  "What's my home worth?",
+  "Explore guard-gated communities",
 ];
 
 export function Concierge() {
