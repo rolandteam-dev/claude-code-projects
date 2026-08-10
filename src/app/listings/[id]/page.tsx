@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { Container } from "@/components/Container";
 import { JsonLd } from "@/components/JsonLd";
 import { IdxDisclaimer } from "@/components/IdxDisclaimer";
+import { ListingGallery } from "@/components/ListingGallery";
 import { breadcrumbSchema } from "@/lib/schema";
 import { getListing } from "@/lib/idx/provider";
-import { getListings } from "@/lib/idx/provider";
 import { formatPrice } from "@/components/ListingCard";
 import { getCommunity } from "@/content/communities";
 import { absoluteUrl, site } from "@/lib/site";
@@ -29,12 +28,17 @@ export async function generateMetadata({
   };
 }
 
+type Row = { label: string; value: string };
+type MaybeRow = Row | false | "" | 0 | undefined | null;
+function rows(...items: MaybeRow[]): Row[] {
+  return items.filter(Boolean) as Row[];
+}
+
 export default async function ListingDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const l = await getListing(id);
   if (!l) notFound();
 
-  const { isSampleData } = await getListings({ limit: 1 });
   const community = l.address.communitySlug ? getCommunity(l.address.communitySlug) : undefined;
 
   const listingSchema = {
@@ -51,6 +55,63 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
       url: absoluteUrl(`/listings/${l.id}`),
     },
   };
+
+  const pricePerSqft = l.sqft > 0 ? Math.round(l.listPrice / l.sqft) : undefined;
+  const hoaValue =
+    l.hoaFee != null
+      ? `${formatPrice(l.hoaFee)}${l.hoaFrequency ? `/${l.hoaFrequency.toLowerCase().replace(/ly$/, "")}` : "/mo"}`
+      : undefined;
+
+  const overview = rows(
+    { label: "Property Type", value: l.propertyType },
+    l.style && { label: "Style", value: l.style },
+    l.status && { label: "Status", value: l.status },
+    l.yearBuilt != null && { label: "Year Built", value: String(l.yearBuilt) },
+    l.sqft > 0 && { label: "Living Area", value: `${l.sqft.toLocaleString()} sq ft` },
+    pricePerSqft && { label: "Price / Sq Ft", value: `$${pricePerSqft.toLocaleString()}` },
+    l.daysOnMarket != null && { label: "Days on Market", value: String(l.daysOnMarket) },
+    (l.subdivision || community) && {
+      label: "Community",
+      value: l.subdivision || community!.name,
+    },
+    l.mlsNumber && { label: "MLS #", value: l.mlsNumber },
+  );
+
+  const interior = rows(
+    l.beds > 0 && { label: "Bedrooms", value: String(l.beds) },
+    l.baths > 0 && { label: "Bathrooms", value: String(l.baths) },
+    l.stories != null && { label: "Stories", value: String(l.stories) },
+    l.heating && { label: "Heating", value: l.heating },
+    l.cooling && { label: "Cooling", value: l.cooling },
+  );
+
+  const exterior = rows(
+    l.lotAcres != null && { label: "Lot Size", value: `${l.lotAcres} acres` },
+    l.garageSpaces != null && { label: "Garage", value: `${l.garageSpaces} space${l.garageSpaces === 1 ? "" : "s"}` },
+    l.pool && { label: "Pool", value: l.pool },
+    l.view && { label: "View", value: l.view },
+  );
+
+  const hoaFees = rows(
+    hoaValue && { label: "HOA Fee", value: hoaValue },
+    l.hoaFrequency && l.hoaFee != null && { label: "HOA Frequency", value: l.hoaFrequency },
+    l.annualTax != null && { label: "Annual Taxes", value: formatPrice(l.annualTax) },
+  );
+
+  const location = rows(
+    l.address.city && { label: "City", value: l.address.city },
+    l.address.postalCode && { label: "ZIP", value: l.address.postalCode },
+    l.county && { label: "County", value: l.county },
+    l.subdivision && { label: "Subdivision", value: l.subdivision },
+  );
+
+  const sections: Array<{ title: string; rows: Row[] }> = [
+    { title: "Overview", rows: overview },
+    { title: "Interior", rows: interior },
+    { title: "Exterior & Lot", rows: exterior },
+    { title: "HOA & Fees", rows: hoaFees },
+    { title: "Location", rows: location },
+  ].filter((s) => s.rows.length > 0);
 
   return (
     <>
@@ -75,38 +136,16 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
         </nav>
       </Container>
 
-      {/* Gallery */}
+      {/* Gallery — renders every photo the feed returns via the lightbox */}
       <Container size="wide" className="pt-4">
-        <div className="relative flex h-[320px] items-end overflow-hidden rounded-[14px] bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)] p-6 md:h-[460px]">
-          {l.photos[0] && (
-            <>
-              <Image src={l.photos[0]} alt={l.address.line1} fill priority sizes="100vw" className="object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-black/10" />
-            </>
-          )}
-          <div className="relative z-10">
-            {l.status !== "Active" && (
-              <span className="mb-2 inline-block rounded bg-[var(--color-gold)] px-2 py-1 font-sans text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white">
-                {l.status}
-              </span>
-            )}
-            <div className="font-sans text-[2.2rem] font-semibold text-white">{formatPrice(l.listPrice)}</div>
-            <div className="font-sans text-white/85">
-              {l.address.line1}, {l.address.city}, {l.address.state} {l.address.postalCode}
-            </div>
-          </div>
-        </div>
-
-        {/* Thumbnail strip */}
-        {l.photos.length > 1 && (
-          <div className="mt-3 grid grid-cols-4 gap-3">
-            {l.photos.slice(1, 5).map((p, i) => (
-              <div key={i} className="relative aspect-[4/3] overflow-hidden rounded-[10px] bg-[var(--color-sand-deep)]">
-                <Image src={p} alt={`${l.address.line1} photo ${i + 2}`} fill sizes="25vw" className="object-cover" />
-              </div>
-            ))}
-          </div>
-        )}
+        <ListingGallery
+          photos={l.photos}
+          label={l.address.line1}
+          status={l.status}
+          isActive={l.status === "Active"}
+          priceLabel={formatPrice(l.listPrice)}
+          addressLabel={`${l.address.line1}, ${l.address.city}, ${l.address.state} ${l.address.postalCode}`}
+        />
       </Container>
 
       <Container size="wide" className="grid gap-10 py-10 md:grid-cols-[1fr_320px]">
@@ -116,20 +155,121 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
             <Fact label="Bedrooms" value={String(l.beds)} />
             <Fact label="Bathrooms" value={String(l.baths)} />
             <Fact label="Square Feet" value={l.sqft.toLocaleString()} />
-            {l.lotAcres != null && <Fact label="Lot (acres)" value={String(l.lotAcres)} />}
-            {l.yearBuilt != null && <Fact label="Year Built" value={String(l.yearBuilt)} />}
-            <Fact label="Type" value={l.propertyType} />
+            {pricePerSqft && <Fact label="Price / Sq Ft" value={`$${pricePerSqft.toLocaleString()}`} />}
+            {l.garageSpaces != null && <Fact label="Garage" value={String(l.garageSpaces)} />}
+            {l.daysOnMarket != null && <Fact label="Days on Market" value={String(l.daysOnMarket)} />}
           </div>
 
-          <h1 className="mt-8 text-[1.6rem]">About this home</h1>
+          <h2 className="mt-8 text-[1.6rem]">About this home</h2>
           <p>{l.description}</p>
 
-          <div className="mt-4 font-sans text-[0.82rem] text-[var(--color-muted)]">
-            MLS #{l.mlsNumber} · Status: {l.status}
-          </div>
+          {l.virtualTourUrl && (
+            <a
+              href={l.virtualTourUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-ghost mt-4 inline-flex"
+            >
+              ▶ Virtual Tour
+            </a>
+          )}
+
+          {/* Grouped property details */}
+          {sections.map((sec) => (
+            <DetailSection key={sec.title} title={sec.title} rows={sec.rows} />
+          ))}
+
+          {/* Schools */}
+          {(l.schoolDistrict || (l.schools && l.schools.length > 0)) && (
+            <section>
+              <h2 className="mt-10 text-[1.6rem]">Schools</h2>
+              {l.schoolDistrict && (
+                <p className="mt-2 font-sans text-[0.95rem] text-[var(--color-ink-soft)]">
+                  School District: <span className="font-semibold text-[var(--color-ink)]">{l.schoolDistrict}</span>
+                </p>
+              )}
+              {l.schools && l.schools.length > 0 && (
+                <ul className="mt-3 flex flex-wrap gap-2 p-0">
+                  {l.schools.map((sch) => (
+                    <li
+                      key={sch}
+                      className="list-none rounded-full border border-[var(--color-line)] bg-[var(--color-sand)] px-3 py-1 font-sans text-[0.8rem] text-[var(--color-ink-soft)]"
+                    >
+                      {sch}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="mt-2 font-sans text-[0.68rem] text-[var(--color-muted)]">
+                School information is provided by the MLS and deemed reliable but not guaranteed. Verify enrollment
+                eligibility directly with the school district.
+              </p>
+            </section>
+          )}
+
+          {/* Features & amenities */}
+          {l.features && l.features.length > 0 && (
+            <section>
+              <h2 className="mt-10 text-[1.6rem]">Features &amp; Amenities</h2>
+              <ul className="mt-4 flex flex-wrap gap-2 p-0">
+                {l.features.map((f) => (
+                  <li
+                    key={f}
+                    className="list-none rounded-full border border-[var(--color-line)] bg-[var(--color-sand)] px-3 py-1 font-sans text-[0.8rem] text-[var(--color-ink-soft)]"
+                  >
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Room dimensions */}
+          {l.rooms && l.rooms.length > 0 && (
+            <section>
+              <h2 className="mt-10 text-[1.6rem]">Room Dimensions</h2>
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full border-collapse font-sans text-[0.88rem]">
+                  <thead>
+                    <tr className="border-b border-[var(--color-line)] text-left text-[0.72rem] uppercase tracking-[0.05em] text-[var(--color-muted)]">
+                      <th className="py-2 pr-4 font-semibold">Room</th>
+                      <th className="py-2 pr-4 font-semibold">Dimensions</th>
+                      <th className="py-2 font-semibold">Level</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {l.rooms.map((rm, i) => (
+                      <tr key={i} className="border-b border-[var(--color-line)]">
+                        <td className="py-2 pr-4 font-semibold text-[var(--color-ink)]">{rm.name}</td>
+                        <td className="py-2 pr-4 text-[var(--color-ink-soft)]">{rm.dimensions ?? "—"}</td>
+                        <td className="py-2 text-[var(--color-ink-soft)]">{rm.level ?? "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
+          {/* Location map */}
+          {l.coords && (
+            <section>
+              <h2 className="mt-10 text-[1.6rem]">Location</h2>
+              <div className="mt-4 overflow-hidden rounded-[12px] border border-[var(--color-line)]">
+                <iframe
+                  title={`Map of ${l.address.line1}`}
+                  className="h-[320px] w-full"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${l.coords.lng - 0.012}%2C${l.coords.lat - 0.009}%2C${l.coords.lng + 0.012}%2C${l.coords.lat + 0.009}&layer=mapnik&marker=${l.coords.lat}%2C${l.coords.lng}`}
+                />
+              </div>
+              <p className="mt-2 font-sans text-[0.72rem] text-[var(--color-muted)]">Approximate location shown.</p>
+            </section>
+          )}
 
           {community && (
-            <p className="mt-6">
+            <p className="mt-8">
               Located in{" "}
               <Link href={`/communities/${community.slug}`} className="font-semibold text-[var(--color-gold)]">
                 {community.name}
@@ -138,7 +278,8 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
             </p>
           )}
 
-          <IdxDisclaimer isSampleData={isSampleData} listingOffice={l.listingOffice} />
+          {/* De-emphasized MLS meta + IDX attribution (compliance minimum) */}
+          <IdxDisclaimer listingOffice={l.listingOffice} lastUpdated={l.updatedAt ?? l.listedDate} />
         </div>
 
         {/* Contact rail */}
@@ -151,9 +292,28 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
           <a href={`tel:${site.phone}`} className="mt-3 block text-center font-sans text-[0.85rem] font-semibold text-[var(--color-gold)] no-underline">
             {site.phone}
           </a>
+          <p className="mt-4 border-t border-[var(--color-line)] pt-3 font-sans text-[0.72rem] text-[var(--color-muted)]">
+            {site.parentBrand} · brokered by {site.brokerage}
+          </p>
         </aside>
       </Container>
     </>
+  );
+}
+
+function DetailSection({ title, rows }: { title: string; rows: Row[] }) {
+  return (
+    <section>
+      <h2 className="mt-10 text-[1.6rem]">{title}</h2>
+      <dl className="mt-4 grid grid-cols-2 gap-x-8 gap-y-4 font-sans text-[0.95rem] sm:grid-cols-3">
+        {rows.map((r) => (
+          <div key={r.label}>
+            <dt className="text-[0.7rem] uppercase tracking-[0.05em] text-[var(--color-muted)]">{r.label}</dt>
+            <dd className="m-0 font-semibold text-[var(--color-ink)]">{r.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   );
 }
 
