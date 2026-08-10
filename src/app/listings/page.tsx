@@ -20,6 +20,13 @@ const PROPERTY_TYPES: PropertyType[] = ["Single Family", "Condo", "Townhouse", "
 const CITIES = ["Henderson", "Las Vegas", "North Las Vegas", "Boulder City"];
 const PAGE_SIZE = 24;
 
+// Luxury price policy: default the Min to $400k when the visitor hasn't chosen
+// one, and never show anything below $300k (even via a hand-edited URL). Keeps
+// the site curated without turning away legitimate mid-market leads — a visitor
+// can still opt down to $300k via the Min dropdown.
+const DEFAULT_MIN_PRICE = 400_000;
+const HARD_MIN_PRICE = 300_000;
+
 // Price tiers span entry-level to ultra-luxury so both ends of the valley's
 // market are covered. Used for the Min and Max price dropdowns.
 const PRICE_POINTS = [
@@ -69,10 +76,12 @@ export default async function ListingsPage({
   const page = Math.max(1, num(sp.page) ?? 1);
   const communityParam = str(sp.community);
   const community = communityParam ? getCommunity(communityParam) : undefined;
+  // Apply the luxury floor: default to $400k, clamp anything lower to $300k.
+  const minPrice = Math.max(HARD_MIN_PRICE, num(sp.minPrice) ?? DEFAULT_MIN_PRICE);
   const filters: ListingFilters = {
     city: str(sp.city),
     communitySlug: community?.slug,
-    minPrice: num(sp.minPrice),
+    minPrice,
     maxPrice: num(sp.maxPrice),
     minBeds: num(sp.minBeds),
     propertyType: str(sp.propertyType) as PropertyType | undefined,
@@ -142,8 +151,7 @@ export default async function ListingsPage({
                 <option key={t} value={t}>{t}</option>
               ))}
             </select>
-            <select name="minPrice" defaultValue={(sp.minPrice as string) ?? ""} className={field} aria-label="Minimum price">
-              <option value="">Min price</option>
+            <select name="minPrice" defaultValue={String(minPrice)} className={field} aria-label="Minimum price">
               {PRICE_POINTS.map((p) => (
                 <option key={p} value={p}>{priceLabel(p)}+</option>
               ))}
