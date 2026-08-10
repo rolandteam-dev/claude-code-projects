@@ -1626,6 +1626,219 @@ export const communities: Community[] = [
       },
     ],
   },
+
+  {
+    slug: "spanish-trail",
+    name: "Spanish Trail",
+    city: "Las Vegas",
+    zip: "89147",
+    featured: true,
+    seoTitle: "Spanish Trail Homes for Sale | West Las Vegas Country Club",
+    seoDescription:
+      "Spanish Trail homes for sale in west Las Vegas — an established guard-gated country-club community with golf, tennis, lakes, and mature luxury estates.",
+    h1: "Spanish Trail Homes for Sale in Las Vegas, NV",
+    eyebrow: "West Las Vegas · Guard-Gated Country Club",
+    intro:
+      "One of Las Vegas's original guard-gated country-club communities — mature, elegant, and centrally located minutes from the Strip.",
+    lead:
+      "Spanish Trail is one of the Las Vegas Valley's original guard-gated country-club communities, a mature and prestigious enclave on the west side built around the private Spanish Trail Country Club. Known for its lush landscaping, tree-lined streets, lakes, and Mediterranean architecture, Spanish Trail real estate ranges from luxury condominiums and townhomes to custom estates, all behind 24-hour guard gates just minutes from the Strip and Chinatown.",
+    quickFacts: [
+      { label: "Location", value: "West Las Vegas, NV 89147" },
+      { label: "Community Type", value: "Guard-gated country club" },
+      { label: "Signature Amenity", value: "Spanish Trail Country Club (private golf & tennis)" },
+      { label: "Home Types", value: "Condos, townhomes & custom estates" },
+      { label: "Price Range", value: "Approx. $500K – $4M+" },
+      { label: "Distance to Strip", value: "~7 miles / 12 minutes" },
+    ],
+    sections: [
+      {
+        heading: "About Spanish Trail",
+        body: [
+          "Established as a pioneering guard-gated golf community, Spanish Trail has matured into one of the most established and centrally located luxury addresses in the valley. Its 27-hole private country club, lakes, tennis, and mature landscaping give the community a settled, resort-like feel that newer developments can't yet match.",
+          "Behind its guarded gates, Spanish Trail offers a range of neighborhoods — from lock-and-leave condominiums and townhomes to larger custom estates on the golf course — making it versatile for buyers seeking gated privacy close to the center of the valley.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Spanish Trail",
+        body: [
+          "Spanish Trail real estate spans a broad range of prices and home types, with golf-course and lakefront properties commanding a premium. Its combination of guard-gated security, private club amenities, and a central west-side location keeps it consistently in demand.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Spanish Trail located?",
+        a: "Spanish Trail is a guard-gated country-club community in west Las Vegas, Nevada (ZIP 89147), about seven miles from the Strip.",
+      },
+      {
+        q: "Is Spanish Trail a gated community?",
+        a: "Yes. Spanish Trail is a 24-hour guard-gated community built around the private Spanish Trail Country Club, with golf, tennis, and lakes.",
+      },
+      {
+        q: "How much do homes in Spanish Trail cost?",
+        a: "Prices generally range from around $500,000 for condominiums and townhomes to more than $4 million for custom golf-course estates. Contact Roland Luxury for current availability.",
+      },
+    ],
+  },
+
+  {
+    slug: "spanish-hills",
+    name: "Spanish Hills",
+    city: "Las Vegas",
+    zip: "89148",
+    featured: true,
+    seoTitle: "Spanish Hills Homes for Sale | Las Vegas Luxury Estates",
+    seoDescription:
+      "Spanish Hills homes for sale in Las Vegas — an exclusive guard-gated community of custom luxury estates on large lots with sweeping Strip and valley views.",
+    h1: "Spanish Hills Homes for Sale in Las Vegas, NV",
+    eyebrow: "Southwest Las Vegas · Guard-Gated Luxury",
+    intro:
+      "An exclusive guard-gated enclave of grand custom estates on oversized lots with commanding valley and Strip views.",
+    lead:
+      "Spanish Hills is one of the southwest valley's most prestigious guard-gated communities — an exclusive enclave of grand custom estates set on unusually large lots, many with sweeping views of the Las Vegas Strip and surrounding mountains. Known for its stately Mediterranean and modern architecture, privacy, and space, Spanish Hills real estate appeals to luxury buyers seeking an established estate address close to the 215 Beltway and Summerlin.",
+    quickFacts: [
+      { label: "Location", value: "Southwest Las Vegas, NV 89148" },
+      { label: "Community Type", value: "Guard-gated custom estates" },
+      { label: "Homesites", value: "Oversized lots (often 0.5–1+ acre)" },
+      { label: "Home Types", value: "Grand custom luxury estates" },
+      { label: "Price Range", value: "Approx. $1.5M – $10M+" },
+      { label: "Views", value: "Strip, valley & mountain views" },
+    ],
+    sections: [
+      {
+        heading: "About Spanish Hills",
+        body: [
+          "Spanish Hills stands apart for the scale of its homesites and homes — grand custom estates on large, private lots, many elevated to capture Strip and valley views. The guard-gated community has long been favored by luxury buyers, executives, and public figures seeking privacy and space within easy reach of the freeway and Summerlin.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Spanish Hills",
+        body: [
+          "Inventory in Spanish Hills is limited and estate-focused, with pricing that reflects the community's exclusivity, lot sizes, and custom finishes. Because homes rarely come available, working with a local luxury specialist is the best way to access opportunities here.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Spanish Hills located?",
+        a: "Spanish Hills is a guard-gated luxury community in the southwest Las Vegas Valley (ZIP 89148), near the 215 Beltway.",
+      },
+      {
+        q: "What kind of homes are in Spanish Hills?",
+        a: "Spanish Hills is composed of grand custom estates on oversized lots, many with elevated Strip and valley views, behind a 24-hour guard gate.",
+      },
+      {
+        q: "How much do homes in Spanish Hills cost?",
+        a: "Prices generally range from approximately $1.5 million to more than $10 million depending on lot size, square footage, and custom finishes. Contact Roland Luxury for current availability.",
+      },
+    ],
+  },
+
+  {
+    slug: "reverence",
+    name: "Reverence",
+    city: "Las Vegas",
+    zip: "89138",
+    featured: true,
+    seoTitle: "Reverence Homes for Sale | Summerlin West Guard-Gated Luxury",
+    seoDescription:
+      "Reverence homes for sale in Summerlin West, Las Vegas — a guard-gated Toll Brothers community of luxury hillside homes with panoramic valley and Strip views.",
+    h1: "Reverence Homes for Sale in Summerlin West, Las Vegas",
+    eyebrow: "Summerlin West, Las Vegas · Guard-Gated Luxury",
+    intro:
+      "A guard-gated Summerlin West community of contemporary luxury homes perched on the valley's western hillsides.",
+    lead:
+      "Reverence is a guard-gated luxury community by Toll Brothers in Summerlin West, set dramatically into the elevated western edge of the Las Vegas Valley near Red Rock Canyon. With contemporary architecture, hillside homesites, and panoramic views of the valley and Strip, Reverence real estate offers newer luxury construction and a private, amenity-rich lifestyle within the acclaimed Summerlin master plan.",
+    quickFacts: [
+      { label: "Location", value: "Summerlin West, Las Vegas, NV 89138" },
+      { label: "Community Type", value: "Guard-gated luxury (Toll Brothers)" },
+      { label: "Setting", value: "Elevated hillsides near Red Rock Canyon" },
+      { label: "Home Types", value: "Contemporary luxury single-family homes" },
+      { label: "Price Range", value: "Approx. $900K – $4M+" },
+      { label: "Amenities", value: "Private clubhouse, pools & trails" },
+    ],
+    sections: [
+      {
+        heading: "About Reverence",
+        body: [
+          "Reverence is one of Summerlin West's premier guard-gated communities, built into the valley's western hillsides for elevation, privacy, and views. Residents enjoy a private amenity center with pools, fitness, and gathering spaces, plus quick access to Red Rock Canyon's trails and the shopping and dining of Downtown Summerlin.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Reverence",
+        body: [
+          "Homes in Reverence are contemporary luxury residences from a range of collections, many on elevated or view homesites. Pricing reflects the community's newer construction, gated exclusivity, and Summerlin West location, with view lots commanding a premium.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Reverence located?",
+        a: "Reverence is a guard-gated luxury community in Summerlin West, Las Vegas, Nevada (ZIP 89138), on the elevated western edge of the valley near Red Rock Canyon.",
+      },
+      {
+        q: "Who built Reverence?",
+        a: "Reverence is a Toll Brothers guard-gated community within the Summerlin West master plan, featuring contemporary luxury homes and a private amenity center.",
+      },
+      {
+        q: "How much do homes in Reverence cost?",
+        a: "Prices generally range from around $900,000 to more than $4 million depending on the collection, homesite, and views. Contact Roland Luxury for current availability.",
+      },
+    ],
+  },
+
+  {
+    slug: "tournament-hills",
+    name: "Tournament Hills",
+    city: "Las Vegas",
+    zip: "89144",
+    featured: true,
+    seoTitle: "Tournament Hills Homes for Sale | Summerlin Guard-Gated Luxury",
+    seoDescription:
+      "Tournament Hills homes for sale in Summerlin, Las Vegas — an established guard-gated luxury enclave of custom estates near TPC Summerlin with mountain views.",
+    h1: "Tournament Hills Homes for Sale in Summerlin, Las Vegas",
+    eyebrow: "Summerlin, Las Vegas · Guard-Gated Luxury",
+    intro:
+      "An established guard-gated enclave of custom luxury estates in the heart of Summerlin near TPC Summerlin.",
+    lead:
+      "Tournament Hills is a prestigious guard-gated luxury enclave in the established heart of Summerlin, known for its custom estates, mature landscaping, and proximity to the private TPC Summerlin golf course. With larger lots, refined architecture, and a central Summerlin location, Tournament Hills real estate appeals to luxury buyers who want an established, guard-gated address close to Downtown Summerlin and top schools.",
+    quickFacts: [
+      { label: "Location", value: "Summerlin, Las Vegas, NV 89144" },
+      { label: "Community Type", value: "Guard-gated custom estates" },
+      { label: "Nearby Golf", value: "TPC Summerlin (private)" },
+      { label: "Home Types", value: "Custom luxury estates" },
+      { label: "Price Range", value: "Approx. $1.2M – $6M+" },
+      { label: "Setting", value: "Established central Summerlin" },
+    ],
+    sections: [
+      {
+        heading: "About Tournament Hills",
+        body: [
+          "Tournament Hills is one of Summerlin's established guard-gated luxury communities, prized for its custom estates, mature streetscapes, and location beside the private TPC Summerlin course. Its central Summerlin position puts residents minutes from Downtown Summerlin, parks and trails, and highly regarded schools.",
+        ],
+      },
+      {
+        heading: "Homes for Sale in Tournament Hills",
+        body: [
+          "Homes in Tournament Hills are predominantly custom luxury estates on generous lots, with pricing that reflects the community's gated exclusivity and prime Summerlin setting. Availability is limited, so a local specialist is the best way to find opportunities.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Tournament Hills located?",
+        a: "Tournament Hills is a guard-gated luxury community in the established heart of Summerlin, Las Vegas, Nevada (ZIP 89144), near TPC Summerlin.",
+      },
+      {
+        q: "Is Tournament Hills a gated community?",
+        a: "Yes. Tournament Hills is a guard-gated enclave of custom luxury estates within Summerlin.",
+      },
+      {
+        q: "How much do homes in Tournament Hills cost?",
+        a: "Prices generally range from approximately $1.2 million to more than $6 million depending on lot size, square footage, and finishes. Contact Roland Luxury for current availability.",
+      },
+    ],
+  },
 ];
 
 export function getCommunity(slug: string): Community | undefined {
