@@ -54,8 +54,23 @@ export default function Home() {
             Roland Luxury is the luxury division of The Roland Team — specialists in Southern Nevada&apos;s
             guard-gated communities, custom estates, and landmark properties, for buyers and sellers who expect more.
           </p>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-            <Link href="/listings" className="btn">Explore Residences</Link>
+          {/* Property search — the fastest path into live MLS inventory */}
+          <form
+            action="/listings"
+            method="get"
+            className="mx-auto mt-10 flex w-full max-w-[560px] items-center gap-2 rounded-full border border-white/20 bg-white/10 p-1.5 backdrop-blur-sm"
+          >
+            <input
+              type="search"
+              name="q"
+              placeholder="Search by address, community, or MLS #"
+              aria-label="Search homes by address, community, or MLS number"
+              className="grow bg-transparent px-4 py-2 font-sans text-[0.95rem] text-white placeholder:text-white/60 focus:outline-none"
+            />
+            <button type="submit" className="btn shrink-0 !rounded-full !px-6 !py-2.5">Search</button>
+          </form>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+            <Link href="/listings" className="btn btn-outline">Explore Residences</Link>
             <Link href="/home-value" className="btn btn-outline">Request a Private Valuation</Link>
           </div>
           <div className="mt-8 font-sans text-[0.82rem] tracking-[0.05em] text-[#aeb2ba]">

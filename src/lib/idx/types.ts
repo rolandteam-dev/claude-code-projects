@@ -86,6 +86,8 @@ export type Listing = {
 };
 
 export type ListingFilters = {
+  /** free-text keyword: address, street, subdivision, or MLS number */
+  q?: string;
   city?: string;
   communitySlug?: string;
   minPrice?: number;

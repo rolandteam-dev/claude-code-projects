@@ -5,6 +5,65 @@ import { site } from "@/lib/site";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
+/** Render inline **bold** and [label](href) markdown as real elements. */
+function renderInline(text: string, keyBase: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  const regex = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let i = 0;
+  while ((m = regex.exec(text)) !== null) {
+    if (m.index > last) nodes.push(text.slice(last, m.index).replace(/\*\*/g, ""));
+    if (m[1] !== undefined && m[2] !== undefined) {
+      const href = m[2].trim();
+      const internal = href.startsWith("/");
+      nodes.push(
+        <a
+          key={`${keyBase}-l-${i}`}
+          href={href}
+          target={internal ? undefined : "_blank"}
+          rel={internal ? undefined : "noreferrer"}
+          className="font-medium text-[var(--color-gold-3)] underline decoration-[rgba(216,189,132,0.45)] underline-offset-2 hover:decoration-[var(--color-gold-3)]"
+        >
+          {m[1]}
+        </a>,
+      );
+    } else if (m[3] !== undefined) {
+      nodes.push(
+        <strong key={`${keyBase}-b-${i}`} className="font-semibold text-white">
+          {m[3]}
+        </strong>,
+      );
+    }
+    last = regex.lastIndex;
+    i++;
+  }
+  if (last < text.length) nodes.push(text.slice(last).replace(/\*\*/g, ""));
+  return nodes;
+}
+
+/** Paragraph-aware rich text for the concierge's replies. */
+function RichText({ text }: { text: string }) {
+  const paras = text
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return (
+    <>
+      {paras.map((p, pi) => (
+        <p key={pi} className={pi > 0 ? "mt-2" : undefined}>
+          {p.split(/\n/).map((line, li) => (
+            <span key={li}>
+              {li > 0 && <br />}
+              {renderInline(line, `${pi}-${li}`)}
+            </span>
+          ))}
+        </p>
+      ))}
+    </>
+  );
+}
+
 const GREETING: Msg = {
   role: "assistant",
   content:
@@ -12,9 +71,9 @@ const GREETING: Msg = {
 };
 
 const SUGGESTIONS = [
-  "Tell me about guard-gated communities",
-  "How's the luxury market right now?",
-  "I'm thinking of selling my home",
+  "Show me 4-bed homes under $2M",
+  "What's my home worth?",
+  "Explore guard-gated communities",
 ];
 
 export function Concierge() {
@@ -25,7 +84,18 @@ export function Concierge() {
   const [showLead, setShowLead] = useState(false);
   const [lead, setLead] = useState({ name: "", email: "", phone: "", message: "" });
   const [leadState, setLeadState] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const [lastUser, setLastUser] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Prefill the lead form's hidden message with what they were just asking about,
+  // so the team sees real context on the FUB lead.
+  function openLead(context?: string) {
+    setLead((l) => ({
+      ...l,
+      message: l.message || (context ? `Concierge chat — interested in: "${context}"` : ""),
+    }));
+    setShowLead(true);
+  }
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -36,6 +106,7 @@ export function Concierge() {
     if (!trimmed || loading) return;
     const next = [...messages, { role: "user" as const, content: trimmed }];
     setMessages(next);
+    setLastUser(trimmed);
     setInput("");
     setLoading(true);
     try {
@@ -45,7 +116,12 @@ export function Concierge() {
         body: JSON.stringify({ messages: next.filter((m) => m !== GREETING) }),
       });
       const data = await res.json();
-      setMessages((m) => [...m, { role: "assistant", content: data.reply ?? "Let me connect you with the team." }]);
+      let reply: string = data.reply ?? "Let me connect you with the team.";
+      // The model appends [[LEAD]] at a natural high-intent moment → open the form.
+      const wantsLead = /\[\[\s*LEAD\s*\]\]/i.test(reply);
+      reply = reply.replace(/\[\[\s*LEAD\s*\]\]/gi, "").trim();
+      setMessages((m) => [...m, { role: "assistant", content: reply }]);
+      if (wantsLead && leadState !== "done") openLead(trimmed);
     } catch {
       setMessages((m) => [
         ...m,
@@ -139,7 +215,7 @@ export function Concierge() {
                     : "mr-auto max-w-[90%] rounded-[12px] rounded-bl-sm bg-[var(--color-graphite-2)] px-3.5 py-2.5 text-[0.94rem] leading-relaxed text-[#e8eaee]"
                 }
               >
-                {m.content}
+                {m.role === "assistant" ? <RichText text={m.content} /> : m.content}
               </div>
             ))}
 
@@ -204,7 +280,7 @@ export function Concierge() {
           <div className="border-t border-[var(--color-line-dark)] bg-[var(--color-graphite-3)] px-3 py-3">
             {!showLead && leadState !== "done" && (
               <button
-                onClick={() => setShowLead(true)}
+                onClick={() => openLead(lastUser)}
                 className="mb-2 w-full rounded-[6px] border border-[rgba(216,189,132,0.35)] py-2 font-sans text-[0.76rem] font-semibold uppercase tracking-[0.12em] text-[var(--color-gold-3)] hover:bg-[rgba(216,189,132,0.08)]"
               >
                 Connect me with the team

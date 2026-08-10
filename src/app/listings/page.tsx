@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Container } from "@/components/Container";
 import { ListingCard } from "@/components/ListingCard";
 import { IdxDisclaimer } from "@/components/IdxDisclaimer";
 import { JsonLd } from "@/components/JsonLd";
 import { breadcrumbSchema } from "@/lib/schema";
-import { getListings } from "@/lib/idx/provider";
+import { getListings, getListing } from "@/lib/idx/provider";
 import { getCommunity } from "@/content/communities";
 import type { ListingFilters, PropertyType } from "@/lib/idx/types";
 
@@ -74,11 +75,19 @@ export default async function ListingsPage({
 }) {
   const sp = await searchParams;
   const page = Math.max(1, num(sp.page) ?? 1);
+  const q = str(sp.q);
+  // If the keyword looks like an MLS number and resolves to a real listing,
+  // take the visitor straight to that property's page.
+  if (q && /^\d{5,9}$/.test(q)) {
+    const hit = await getListing(q);
+    if (hit) redirect(`/listings/${hit.id}`);
+  }
   const communityParam = str(sp.community);
   const community = communityParam ? getCommunity(communityParam) : undefined;
   // Apply the luxury floor: default to $400k, clamp anything lower to $300k.
   const minPrice = Math.max(HARD_MIN_PRICE, num(sp.minPrice) ?? DEFAULT_MIN_PRICE);
   const filters: ListingFilters = {
+    q,
     city: str(sp.city),
     communitySlug: community?.slug,
     minPrice,
@@ -127,6 +136,18 @@ export default async function ListingsPage({
 
           {/* Filter bar (GET form → server component re-renders) */}
           <form className="mt-6 flex flex-wrap gap-3" action="/listings" method="get">
+            {/* Keyword / address / MLS# search — full width above the filters */}
+            <div className="flex basis-full gap-2">
+              <input
+                type="search"
+                name="q"
+                defaultValue={q ?? ""}
+                placeholder="Search by address, MLS #, or community…"
+                aria-label="Search by address, MLS number, or community"
+                className={`${field} grow`}
+              />
+              <button type="submit" className="btn !py-2 !px-6">Search</button>
+            </div>
             {community ? (
               // Keep the community filter while refining beds/price/type.
               <input type="hidden" name="community" value={community.slug} />
