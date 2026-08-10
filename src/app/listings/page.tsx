@@ -6,6 +6,7 @@ import { IdxDisclaimer } from "@/components/IdxDisclaimer";
 import { JsonLd } from "@/components/JsonLd";
 import { breadcrumbSchema } from "@/lib/schema";
 import { getListings } from "@/lib/idx/provider";
+import { getCommunity } from "@/content/communities";
 import type { ListingFilters, PropertyType } from "@/lib/idx/types";
 
 export const metadata: Metadata = {
@@ -66,8 +67,11 @@ export default async function ListingsPage({
 }) {
   const sp = await searchParams;
   const page = Math.max(1, num(sp.page) ?? 1);
+  const communityParam = str(sp.community);
+  const community = communityParam ? getCommunity(communityParam) : undefined;
   const filters: ListingFilters = {
     city: str(sp.city),
+    communitySlug: community?.slug,
     minPrice: num(sp.minPrice),
     maxPrice: num(sp.maxPrice),
     minBeds: num(sp.minBeds),
@@ -92,20 +96,39 @@ export default async function ListingsPage({
 
       <section className="bg-[var(--color-sand)]">
         <Container size="wide" className="py-12">
-          <div className="eyebrow">Homes for Sale</div>
-          <h1 className="mt-2 text-[2.2rem]">Search Las Vegas &amp; Henderson listings</h1>
+          <div className="eyebrow">{community ? `${community.city}, NV` : "Homes for Sale"}</div>
+          <h1 className="mt-2 text-[2.2rem]">
+            {community ? `${community.name} Homes for Sale` : "Search Las Vegas & Henderson listings"}
+          </h1>
           <p className="mt-3 max-w-[620px] text-[var(--color-ink-soft)]">
-            Browse live MLS homes across the valley&apos;s most sought-after communities.
+            {community ? (
+              <>
+                Live MLS listings in {community.name}, {community.city}.{" "}
+                <Link
+                  href={`/listings?city=${encodeURIComponent(community.city)}`}
+                  className="font-semibold text-[var(--color-gold)]"
+                >
+                  View all {community.city} homes
+                </Link>
+              </>
+            ) : (
+              "Browse live MLS homes across the valley's most sought-after communities."
+            )}
           </p>
 
           {/* Filter bar (GET form → server component re-renders) */}
           <form className="mt-6 flex flex-wrap gap-3" action="/listings" method="get">
-            <select name="city" defaultValue={filters.city ?? ""} className={field} aria-label="City">
-              <option value="">All cities</option>
-              {CITIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+            {community ? (
+              // Keep the community filter while refining beds/price/type.
+              <input type="hidden" name="community" value={community.slug} />
+            ) : (
+              <select name="city" defaultValue={filters.city ?? ""} className={field} aria-label="City">
+                <option value="">All cities</option>
+                {CITIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            )}
             <select name="minBeds" defaultValue={(sp.minBeds as string) ?? ""} className={field} aria-label="Minimum beds">
               <option value="">Beds (any)</option>
               <option value="2">2+ beds</option>

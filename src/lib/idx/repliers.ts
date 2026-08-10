@@ -15,7 +15,7 @@
  */
 import type { Listing, ListingFilters, ListingResult, PropertyType, ListingStatus } from "./types";
 import type { ListingProvider } from "./provider";
-import { matchCommunitySlug } from "@/content/communities";
+import { matchCommunitySlug, getCommunity } from "@/content/communities";
 
 const API_BASE = "https://api.repliers.io";
 const CDN_BASE = "https://cdn.repliers.io";
@@ -290,27 +290,91 @@ function latestUpdate(rows: any[]): string | undefined {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/** Fetch one page of raw listing rows, requesting card image fields with a
+ *  safe fallback if the board rejects the fields whitelist. */
+async function fetchRows(filters: ListingFilters): Promise<{ rows: any[]; count: number }> {
+  let data: any;
+  try {
+    data = await query(`/listings?${buildQuery(filters, { fields: LIST_FIELDS })}`);
+  } catch {
+    data = await query(`/listings?${buildQuery(filters)}`);
+  }
+  const rows: any[] = data.listings ?? [];
+  return { rows, count: Number(data.count ?? data.total ?? rows.length) };
+}
+
+/** Standard city/valley-wide search. */
+async function cityListings(filters: ListingFilters): Promise<ListingResult> {
+  const { rows, count } = await fetchRows(filters);
+  return {
+    listings: rows.map(mapRecord),
+    total: count,
+    isSampleData: false,
+    lastUpdated: latestUpdate(rows),
+  };
+}
+
+/**
+ * Community-scoped search. Repliers has no single "community" filter and MLS
+ * subdivision/neighborhood naming varies, so we scope the query to the
+ * community's CITY (plus any price/bed/type filters) and keep only the rows
+ * that map back to this community via the same structured-field matching used
+ * to cross-link listings to community pages. That guarantees a home appears on
+ * a community's page exactly when it would link to that community.
+ *
+ * We scan up to MAX_PAGES of the city to find the community's homes, then
+ * paginate the matched set in-app. Default price-descending sort surfaces
+ * higher-end communities' homes first.
+ */
+async function communityListings(filters: ListingFilters): Promise<ListingResult> {
+  const slug = filters.communitySlug!;
+  const community = getCommunity(slug);
+  const city = community?.city ?? filters.city;
+  const pageSize = filters.limit ?? 24;
+  const offset = filters.offset ?? 0;
+
+  const PER = 100; // rows per Repliers request
+  const MAX_PAGES = 4; // scan up to ~400 city listings for this community
+
+  const matched: Listing[] = [];
+  const matchedRaw: any[] = [];
+  let scanned = 0;
+  let cityCount = Number.POSITIVE_INFINITY;
+
+  for (let pageNum = 1; pageNum <= MAX_PAGES && scanned < cityCount; pageNum++) {
+    const { rows, count } = await fetchRows({
+      ...filters,
+      city,
+      communitySlug: undefined, // Repliers doesn't know our community; filter below
+      limit: PER,
+      offset: (pageNum - 1) * PER,
+    });
+    cityCount = count;
+    if (rows.length === 0) break;
+    for (const r of rows) {
+      const l = mapRecord(r);
+      if (l.address.communitySlug === slug) {
+        matched.push(l);
+        matchedRaw.push(r);
+      }
+    }
+    scanned += rows.length;
+    if (rows.length < PER) break;
+  }
+
+  return {
+    listings: matched.slice(offset, offset + pageSize),
+    total: matched.length,
+    isSampleData: false,
+    lastUpdated: latestUpdate(matchedRaw),
+  };
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 export const repliersProvider: ListingProvider = {
   async getListings(filters = {}) {
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    let data: any;
-    try {
-      // Request the primary image (and card fields) so search cards get a photo.
-      data = await query(`/listings?${buildQuery(filters, { fields: LIST_FIELDS })}`);
-    } catch {
-      // If a board/plan rejects the fields whitelist, fall back to the default
-      // response so the page still renders (cards may lack a photo, but never
-      // an empty page).
-      data = await query(`/listings?${buildQuery(filters)}`);
-    }
-    const rows: unknown[] = data.listings ?? [];
-    return {
-      listings: rows.map(mapRecord),
-      total: Number(data.count ?? data.total ?? rows.length),
-      isSampleData: false,
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      lastUpdated: latestUpdate(rows as any[]),
-    } satisfies ListingResult;
+    return filters.communitySlug ? communityListings(filters) : cityListings(filters);
   },
 
   async getListing(id) {

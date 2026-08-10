@@ -90,7 +90,7 @@ export default async function CommunityPage({
             </div>
             <p className="mt-5 max-w-[560px] text-[1.12rem] leading-relaxed text-[#d9dbe0]">{c.intro}</p>
             <div className="mt-8 flex flex-wrap gap-4">
-              <Link href={`/listings?city=${encodeURIComponent(c.city)}`} className="btn">
+              <Link href={`/listings?community=${encodeURIComponent(c.slug)}`} className="btn">
                 Browse {c.name} Homes
               </Link>
               <Link href={site.cta.href} className="btn btn-ghost !border-white/30 !text-white hover:!bg-white/10">
