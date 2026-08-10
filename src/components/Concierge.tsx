@@ -8,14 +8,14 @@ type Msg = { role: "user" | "assistant"; content: string };
 /** Render inline **bold** and [label](href) markdown as real elements. */
 function renderInline(text: string, keyBase: string): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
-  const regex = /\[([^\]]+)\]\(([^)\s]+)\)|\*\*([^*]+)\*\*/g;
+  const regex = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*/g;
   let last = 0;
   let m: RegExpExecArray | null;
   let i = 0;
   while ((m = regex.exec(text)) !== null) {
     if (m.index > last) nodes.push(text.slice(last, m.index).replace(/\*\*/g, ""));
     if (m[1] !== undefined && m[2] !== undefined) {
-      const href = m[2];
+      const href = m[2].trim();
       const internal = href.startsWith("/");
       nodes.push(
         <a
