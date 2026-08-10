@@ -117,11 +117,13 @@ export function Concierge() {
       });
       const data = await res.json();
       let reply: string = data.reply ?? "Let me connect you with the team.";
-      // The model appends [[LEAD]] at a natural high-intent moment → open the form.
-      const wantsLead = /\[\[\s*LEAD\s*\]\]/i.test(reply);
-      reply = reply.replace(/\[\[\s*LEAD\s*\]\]/gi, "").trim();
+      // The model appends [[LEAD]] (optionally [[LEAD: criteria summary]]) at a
+      // natural high-intent moment → open the form, prefilled with the criteria.
+      const leadMatch = reply.match(/\[\[\s*LEAD\s*(?::\s*([^\]]+))?\]\]/i);
+      const leadSummary = leadMatch?.[1]?.trim();
+      reply = reply.replace(/\[\[\s*LEAD\s*(?::[^\]]*)?\]\]/gi, "").trim();
       setMessages((m) => [...m, { role: "assistant", content: reply }]);
-      if (wantsLead && leadState !== "done") openLead(trimmed);
+      if (leadMatch && leadState !== "done") openLead(leadSummary || trimmed);
     } catch {
       setMessages((m) => [
         ...m,
@@ -145,9 +147,9 @@ export function Concierge() {
           email: lead.email,
           phone: lead.phone,
           message: lead.message,
-          type: "General Inquiry",
-          tag: "AI Concierge",
-          source: "Luxury ChatBot",
+          type: "Buyer Inquiry",
+          tags: ["Luxury Buyer", "AI Concierge"],
+          source: "Luxury Website Chatbot",
         }),
       });
       const data = await res.json();
@@ -245,7 +247,10 @@ export function Concierge() {
             {/* Inline lead form */}
             {showLead && leadState !== "done" && (
               <form onSubmit={submitLead} className="space-y-2 rounded-[10px] border border-[rgba(216,189,132,0.35)] bg-[var(--color-graphite-3)] p-3.5">
-                <div className="font-sans text-[0.8rem] font-semibold text-[var(--color-gold-3)]">Connect with the team</div>
+                <div>
+                  <div className="font-sans text-[0.8rem] font-semibold text-[var(--color-gold-3)]">Get new matching homes first</div>
+                  <div className="mt-0.5 font-sans text-[0.68rem] text-[#9aa0aa]">Tell us where to send them — no spam, unsubscribe anytime.</div>
+                </div>
                 <input
                   value={lead.name}
                   onChange={(e) => setLead({ ...lead, name: e.target.value })}
@@ -270,7 +275,7 @@ export function Concierge() {
                   <div className="font-sans text-[0.76rem] text-[#e6a5a5]">Please add an email or phone so we can reach you.</div>
                 )}
                 <button type="submit" disabled={leadState === "sending"} className="btn w-full !py-2.5 !text-[0.72rem]">
-                  {leadState === "sending" ? "Sending…" : "Request a callback"}
+                  {leadState === "sending" ? "Sending…" : "Send me matching homes"}
                 </button>
               </form>
             )}
