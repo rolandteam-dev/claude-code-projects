@@ -168,7 +168,14 @@ export default async function CommunityPage({
             Ready to see current {c.name} listings and homesites? Roland Luxury specializes in {c.city}&apos;s
             luxury and guard-gated communities.
           </p>
-          <Link href={site.cta.href} className="btn mt-6">{site.cta.label}</Link>
+          <div className="mt-6 flex flex-wrap justify-center gap-4">
+            <Link href={`/listings?community=${encodeURIComponent(c.slug)}`} className="btn">
+              Browse {c.name} Homes
+            </Link>
+            <Link href={site.cta.href} className="btn btn-ghost !border-white/30 !text-white hover:!bg-white/10">
+              {site.cta.label}
+            </Link>
+          </div>
         </div>
       </Container>
     </>
