@@ -63,6 +63,30 @@ Live listings are automatically cross-linked to the matching community page
 when their subdivision/neighborhood matches one of our communities
 (`matchCommunitySlug` in `src/content/communities.ts`).
 
+## Follow Up Boss (CRM) integration
+
+Two independent Follow Up Boss (FUB) hooks are wired in. Both are controlled by
+environment variables in **Vercel → Project → Settings → Environment Variables**
+(they're secrets — never commit them), and both fail gracefully when unset so
+the site works in dev/preview.
+
+| Variable | Purpose |
+| --- | --- |
+| `FUB_API_KEY` | Server-side. Sends contact-form submissions to the FUB Events API (`src/app/api/lead/route.ts`). Without it, forms still submit but no lead is stored. |
+| `NEXT_PUBLIC_FUB_PIXEL_ID` | Client-side tracking pixel (`src/components/FollowUpBossPixel.tsx`). Ties site browsing to a FUB contact — powering "your lead just viewed X" agent notifications and activity-based Action Plans. |
+
+**Getting the Pixel ID:** in Follow Up Boss go to **Admin → Pixel** and copy the
+tracking ID from the snippet it shows. Set `NEXT_PUBLIC_FUB_PIXEL_ID` to that ID
+and redeploy — no code change. The pixel then loads on every page and reports a
+pageview on each in-app navigation (so the full browsing path is captured, not
+just the landing page). Confirm the FUB-provided snippet still uses the
+`widgetbe.com/agent` loader and `widgetTracker` name; if FUB changes the format,
+update `src/components/FollowUpBossPixel.tsx` to match.
+
+Remarketing flow this enables: email/text your FUB database → contact clicks a
+link to the site → pixel attributes their browsing to their FUB record → FUB
+notifies the assigned agent and triggers any Action Plans / pond routing.
+
 ## Blog auto-drafting engine
 
 Give it a topic and it writes a full, SEO-optimized, internally-linked post
