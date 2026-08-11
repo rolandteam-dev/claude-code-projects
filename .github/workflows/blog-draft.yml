@@ -1,0 +1,78 @@
+name: Draft blog post
+
+# Hands-off blog drafting. Go to the repo's Actions tab → "Draft blog post" →
+# Run workflow → type a topic. The engine writes a full SEO post + cover and
+# opens a PR for you to review and merge.
+#
+# Requires one repo secret: ANTHROPIC_API_KEY
+#   (Settings → Secrets and variables → Actions → New repository secret)
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "What should the post be about?"
+        required: true
+        type: string
+      category:
+        description: "Category (optional — the writer will choose if blank)"
+        required: false
+        type: choice
+        default: ""
+        options:
+          - ""
+          - "New Construction"
+          - "Market Updates"
+          - "Buying Guides"
+          - "Selling Guides"
+  # Weekly hands-off draft — uncomment to auto-produce a post every Monday 8am UTC.
+  # The engine picks a fresh topic not already covered.
+  # schedule:
+  #   - cron: "0 8 * * 1"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Draft the post
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "${{ inputs.topic }}" ]; then
+            node scripts/draft-blog-post.mjs --topic "${{ inputs.topic }}" ${{ inputs.category && format('--category "{0}"', inputs.category) || '' }}
+          else
+            node scripts/draft-blog-post.mjs --topic "auto"
+          fi
+
+      - name: Verify build
+        run: npm run build
+
+      - name: Open a pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          slug=$(git status --porcelain | grep 'public/blog/' | head -1 | sed 's#.*public/blog/##; s#\.svg$##')
+          [ -z "$slug" ] && { echo "No new post detected"; exit 1; }
+          branch="blog/${slug}"
+          git config user.name "roland-luxury-bot"
+          git config user.email "bot@therolandteam.com"
+          git checkout -b "$branch"
+          git add -A
+          git commit -m "Blog draft: ${{ inputs.topic }}"
+          git push -u origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "Blog draft: ${{ inputs.topic }}" \
+            --body "Auto-drafted by the blog engine. Review the copy + cover, then merge to publish."

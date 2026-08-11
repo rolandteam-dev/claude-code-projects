@@ -63,6 +63,48 @@ Live listings are automatically cross-linked to the matching community page
 when their subdivision/neighborhood matches one of our communities
 (`matchCommunitySlug` in `src/content/communities.ts`).
 
+## Blog auto-drafting engine
+
+Give it a topic and it writes a full, SEO-optimized, internally-linked post
+with a branded cover and drops it into `src/content/blog.ts` + `public/blog/`.
+The script is `scripts/draft-blog-post.mjs`.
+
+**Hands-off (Claude writes it) — needs `ANTHROPIC_API_KEY`:**
+
+```bash
+ANTHROPIC_API_KEY=... node scripts/draft-blog-post.mjs \
+  --topic "How Henderson guard-gated communities compare" \
+  --category "Buying Guides"
+npm run build   # verify, then commit
+```
+
+**From a post you wrote yourself (no API key):**
+
+```bash
+node scripts/draft-blog-post.mjs --from-json ./post.json
+```
+
+Flags: `--category` (optional; one of New Construction / Market Updates /
+Buying Guides / Selling Guides), `--date YYYY-MM-DD` (defaults to today),
+`--dry` (print the generated post without writing anything).
+
+What the engine does for you: generates a URL slug, estimates read time,
+creates a branded SVG cover at `public/blog/<slug>.svg`, validates the SEO
+title/description lengths and that the slug is unique, and inserts the post at
+the top of the `blogPosts` array. Body text supports `**bold**` and
+`[label](/internal-path)` links, which render as real links (see
+`src/lib/prose.tsx`) — good for the internal-link graph.
+
+**Fully automated (topic → PR):** the `Draft blog post` GitHub Action
+(`.github/workflows/blog-draft.yml`) lets you run it from the repo's **Actions**
+tab — type a topic and it opens a PR with the post + cover. Add one repo secret
+first: **Settings → Secrets and variables → Actions → `ANTHROPIC_API_KEY`**.
+Uncomment the `schedule:` block in that file to auto-draft on a cadence.
+
+> Model: defaults to `claude-sonnet-5`; override with `BLOG_MODEL`.
+> Covers are on-brand SVGs today; swap in real photography per post by setting
+> `coverImage` to any image path under `public/`.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
