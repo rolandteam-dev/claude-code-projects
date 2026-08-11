@@ -98,7 +98,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             {s.bullets && (
               <ul className="ml-5 list-disc space-y-2">
                 {s.bullets.map((b, i) => (
-                  <li key={i}>{b}</li>
+                  <li key={i}><ProseText text={b} /></li>
                 ))}
               </ul>
             )}
