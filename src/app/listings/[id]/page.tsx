@@ -9,6 +9,7 @@ import { PaymentEstimator } from "@/components/PaymentEstimator";
 import { ScheduleTour } from "@/components/ScheduleTour";
 import { ListingStickyBar } from "@/components/ListingStickyBar";
 import { ListingShareBar } from "@/components/ListingShareBar";
+import { WhatsNearby } from "@/components/WhatsNearby";
 import { breadcrumbSchema } from "@/lib/schema";
 import { getListing } from "@/lib/idx/provider";
 import { formatPrice } from "@/components/ListingCard";
@@ -301,18 +302,21 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
             </section>
           )}
 
-          {/* Location map */}
+          {/* Location map + what's nearby */}
           {l.coords && (
             <section>
               <h2 className="mt-10 font-serif text-[1.6rem]">Location</h2>
-              <div className="mt-4 overflow-hidden rounded-[12px] border border-[var(--color-line)]">
-                <iframe
-                  title={`Map of ${l.address.line1}`}
-                  className="h-[320px] w-full"
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${l.coords.lng - 0.012}%2C${l.coords.lat - 0.009}%2C${l.coords.lng + 0.012}%2C${l.coords.lat + 0.009}&layer=mapnik&marker=${l.coords.lat}%2C${l.coords.lng}`}
-                />
+              <div className="mt-4 grid gap-4 md:grid-cols-[1.6fr_1fr]">
+                <div className="overflow-hidden rounded-[12px] border border-[var(--color-line)]">
+                  <iframe
+                    title={`Map of ${l.address.line1}`}
+                    className="h-full min-h-[320px] w-full"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${l.coords.lng - 0.012}%2C${l.coords.lat - 0.009}%2C${l.coords.lng + 0.012}%2C${l.coords.lat + 0.009}&layer=mapnik&marker=${l.coords.lat}%2C${l.coords.lng}`}
+                  />
+                </div>
+                <WhatsNearby lat={l.coords.lat} lng={l.coords.lng} />
               </div>
               <p className="mt-2 font-sans text-[0.72rem] text-[var(--color-muted)]">Approximate location shown.</p>
             </section>
