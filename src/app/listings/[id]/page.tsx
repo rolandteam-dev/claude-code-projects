@@ -63,6 +63,9 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
   };
 
   const pricePerSqft = l.sqft > 0 ? Math.round(l.listPrice / l.sqft) : undefined;
+  // AVM "Est. value" display is gated: only shown once GLVAR confirms display
+  // alongside list price is permitted (set SHOW_AVM_ESTIMATE=true in Vercel).
+  const showAvm = process.env.SHOW_AVM_ESTIMATE === "true";
   // Normalize the HOA fee to a monthly figure for the payment estimator.
   const hoaMonthly = (() => {
     if (l.hoaFee == null) return 0;
@@ -192,6 +195,24 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
             {pricePerSqft && (
               <div className="mt-1 font-sans text-[0.82rem] text-[var(--color-muted)]">
                 ${pricePerSqft.toLocaleString()} / sq ft
+              </div>
+            )}
+            {showAvm && l.estimate && (
+              <div className="mt-2 font-sans text-[0.8rem] text-[var(--color-ink-soft)]">
+                Est. value{" "}
+                <span className="font-semibold text-[var(--color-ink)]">{formatPrice(l.estimate.value)}</span>
+                {l.estimate.low && l.estimate.high ? (
+                  <span className="text-[var(--color-muted)]">
+                    {" "}
+                    · {formatPrice(l.estimate.low)}–{formatPrice(l.estimate.high)}
+                  </span>
+                ) : null}
+                {l.estimate.confidence ? (
+                  <span className="text-[var(--color-muted)]"> · {l.estimate.confidence} confidence</span>
+                ) : null}
+                <span className="ml-1 text-[var(--color-muted)]" title="Automated valuation estimate — not an appraisal.">
+                  ⓘ
+                </span>
               </div>
             )}
           </div>

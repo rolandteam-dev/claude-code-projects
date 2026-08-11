@@ -131,6 +131,20 @@ function collect(...sources: any[]): string[] {
   return out;
 }
 
+function mapEstimate(est: any): Listing["estimate"] {
+  if (!est || typeof est !== "object") return undefined;
+  const value = numOpt(est.value, est.estimate, est.predictedValue, est.price);
+  if (!value) return undefined;
+  const low = numOpt(est.low, est.valueLow, est.rangeLow, est.range?.low, est.confidenceRange?.low);
+  const high = numOpt(est.high, est.valueHigh, est.rangeHigh, est.range?.high, est.confidenceRange?.high);
+  const confRaw = est.confidence ?? est.confidenceLevel;
+  const confidence =
+    typeof confRaw === "number"
+      ? `${Math.round(confRaw <= 1 ? confRaw * 100 : confRaw)}%`
+      : s(confRaw) || undefined;
+  return { value, low, high, confidence };
+}
+
 function mapHistory(hist: any): Listing["history"] {
   if (!Array.isArray(hist)) return undefined;
   const out = hist
@@ -249,6 +263,7 @@ function mapRecord(r: any): Listing {
     ),
     rooms: mapRooms(r.rooms),
     history: mapHistory(r.history ?? r.mlsHistory ?? r.priceHistory),
+    estimate: mapEstimate(r.estimate ?? r.estimates ?? r.avm),
     virtualTourUrl: s(r.virtualTourUrl, details.virtualTourUrl, r.tour, details.tourUrl) || undefined,
   };
 }
