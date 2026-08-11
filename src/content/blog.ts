@@ -34,6 +34,386 @@ export type BlogPost = {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: "las-vegas-real-estate-market-what-buyers-and-sellers-should-watch",
+    title: "Las Vegas Real Estate Market: What Buyers and Sellers Should Watch",
+    category: "Market Updates",
+    excerpt: "Rather than guess the future, watch the factors that actually move the Las Vegas market. Here's what matters for buyers and sellers now.",
+    date: "2026-08-11",
+    author: "Roland Luxury",
+    readMinutes: 4,
+    seoTitle: "Las Vegas Real Estate Market: What to Watch",
+    seoDescription: "The factors that actually move the Las Vegas housing market — inventory, rates, demand, and new construction — and what they mean for you.",
+    coverImage: "/blog/las-vegas-real-estate-market-what-buyers-and-sellers-should-watch.svg",
+    coverAlt: "Market Updates — Roland Luxury Las Vegas real estate",
+    sections: [
+      {
+        heading: "Watch the drivers, not the predictions",
+        body: [
+          "No one can perfectly predict the market, but the forces that move it are knowable — and watching them beats trying to time a bottom. For area-by-area context and the latest numbers, keep an eye on our [market report](/market-report). Below are the drivers worth tracking.",
+          "The goal isn't to guess; it's to make a confident decision based on where things actually stand."
+        ]
+      },
+      {
+        heading: "The factors that matter",
+        body: [
+          "A handful of forces shape prices and pace in the valley:"
+        ],
+        bullets: [
+          "Inventory: how many homes are for sale relative to demand sets the tone for negotiation.",
+          "Interest rates: they move buyer purchasing power and monthly payments.",
+          "In-migration: steady relocation from higher-cost states supports demand.",
+          "New construction: builder activity and incentives influence the resale market too.",
+          "The luxury tier: guard-gated and custom-estate segments move on their own timeline."
+        ]
+      },
+      {
+        heading: "What it means if you're buying",
+        body: [
+          "In a steady market like Las Vegas, buyers who focus on the right home at a comfortable payment tend to do well regardless of short-term swings. Get pre-approved, know your must-haves, and act when the right home appears rather than waiting for a perfect moment that rarely comes.",
+          "Start your search on our [listings page](/listings) to see what current conditions mean for your budget."
+        ]
+      },
+      {
+        heading: "What it means if you're selling",
+        body: [
+          "Well-priced, well-presented homes continue to sell across market conditions. The sellers who win price to the current market from day one and market professionally. Start with a precise [home valuation](/home-value), then [reach out to the team](/contact) for a strategy tailored to your home and timing."
+        ]
+      }
+    ]
+  },
+  {
+    slug: "new-construction-vs-resale-in-las-vegas-which-is-right-for-you",
+    title: "New Construction vs. Resale in Las Vegas: Which Is Right for You?",
+    category: "New Construction",
+    excerpt: "Buy new or buy resale? Both have real advantages in Las Vegas. Here's an honest comparison to help you decide.",
+    date: "2026-08-11",
+    author: "Roland Luxury",
+    readMinutes: 4,
+    seoTitle: "New Construction vs. Resale in Las Vegas",
+    seoDescription: "New construction or resale in Las Vegas? Compare price, timeline, incentives, upgrades, and location to decide which is right for you.",
+    coverImage: "/blog/new-construction-vs-resale-in-las-vegas-which-is-right-for-you.svg",
+    coverAlt: "New Construction — Roland Luxury Las Vegas real estate",
+    sections: [
+      {
+        heading: "A real choice in an active new-home market",
+        body: [
+          "Las Vegas is one of the nation's most active new-construction markets, so most buyers here genuinely weigh new versus resale. Both can be smart — it depends on your timeline, priorities, and how much you value customization versus established location. Our [new construction](/new-construction) page covers where builders are most active right now.",
+          "Here's how the two compare on the factors that matter most."
+        ]
+      },
+      {
+        heading: "The case for new construction",
+        body: [
+          "Buying new means a home built to current standards, with warranties, modern floor plans, and energy efficiency — plus the ability to choose finishes on many builds. Builders also frequently offer incentives like upgrades, closing-cost credits, or rate buydowns.",
+          "One key tip: bring your own agent to the builder on your first visit. The on-site rep works for the builder; your agent works for you."
+        ]
+      },
+      {
+        heading: "The case for resale",
+        body: [
+          "Resale homes shine on location and value:"
+        ],
+        bullets: [
+          "Established, centrally located neighborhoods that are often built out and mature.",
+          "Landscaping, window coverings, and upgrades already in place — fewer post-purchase costs.",
+          "More room to negotiate on price in many cases.",
+          "You see the actual home and community as they are today, not a rendering."
+        ]
+      },
+      {
+        heading: "How to decide",
+        body: [
+          "If customization, warranties, and modern efficiency top your list, lean new. If location, mature surroundings, and move-in-ready value matter more, lean resale. Many buyers compare both before deciding — and that's exactly the right approach.",
+          "Browse resale homes on our [listings search](/listings), and [reach out to the team](/contact) — we represent buyers on both new and resale, and we'll help you weigh the trade-offs for your situation."
+        ]
+      }
+    ]
+  },
+  {
+    slug: "staging-tips-that-sell-las-vegas-homes-faster",
+    title: "Staging Tips That Sell Las Vegas Homes Faster",
+    category: "Selling Guides",
+    excerpt: "Smart staging can add real dollars and cut days on market. Here are the highest-impact moves for Las Vegas sellers.",
+    date: "2026-08-11",
+    author: "Roland Luxury",
+    readMinutes: 4,
+    seoTitle: "Home Staging Tips That Sell Las Vegas Homes Faster",
+    seoDescription: "Staging tips that help Las Vegas homes sell faster and for more — from decluttering and lighting to desert curb appeal and photo-ready prep.",
+    coverImage: "/blog/staging-tips-that-sell-las-vegas-homes-faster.svg",
+    coverAlt: "Selling Guides — Roland Luxury Las Vegas real estate",
+    sections: [
+      {
+        heading: "Why staging pays off",
+        body: [
+          "Nearly every buyer starts online, which means your home is really selling in photos first. Staging — even light staging — helps buyers picture themselves living there, and well-presented homes tend to sell faster and attract stronger offers. For the full playbook, see our [selling guide](/guides/selling-your-home-in-las-vegas).",
+          "You don't have to stage every room; focus effort where buyers form their first impression."
+        ]
+      },
+      {
+        heading: "The highest-impact moves",
+        body: [
+          "A few fundamentals do most of the work:"
+        ],
+        bullets: [
+          "Declutter and depersonalize so spaces feel larger and move-in ready.",
+          "Maximize light — open blinds, add warm lighting, and let the desert sun in.",
+          "Refresh with neutral tones and clean, simple décor that photographs well.",
+          "Handle obvious maintenance — paint touch-ups, fixtures, and anything that reads as deferred upkeep."
+        ]
+      },
+      {
+        heading: "Don't forget desert curb appeal",
+        body: [
+          "In Las Vegas, outdoor space sells. Clean, well-kept desert landscaping (xeriscape), a tidy entry, and an inviting backyard — especially a pool or view — can meaningfully raise a home's appeal. Buyers here place real value on livable outdoor areas.",
+          "First impressions start at the curb, so give the exterior the same attention as the interior."
+        ]
+      },
+      {
+        heading: "Set the stage for a strong sale",
+        body: [
+          "Great staging works hand in hand with sharp pricing and professional marketing. Start with a free [home valuation](/home-value) to set the right number, and [reach out to the team](/contact) — we'll advise exactly where to focus your prep for the biggest return."
+        ]
+      }
+    ]
+  },
+  {
+    slug: "how-to-sell-a-luxury-home-in-las-vegas",
+    title: "How to Sell a Luxury Home in Las Vegas",
+    category: "Selling Guides",
+    excerpt: "Luxury homes play by different rules. Here's how to price, market, and sell a high-end Las Vegas property for its full value.",
+    date: "2026-08-11",
+    author: "Roland Luxury",
+    readMinutes: 4,
+    seoTitle: "How to Sell a Luxury Home in Las Vegas",
+    seoDescription: "Selling a luxury home in Las Vegas? How pricing, marketing, and negotiation differ at the high end — and how to get top dollar.",
+    coverImage: "/blog/how-to-sell-a-luxury-home-in-las-vegas.svg",
+    coverAlt: "Selling Guides — Roland Luxury Las Vegas real estate",
+    sections: [
+      {
+        heading: "The luxury market is a market of its own",
+        body: [
+          "Selling a high-end home isn't just a bigger version of a standard sale. With fewer truly comparable sales, unique custom features, and a smaller, more discerning buyer pool, pricing and marketing strategy matter far more than valley-wide averages. Our [Las Vegas luxury real estate](/las-vegas-luxury-real-estate) page speaks to what sets this tier apart.",
+          "Getting the strategy right from day one is the difference between a strong sale and a listing that lingers."
+        ]
+      },
+      {
+        heading: "Pricing with precision",
+        body: [
+          "Overpricing is the most common luxury mistake — it stalls the listing and invites price cuts that signal weakness. The right price comes from a careful analysis of genuine comparables, current high-end demand, and the specific features that move value at this level: views, lot, architecture, and finish.",
+          "Start with a precise, human [home valuation](/home-value) rather than an automated estimate, and check the current [market report](/market-report) for context."
+        ]
+      },
+      {
+        heading: "Marketing that reaches luxury buyers",
+        body: [
+          "High-end buyers expect a presentation to match the home:"
+        ],
+        bullets: [
+          "Professional photography, video, and often aerial and twilight imagery.",
+          "Thoughtful staging that lets the architecture and views speak.",
+          "Targeted digital marketing plus a network of agents and past clients.",
+          "Discretion when it matters — including off-market and coming-soon strategies for the right sellers."
+        ]
+      },
+      {
+        heading: "Negotiation and the right partner",
+        body: [
+          "At this level, negotiation is nuanced — terms, contingencies, and timing can matter as much as price, and privacy is often a priority. Working with a team that specializes in luxury and knows the valley's guard-gated communities protects both your value and your peace of mind.",
+          "[Reach out to the team](/contact) for a confidential conversation about selling your home for its full value."
+        ]
+      }
+    ]
+  },
+  {
+    slug: "buying-a-second-home-or-vacation-property-in-las-vegas",
+    title: "Buying a Second Home or Vacation Property in Las Vegas",
+    category: "Buying Guides",
+    excerpt: "Las Vegas is a top pick for a second home. Here's what to consider — from location and lock-and-leave living to costs and rental rules.",
+    date: "2026-08-11",
+    author: "Roland Luxury",
+    readMinutes: 4,
+    seoTitle: "Buying a Second Home in Las Vegas: What to Know",
+    seoDescription: "Thinking about a Las Vegas second home or vacation property? Location, lock-and-leave options, costs, and rental considerations to plan for.",
+    coverImage: "/blog/buying-a-second-home-or-vacation-property-in-las-vegas.svg",
+    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    sections: [
+      {
+        heading: "Why Las Vegas works for a second home",
+        body: [
+          "Between the climate, the entertainment, direct flights from most major cities, and Nevada's tax advantages, Las Vegas is one of the country's most popular second-home markets. Whether you want a winter escape or a part-time base near the action, there's a home style to match.",
+          "The key is choosing a property that fits how you'll actually use it. Start by browsing our [listings search](/listings) to get a feel for options and price points."
+        ]
+      },
+      {
+        heading: "Location and home type",
+        body: [
+          "For a second home, low-maintenance living usually wins. Many buyers gravitate to lock-and-leave condos and townhomes or homes in guard-gated and resort communities where the HOA handles upkeep while you're away.",
+          "Resort settings like [Lake Las Vegas](/communities/lake-las-vegas) are popular for exactly this — a vacation feel with amenities and security built in."
+        ]
+      },
+      {
+        heading: "Costs and considerations",
+        body: [
+          "A second home comes with a few planning items beyond the purchase price:"
+        ],
+        bullets: [
+          "Financing: second-home loans differ from primary-residence terms — talk to a lender early.",
+          "Carrying costs: HOA dues, insurance, utilities, and upkeep continue while you're away.",
+          "Security and maintenance: a gated community or a property manager provides peace of mind.",
+          "Rental rules: if you might rent it out, check community and local short-term-rental regulations first."
+        ]
+      },
+      {
+        heading: "Let's find your place",
+        body: [
+          "The best second home is the one that matches your travel rhythm and budget. [Reach out to the team](/contact) and we'll help you weigh neighborhoods, home types, and carrying costs so your Las Vegas getaway is a pleasure to own."
+        ]
+      }
+    ]
+  },
+  {
+    slug: "55-active-adult-communities-in-las-vegas-a-buyers-guide",
+    title: "55+ Active Adult Communities in Las Vegas: A Buyer's Guide",
+    category: "Buying Guides",
+    excerpt: "Age-qualified living with resort amenities and low-maintenance homes — here's how Las Vegas 55+ communities work and how to choose.",
+    date: "2026-08-11",
+    author: "Roland Luxury",
+    readMinutes: 4,
+    seoTitle: "55+ Active Adult Communities in Las Vegas Guide",
+    seoDescription: "A guide to 55+ active adult communities in Las Vegas and Henderson — amenities, home styles, HOA considerations, and how to pick the right one.",
+    coverImage: "/blog/55-active-adult-communities-in-las-vegas-a-buyers-guide.svg",
+    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    sections: [
+      {
+        heading: "What makes a 55+ community different",
+        body: [
+          "Active adult (55+) communities are age-qualified neighborhoods designed around a low-maintenance, amenity-rich lifestyle. Las Vegas is one of the country's most popular markets for them, thanks to the climate, the value, and Nevada's tax advantages. Our [active adult communities](/active-adult-communities-las-vegas) page is a helpful overview.",
+          "These communities are legally established as housing for older persons, so at least one resident typically must meet the age requirement — worth confirming the specific rules for any community you consider."
+        ]
+      },
+      {
+        heading: "What you get",
+        body: [
+          "The appeal is a turnkey lifestyle with built-in community:"
+        ],
+        bullets: [
+          "Single-story, low-maintenance home designs built for easy living.",
+          "Resort-style amenities — clubhouses, pools, fitness, pickleball, and golf in some communities.",
+          "Full social calendars, clubs, and activities that make it easy to meet neighbors.",
+          "HOA services that handle much of the exterior upkeep."
+        ]
+      },
+      {
+        heading: "What to weigh before buying",
+        body: [
+          "Match the community to how you actually want to live. Consider the amenity set you'll really use, the HOA dues that fund them, proximity to healthcare and the airport for visiting family, and whether you prefer a large master-planned community or a smaller, quieter enclave.",
+          "Resale considerations differ from all-ages neighborhoods too, so it's worth understanding each community's track record."
+        ]
+      },
+      {
+        heading: "Find the right community",
+        body: [
+          "There's a wide range of 55+ options across the valley, from sprawling master plans to boutique communities. [Reach out to the team](/contact) and we'll help you compare amenities, home styles, and costs — and if you're selling first, start with a free [home valuation](/home-value)."
+        ]
+      }
+    ]
+  },
+  {
+    slug: "the-best-golf-communities-in-las-vegas",
+    title: "The Best Golf Communities in Las Vegas",
+    category: "Buying Guides",
+    excerpt: "From championship courses to guard-gated clubs, here are the Las Vegas golf communities worth knowing — and how to choose.",
+    date: "2026-08-11",
+    author: "Roland Luxury",
+    readMinutes: 4,
+    seoTitle: "The Best Golf Communities in Las Vegas",
+    seoDescription: "Explore the best golf communities in Las Vegas and Henderson — private clubs, championship courses, and guard-gated living for golf lovers.",
+    coverImage: "/blog/the-best-golf-communities-in-las-vegas.svg",
+    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    sections: [
+      {
+        heading: "Golf living in the valley",
+        body: [
+          "With sunshine most of the year, Las Vegas is a golfer's market — and several of its most desirable communities are built around championship courses and private clubs. If teeing off minutes from home is the dream, our [golf communities](/golf-communities-las-vegas) overview is a great place to start; below are standouts worth a closer look.",
+          "Keep in mind that many of these clubs are private, with membership separate from home ownership — worth confirming as you shop."
+        ]
+      },
+      {
+        heading: "Communities to know",
+        body: [
+          "A few communities consistently top the list for golf-focused buyers:"
+        ],
+        bullets: [
+          "[Southern Highlands](/communities/southern-highlands) — a prestigious southwest master plan with a private championship golf club.",
+          "[Anthem Country Club](/communities/anthem) — a guard-gated Henderson enclave built around its private course.",
+          "[Seven Hills](/communities/seven-hills) — established Henderson living with nearby golf and hilltop views.",
+          "[MacDonald Highlands](/communities/macdonald-highlands) — luxury estates anchored by the private DragonRidge Country Club."
+        ]
+      },
+      {
+        heading: "What to weigh",
+        body: [
+          "Golf communities offer lifestyle and often strong long-term appeal, but there are trade-offs to plan for: HOA dues, optional or required club memberships and their fees, and the premium that view and course-frontage lots command. Decide up front how much golf access you actually want to pay for.",
+          "A course-frontage home is a very different purchase than a home simply located within a golf community — we can help you compare."
+        ]
+      },
+      {
+        heading: "Find your fit",
+        body: [
+          "The right golf community depends on your game, your budget, and the lifestyle you want around it. [Reach out to the team](/contact) or browse current homes on our [listings search](/listings), and we'll help you match the course, the club, and the community to what matters most to you."
+        ]
+      }
+    ]
+  },
+  {
+    slug: "the-ridges-in-summerlin-a-complete-guide",
+    title: "The Ridges in Summerlin: A Complete Guide",
+    category: "Buying Guides",
+    excerpt: "Inside one of Summerlin's most prestigious guard-gated communities — architecture, amenities, golf, and what buyers should know.",
+    date: "2026-08-11",
+    author: "Roland Luxury",
+    readMinutes: 4,
+    seoTitle: "The Ridges Summerlin: A Complete Buyer's Guide",
+    seoDescription: "A complete guide to The Ridges in Summerlin — guard-gated luxury, Bear's Best golf, contemporary custom estates, and what to know before you buy.",
+    coverImage: "/blog/the-ridges-in-summerlin-a-complete-guide.svg",
+    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    sections: [
+      {
+        heading: "One of Summerlin's premier addresses",
+        body: [
+          "[The Ridges](/communities/the-ridges-summerlin) sits at the western edge of Summerlin, backed up against Red Rock Canyon, and is widely regarded as one of the valley's finest guard-gated communities. It's known for sleek contemporary architecture, elevated homesites, and some of the best Strip-and-mountain views in Las Vegas.",
+          "If modern luxury with a mountain backdrop is your target, here's what makes The Ridges special — and what to weigh before you buy."
+        ]
+      },
+      {
+        heading: "Homes and architecture",
+        body: [
+          "The Ridges is defined by desert-contemporary design — clean lines, walls of glass, and indoor-outdoor living that frames the views. It's a collection of distinct guard-gated enclaves, ranging from luxury villas to sprawling custom estates, so there's meaningful variety in size, style, and price within the community.",
+          "Browse current availability on our [listings search](/listings), and explore more high-end options on our [Las Vegas luxury real estate](/las-vegas-luxury-real-estate) page."
+        ]
+      },
+      {
+        heading: "Amenities and lifestyle",
+        body: [
+          "The community centers on lifestyle and recreation:"
+        ],
+        bullets: [
+          "Bear's Best Las Vegas — a signature golf course woven through the community.",
+          "Club Ridges — a private residents' club with pools, tennis, fitness, and events.",
+          "Direct access to Red Rock Canyon trails for hiking and biking.",
+          "Minutes to Downtown Summerlin's shopping, dining, and entertainment."
+        ]
+      },
+      {
+        heading: "Is The Ridges right for you?",
+        body: [
+          "The Ridges suits buyers who want contemporary architecture, resort-style amenities, and a premium Summerlin address with the mountains at their doorstep. Because inventory is limited and some of the best homes trade privately, working with a connected local team pays off.",
+          "[Reach out to the team](/contact) and we'll share current and off-market opportunities in The Ridges and help you compare specific homes and homesites."
+        ]
+      }
+    ]
+  },
+  {
     slug: "guard-gated-communities-in-las-vegas-under-1m",
     title: "Guard-Gated Communities in Las Vegas Under $1M",
     category: "Buying Guides",
