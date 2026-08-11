@@ -5,27 +5,23 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef } from "react";
 
 /**
- * Follow Up Boss (FUB) tracking pixel.
+ * Follow Up Boss (FUB) tracking pixel — the official "Widget Tracker" snippet.
  *
  * When a database contact clicks a link in a FUB email/text and lands here,
  * this pixel ties their site browsing to their FUB contact record — powering
  * the "your lead just viewed X" agent notifications and any activity-based
  * Action Plans / automations.
  *
- * Setup: grab the Pixel ID from Follow Up Boss → Admin → Pixel (Superhuman /
- * website tracking), then set it as an environment variable in Vercel:
+ * The Pixel ID is a public, client-side value (it ships in the page HTML), so
+ * it is safe to keep in the repo. It defaults to The Roland Team's live pixel
+ * and can be overridden per environment (e.g. staging) with:
  *
- *   NEXT_PUBLIC_FUB_PIXEL_ID=your-pixel-id
+ *   NEXT_PUBLIC_FUB_PIXEL_ID=WT-XXXXXXXX
  *
- * Until that var is present the component renders nothing, so the site is
- * unaffected in dev/preview. NEXT_PUBLIC_ is required so the value is inlined
- * into the client bundle (the pixel runs in the browser).
- *
- * NOTE: FUB shows an account-specific copy-paste snippet — confirm the loader
- * URL (widgetbe.com/agent) and tracker name (widgetTracker) below match what
- * your account displays. Only the ID normally changes.
+ * Source of truth for the snippet: Follow Up Boss → Admin → Pixel.
  */
-const PIXEL_ID = process.env.NEXT_PUBLIC_FUB_PIXEL_ID;
+const DEFAULT_PIXEL_ID = "WT-HKVXTYFU";
+const PIXEL_ID = process.env.NEXT_PUBLIC_FUB_PIXEL_ID ?? DEFAULT_PIXEL_ID;
 
 function sendPageview() {
   const w = window as unknown as { widgetTracker?: (...args: unknown[]) => void };
@@ -60,8 +56,9 @@ export function FollowUpBossPixel() {
 
   return (
     <>
+      {/* Official Follow Up Boss "Widget Tracker" snippet (Admin → Pixel). */}
       <Script id="fub-pixel" strategy="afterInteractive">
-        {`(function(w,i,d,g,e,t){w[d]=w[d]||[];var s=i.createElement(g);s.async=1;s.src=e;var x=i.getElementsByTagName(g)[0];x.parentNode.insertBefore(s,x);w[t]=w[t]||function(){(w[t].q=w[t].q||[]).push(arguments)}})(window,document,'widgetTrackerData','script','https://widgetbe.com/agent','widgetTracker');widgetTracker('create','${PIXEL_ID}');widgetTracker('send','pageview');`}
+        {`(function(w,i,d,g,e,t){w["WidgetTrackerObject"]=g;(w[g]=w[g]||function(){(w[g].q=w[g].q||[]).push(arguments);}),(w[g].ds=1*new Date());(e="script"),(t=d.createElement(e)),(e=d.getElementsByTagName(e)[0]);t.async=1;t.src=i;e.parentNode.insertBefore(t,e);})(window,"https://widgetbe.com/agent",document,"widgetTracker");window.widgetTracker("create","${PIXEL_ID}");window.widgetTracker("send","pageview");`}
       </Script>
       <Suspense fallback={null}>
         <RouteChangeTracker />

@@ -65,23 +65,24 @@ when their subdivision/neighborhood matches one of our communities
 
 ## Follow Up Boss (CRM) integration
 
-Two independent Follow Up Boss (FUB) hooks are wired in. Both are controlled by
-environment variables in **Vercel → Project → Settings → Environment Variables**
-(they're secrets — never commit them), and both fail gracefully when unset so
-the site works in dev/preview.
+Two independent Follow Up Boss (FUB) hooks are wired in: a **server-side lead
+API** (needs a secret key) and a **client-side tracking pixel** (live by
+default). Configure them in **Vercel → Project → Settings → Environment
+Variables**.
 
 | Variable | Purpose |
 | --- | --- |
-| `FUB_API_KEY` | Server-side. Sends contact-form submissions to the FUB Events API (`src/app/api/lead/route.ts`). Without it, forms still submit but no lead is stored. |
-| `NEXT_PUBLIC_FUB_PIXEL_ID` | Client-side tracking pixel (`src/components/FollowUpBossPixel.tsx`). Ties site browsing to a FUB contact — powering "your lead just viewed X" agent notifications and activity-based Action Plans. |
+| `FUB_API_KEY` | Server-side, **required to store leads** (it's a secret — never commit it). Sends contact-form submissions to the FUB Events API (`src/app/api/lead/route.ts`). Without it, forms still submit but no lead is stored. |
+| `NEXT_PUBLIC_FUB_PIXEL_ID` | **Optional override** for the tracking pixel (`src/components/FollowUpBossPixel.tsx`). Defaults to the live pixel `WT-HKVXTYFU`; set this only to point a non-production environment at a different pixel. |
 
-**Getting the Pixel ID:** in Follow Up Boss go to **Admin → Pixel** and copy the
-tracking ID from the snippet it shows. Set `NEXT_PUBLIC_FUB_PIXEL_ID` to that ID
-and redeploy — no code change. The pixel then loads on every page and reports a
-pageview on each in-app navigation (so the full browsing path is captured, not
-just the landing page). Confirm the FUB-provided snippet still uses the
-`widgetbe.com/agent` loader and `widgetTracker` name; if FUB changes the format,
-update `src/components/FollowUpBossPixel.tsx` to match.
+**Tracking pixel:** live by default — the ID is baked into the component, since a
+pixel ID is a public value that ships in the page HTML (not a secret). It loads
+on every page and reports a pageview on each in-app navigation, so the full
+browsing path is captured, not just the landing page. It ties site browsing to a
+FUB contact — powering "your lead just viewed X" agent notifications and
+activity-based Action Plans. The snippet is FUB's official Widget Tracker code
+from **Admin → Pixel**; if FUB ever changes that snippet, update
+`src/components/FollowUpBossPixel.tsx` to match.
 
 Remarketing flow this enables: email/text your FUB database → contact clicks a
 link to the site → pixel attributes their browsing to their FUB record → FUB
