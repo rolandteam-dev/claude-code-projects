@@ -8,6 +8,7 @@ import { ListingGallery } from "@/components/ListingGallery";
 import { PaymentEstimator } from "@/components/PaymentEstimator";
 import { ScheduleTour } from "@/components/ScheduleTour";
 import { ListingStickyBar } from "@/components/ListingStickyBar";
+import { ListingShareBar } from "@/components/ListingShareBar";
 import { breadcrumbSchema } from "@/lib/schema";
 import { getListing } from "@/lib/idx/provider";
 import { formatPrice } from "@/components/ListingCard";
@@ -139,13 +140,20 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
       />
 
       <Container size="wide" className="pt-5">
-        <nav className="font-sans text-[0.78rem] text-[var(--color-muted)]" aria-label="Breadcrumb">
-          <Link href="/" className="no-underline hover:text-[var(--color-gold)]">Home</Link>
-          {" › "}
-          <Link href="/listings" className="no-underline hover:text-[var(--color-gold)]">Homes for Sale</Link>
-          {" › "}
-          <span className="text-[var(--color-ink-soft)]">{l.address.line1}</span>
-        </nav>
+        <div className="flex items-center justify-between gap-4">
+          <nav className="min-w-0 truncate font-sans text-[0.78rem] text-[var(--color-muted)]" aria-label="Breadcrumb">
+            <Link href="/" className="no-underline hover:text-[var(--color-gold)]">Home</Link>
+            {" › "}
+            <Link href="/listings" className="no-underline hover:text-[var(--color-gold)]">Homes for Sale</Link>
+            {" › "}
+            <span className="text-[var(--color-ink-soft)]">{l.address.line1}</span>
+          </nav>
+          <ListingShareBar
+            url={absoluteUrl(`/listings/${l.id}`)}
+            title={`${l.address.line1}, ${l.address.city} — ${formatPrice(l.listPrice)}`}
+            listingId={l.id}
+          />
+        </div>
       </Container>
 
       {/* Gallery — renders every photo the feed returns via the lightbox */}
