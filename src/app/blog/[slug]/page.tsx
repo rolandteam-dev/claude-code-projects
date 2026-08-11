@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Container } from "@/components/Container";
 import { JsonLd } from "@/components/JsonLd";
-import { breadcrumbSchema } from "@/lib/schema";
+import { breadcrumbSchema, faqSchema } from "@/lib/schema";
 import { blogPosts, getPost } from "@/content/blog";
 import { ProseText } from "@/lib/prose";
 import { site, absoluteUrl } from "@/lib/site";
@@ -58,6 +58,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             { name: p.title, path: `/blog/${p.slug}` },
           ]),
           article,
+          ...(p.faqs && p.faqs.length ? [faqSchema(p.faqs)] : []),
         ]}
       />
 
@@ -103,6 +104,20 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             )}
           </section>
         ))}
+
+        {p.faqs && p.faqs.length > 0 && (
+          <section className="mt-14">
+            <h2 className="text-[1.6rem]">Frequently asked questions</h2>
+            <div className="mt-4 divide-y divide-[var(--color-line)]">
+              {p.faqs.map((f, i) => (
+                <div key={i} className="py-5">
+                  <h3 className="font-serif text-[1.15rem] font-semibold text-[var(--color-ink)]">{f.q}</h3>
+                  <p className="mt-2 text-[var(--color-ink-soft)]"><ProseText text={f.a} /></p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <div className="mt-12 rounded-[14px] bg-[var(--color-graphite)] px-7 py-10 text-center text-white">
           <h2 className="text-[1.5rem] text-white">Have a question about your move?</h2>

@@ -3,7 +3,7 @@
  * New Construction, Market Updates, Buying Guides, Selling Guides.
  * The daily blog-draft automation can append new posts to this array.
  */
-import type { Section } from "./communities";
+import type { Section, Faq } from "./communities";
 
 export const BLOG_CATEGORIES = [
   "New Construction",
@@ -32,6 +32,8 @@ export type BlogPost = {
   /** alt text for the cover image */
   coverAlt?: string;
   sections: Section[];
+  /** optional FAQ block, rendered at the end and emitted as FAQPage JSON-LD */
+  faqs?: Faq[];
 };
 
 export const blogPosts: BlogPost[] = [
