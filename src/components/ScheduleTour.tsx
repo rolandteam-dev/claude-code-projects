@@ -9,6 +9,9 @@ import { site } from "@/lib/site";
  * Roland Team (NOT the source listing agent, which stays only in the small
  * IDX attribution line for compliance), with a "Schedule a Tour" request that
  * routes to Follow Up Boss via /api/lead.
+ *
+ * When site.founderPhoto is set it shows a full portrait header; otherwise it
+ * falls back to a monogram so nothing breaks before the headshot is added.
  */
 export function ScheduleTour({ address, mlsNumber }: { address: string; mlsNumber?: string }) {
   const [form, setForm] = useState({ name: "", email: "", phone: "", date: "", time: "", message: "" });
@@ -58,34 +61,51 @@ export function ScheduleTour({ address, mlsNumber }: { address: string; mlsNumbe
   const inputCls =
     "w-full rounded-[6px] border border-[var(--color-line)] bg-white px-3 py-2 font-sans text-[0.85rem] text-[var(--color-ink)] placeholder:text-[var(--color-muted)] focus:border-[var(--color-gold)] focus:outline-none";
 
+  const repEyebrow = "Your Team Representative";
+
   return (
     <aside className="h-fit overflow-hidden rounded-[14px] border border-[var(--color-line)] bg-[var(--color-sand)]">
-      {/* Agent card */}
-      <div className="border-b border-[var(--color-line)] p-6">
-        <div className="font-sans text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[var(--color-muted)]">
-          Your Team Representative
-        </div>
-        <div className="mt-3 flex items-center gap-3">
-          <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--color-graphite)] font-serif text-[1.5rem] font-medium text-[var(--color-gold-2)]">
-            {site.founderPhoto ? (
-              <Image src={site.founderPhoto} alt={site.founder} fill sizes="64px" className="object-cover" />
-            ) : (
-              initials
-            )}
-          </div>
-          <div>
-            <div className="font-serif text-[1.25rem] font-semibold leading-tight text-[var(--color-ink)]">
-              {site.founder}
+      {/* Header — portrait when a headshot is set, monogram otherwise */}
+      {site.founderPhoto ? (
+        <div className="relative aspect-[4/5] w-full overflow-hidden bg-[var(--color-graphite)]">
+          <Image src={site.founderPhoto} alt={site.founder} fill sizes="360px" className="object-cover object-top" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-5">
+            <div className="font-sans text-[0.64rem] font-semibold uppercase tracking-[0.16em] text-[var(--color-gold-2)]">
+              {repEyebrow}
             </div>
-            <div className="font-sans text-[0.8rem] text-[var(--color-ink-soft)]">{site.founderTitle}</div>
-            <div className="font-sans text-[0.74rem] text-[var(--color-muted)]">
+            <div className="mt-1 font-serif text-[1.7rem] font-semibold leading-tight text-white">{site.founder}</div>
+            <div className="font-sans text-[0.84rem] text-white/85">{site.founderTitle}</div>
+            <div className="font-sans text-[0.72rem] text-white/65">
               {site.name} · brokered by {site.brokerage}
             </div>
           </div>
         </div>
+      ) : (
+        <div className="p-6 pb-4">
+          <div className="font-sans text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[var(--color-muted)]">
+            {repEyebrow}
+          </div>
+          <div className="mt-3 flex items-center gap-3">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--color-graphite)] font-serif text-[1.5rem] font-medium text-[var(--color-gold-2)]">
+              {initials}
+            </div>
+            <div>
+              <div className="font-serif text-[1.25rem] font-semibold leading-tight text-[var(--color-ink)]">
+                {site.founder}
+              </div>
+              <div className="font-sans text-[0.8rem] text-[var(--color-ink-soft)]">{site.founderTitle}</div>
+              <div className="font-sans text-[0.74rem] text-[var(--color-muted)]">
+                {site.name} · brokered by {site.brokerage}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-        {/* Stats */}
-        <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[var(--color-line)] pt-4 text-center">
+      {/* Stats + call */}
+      <div className="border-b border-[var(--color-line)] p-6">
+        <div className="grid grid-cols-3 gap-2 text-center">
           {stats.map((s) => (
             <div key={s.label}>
               <div className="font-serif text-[1.05rem] font-semibold text-[var(--color-ink)]">{s.value}</div>
@@ -93,7 +113,6 @@ export function ScheduleTour({ address, mlsNumber }: { address: string; mlsNumbe
             </div>
           ))}
         </div>
-
         <a
           href={`tel:${site.phone}`}
           className="mt-4 block rounded-[8px] border border-[var(--color-line)] bg-white py-2.5 text-center font-sans text-[0.9rem] font-semibold text-[var(--color-gold)] no-underline hover:border-[var(--color-gold)]"
