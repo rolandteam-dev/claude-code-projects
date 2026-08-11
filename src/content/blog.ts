@@ -25,10 +25,70 @@ export type BlogPost = {
   readMinutes: number;
   seoTitle: string;
   seoDescription: string;
+  /** app-relative cover image path, e.g. "/blog/<slug>.svg" (optional) */
+  coverImage?: string;
+  /** alt text for the cover image */
+  coverAlt?: string;
   sections: Section[];
 };
 
 export const blogPosts: BlogPost[] = [
+  {
+    slug: "summerlin-vs-henderson-where-should-you-buy-in-las-vegas",
+    title: "Summerlin vs. Henderson: Where Should You Buy in Las Vegas?",
+    category: "Buying Guides",
+    excerpt: "Two of Southern Nevada's most sought-after places to live — but they offer very different lifestyles. Here's an honest comparison to help you decide.",
+    date: "2026-08-11",
+    author: "Roland Luxury",
+    readMinutes: 4,
+    seoTitle: "Summerlin vs. Henderson: Where Should You Buy?",
+    seoDescription: "Summerlin or Henderson? Compare Las Vegas's two premier areas — lifestyle, luxury communities, commute, and value — to decide where to buy your next home.",
+    coverImage: "/blog/summerlin-vs-henderson-where-should-you-buy-in-las-vegas.svg",
+    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    sections: [
+      {
+        heading: "The short answer",
+        body: [
+          "Summerlin and Henderson are consistently two of the most desirable places to live in the Las Vegas Valley — and choosing between them comes down to lifestyle, not quality. Both offer master-planned living, strong amenities, and everything from family homes to ultra-luxury estates. **Summerlin** sits on the west side against Red Rock Canyon; **Henderson** anchors the southeast, closer to Lake Mead and the airport.",
+          "If you want a walkable, resort-style urban core and quick access to Red Rock, lean [Summerlin](/communities/summerlin). If you want a slightly quieter, spread-out feel with lake and mountain settings, look hard at [Henderson](/areas/henderson). Below is how they actually compare."
+        ]
+      },
+      {
+        heading: "Summerlin: master-planned living on the west side",
+        body: [
+          "Summerlin is one of the nation's best-known master-planned communities — more than two dozen villages woven together with parks, trails, and top-rated amenities. Its walkable core, Downtown Summerlin, pairs shopping and dining with a ballpark and year-round events, which gives the area an energy that's rare in the suburbs.",
+          "At the luxury end, guard-gated enclaves like [The Ridges](/communities/the-ridges-summerlin) deliver contemporary custom estates with Red Rock and Strip views. Summerlin also tends to hold value well, thanks to its brand recognition, amenities, and proximity to the mountains for hiking and biking."
+        ]
+      },
+      {
+        heading: "Henderson: lakes, luxury, and a spread-out calm",
+        body: [
+          "Henderson is its own city, regularly ranked among America's safest and most livable. It's larger and more spread out than Summerlin, with established areas like Green Valley alongside newer master plans, and a lifestyle that feels a touch calmer and more residential.",
+          "Henderson also holds some of the valley's most exclusive addresses. Waterfront living at [Lake Las Vegas](/communities/lake-las-vegas) and hillside custom estates in guard-gated [MacDonald Highlands](/communities/macdonald-highlands) and [Ascaya](/communities/ascaya) put Henderson at the very top of the local luxury market — often with dramatic elevation and views you simply can't get on the valley floor."
+        ]
+      },
+      {
+        heading: "How they compare",
+        body: [
+          "Neither area is objectively \"better\" — they trade off in predictable ways. A quick side-by-side:"
+        ],
+        bullets: [
+          "Location: Summerlin is closest to Red Rock Canyon and the northwest; Henderson is closest to Lake Mead, the airport, and the southeast valley.",
+          "Feel: Summerlin skews walkable and amenity-dense around Downtown Summerlin; Henderson feels more spread out and residential.",
+          "Luxury: both have elite guard-gated options — The Ridges in Summerlin; MacDonald Highlands, Ascaya, and Lake Las Vegas in Henderson.",
+          "Commute: Henderson is generally faster to Harry Reid International Airport; Summerlin is quicker to the northwest and Red Rock.",
+          "Value: pricing overlaps heavily across both; your budget usually stretches similarly, so the choice is lifestyle-driven."
+        ]
+      },
+      {
+        heading: "How to decide — and see what's available",
+        body: [
+          "The best way to choose is to spend time in a few specific communities within each area and picture your actual week — your commute, where you'd work out, where you'd eat, and how you want your weekends to feel. Many buyers are surprised which one clicks once they're standing in it.",
+          "When you're ready, browse current homes across both areas on our [live listings search](/listings), or if you're weighing a move from your current home, start with a free [home valuation](/home-value). Have questions specific to your situation? [Reach out to the team](/contact) and we'll help you compare neighborhoods, budgets, and timing — no pressure."
+        ]
+      }
+    ]
+  },
   {
     slug: "las-vegas-new-construction-communities-2026",
     title: "New Construction in Las Vegas: Builder Communities to Watch in 2026",

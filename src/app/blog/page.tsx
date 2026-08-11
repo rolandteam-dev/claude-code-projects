@@ -70,11 +70,18 @@ export default async function BlogIndex({
               href={`/blog/${p.slug}`}
               className="group block overflow-hidden rounded-[12px] border border-[var(--color-line)] bg-white no-underline shadow-[var(--shadow-soft)] transition-transform hover:-translate-y-1"
             >
-              <div className="relative flex h-44 flex-col justify-between bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)] p-5">
-                <div className="font-sans text-[0.6rem] uppercase tracking-[0.2em] text-white/60">Roland Luxury</div>
-                <div className="font-serif text-[1.3rem] italic leading-tight text-[var(--color-gold-2)]">
-                  {p.category}
-                </div>
+              <div
+                className="relative flex h-44 flex-col justify-between bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)] bg-cover bg-center p-5"
+                style={p.coverImage ? { backgroundImage: `url(${p.coverImage})` } : undefined}
+              >
+                {!p.coverImage && (
+                  <>
+                    <div className="font-sans text-[0.6rem] uppercase tracking-[0.2em] text-white/60">Roland Luxury</div>
+                    <div className="font-serif text-[1.3rem] italic leading-tight text-[var(--color-gold-2)]">
+                      {p.category}
+                    </div>
+                  </>
+                )}
               </div>
               <div className="p-6">
                 <div className="font-sans text-[0.68rem] uppercase tracking-[0.14em] text-[var(--color-gold)]">
