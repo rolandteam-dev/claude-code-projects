@@ -34,6 +34,281 @@ export type BlogPost = {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: "guard-gated-communities-in-las-vegas-under-1m",
+    title: "Guard-Gated Communities in Las Vegas Under $1M",
+    category: "Buying Guides",
+    excerpt: "Guard-gated living isn't only for ultra-luxury budgets. Here's where to find gated communities in the valley with homes attainable under $1M.",
+    date: "2026-08-11",
+    author: "Roland Luxury",
+    readMinutes: 4,
+    seoTitle: "Guard-Gated Communities in Las Vegas Under $1M",
+    seoDescription: "You don't need millions for gated living. Explore guard-gated communities in Las Vegas and Henderson where homes can be attainable under $1M.",
+    coverImage: "/blog/guard-gated-communities-in-las-vegas-under-1m.svg",
+    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    sections: [
+      {
+        heading: "Gated living is more attainable than you think",
+        body: [
+          "When people picture [guard-gated communities](/guard-gated-communities-las-vegas), they often imagine multimillion-dollar estates. And the valley certainly has those. But gated living — with staffed entry, added privacy, and private amenities — is more attainable than many buyers expect, with options where well-appointed homes can be found under $1 million.",
+          "Here are established communities worth exploring at that level. Availability and pricing shift constantly, so treat these as starting points and confirm current inventory."
+        ]
+      },
+      {
+        heading: "Communities to explore",
+        body: [
+          "A few guard-gated and gated-enclave communities regularly offer homes in more approachable price bands:"
+        ],
+        bullets: [
+          "[Seven Hills](/communities/seven-hills) — an established master-planned community in Henderson with gated enclaves, golf, and hilltop views.",
+          "[Southern Highlands](/communities/southern-highlands) — a master plan in the southwest valley with guard-gated neighborhoods and a private golf club.",
+          "[Anthem](/communities/anthem) — a large Henderson master plan whose gated Country Club section offers a range of home sizes and price points."
+        ]
+      },
+      {
+        heading: "What your money gets you",
+        body: [
+          "At this level, gated living typically means:"
+        ],
+        bullets: [
+          "Controlled, often staffed access and an added layer of privacy.",
+          "Access to community amenities — parks, trails, and in some cases golf and clubhouses.",
+          "Well-maintained streetscapes and a cohesive, planned feel.",
+          "Strong long-term appeal, since gated addresses tend to hold their draw over time."
+        ]
+      },
+      {
+        heading: "Weigh the HOA and access trade-offs",
+        body: [
+          "Gated communities carry HOA dues that fund the security and amenities, so build those into your monthly budget, and review the community's rules and documents before you buy. For many buyers, the privacy and lifestyle are well worth the cost.",
+          "The right fit depends on your priorities — golf, location, home style, and how much amenity you actually want to pay for."
+        ]
+      },
+      {
+        heading: "Find gated homes in your budget",
+        body: [
+          "Ready to see what's available? Browse our [live listings search](/listings) to filter by price, or [reach out to the team](/contact) and we'll send current guard-gated options under $1M that match what you're looking for."
+        ]
+      }
+    ]
+  },
+  {
+    slug: "is-lake-las-vegas-a-good-place-to-live",
+    title: "Is Lake Las Vegas a Good Place to Live?",
+    category: "Buying Guides",
+    excerpt: "Waterfront living about 30 minutes from the Strip — here's an honest look at what it's like to live in Lake Las Vegas.",
+    date: "2026-08-11",
+    author: "Roland Luxury",
+    readMinutes: 4,
+    seoTitle: "Is Lake Las Vegas a Good Place to Live?",
+    seoDescription: "Is Lake Las Vegas worth it? A look at waterfront living in Henderson — lifestyle, home options, amenities, and HOA costs, and who it's best for.",
+    coverImage: "/blog/is-lake-las-vegas-a-good-place-to-live.svg",
+    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    sections: [
+      {
+        heading: "A resort lifestyle around a private lake",
+        body: [
+          "[Lake Las Vegas](/communities/lake-las-vegas) is unlike anywhere else in Southern Nevada — a 320-acre man-made lake ringed by Mediterranean-inspired villages, resorts, golf, and a waterfront district, all tucked into the hills of eastern [Henderson](/areas/henderson). For buyers who want a vacation-every-day feel, it has real pull.",
+          "But a resort setting isn't for everyone. Here's what living there is actually like."
+        ]
+      },
+      {
+        heading: "Homes and neighborhoods",
+        body: [
+          "Lake Las Vegas spans a wide range of housing — from lock-and-leave condos and townhomes to custom waterfront estates in guard-gated enclaves. That variety means a broad span of price points, so it's worth touring a few neighborhoods to find the pocket that fits your budget and lifestyle.",
+          "See current homes and price ranges on our [listings search](/listings) to get a feel for the market inside the community."
+        ]
+      },
+      {
+        heading: "Amenities and lifestyle",
+        body: [
+          "The draw is the lifestyle around the water:"
+        ],
+        bullets: [
+          "A walkable waterfront district with dining, events, and resort hotels.",
+          "Golf, a marina, and non-motorized boating and paddle sports on the lake.",
+          "Trails and outdoor recreation, with Lake Mead and the Strip both a short drive away.",
+          "A quieter, self-contained feel compared to the busier core of the valley."
+        ]
+      },
+      {
+        heading: "What to weigh before you buy",
+        body: [
+          "A few honest trade-offs: the resort setting comes with HOA and community fees that fund the amenities and upkeep, and the location is a bit farther from the center of the valley, so factor in your commute. For buyers who value the water, the views, and the lifestyle, most find it well worth it.",
+          "Review any specific community's HOA documents and fees carefully as part of your due diligence."
+        ]
+      },
+      {
+        heading: "Is it right for you?",
+        body: [
+          "If a walkable, waterfront, resort-style community speaks to you, Lake Las Vegas is one of the most distinctive places to live in the region. [Reach out to the team](/contact) and we'll help you compare neighborhoods, home types, and costs so you can decide with clear eyes."
+        ]
+      }
+    ]
+  },
+  {
+    slug: "moving-to-las-vegas-from-california-the-complete-2026-guide",
+    title: "Moving to Las Vegas from California: The Complete 2026 Guide",
+    category: "Buying Guides",
+    excerpt: "Californians are relocating to Las Vegas in big numbers. Here's an honest guide to the move — costs, taxes, neighborhoods, and how to do it right.",
+    date: "2026-08-11",
+    author: "Roland Luxury",
+    readMinutes: 4,
+    seoTitle: "Moving to Las Vegas from California: 2026 Guide",
+    seoDescription: "Moving from California to Las Vegas? What to know about cost savings, taxes, neighborhoods, and how to plan your relocation the smart way.",
+    coverImage: "/blog/moving-to-las-vegas-from-california-the-complete-2026-guide.svg",
+    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    sections: [
+      {
+        heading: "Why so many Californians are making the move",
+        body: [
+          "The Las Vegas Valley has become one of the top destinations for California movers, and the reasons are consistent: lower overall cost of living, no state income tax, newer housing stock, and a short drive or quick flight back to the coast. For many buyers, the same budget simply stretches further here.",
+          "If you're early in the process, start with our overview on [moving to Las Vegas](/moving-to-las-vegas) — then use the sections below to plan the details."
+        ]
+      },
+      {
+        heading: "The financial difference is real",
+        body: [
+          "The headline is taxes. Nevada has no state income tax, which can change your take-home meaningfully compared to California. Housing budgets also tend to go further — buyers frequently find they can move up in size, features, or community tier for a comparable or lower monthly payment.",
+          "If you're selling a California home to fund the move, it's worth understanding your equity picture first. A quick [home valuation](/home-value) on your current property helps you plan your Las Vegas budget with real numbers."
+        ]
+      },
+      {
+        heading: "Where California buyers are landing",
+        body: [
+          "Two areas come up most often for relocating buyers who want amenities and long-term value: [Summerlin](/communities/summerlin) on the west side, known for its walkable core and trails, and [Henderson](/areas/henderson) to the southeast, known for its master plans and lakeside and hillside luxury. Both offer everything from move-up homes to guard-gated estates.",
+          "The best fit depends on your commute, lifestyle, and the feel you want day to day."
+        ]
+      },
+      {
+        heading: "Planning your move the smart way",
+        body: [
+          "A little planning prevents most relocation headaches:"
+        ],
+        bullets: [
+          "Visit first and spend time in a few specific neighborhoods before you commit.",
+          "Get pre-approved with a lender early so you can move quickly on the right home.",
+          "Map your must-haves — commute, single-story vs. two-story, view, pool — before you shop.",
+          "Time your sale and purchase together, and lean on a local agent to coordinate the two."
+        ]
+      },
+      {
+        heading: "Start your Las Vegas search",
+        body: [
+          "When you're ready to see what your budget buys here, browse our [live listings search](/listings) and check the current [market report](/market-report) for context. Have questions specific to your move? [Reach out to the team](/contact) — we help relocating buyers every week and can make the transition smooth."
+        ]
+      }
+    ]
+  },
+  {
+    slug: "macdonald-highlands-vs-ascaya-which-luxury-community-fits-you",
+    title: "MacDonald Highlands vs. Ascaya: Which Luxury Community Fits You?",
+    category: "Buying Guides",
+    excerpt: "Henderson's two crown-jewel guard-gated communities, compared — from architecture and views to amenities and price.",
+    date: "2026-08-11",
+    author: "Roland Luxury",
+    readMinutes: 4,
+    seoTitle: "MacDonald Highlands vs. Ascaya: Which to Choose?",
+    seoDescription: "MacDonald Highlands or Ascaya? Compare Henderson's two premier guard-gated luxury communities — setting, homes, amenities, and price — to find your fit.",
+    coverImage: "/blog/macdonald-highlands-vs-ascaya-which-luxury-community-fits-you.svg",
+    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    sections: [
+      {
+        heading: "Two peaks of Henderson luxury",
+        body: [
+          "If you're shopping at the very top of the Las Vegas market, two Henderson names come up again and again: [MacDonald Highlands](/communities/macdonald-highlands) and [Ascaya](/communities/ascaya). Both are guard-gated, both are carved into the hills above the valley, and both deliver dramatic Strip and mountain views. But they have distinct personalities — and the right choice depends on how you want to live.",
+          "Here's how these two [guard-gated communities](/guard-gated-communities-las-vegas) compare."
+        ]
+      },
+      {
+        heading: "MacDonald Highlands: golf, club, and established prestige",
+        body: [
+          "MacDonald Highlands is anchored by the private DragonRidge Country Club, with golf, dining, fitness, and a full social calendar at its center. The community blends completed custom estates with homesites still available to build, and its elevated lots frame sweeping views of the valley and Strip.",
+          "For buyers who want a country-club lifestyle and an established, amenity-rich community around them, MacDonald Highlands is hard to beat."
+        ]
+      },
+      {
+        heading: "Ascaya: modern architecture and rare exclusivity",
+        body: [
+          "Ascaya is a study in modern desert design. Terraced dramatically into Black Mountain and limited to just 313 homesites, it's one of Southern Nevada's most exclusive addresses — an architectural gallery of glass-walled, view-oriented estates, anchored by a striking private clubhouse.",
+          "Ascaya appeals to buyers who prize contemporary architecture, privacy, and scarcity over a traditional golf-club setting."
+        ]
+      },
+      {
+        heading: "How to choose between them",
+        body: [
+          "Both are exceptional; the decision usually comes down to lifestyle and design taste:"
+        ],
+        bullets: [
+          "Want golf and a full country club at the center of your community? Lean MacDonald Highlands.",
+          "Prefer cutting-edge modern architecture and maximum exclusivity? Lean Ascaya.",
+          "Both offer completed homes and build-your-own homesites, so your timeline and vision matter too.",
+          "Views are spectacular in both — compare specific lots, since elevation and orientation change the vista significantly."
+        ]
+      },
+      {
+        heading: "See what's available",
+        body: [
+          "Because inventory at this level is limited and often moves privately, the best next step is a conversation. Explore more on our [Las Vegas luxury real estate](/las-vegas-luxury-real-estate) page, then [reach out to the team](/contact) — we can walk you through current and off-market opportunities in both communities and help you compare specific homes and homesites."
+        ]
+      }
+    ]
+  },
+  {
+    slug: "cost-of-living-in-henderson-nv-what-to-expect-in-2026",
+    title: "Cost of Living in Henderson, NV: What to Expect in 2026",
+    category: "Buying Guides",
+    excerpt: "Thinking about a move to Henderson? Here's a clear, honest look at what it really costs to live in one of Nevada's most popular cities.",
+    date: "2026-08-11",
+    author: "Roland Luxury",
+    readMinutes: 4,
+    seoTitle: "Cost of Living in Henderson, NV: 2026 Guide",
+    seoDescription: "What does it cost to live in Henderson, NV? Home prices, taxes, utilities, and lifestyle costs — and why relocating buyers keep choosing Henderson.",
+    coverImage: "/blog/cost-of-living-in-henderson-nv-what-to-expect-in-2026.svg",
+    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    sections: [
+      {
+        heading: "Why Henderson keeps drawing new residents",
+        body: [
+          "Henderson has grown from a quiet suburb into one of the Southwest's most sought-after places to live — master-planned, amenity-rich, and just minutes from both the Las Vegas Strip and Lake Mead. For buyers relocating from higher-cost metros, the appeal is simple: you often get more home, more space, and a lower overall cost of living.",
+          "Before you plan a move, it helps to understand the real numbers. Here's how the major costs break down, and where Henderson tends to save you money. For a broader relocation overview, see our guide to [moving to Las Vegas](/moving-to-las-vegas) and the [Henderson area page](/areas/henderson)."
+        ]
+      },
+      {
+        heading: "Housing: the biggest line in your budget",
+        body: [
+          "Housing is where cost of living varies most. Henderson spans a wide range — from attainable single-family homes and townhomes to ultra-luxury estates in guard-gated communities. Pricing shifts with location, size, age, and view, so the smartest move is to anchor your budget to a specific area rather than a valley-wide average.",
+          "Waterfront and hillside settings like [Lake Las Vegas](/communities/lake-las-vegas) sit at the higher end, while many established neighborhoods offer far more approachable pricing. Browse current homes on our [live listings search](/listings) to see real numbers in the areas you're considering."
+        ]
+      },
+      {
+        heading: "The Nevada tax advantage",
+        body: [
+          "One of the biggest reasons buyers move to Henderson is taxes. Nevada has no state income tax, which can meaningfully change your monthly math versus higher-tax states. Property taxes here are also relatively moderate, and Nevada has provisions that can limit large year-over-year increases on owner-occupied homes.",
+          "The tax picture is a real part of affordability — for many relocating buyers it offsets a chunk of the move's cost within the first year or two."
+        ]
+      },
+      {
+        heading: "Everyday costs to plan for",
+        body: [
+          "Beyond your mortgage, a few recurring costs shape your monthly budget:"
+        ],
+        bullets: [
+          "Utilities: summer cooling is the big one — energy-efficient homes and newer construction help keep bills in check.",
+          "HOA dues: many of Henderson's master-planned and guard-gated communities have HOA fees that fund amenities; always factor them in.",
+          "Transportation: Henderson offers quick access to Harry Reid International Airport and the freeway system, keeping commutes manageable.",
+          "Water: desert landscaping (xeriscape) is common and keeps outdoor water costs lower than lush-lawn markets."
+        ]
+      },
+      {
+        heading: "Is Henderson worth it for you?",
+        body: [
+          "For most buyers weighing a move, Henderson delivers a strong balance of value, amenities, and lifestyle — especially compared to coastal markets. The best way to pressure-test your budget is to run real numbers on a specific home and neighborhood.",
+          "If you already own and are considering a move, start with a free [home valuation](/home-value), or [reach out to the team](/contact) and we'll help you map your budget to the right Henderson community — no pressure."
+        ]
+      }
+    ]
+  },
+  {
     slug: "summerlin-vs-henderson-where-should-you-buy-in-las-vegas",
     title: "Summerlin vs. Henderson: Where Should You Buy in Las Vegas?",
     category: "Buying Guides",
