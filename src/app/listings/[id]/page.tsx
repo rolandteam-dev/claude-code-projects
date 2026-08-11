@@ -10,6 +10,7 @@ import { ScheduleTour } from "@/components/ScheduleTour";
 import { ListingStickyBar } from "@/components/ListingStickyBar";
 import { ListingShareBar } from "@/components/ListingShareBar";
 import { WhatsNearby } from "@/components/WhatsNearby";
+import { RelocationTaxSavings } from "@/components/RelocationTaxSavings";
 import { breadcrumbSchema } from "@/lib/schema";
 import { getListing } from "@/lib/idx/provider";
 import { formatPrice } from "@/components/ListingCard";
@@ -230,6 +231,38 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
             <DetailSection key={sec.title} title={sec.title} rows={sec.rows} />
           ))}
 
+          {/* Property history */}
+          {l.history && l.history.length > 0 && (
+            <section>
+              <h2 className="mt-10 font-serif text-[1.6rem]">Property History</h2>
+              <p className="mt-1 font-sans text-[0.8rem] text-[var(--color-ink-soft)]">
+                Prior MLS records for this address — deemed reliable but not guaranteed.
+              </p>
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full border-collapse font-sans text-[0.88rem]">
+                  <thead>
+                    <tr className="border-b border-[var(--color-line)] text-left text-[0.72rem] uppercase tracking-[0.05em] text-[var(--color-muted)]">
+                      <th className="py-2 pr-4 font-semibold">Date</th>
+                      <th className="py-2 pr-4 font-semibold">Event</th>
+                      <th className="py-2 text-right font-semibold">Price</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {l.history.map((h, i) => (
+                      <tr key={i} className="border-b border-[var(--color-line)]">
+                        <td className="py-2 pr-4 text-[var(--color-ink-soft)]">{h.date}</td>
+                        <td className="py-2 pr-4 font-semibold text-[var(--color-ink)]">{h.event}</td>
+                        <td className="py-2 text-right text-[var(--color-ink-soft)]">
+                          {h.price ? formatPrice(h.price) : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
           {/* Schools */}
           {(l.schoolDistrict || (l.schools && l.schools.length > 0)) && (
             <section>
@@ -322,6 +355,9 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
             </section>
           )}
 
+          {/* Relocation math — CA → NV tax savings */}
+          <RelocationTaxSavings />
+
           {community && (
             <p className="mt-8">
               Located in{" "}
@@ -367,9 +403,14 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
 
 function DetailSection({ title, rows }: { title: string; rows: Row[] }) {
   return (
-    <section>
-      <h2 className="mt-10 font-serif text-[1.6rem]">{title}</h2>
-      <dl className="mt-4 grid grid-cols-2 gap-x-8 gap-y-4 font-sans text-[0.95rem] sm:grid-cols-3">
+    <details open className="group mt-5 border-b border-[var(--color-line)] pb-4">
+      <summary className="flex cursor-pointer list-none items-center justify-between py-3 [&::-webkit-details-marker]:hidden">
+        <h2 className="font-serif text-[1.5rem] text-[var(--color-ink)]">{title}</h2>
+        <span className="font-sans text-[1.1rem] text-[var(--color-muted)] transition-transform group-open:rotate-180">
+          ⌄
+        </span>
+      </summary>
+      <dl className="mt-2 grid grid-cols-2 gap-x-8 gap-y-4 font-sans text-[0.95rem] sm:grid-cols-3">
         {rows.map((r) => (
           <div key={r.label}>
             <dt className="text-[0.7rem] uppercase tracking-[0.05em] text-[var(--color-muted)]">{r.label}</dt>
@@ -377,7 +418,7 @@ function DetailSection({ title, rows }: { title: string; rows: Row[] }) {
           </div>
         ))}
       </dl>
-    </section>
+    </details>
   );
 }
 

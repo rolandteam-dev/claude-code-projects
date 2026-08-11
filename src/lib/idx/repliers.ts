@@ -131,6 +131,22 @@ function collect(...sources: any[]): string[] {
   return out;
 }
 
+function mapHistory(hist: any): Listing["history"] {
+  if (!Array.isArray(hist)) return undefined;
+  const out = hist
+    .map((e) => {
+      const date = s(e?.soldDate, e?.listDate, e?.date, e?.timestamp, e?.lastStatusUpdate, e?.updatedOn);
+      if (!date) return null;
+      const event = s(e?.lastStatus, e?.status, e?.type, e?.event) || "Listed";
+      const price = numOpt(e?.soldPrice, e?.listPrice, e?.price);
+      return { date: date.slice(0, 10), event, price };
+    })
+    .filter(Boolean) as NonNullable<Listing["history"]>;
+  // newest first
+  out.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  return out.length ? out : undefined;
+}
+
 function mapRooms(rooms: any): Listing["rooms"] {
   if (!Array.isArray(rooms)) return undefined;
   const out = rooms
@@ -232,6 +248,7 @@ function mapRecord(r: any): Listing {
       r.condominium?.amenities,
     ),
     rooms: mapRooms(r.rooms),
+    history: mapHistory(r.history ?? r.mlsHistory ?? r.priceHistory),
     virtualTourUrl: s(r.virtualTourUrl, details.virtualTourUrl, r.tour, details.tourUrl) || undefined,
   };
 }
