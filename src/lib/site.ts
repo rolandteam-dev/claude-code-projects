@@ -15,6 +15,9 @@ export const site = {
   phone: "(702) 793-2158",
   email: "mike@therolandteam.com",
   founder: "Mike Roland",
+  founderTitle: "Founder · The Roland Team",
+  // Mike's headshot (in /public). Set to "" to fall back to the monogram.
+  founderPhoto: "/mike-roland.jpg",
   brokerage: "LPT Realty",
   // Office NAP. Confirm the ZIP matches your Google Business Profile exactly.
   address: {
