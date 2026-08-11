@@ -9,7 +9,8 @@ import { breadcrumbSchema } from "@/lib/schema";
 import { getListing } from "@/lib/idx/provider";
 import { formatPrice } from "@/components/ListingCard";
 import { getCommunity } from "@/content/communities";
-import { absoluteUrl, site } from "@/lib/site";
+import { absoluteUrl } from "@/lib/site";
+import { ScheduleTour } from "@/components/ScheduleTour";
 
 export async function generateMetadata({
   params,
@@ -282,20 +283,11 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
           <IdxDisclaimer listingOffice={l.listingOffice} lastUpdated={l.updatedAt ?? l.listedDate} />
         </div>
 
-        {/* Contact rail */}
-        <aside className="h-fit rounded-[14px] border border-[var(--color-line)] bg-[var(--color-sand)] p-6">
-          <div className="font-sans text-[1.05rem] font-semibold">Interested in this home?</div>
-          <p className="mt-2 text-[0.9rem] text-[var(--color-ink-soft)]">
-            Roland Luxury can arrange a private showing and share current details.
-          </p>
-          <Link href={site.cta.href} className="btn mt-4 w-full">Request a Showing</Link>
-          <a href={`tel:${site.phone}`} className="mt-3 block text-center font-sans text-[0.85rem] font-semibold text-[var(--color-gold)] no-underline">
-            {site.phone}
-          </a>
-          <p className="mt-4 border-t border-[var(--color-line)] pt-3 font-sans text-[0.72rem] text-[var(--color-muted)]">
-            {site.parentBrand} · brokered by {site.brokerage}
-          </p>
-        </aside>
+        {/* Contact rail — agent-forward (Mike / The Roland Team) + Schedule a Tour */}
+        <ScheduleTour
+          address={`${l.address.line1}, ${l.address.city}, ${l.address.state} ${l.address.postalCode}`}
+          mlsNumber={l.mlsNumber}
+        />
       </Container>
     </>
   );
