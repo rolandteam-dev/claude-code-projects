@@ -69,6 +69,7 @@ export const site = {
         { label: "Moving to Las Vegas", href: "/moving-to-las-vegas" },
         { label: "Buyer Guides", href: "/guides" },
         { label: "First-Time Buyers", href: "/guides/first-time-home-buyer-las-vegas" },
+        { label: "Mortgage Pre-Approval", href: "/mortgage-pre-approval" },
         { label: "Market Report", href: "/market-report" },
       ],
     },
