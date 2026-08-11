@@ -63,10 +63,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
       <header
         className="relative bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)] bg-cover bg-center text-white"
-        style={p.coverImage ? { backgroundImage: `url(${p.coverImage})` } : undefined}
+        style={p.coverPhoto || p.coverImage ? { backgroundImage: `url(${p.coverPhoto ?? p.coverImage})` } : undefined}
       >
         {/* Dark scrim keeps the headline legible over a cover image */}
-        {p.coverImage && <div className="absolute inset-0 bg-[var(--color-graphite)]/70" aria-hidden="true" />}
+        {(p.coverPhoto || p.coverImage) && (
+          <div className="absolute inset-0 bg-[var(--color-graphite)]/70" aria-hidden="true" />
+        )}
         <Container size="narrow" className="relative py-14 md:py-20">
           <Link
             href={`/blog?category=${encodeURIComponent(p.category)}`}

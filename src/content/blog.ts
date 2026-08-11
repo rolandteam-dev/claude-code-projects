@@ -27,6 +27,8 @@ export type BlogPost = {
   seoDescription: string;
   /** app-relative cover image path, e.g. "/blog/<slug>.svg" (optional) */
   coverImage?: string;
+  /** background photo URL for the branded cover (AI/photography); optional */
+  coverPhoto?: string;
   /** alt text for the cover image */
   coverAlt?: string;
   sections: Section[];
@@ -44,6 +46,7 @@ export const blogPosts: BlogPost[] = [
     seoTitle: "Las Vegas Real Estate Market: What to Watch",
     seoDescription: "The factors that actually move the Las Vegas housing market — inventory, rates, demand, and new construction — and what they mean for you.",
     coverImage: "/blog/las-vegas-real-estate-market-what-buyers-and-sellers-should-watch.svg",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_3e54cfdd-c30d-4a97-b2de-cbaee0d26195.png",
     coverAlt: "Market Updates — Roland Luxury Las Vegas real estate",
     sections: [
       {
@@ -92,6 +95,7 @@ export const blogPosts: BlogPost[] = [
     seoTitle: "New Construction vs. Resale in Las Vegas",
     seoDescription: "New construction or resale in Las Vegas? Compare price, timeline, incentives, upgrades, and location to decide which is right for you.",
     coverImage: "/blog/new-construction-vs-resale-in-las-vegas-which-is-right-for-you.svg",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_64e2e296-7b01-4d39-8c34-7b1a6db20b24.png",
     coverAlt: "New Construction — Roland Luxury Las Vegas real estate",
     sections: [
       {
@@ -140,6 +144,7 @@ export const blogPosts: BlogPost[] = [
     seoTitle: "Home Staging Tips That Sell Las Vegas Homes Faster",
     seoDescription: "Staging tips that help Las Vegas homes sell faster and for more — from decluttering and lighting to desert curb appeal and photo-ready prep.",
     coverImage: "/blog/staging-tips-that-sell-las-vegas-homes-faster.svg",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_caa737a2-acfa-4c6d-b226-8330a35434f2.png",
     coverAlt: "Selling Guides — Roland Luxury Las Vegas real estate",
     sections: [
       {
@@ -187,6 +192,7 @@ export const blogPosts: BlogPost[] = [
     seoTitle: "How to Sell a Luxury Home in Las Vegas",
     seoDescription: "Selling a luxury home in Las Vegas? How pricing, marketing, and negotiation differ at the high end — and how to get top dollar.",
     coverImage: "/blog/how-to-sell-a-luxury-home-in-las-vegas.svg",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_4aff30dc-84c6-4b2d-95bd-0ed51314f7f9.png",
     coverAlt: "Selling Guides — Roland Luxury Las Vegas real estate",
     sections: [
       {
@@ -235,6 +241,7 @@ export const blogPosts: BlogPost[] = [
     seoTitle: "Buying a Second Home in Las Vegas: What to Know",
     seoDescription: "Thinking about a Las Vegas second home or vacation property? Location, lock-and-leave options, costs, and rental considerations to plan for.",
     coverImage: "/blog/buying-a-second-home-or-vacation-property-in-las-vegas.svg",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163757_c7a6b662-0998-4825-a4b3-cc10520c079e.png",
     coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
     sections: [
       {
@@ -282,6 +289,7 @@ export const blogPosts: BlogPost[] = [
     seoTitle: "55+ Active Adult Communities in Las Vegas Guide",
     seoDescription: "A guide to 55+ active adult communities in Las Vegas and Henderson — amenities, home styles, HOA considerations, and how to pick the right one.",
     coverImage: "/blog/55-active-adult-communities-in-las-vegas-a-buyers-guide.svg",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_4a6c0e2a-7e78-4b17-8478-f0b8bd8881f0.png",
     coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
     sections: [
       {
@@ -329,6 +337,7 @@ export const blogPosts: BlogPost[] = [
     seoTitle: "The Best Golf Communities in Las Vegas",
     seoDescription: "Explore the best golf communities in Las Vegas and Henderson — private clubs, championship courses, and guard-gated living for golf lovers.",
     coverImage: "/blog/the-best-golf-communities-in-las-vegas.svg",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_ee7e2ab1-cf78-4f22-82d4-c30bfc6e817e.png",
     coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
     sections: [
       {
@@ -376,6 +385,7 @@ export const blogPosts: BlogPost[] = [
     seoTitle: "The Ridges Summerlin: A Complete Buyer's Guide",
     seoDescription: "A complete guide to The Ridges in Summerlin — guard-gated luxury, Bear's Best golf, contemporary custom estates, and what to know before you buy.",
     coverImage: "/blog/the-ridges-in-summerlin-a-complete-guide.svg",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_19002596-0496-4803-bde2-d4430c7dec99.png",
     coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
     sections: [
       {
@@ -424,6 +434,7 @@ export const blogPosts: BlogPost[] = [
     seoTitle: "Guard-Gated Communities in Las Vegas Under $1M",
     seoDescription: "You don't need millions for gated living. Explore guard-gated communities in Las Vegas and Henderson where homes can be attainable under $1M.",
     coverImage: "/blog/guard-gated-communities-in-las-vegas-under-1m.svg",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_959212a6-fa30-4805-babb-e54ad1754ae2.png",
     coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
     sections: [
       {
@@ -482,6 +493,7 @@ export const blogPosts: BlogPost[] = [
     seoTitle: "Is Lake Las Vegas a Good Place to Live?",
     seoDescription: "Is Lake Las Vegas worth it? A look at waterfront living in Henderson — lifestyle, home options, amenities, and HOA costs, and who it's best for.",
     coverImage: "/blog/is-lake-las-vegas-a-good-place-to-live.svg",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_f5155862-6c35-4be1-a1c8-41af2c4359d2.png",
     coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
     sections: [
       {
@@ -536,6 +548,7 @@ export const blogPosts: BlogPost[] = [
     seoTitle: "Moving to Las Vegas from California: 2026 Guide",
     seoDescription: "Moving from California to Las Vegas? What to know about cost savings, taxes, neighborhoods, and how to plan your relocation the smart way.",
     coverImage: "/blog/moving-to-las-vegas-from-california-the-complete-2026-guide.svg",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_a66ffa8e-96ae-4bf0-bffe-0148dfc830ad.png",
     coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
     sections: [
       {
@@ -590,6 +603,7 @@ export const blogPosts: BlogPost[] = [
     seoTitle: "MacDonald Highlands vs. Ascaya: Which to Choose?",
     seoDescription: "MacDonald Highlands or Ascaya? Compare Henderson's two premier guard-gated luxury communities — setting, homes, amenities, and price — to find your fit.",
     coverImage: "/blog/macdonald-highlands-vs-ascaya-which-luxury-community-fits-you.svg",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_f2c86e9d-3c4a-4cb6-a3e2-e4796b89710f.png",
     coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
     sections: [
       {
@@ -644,6 +658,7 @@ export const blogPosts: BlogPost[] = [
     seoTitle: "Cost of Living in Henderson, NV: 2026 Guide",
     seoDescription: "What does it cost to live in Henderson, NV? Home prices, taxes, utilities, and lifestyle costs — and why relocating buyers keep choosing Henderson.",
     coverImage: "/blog/cost-of-living-in-henderson-nv-what-to-expect-in-2026.svg",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163757_32fa2d6a-42cd-489d-95cb-0c7863d1db01.png",
     coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
     sections: [
       {
@@ -699,6 +714,7 @@ export const blogPosts: BlogPost[] = [
     seoTitle: "Summerlin vs. Henderson: Where Should You Buy?",
     seoDescription: "Summerlin or Henderson? Compare Las Vegas's two premier areas — lifestyle, luxury communities, commute, and value — to decide where to buy your next home.",
     coverImage: "/blog/summerlin-vs-henderson-where-should-you-buy-in-las-vegas.svg",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163757_3cd3b041-ca7e-425b-b400-4b009f81fe5c.png",
     coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
     sections: [
       {
@@ -746,6 +762,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "las-vegas-new-construction-communities-2026",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163757_d004368b-97ea-4eed-bc06-9a4b39dadbb0.png",
     title: "New Construction in Las Vegas: Builder Communities to Watch in 2026",
     category: "New Construction",
     excerpt:
@@ -779,6 +796,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "las-vegas-market-update-summer-2026",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163757_4e2c63c1-3152-4dec-b3ec-5078cb25a4ac.png",
     title: "Las Vegas Market Update: What Buyers and Sellers Should Know",
     category: "Market Updates",
     excerpt:
@@ -807,6 +825,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "how-much-home-can-you-afford-las-vegas",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163757_98efec9a-b609-41e4-bb34-f28663ca8757.png",
     title: "How Much Home Can You Afford in Las Vegas?",
     category: "Buying Guides",
     excerpt:
@@ -834,6 +853,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "preparing-your-las-vegas-home-to-sell",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163757_147f400b-baf9-4757-8f33-aff637506319.png",
     title: "Preparing Your Las Vegas Home to Sell for Top Dollar",
     category: "Selling Guides",
     excerpt:
@@ -861,6 +881,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "las-vegas-luxury-seller-net-proceeds",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163757_eacf5c8b-5fcc-4a95-b3cd-a368257ccfc4.png",
     title: "Understanding Seller Net Proceeds on a Las Vegas Home",
     category: "Selling Guides",
     excerpt:
@@ -889,6 +910,7 @@ export const blogPosts: BlogPost[] = [
 
   {
     slug: "is-now-a-good-time-to-buy-las-vegas",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163757_f1c3258a-b34f-420a-9d1f-5bb2d5ced797.png",
     title: "Is Now a Good Time to Buy in Las Vegas?",
     category: "Market Updates",
     excerpt:
@@ -917,6 +939,7 @@ export const blogPosts: BlogPost[] = [
 
   {
     slug: "guard-gated-vs-master-planned-las-vegas",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163757_35766b39-d201-4d3a-ad04-39113dc6ce3e.png",
     title: "Guard-Gated vs. Master-Planned: What's the Difference?",
     category: "Buying Guides",
     excerpt:
@@ -951,6 +974,7 @@ export const blogPosts: BlogPost[] = [
 
   {
     slug: "buying-new-construction-what-to-know-las-vegas",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163757_43d68448-fe1b-4f13-82e9-78d2b2ad4e4c.png",
     title: "Buying New Construction in Las Vegas: What to Know",
     category: "New Construction",
     excerpt:
@@ -979,6 +1003,7 @@ export const blogPosts: BlogPost[] = [
 
   {
     slug: "las-vegas-luxury-market-what-makes-it-unique",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163757_ab481f6e-1147-49b4-9611-ac4d1b096fd2.png",
     title: "The Las Vegas Luxury Market: What Makes It Unique",
     category: "Market Updates",
     excerpt:
@@ -1008,6 +1033,7 @@ export const blogPosts: BlogPost[] = [
 
   {
     slug: "off-market-luxury-homes-las-vegas",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_164600_752df05a-1175-4ebb-8d45-e9c67d5d9fe6.png",
     title: "Off-Market Luxury Homes in Las Vegas: How to Find Them",
     category: "Buying Guides",
     excerpt:
@@ -1036,6 +1062,7 @@ export const blogPosts: BlogPost[] = [
 
   {
     slug: "are-guard-gated-communities-worth-it-las-vegas",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_164600_d1c8be69-b279-41bb-99fc-383a17d81911.png",
     title: "Are Guard-Gated Communities Worth It in Las Vegas?",
     category: "Buying Guides",
     excerpt:
@@ -1064,6 +1091,7 @@ export const blogPosts: BlogPost[] = [
 
   {
     slug: "las-vegas-property-taxes-explained",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_164600_1ca99ec6-7863-4e5d-861b-72587f6e2d5b.png",
     title: "Las Vegas Property Taxes Explained",
     category: "Buying Guides",
     excerpt:
@@ -1092,6 +1120,7 @@ export const blogPosts: BlogPost[] = [
 
   {
     slug: "best-time-to-buy-or-sell-las-vegas",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_164600_5f71efdd-0a13-4724-9575-e7143b016429.png",
     title: "The Best Time to Buy or Sell a Home in Las Vegas",
     category: "Market Updates",
     excerpt:
@@ -1120,6 +1149,7 @@ export const blogPosts: BlogPost[] = [
 
   {
     slug: "understanding-escrow-closing-nevada",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_164600_278e4373-eded-4cb3-bb95-4b58270b5a5f.png",
     title: "Understanding Escrow and Closing in Nevada",
     category: "Buying Guides",
     excerpt:
@@ -1148,6 +1178,7 @@ export const blogPosts: BlogPost[] = [
 
   {
     slug: "pool-homes-in-las-vegas-what-to-know",
+    coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_164600_99bee703-7af8-4248-b77c-26ef4ff94858.png",
     title: "Pool Homes in Las Vegas: What to Know",
     category: "Buying Guides",
     excerpt:
