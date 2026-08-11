@@ -16,9 +16,8 @@ export const site = {
   email: "mike@therolandteam.com",
   founder: "Mike Roland",
   founderTitle: "Founder · The Roland Team",
-  // Drop in Mike's headshot URL (or /images/... path) to replace the monogram
-  // placeholder shown on listing pages. Leave empty to use the monogram.
-  founderPhoto: "",
+  // Mike's headshot (in /public). Set to "" to fall back to the monogram.
+  founderPhoto: "/mike-roland.jpg",
   brokerage: "LPT Realty",
   // Office NAP. Confirm the ZIP matches your Google Business Profile exactly.
   address: {
@@ -58,6 +57,7 @@ export const site = {
     // Add your Google Business Profile + Realtor.com/Homes.com URLs when handy.
   ],
   nav: [
+    { label: "Search", href: "/listings" },
     {
       label: "Buy a Home",
       href: "/buy",

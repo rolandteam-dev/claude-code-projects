@@ -5,6 +5,7 @@ import { Container } from "@/components/Container";
 import { JsonLd } from "@/components/JsonLd";
 import { breadcrumbSchema } from "@/lib/schema";
 import { blogPosts, getPost } from "@/content/blog";
+import { ProseText } from "@/lib/prose";
 import { site, absoluteUrl } from "@/lib/site";
 
 export function generateStaticParams() {
@@ -60,8 +61,13 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         ]}
       />
 
-      <header className="bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)] text-white">
-        <Container size="narrow" className="py-14 md:py-20">
+      <header
+        className="relative bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)] bg-cover bg-center text-white"
+        style={p.coverImage ? { backgroundImage: `url(${p.coverImage})` } : undefined}
+      >
+        {/* Dark scrim keeps the headline legible over a cover image */}
+        {p.coverImage && <div className="absolute inset-0 bg-[var(--color-graphite)]/70" aria-hidden="true" />}
+        <Container size="narrow" className="relative py-14 md:py-20">
           <Link
             href={`/blog?category=${encodeURIComponent(p.category)}`}
             className="font-sans text-[0.72rem] uppercase tracking-[0.16em] text-[var(--color-gold-2)] no-underline"
@@ -84,7 +90,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <section key={s.heading}>
             <h2 className="mt-10 text-[1.5rem]">{s.heading}</h2>
             {s.body.map((para, i) => (
-              <p key={i}>{para}</p>
+              <p key={i}><ProseText text={para} /></p>
             ))}
             {s.bullets && (
               <ul className="ml-5 list-disc space-y-2">
