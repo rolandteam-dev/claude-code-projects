@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { site } from "@/lib/site";
+import { onChatbotEngaged, setIdentifiedEmail } from "@/lib/fubClient";
 
 type Card = {
   id: string;
@@ -196,6 +197,8 @@ export function Concierge() {
       });
       const data = await res.json();
       if (data.ok) {
+        setIdentifiedEmail(lead.email);
+        onChatbotEngaged(lead.email);
         setLeadState("done");
         setShowLead(false);
         setMessages((m) => [
