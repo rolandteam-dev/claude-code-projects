@@ -5,7 +5,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { HeroBg } from "@/components/HeroBg";
 import { heroImages } from "@/lib/heroImages";
 import { breadcrumbSchema, faqSchema } from "@/lib/schema";
-import { LeadForm } from "@/components/LeadForm";
+import { PreApprovalForm } from "@/components/PreApprovalForm";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -110,21 +110,19 @@ export default function MortgagePreApprovalPage() {
               the right home.
             </p>
             <ul className="mt-6 space-y-2 font-sans text-[0.95rem] text-[#d9dbe0]">
-              <li>✓ Free and no obligation</li>
-              <li>✓ Shop with a confirmed budget</li>
-              <li>✓ Stronger offers, faster closings</li>
+              <li>✓ Free and no obligation — no impact on your credit to ask</li>
+              <li>✓ Matched with a trusted local, licensed lender</li>
+              <li>✓ Most buyers have their letter in 24–48 hours</li>
             </ul>
           </div>
 
           {/* Pre-approval request form → Follow Up Boss */}
           <div className="rounded-[14px] bg-white p-7 text-[var(--color-ink)] shadow-[var(--shadow-soft)]">
-            <div className="mb-5 font-sans text-[1.1rem] font-semibold">Request your pre-approval</div>
-            <LeadForm
-              type="Buyer Inquiry"
-              tags={["Buyer Lead", "Mortgage Pre-Approval"]}
-              source="Mortgage Pre-Approval Request"
-              submitLabel="Request Pre-Approval"
-            />
+            <div className="mb-1 font-sans text-[1.1rem] font-semibold">Request your pre-approval</div>
+            <p className="mb-5 font-sans text-[0.85rem] text-[var(--color-ink-soft)]">
+              Tell us a bit about your plans and we&apos;ll match you with the right lender.
+            </p>
+            <PreApprovalForm />
           </div>
         </Container>
       </section>
