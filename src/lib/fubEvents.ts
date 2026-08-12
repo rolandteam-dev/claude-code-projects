@@ -1,5 +1,3 @@
-"use client";
-
 import type { Listing } from "@/lib/idx/types";
 
 export type FubEventType = "Viewed Property" | "Saved Property";
