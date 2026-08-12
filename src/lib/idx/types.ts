@@ -96,6 +96,17 @@ export type ListingFilters = {
   minBaths?: number;
   propertyType?: PropertyType;
   status?: ListingStatus;
+  /* ---- Facet filters (applied in-app; not native MLS query params) ---- */
+  /** minimum covered garage spaces, e.g. 3 for "3+ car garage" */
+  minGarage?: number;
+  /** only homes with no HOA fee reported */
+  noHoa?: boolean;
+  /** only 55+/age-restricted communities */
+  ageRestricted?: boolean;
+  /** only new construction — built in the previous calendar year or newer */
+  newConstruction?: boolean;
+  /** only homes whose features/remarks mention RV parking */
+  rvParking?: boolean;
   /** result page size */
   limit?: number;
   offset?: number;
