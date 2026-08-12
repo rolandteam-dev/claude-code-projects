@@ -5,7 +5,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { HeroBg } from "@/components/HeroBg";
 import { heroImages } from "@/lib/heroImages";
 import { breadcrumbSchema } from "@/lib/schema";
-import { HomeValuation } from "@/components/HomeValuation";
+import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "What's My Home Worth? Free Las Vegas Home Valuation",
@@ -45,8 +45,15 @@ export default function HomeValuePage() {
             </ul>
           </div>
 
-          {/* Instant AVM estimate + seller lead capture → Follow Up Boss */}
-          <HomeValuation />
+          {/* Home-value tool — embedded CloudCMA widget → Follow Up Boss */}
+          <div className="rounded-[14px] bg-white p-3 shadow-[var(--shadow-soft)]">
+            <iframe
+              src={site.homeValueWidgetUrl}
+              title="Get your home value"
+              className="h-[560px] w-full rounded-[10px] border-0"
+              loading="lazy"
+            />
+          </div>
         </Container>
       </section>
 
