@@ -131,6 +131,38 @@ function collect(...sources: any[]): string[] {
   return out;
 }
 
+/**
+ * Pool is carried inconsistently across MLSs: sometimes a descriptive list
+ * (`poolFeatures: ["In Ground","Heated"]`), sometimes a scalar/boolean
+ * (`swimmingPool: "Private"` or `"Y"`), and sometimes only as an entry inside
+ * the exterior-features list. Check all three, and normalize empties/"None" to
+ * undefined so we never render "Pool: None".
+ */
+function poolFrom(details: any): string | undefined {
+  const isNo = (v: string) => {
+    const t = v.trim().toLowerCase();
+    return !t || t === "none" || t === "no" || t === "n" || t === "false" || t === "0";
+  };
+  const isYes = (v: string) => {
+    const t = v.trim().toLowerCase();
+    return t === "y" || t === "yes" || t === "true" || t === "1";
+  };
+
+  // 1) Descriptive list field (best: keeps "In Ground, Heated, Private").
+  const featureList = collect(details.poolFeatures, details.poolDescription);
+  if (featureList.length) return featureList.join(", ");
+
+  // 2) Dedicated scalar field.
+  const direct = s(details.swimmingPool, details.pool, details.privatePool).trim();
+  if (direct && !isNo(direct)) return isYes(direct) ? "Yes" : direct;
+
+  // 3) Last resort: a "pool" mention inside the general exterior/amenity lists.
+  const mention = collect(details.exteriorFeatures, details.features, details.amenities).find(
+    (f) => /\bpool\b/i.test(f) && !/no pool|without pool/i.test(f),
+  );
+  return mention || undefined;
+}
+
 function mapRooms(rooms: any): Listing["rooms"] {
   if (!Array.isArray(rooms)) return undefined;
   const out = rooms
@@ -220,7 +252,7 @@ function mapRecord(r: any): Listing {
     ),
     heating: s(details.heating, details.heatType) || undefined,
     cooling: s(details.airConditioning, details.cooling, details.coolingType) || undefined,
-    pool: s(details.swimmingPool, details.pool) || undefined,
+    pool: poolFrom(details),
     view: s(details.view) || undefined,
     features: collect(
       details.exteriorFeatures,
