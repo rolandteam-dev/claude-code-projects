@@ -5,11 +5,12 @@ import Image from "next/image";
 import { site } from "@/lib/site";
 
 /**
- * Agent-forward contact card for a listing. Features Mike / The Roland Team
- * (NOT the source listing agent, which stays only in the small IDX attribution
- * line for compliance) above a contact form with three intents — Email Agent,
- * Request a Tour, Make an Offer — each routed to Follow Up Boss via /api/lead
- * with its own tag.
+ * Agent-forward contact card for a listing. The three intents — Email Agent,
+ * Request a Tour, Make an Offer — lead the card as bold, high-contrast CTAs so
+ * they're the first thing a buyer notices. Mike / The Roland Team appears as a
+ * compact trust bar BELOW the actions (never the source listing agent, which
+ * stays only in the small IDX attribution line for compliance). Each intent is
+ * routed to Follow Up Boss via /api/lead with its own tag.
  */
 type Intent = "email" | "tour" | "offer";
 
@@ -22,6 +23,7 @@ export function ScheduleTour({ address, mlsNumber }: { address: string; mlsNumbe
     date: "",
     message: `I'm interested in ${street}.`,
   });
+  const [grant, setGrant] = useState(false);
   const [status, setStatus] = useState<"idle" | "sending" | "ok" | "error">("idle");
   const [active, setActive] = useState<Intent | null>(null);
 
@@ -46,9 +48,12 @@ export function ScheduleTour({ address, mlsNumber }: { address: string; mlsNumbe
       offer: { type: "Property Inquiry", tags: ["Luxury Buyer", "Make an Offer"], note: "Interested in making an offer." },
     };
     const c = cfg[intent];
+    const tags = [...c.tags];
+    if (grant) tags.push("Down Payment Assistance");
     const message = [
       f.message,
       intent === "tour" && f.date ? `Preferred tour date: ${f.date}` : "",
+      grant ? "Requested info on down payment assistance / grant programs." : "",
       mlsNumber ? `MLS #${mlsNumber}` : "",
       c.note ?? "",
     ]
@@ -65,7 +70,7 @@ export function ScheduleTour({ address, mlsNumber }: { address: string; mlsNumbe
           address,
           message,
           type: c.type,
-          tags: c.tags,
+          tags,
           source: "Luxury Listing Page",
         }),
       });
@@ -78,61 +83,14 @@ export function ScheduleTour({ address, mlsNumber }: { address: string; mlsNumbe
 
   const field =
     "w-full rounded-md border border-[var(--color-line)] bg-white px-3 py-2.5 font-sans text-[0.9rem] text-[var(--color-ink)] focus:border-[var(--color-gold)] focus:outline-none";
+  // Bold, high-contrast CTAs — larger tap target + shadow so they anchor the card.
   const actionBase =
-    "w-full rounded-md py-3 font-sans text-[0.92rem] font-semibold transition disabled:opacity-60";
+    "flex w-full items-center justify-center gap-2 rounded-md py-3.5 font-sans text-[0.98rem] font-semibold shadow-[0_6px_16px_rgba(20,22,27,0.12)] transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60";
   const busy = status === "sending";
 
   return (
-    <div className="overflow-hidden rounded-[14px] border border-[var(--color-line)] bg-white">
-      {/* Agent header — portrait when a headshot is set, monogram otherwise */}
-      {site.founderPhoto ? (
-        <div className="relative aspect-[4/5] w-full overflow-hidden bg-[var(--color-graphite)]">
-          <Image src={site.founderPhoto} alt={site.founder} fill sizes="360px" className="object-cover object-top" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 p-5">
-            <div className="font-sans text-[0.64rem] font-semibold uppercase tracking-[0.16em] text-[var(--color-gold-2)]">
-              Your Team Representative
-            </div>
-            <div className="mt-1 font-serif text-[1.7rem] font-semibold leading-tight text-white">{site.founder}</div>
-            <div className="font-sans text-[0.84rem] text-white/85">{site.founderTitle}</div>
-            <div className="font-sans text-[0.72rem] text-white/65">
-              {site.name} · brokered by {site.brokerage}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="p-5 pb-0">
-          <div className="font-sans text-[0.66rem] font-semibold uppercase tracking-[0.14em] text-[var(--color-muted)]">
-            Your Team Representative
-          </div>
-          <div className="mt-3 flex items-center gap-3">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--color-graphite)] font-serif text-[1.5rem] font-medium text-[var(--color-gold-2)]">
-              {initials}
-            </div>
-            <div>
-              <div className="font-serif text-[1.25rem] font-semibold leading-tight text-[var(--color-ink)]">
-                {site.founder}
-              </div>
-              <div className="font-sans text-[0.8rem] text-[var(--color-ink-soft)]">{site.founderTitle}</div>
-              <div className="font-sans text-[0.74rem] text-[var(--color-muted)]">
-                {site.name} · brokered by {site.brokerage}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-2 border-b border-[var(--color-line)] p-5 text-center">
-        {stats.map((s) => (
-          <div key={s.label}>
-            <div className="font-serif text-[1.05rem] font-semibold text-[var(--color-ink)]">{s.value}</div>
-            <div className="font-sans text-[0.6rem] leading-tight text-[var(--color-muted)]">{s.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Contact */}
+    <div className="overflow-hidden rounded-[14px] border border-[var(--color-line)] bg-white shadow-[var(--shadow-soft)]">
+      {/* Contact + intents lead the card */}
       <div className="p-5">
         {status === "ok" ? (
           <div className="text-center">
@@ -147,8 +105,11 @@ export function ScheduleTour({ address, mlsNumber }: { address: string; mlsNumbe
           </div>
         ) : (
           <>
-            <div className="font-serif text-[1.2rem] text-[var(--color-ink)]">More about {street}</div>
-            <div className="mt-3 space-y-2.5">
+            <div className="font-serif text-[1.35rem] leading-tight text-[var(--color-ink)]">More about {street}</div>
+            <p className="mt-1 font-sans text-[0.82rem] text-[var(--color-ink-soft)]">
+              Choose how you&apos;d like to connect — we respond fast.
+            </p>
+            <div className="mt-4 space-y-2.5">
               <input className={field} placeholder="Full name" aria-label="Full name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
               <input className={field} type="email" placeholder="Email" aria-label="Email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
               <input className={field} type="tel" placeholder="Phone" aria-label="Phone" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
@@ -165,33 +126,61 @@ export function ScheduleTour({ address, mlsNumber }: { address: string; mlsNumbe
                 </span>
                 <input className={`${field} mt-1`} type="date" aria-label="Preferred tour date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} />
               </label>
+
+              {/* Down payment grant / assistance toggle */}
+              <label className="flex cursor-pointer items-start gap-2.5 rounded-md border border-[var(--color-line)] bg-[var(--color-sand)] p-3">
+                <input
+                  type="checkbox"
+                  checked={grant}
+                  onChange={(e) => setGrant(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--color-gold)]"
+                  aria-label="Tell me about down payment assistance and grant programs"
+                />
+                <span className="font-sans text-[0.82rem] leading-snug text-[var(--color-ink)]">
+                  Tell me about <strong>down payment assistance &amp; grant programs</strong> — I may qualify for help
+                  with my down payment.
+                </span>
+              </label>
+
               {status === "error" && (
                 <div className="font-sans text-[0.78rem] text-[#b4433a]">Please add an email or phone so we can reach you.</div>
               )}
 
-              {/* Three intents — brand colors per the request */}
+              {/* Three intents — bold, distinct colors so they stand out */}
               <button
                 type="button"
                 onClick={() => submit("email")}
                 disabled={busy}
                 className={`${actionBase} bg-[var(--color-gold)] text-white hover:brightness-110`}
               >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <rect x="3" y="5" width="18" height="14" rx="2" />
+                  <path d="m3 7 9 6 9-6" />
+                </svg>
                 {busy && active === "email" ? "Sending…" : "Email Agent"}
               </button>
               <button
                 type="button"
                 onClick={() => submit("tour")}
                 disabled={busy}
-                className={`${actionBase} bg-[var(--color-graphite)] text-white hover:bg-black`}
+                className={`${actionBase} bg-[#1f6feb] text-white hover:brightness-110`}
               >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <rect x="3" y="4" width="18" height="17" rx="2" />
+                  <path d="M3 9h18M8 2v4M16 2v4" />
+                </svg>
                 {busy && active === "tour" ? "Sending…" : "Request a Tour"}
               </button>
               <button
                 type="button"
                 onClick={() => submit("offer")}
                 disabled={busy}
-                className={`${actionBase} border border-[var(--color-line)] bg-white text-[var(--color-ink)] hover:border-[var(--color-gold)]`}
+                className={`${actionBase} bg-[#1d7a5f] text-white hover:brightness-110`}
               >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M20.6 12.6 12 21l-8-8V4h9z" />
+                  <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none" />
+                </svg>
                 {busy && active === "offer" ? "Sending…" : "Make an Offer"}
               </button>
               <p className="text-center font-sans text-[0.66rem] text-[var(--color-muted)]">
@@ -200,6 +189,42 @@ export function ScheduleTour({ address, mlsNumber }: { address: string; mlsNumbe
             </div>
           </>
         )}
+      </div>
+
+      {/* Agent trust bar — moved below the actions */}
+      <div className="border-t border-[var(--color-line)] bg-[var(--color-sand)] p-5">
+        <div className="flex items-center gap-3">
+          {site.founderPhoto ? (
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-[var(--color-graphite)]">
+              <Image src={site.founderPhoto} alt={site.founder} fill sizes="56px" className="object-cover object-top" />
+            </div>
+          ) : (
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[var(--color-graphite)] font-serif text-[1.25rem] font-medium text-[var(--color-gold-2)]">
+              {initials}
+            </div>
+          )}
+          <div>
+            <div className="font-sans text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-[var(--color-gold)]">
+              Your Team Representative
+            </div>
+            <div className="font-serif text-[1.2rem] font-semibold leading-tight text-[var(--color-ink)]">
+              {site.founder}
+            </div>
+            <div className="font-sans text-[0.74rem] text-[var(--color-ink-soft)]">
+              {site.name} · brokered by {site.brokerage}
+            </div>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+          {stats.map((s) => (
+            <div key={s.label}>
+              <div className="font-serif text-[1.05rem] font-semibold text-[var(--color-ink)]">{s.value}</div>
+              <div className="font-sans text-[0.6rem] leading-tight text-[var(--color-muted)]">{s.label}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
