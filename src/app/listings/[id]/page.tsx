@@ -9,6 +9,8 @@ import { PaymentEstimator } from "@/components/PaymentEstimator";
 import { ScheduleTour } from "@/components/ScheduleTour";
 import { ListingStickyBar } from "@/components/ListingStickyBar";
 import { ListingShareBar } from "@/components/ListingShareBar";
+import { ListingActivityTracker } from "@/components/ListingActivityTracker";
+import type { FubProperty } from "@/lib/fubClient";
 import { WhatsNearby } from "@/components/WhatsNearby";
 import { RelocationTaxSavings } from "@/components/RelocationTaxSavings";
 import { breadcrumbSchema } from "@/lib/schema";
@@ -131,6 +133,20 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
     { title: "Location", rows: location },
   ].filter((s) => s.rows.length > 0);
 
+  const fubProperty: FubProperty = {
+    street: l.address.line1,
+    city: l.address.city,
+    state: l.address.state,
+    code: l.address.postalCode,
+    mlsNumber: l.mlsNumber,
+    price: l.listPrice,
+    url: absoluteUrl(`/listings/${l.id}`),
+    bedrooms: l.beds,
+    bathrooms: l.baths,
+    area: l.sqft,
+    type: l.propertyType,
+  };
+
   return (
     <>
       <JsonLd
@@ -157,7 +173,9 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
             url={absoluteUrl(`/listings/${l.id}`)}
             title={`${l.address.line1}, ${l.address.city} — ${formatPrice(l.listPrice)}`}
             listingId={l.id}
+            property={fubProperty}
           />
+          <ListingActivityTracker listingId={l.id} property={fubProperty} />
         </div>
       </Container>
 
