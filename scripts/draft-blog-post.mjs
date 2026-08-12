@@ -76,6 +76,9 @@ function wordCount(post) {
     for (const p of s.body || []) words += p.split(/\s+/).length;
     for (const b of s.bullets || []) words += b.split(/\s+/).length;
   }
+  for (const f of post.faqs || []) {
+    words += (f.q || "").split(/\s+/).length + (f.a || "").split(/\s+/).length;
+  }
   return words;
 }
 
@@ -134,10 +137,16 @@ function validate(post, slug) {
   else if (post.seoTitle.length > 65) errs.push(`seoTitle too long (${post.seoTitle.length} > 65)`);
   if (!post.seoDescription) errs.push("missing seoDescription");
   else if (post.seoDescription.length > 158) errs.push(`seoDescription too long (${post.seoDescription.length} > 158)`);
-  if (!Array.isArray(post.sections) || post.sections.length < 2) errs.push("need at least 2 sections");
+  if (!Array.isArray(post.sections) || post.sections.length < 5) errs.push("need at least 5 sections (long-form)");
   for (const [i, s] of (post.sections || []).entries()) {
     if (!s.heading) errs.push(`section ${i} missing heading`);
     if (!Array.isArray(s.body) || s.body.length === 0) errs.push(`section ${i} missing body`);
+  }
+  if (post.faqs !== undefined) {
+    if (!Array.isArray(post.faqs)) errs.push("faqs must be an array");
+    else for (const [i, f] of post.faqs.entries()) {
+      if (!f || !f.q || !f.a) errs.push(`faq ${i} needs both q and a`);
+    }
   }
   if (existingSlugs().has(slug)) errs.push(`slug "${slug}" already exists`);
   if (errs.length) throw new Error("Post failed validation:\n - " + errs.join("\n - "));
@@ -184,13 +193,17 @@ Return ONLY valid minified-or-pretty JSON (no markdown fences, no commentary) wi
   "excerpt": string,             // 1-2 sentence hook, <= 200 chars
   "seoTitle": string,            // <= 60 chars, keyword-forward
   "seoDescription": string,      // <= 155 chars, benefit + keyword
-  "sections": [ { "heading": string, "body": [string, ...], "bullets": [string, ...] (optional) }, ... ]
+  "sections": [ { "heading": string, "body": [string, ...], "bullets": [string, ...] (optional) }, ... ],
+  "faqs": [ { "q": string, "a": string }, ... ]
 }
 
 REQUIREMENTS:
-- 4-6 sections, ~700-1100 words total, written for a real Las Vegas buyer/seller.
-- Weave in 2-4 relevant INTERNAL links using markdown [label](/path) inside body paragraphs (not headings). Only use paths from the list below.
-- Helpful and authoritative; no fluff, no fabricated statistics, no specific active listing prices or inventory counts.
+- LONG-FORM and comprehensive: 8-14 sections, ~1800-3000 words total (a 12-18 minute read), written for a real Las Vegas buyer/seller. Depth and genuine usefulness matter more than length — every section must earn its place.
+- Each section should have 2-4 substantial paragraphs; use "bullets" where a list genuinely helps (steps, checklists, pros/cons, what-to-look-for). Not every section needs bullets.
+- Open with a strong, specific intro section that frames the reader's real question, and close with a section that tells them the clear next step.
+- Include a "faqs" array of 5-8 real questions a Las Vegas buyer/seller would ask on this topic, each with a thorough 2-4 sentence answer.
+- Weave in 4-8 relevant INTERNAL links using markdown [label](/path) inside body paragraphs (not headings). Only use paths from the list below.
+- Helpful and authoritative; no fluff, no fabricated statistics, no specific active listing prices or inventory counts. Explain mechanisms, trade-offs, and process concretely.
 - Fair Housing compliant: describe places by objective features and lifestyle, never by demographics; never steer.
 - Keep pricing general/approximate and route readers to contact for current availability.
 - American English. Confident, polished, plain language.
@@ -202,7 +215,7 @@ Topic to write about: "${topic}"${category ? `\nUse category: ${category}` : ""}
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify({ model: MODEL, max_tokens: 4000, system, messages: [{ role: "user", content: `Write the post about: ${topic}` }] }),
+    body: JSON.stringify({ model: MODEL, max_tokens: 12000, system, messages: [{ role: "user", content: `Write the long-form post about: ${topic}` }] }),
   });
   if (!res.ok) throw new Error(`Anthropic API error ${res.status}: ${(await res.text()).slice(0, 400)}`);
   const json = await res.json();
@@ -246,6 +259,7 @@ async function main() {
     coverImage,
     coverAlt: post.coverAlt || `${post.category} — Roland Luxury Las Vegas real estate`,
     sections: post.sections,
+    faqs: post.faqs,
   };
 
   if (args.dry) {
