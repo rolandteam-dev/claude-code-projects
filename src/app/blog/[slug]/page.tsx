@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Container } from "@/components/Container";
 import { JsonLd } from "@/components/JsonLd";
-import { breadcrumbSchema } from "@/lib/schema";
+import { breadcrumbSchema, faqSchema } from "@/lib/schema";
 import { blogPosts, getPost } from "@/content/blog";
 import { ProseText } from "@/lib/prose";
 import { site, absoluteUrl } from "@/lib/site";
@@ -58,15 +58,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             { name: p.title, path: `/blog/${p.slug}` },
           ]),
           article,
+          ...(p.faqs && p.faqs.length ? [faqSchema(p.faqs)] : []),
         ]}
       />
 
       <header
         className="relative bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)] bg-cover bg-center text-white"
-        style={p.coverImage ? { backgroundImage: `url(${p.coverImage})` } : undefined}
+        style={p.coverPhoto || p.coverImage ? { backgroundImage: `url(${p.coverPhoto ?? p.coverImage})` } : undefined}
       >
         {/* Dark scrim keeps the headline legible over a cover image */}
-        {p.coverImage && <div className="absolute inset-0 bg-[var(--color-graphite)]/70" aria-hidden="true" />}
+        {(p.coverPhoto || p.coverImage) && (
+          <div className="absolute inset-0 bg-[var(--color-graphite)]/70" aria-hidden="true" />
+        )}
         <Container size="narrow" className="relative py-14 md:py-20">
           <Link
             href={`/blog?category=${encodeURIComponent(p.category)}`}
@@ -95,12 +98,26 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             {s.bullets && (
               <ul className="ml-5 list-disc space-y-2">
                 {s.bullets.map((b, i) => (
-                  <li key={i}>{b}</li>
+                  <li key={i}><ProseText text={b} /></li>
                 ))}
               </ul>
             )}
           </section>
         ))}
+
+        {p.faqs && p.faqs.length > 0 && (
+          <section className="mt-14">
+            <h2 className="text-[1.6rem]">Frequently asked questions</h2>
+            <div className="mt-4 divide-y divide-[var(--color-line)]">
+              {p.faqs.map((f, i) => (
+                <div key={i} className="py-5">
+                  <h3 className="font-serif text-[1.15rem] font-semibold text-[var(--color-ink)]">{f.q}</h3>
+                  <p className="mt-2 text-[var(--color-ink-soft)]"><ProseText text={f.a} /></p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <div className="mt-12 rounded-[14px] bg-[var(--color-graphite)] px-7 py-10 text-center text-white">
           <h2 className="text-[1.5rem] text-white">Have a question about your move?</h2>

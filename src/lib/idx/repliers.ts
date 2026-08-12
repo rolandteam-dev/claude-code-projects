@@ -163,6 +163,36 @@ function poolFrom(details: any): string | undefined {
   return mention || undefined;
 }
 
+function mapEstimate(est: any): Listing["estimate"] {
+  if (!est || typeof est !== "object") return undefined;
+  const value = numOpt(est.value, est.estimate, est.predictedValue, est.price);
+  if (!value) return undefined;
+  const low = numOpt(est.low, est.valueLow, est.rangeLow, est.range?.low, est.confidenceRange?.low);
+  const high = numOpt(est.high, est.valueHigh, est.rangeHigh, est.range?.high, est.confidenceRange?.high);
+  const confRaw = est.confidence ?? est.confidenceLevel;
+  const confidence =
+    typeof confRaw === "number"
+      ? `${Math.round(confRaw <= 1 ? confRaw * 100 : confRaw)}%`
+      : s(confRaw) || undefined;
+  return { value, low, high, confidence };
+}
+
+function mapHistory(hist: any): Listing["history"] {
+  if (!Array.isArray(hist)) return undefined;
+  const out = hist
+    .map((e) => {
+      const date = s(e?.soldDate, e?.listDate, e?.date, e?.timestamp, e?.lastStatusUpdate, e?.updatedOn);
+      if (!date) return null;
+      const event = s(e?.lastStatus, e?.status, e?.type, e?.event) || "Listed";
+      const price = numOpt(e?.soldPrice, e?.listPrice, e?.price);
+      return { date: date.slice(0, 10), event, price };
+    })
+    .filter(Boolean) as NonNullable<Listing["history"]>;
+  // newest first
+  out.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  return out.length ? out : undefined;
+}
+
 function mapRooms(rooms: any): Listing["rooms"] {
   if (!Array.isArray(rooms)) return undefined;
   const out = rooms
@@ -269,6 +299,8 @@ function mapRecord(r: any): Listing {
       r.condominium?.amenities,
     ),
     rooms: mapRooms(r.rooms),
+    history: mapHistory(r.history ?? r.mlsHistory ?? r.priceHistory),
+    estimate: mapEstimate(r.estimate ?? r.estimates ?? r.avm),
     virtualTourUrl: s(r.virtualTourUrl, details.virtualTourUrl, r.tour, details.tourUrl) || undefined,
   };
 }

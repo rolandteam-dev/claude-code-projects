@@ -83,6 +83,10 @@ export type Listing = {
   rooms?: { name: string; dimensions?: string; level?: string }[];
   /** 3D tour / video walkthrough URL */
   virtualTourUrl?: string;
+  /** prior MLS records for this address (sold / listed / leased), newest first */
+  history?: { date: string; event: string; price?: number }[];
+  /** Repliers AI AVM estimate (present when the Estimates add-on is enabled) */
+  estimate?: { value: number; low?: number; high?: number; confidence?: string };
 };
 
 export type ListingFilters = {
