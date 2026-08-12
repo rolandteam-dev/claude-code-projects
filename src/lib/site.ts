@@ -15,6 +15,9 @@ export const site = {
   phone: "(702) 793-2158",
   email: "mike@therolandteam.com",
   founder: "Mike Roland",
+  founderTitle: "Founder · The Roland Team",
+  // Mike's headshot (in /public). Set to "" to fall back to the monogram.
+  founderPhoto: "/mike-roland.jpg",
   brokerage: "LPT Realty",
   // Office NAP. Confirm the ZIP matches your Google Business Profile exactly.
   address: {
@@ -66,6 +69,7 @@ export const site = {
         { label: "Moving to Las Vegas", href: "/moving-to-las-vegas" },
         { label: "Buyer Guides", href: "/guides" },
         { label: "First-Time Buyers", href: "/guides/first-time-home-buyer-las-vegas" },
+        { label: "Mortgage Pre-Approval", href: "/mortgage-pre-approval" },
         { label: "Market Report", href: "/market-report" },
       ],
     },

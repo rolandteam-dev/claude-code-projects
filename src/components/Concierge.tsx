@@ -1,9 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { site } from "@/lib/site";
 
-type Msg = { role: "user" | "assistant"; content: string };
+type Card = {
+  id: string;
+  price: number;
+  beds: number;
+  baths: number;
+  sqft: number;
+  address: string;
+  photo: string | null;
+  url: string;
+};
+type Msg = { role: "user" | "assistant"; content: string; cards?: Card[]; searchUrl?: string };
 
 /** Render inline **bold** and [label](href) markdown as real elements. */
 function renderInline(text: string, keyBase: string): React.ReactNode[] {
@@ -67,14 +78,37 @@ function RichText({ text }: { text: string }) {
 const GREETING: Msg = {
   role: "assistant",
   content:
-    "Welcome to Roland Luxury. I'm your private concierge — ask me about our communities, the Las Vegas luxury market, or buying and selling. How may I help?",
+    "Welcome to Roland Luxury. I'm your private concierge — ask me about our communities, the Las Vegas luxury market, or tell me what you're looking for and I'll pull live listings. How may I help?",
 };
 
 const SUGGESTIONS = [
-  "Show me 4-bed homes under $2M",
+  "Show me 4-bed homes in Henderson under $2M",
   "What's my home worth?",
   "Explore guard-gated communities",
 ];
+
+const fmtPrice = (n: number) =>
+  n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+
+function ListingMini({ card }: { card: Card }) {
+  return (
+    <a
+      href={card.url}
+      className="flex gap-3 rounded-[10px] border border-[var(--color-line-dark)] bg-[var(--color-graphite-2)] p-2 no-underline transition-colors hover:border-[rgba(216,189,132,0.45)]"
+    >
+      <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-[6px] bg-[var(--color-graphite-3)]">
+        {card.photo && <Image src={card.photo} alt="" fill sizes="80px" className="object-cover" />}
+      </div>
+      <div className="min-w-0 flex-1 self-center">
+        <div className="font-sans text-[0.92rem] font-semibold text-white">{fmtPrice(card.price)}</div>
+        <div className="font-sans text-[0.72rem] text-[#9aa0aa]">
+          {card.beds} bd · {card.baths} ba · {card.sqft.toLocaleString()} sqft
+        </div>
+        <div className="truncate font-sans text-[0.72rem] text-[#cbcfd6]">{card.address}</div>
+      </div>
+    </a>
+  );
+}
 
 export function Concierge() {
   const [open, setOpen] = useState(false);
@@ -122,7 +156,15 @@ export function Concierge() {
       const leadMatch = reply.match(/\[\[\s*LEAD\s*(?::\s*([^\]]+))?\]\]/i);
       const leadSummary = leadMatch?.[1]?.trim();
       reply = reply.replace(/\[\[\s*LEAD\s*(?::[^\]]*)?\]\]/gi, "").trim();
-      setMessages((m) => [...m, { role: "assistant", content: reply }]);
+      setMessages((m) => [
+        ...m,
+        {
+          role: "assistant",
+          content: reply,
+          cards: Array.isArray(data.listings) ? data.listings : undefined,
+          searchUrl: typeof data.searchUrl === "string" ? data.searchUrl : undefined,
+        },
+      ]);
       if (leadMatch && leadState !== "done") openLead(leadSummary || trimmed);
     } catch {
       setMessages((m) => [
@@ -209,15 +251,33 @@ export function Concierge() {
           {/* Messages */}
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
             {messages.map((m, i) => (
-              <div
-                key={i}
-                className={
-                  m.role === "user"
-                    ? "ml-auto max-w-[85%] rounded-[12px] rounded-br-sm bg-[var(--color-gold)] px-3.5 py-2.5 font-sans text-[0.9rem] text-white"
-                    : "mr-auto max-w-[90%] rounded-[12px] rounded-bl-sm bg-[var(--color-graphite-2)] px-3.5 py-2.5 text-[0.94rem] leading-relaxed text-[#e8eaee]"
-                }
-              >
-                {m.role === "assistant" ? <RichText text={m.content} /> : m.content}
+              <div key={i}>
+                <div
+                  className={
+                    m.role === "user"
+                      ? "ml-auto max-w-[85%] rounded-[12px] rounded-br-sm bg-[var(--color-gold)] px-3.5 py-2.5 font-sans text-[0.9rem] text-white"
+                      : "mr-auto max-w-[90%] rounded-[12px] rounded-bl-sm bg-[var(--color-graphite-2)] px-3.5 py-2.5 text-[0.94rem] leading-relaxed text-[#e8eaee]"
+                  }
+                >
+                  {m.role === "assistant" ? <RichText text={m.content} /> : m.content}
+                </div>
+
+                {/* Live listing cards + open-in-search (assistant search results) */}
+                {m.role === "assistant" && m.cards && m.cards.length > 0 && (
+                  <div className="mt-2 space-y-2">
+                    {m.cards.map((card) => (
+                      <ListingMini key={card.id} card={card} />
+                    ))}
+                    {m.searchUrl && (
+                      <a
+                        href={m.searchUrl}
+                        className="block rounded-[8px] bg-[var(--color-gold)] py-2.5 text-center font-sans text-[0.8rem] font-semibold text-white no-underline transition-colors hover:bg-[#86692f]"
+                      >
+                        Open these filters in search →
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
 
@@ -301,7 +361,7 @@ export function Concierge() {
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask the concierge…"
+                placeholder="e.g. 4-bed in Summerlin under $2M"
                 className="flex-1 rounded-[8px] border border-[var(--color-line-dark)] bg-[var(--color-graphite-2)] px-3.5 py-2.5 font-sans text-[0.88rem] text-white placeholder:text-[#7f8792] focus:border-[var(--color-gold-3)] focus:outline-none"
               />
               <button
@@ -316,7 +376,7 @@ export function Concierge() {
               </button>
             </form>
             <div className="mt-2 text-center font-sans text-[0.64rem] text-[#7f8792]">
-              AI concierge · for current listings &amp; pricing, connect with the team
+              Live MLS data · AI can make mistakes — confirm details with the team at {site.phone}
             </div>
           </div>
         </div>

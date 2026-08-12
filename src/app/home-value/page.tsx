@@ -5,7 +5,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { HeroBg } from "@/components/HeroBg";
 import { heroImages } from "@/lib/heroImages";
 import { breadcrumbSchema } from "@/lib/schema";
-import { LeadForm } from "@/components/LeadForm";
+import { HomeValuation } from "@/components/HomeValuation";
 
 export const metadata: Metadata = {
   title: "What's My Home Worth? Free Las Vegas Home Valuation",
@@ -35,27 +35,18 @@ export default function HomeValuePage() {
               What&apos;s your home worth?
             </h1>
             <p className="mt-5 text-[1.12rem] text-[#d9dbe0]">
-              Skip the automated estimates. Get a precise, human home valuation from a team that actually knows
-              your neighborhood — based on real comparable sales, current demand, and your home&apos;s specifics.
+              Get an instant estimate in seconds — then a precise, human valuation from a team that actually knows
+              your neighborhood, based on real comparable sales, current demand, and your home&apos;s specifics.
             </p>
             <ul className="mt-6 space-y-2 font-sans text-[0.95rem] text-[#d9dbe0]">
-              <li>✓ Local expertise, not a generic algorithm</li>
+              <li>✓ Instant estimate now, real human CMA to follow</li>
               <li>✓ No obligation, no pressure</li>
               <li>✓ A real strategy to maximize your sale</li>
             </ul>
           </div>
 
-          {/* Valuation request form → Follow Up Boss */}
-          <div className="rounded-[14px] bg-white p-7 text-[var(--color-ink)] shadow-[var(--shadow-soft)]">
-            <div className="mb-5 font-sans text-[1.1rem] font-semibold">Request your free valuation</div>
-            <LeadForm
-              type="Seller Inquiry"
-              tags={["Luxury Seller", "Home Valuation"]}
-              source="Luxury Home Valuation"
-              showAddress
-              submitLabel="Get My Home Value"
-            />
-          </div>
+          {/* Instant AVM estimate + seller lead capture → Follow Up Boss */}
+          <HomeValuation />
         </Container>
       </section>
 
