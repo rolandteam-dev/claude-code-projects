@@ -50,6 +50,26 @@ function mapType(v: string | undefined): PropertyType {
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/**
+ * Pool per the RESO Data Dictionary: PoolFeatures (list, e.g. ["In Ground",
+ * "Heated"]) with PoolPrivateYN as a boolean fallback. Normalize "None" away so
+ * we never render "Pool: None".
+ */
+function poolFrom(r: any): string | undefined {
+  const feats = r.PoolFeatures;
+  const list = Array.isArray(feats)
+    ? feats
+    : typeof feats === "string"
+      ? feats.split(/[,;|]/)
+      : [];
+  const clean = list
+    .map((x: any) => String(x).trim())
+    .filter((x: string) => x && x.toLowerCase() !== "none");
+  if (clean.length) return clean.join(", ");
+  if (r.PoolPrivateYN === true || String(r.PoolPrivateYN).toLowerCase() === "true") return "Private";
+  return undefined;
+}
+
 function mapRecord(r: any): Listing {
   return {
     id: String(r.ListingKey ?? r.ListingId),
@@ -83,6 +103,7 @@ function mapRecord(r: any): Listing {
         : undefined,
     listedDate: r.ListingContractDate ?? r.OnMarketDate ?? new Date().toISOString().slice(0, 10),
     listingOffice: r.ListOfficeName ?? "",
+    pool: poolFrom(r),
   };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */

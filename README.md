@@ -63,6 +63,31 @@ Live listings are automatically cross-linked to the matching community page
 when their subdivision/neighborhood matches one of our communities
 (`matchCommunitySlug` in `src/content/communities.ts`).
 
+## Follow Up Boss (CRM) integration
+
+Two independent Follow Up Boss (FUB) hooks are wired in: a **server-side lead
+API** (needs a secret key) and a **client-side tracking pixel** (live by
+default). Configure them in **Vercel → Project → Settings → Environment
+Variables**.
+
+| Variable | Purpose |
+| --- | --- |
+| `FUB_API_KEY` | Server-side, **required to store leads** (it's a secret — never commit it). Sends contact-form submissions to the FUB Events API (`src/app/api/lead/route.ts`). Without it, forms still submit but no lead is stored. |
+| `NEXT_PUBLIC_FUB_PIXEL_ID` | **Optional override** for the tracking pixel (`src/components/FollowUpBossPixel.tsx`). Defaults to the live pixel `WT-HKVXTYFU`; set this only to point a non-production environment at a different pixel. |
+
+**Tracking pixel:** live by default — the ID is baked into the component, since a
+pixel ID is a public value that ships in the page HTML (not a secret). It loads
+on every page and reports a pageview on each in-app navigation, so the full
+browsing path is captured, not just the landing page. It ties site browsing to a
+FUB contact — powering "your lead just viewed X" agent notifications and
+activity-based Action Plans. The snippet is FUB's official Widget Tracker code
+from **Admin → Pixel**; if FUB ever changes that snippet, update
+`src/components/FollowUpBossPixel.tsx` to match.
+
+Remarketing flow this enables: email/text your FUB database → contact clicks a
+link to the site → pixel attributes their browsing to their FUB record → FUB
+notifies the assigned agent and triggers any Action Plans / pond routing.
+
 ## Blog auto-drafting engine
 
 Give it a topic and it writes a full, SEO-optimized, internally-linked post
