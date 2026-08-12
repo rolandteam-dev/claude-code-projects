@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { onPropertySave, type FubProperty } from "@/lib/fubClient";
 
 /**
  * Save + Share bar for a listing. "Save" favorites the home to the browser
@@ -12,10 +13,12 @@ export function ListingShareBar({
   url,
   title,
   listingId,
+  property,
 }: {
   url: string;
   title: string;
   listingId: string;
+  property?: FubProperty;
 }) {
   const [open, setOpen] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -48,8 +51,10 @@ export function ListingShareBar({
       const raw = JSON.parse(localStorage.getItem("rl_saved_listings") || "[]");
       const arr: string[] = Array.isArray(raw) ? raw : [];
       const next = arr.includes(listingId) ? arr.filter((x) => x !== listingId) : [...arr, listingId];
+      const wasSaved = arr.includes(listingId);
       localStorage.setItem("rl_saved_listings", JSON.stringify(next));
       setSaved(next.includes(listingId));
+      if (!wasSaved && property) onPropertySave(property);
     } catch {}
   }
 
