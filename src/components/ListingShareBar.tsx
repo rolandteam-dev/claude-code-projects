@@ -153,4 +153,4 @@ function Badge({ children }: { children: React.ReactNode }) {
             {children}
           </span>
         );
-}</Badge>
+}
