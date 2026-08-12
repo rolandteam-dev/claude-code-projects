@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { site } from "@/lib/site";
+import { setIdentifiedEmail } from "@/lib/identity";
 
 type Estimate = { value: number; low?: number; high?: number; confidence?: string };
 
@@ -63,6 +64,7 @@ export function HomeValuation() {
       if (data.ok) {
         setEstimate(data.estimate ?? null);
         setStatus("done");
+              if (f.email) setIdentifiedEmail(f.email);
       } else {
         setStatus("error");
       }

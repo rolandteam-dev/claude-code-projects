@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { site } from "@/lib/site";
+import { setIdentifiedEmail } from "@/lib/identity";
 
 /**
  * Agent-forward contact card for a listing. Features Mike / The Roland Team
@@ -70,7 +71,9 @@ export function ScheduleTour({ address, mlsNumber }: { address: string; mlsNumbe
         }),
       });
       const j = await res.json().catch(() => ({ ok: false }));
-      setStatus(res.ok && j.ok ? "ok" : "error");
+            const success = res.ok && j.ok;
+            setStatus(success ? "ok" : "error");
+            if (success && f.email) setIdentifiedEmail(f.email);
     } catch {
       setStatus("error");
     }

@@ -16,6 +16,8 @@ import { getListing } from "@/lib/idx/provider";
 import { formatPrice } from "@/components/ListingCard";
 import { getCommunity } from "@/content/communities";
 import { absoluteUrl, site } from "@/lib/site";
+import { ListingViewTracker } from "@/components/ListingViewTracker";
+import { toFubProperty } from "@/lib/fubEvents";
 
 export async function generateMetadata({
   params,
@@ -61,6 +63,9 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
       url: absoluteUrl(`/listings/${l.id}`),
     },
   };
+
+    const listingUrl = absoluteUrl(`/listings/${l.id}`);
+    const fubProperty = toFubProperty(l, listingUrl);
 
   const pricePerSqft = l.sqft > 0 ? Math.round(l.listPrice / l.sqft) : undefined;
   // AVM "Est. value" display is gated: only shown once GLVAR confirms display
@@ -157,9 +162,11 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
             url={absoluteUrl(`/listings/${l.id}`)}
             title={`${l.address.line1}, ${l.address.city} — ${formatPrice(l.listPrice)}`}
             listingId={l.id}
+                    property={fubProperty}
           />
         </div>
       </Container>
+            <ListingViewTracker listingId={l.id} property={fubProperty} />
 
       {/* Gallery — renders every photo the feed returns via the lightbox */}
       <Container size="wide" className="pt-4">

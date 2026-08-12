@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { site } from "@/lib/site";
+import { setIdentifiedEmail } from "@/lib/identity";
 
 const field =
   "w-full rounded-md border border-[var(--color-line)] bg-white px-4 py-3 font-sans text-[0.95rem] text-[var(--color-ink)] focus:border-[var(--color-gold)] focus:outline-none";
@@ -35,7 +36,11 @@ export function LeadForm({
         body: JSON.stringify({ ...payload, type, tag, tags, source }),
       });
       const json = await res.json().catch(() => ({ ok: false }));
-      setStatus(res.ok && json.ok ? "ok" : "error");
+            const success = res.ok && json.ok;
+            setStatus(success ? "ok" : "error");
+            if (success && typeof payload.email === "string" && payload.email) {
+                      setIdentifiedEmail(payload.email);
+            }
     } catch {
       setStatus("error");
     }
