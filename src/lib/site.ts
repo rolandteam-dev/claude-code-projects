@@ -76,6 +76,7 @@ export const site = {
         { label: "Buyer Guides", href: "/guides" },
         { label: "First-Time Buyers", href: "/guides/first-time-home-buyer-las-vegas" },
         { label: "Mortgage Pre-Approval", href: "/mortgage-pre-approval" },
+        { label: "Down Payment Assistance", href: "/down-payment-assistance" },
         { label: "Market Report", href: "/market-report" },
       ],
     },
