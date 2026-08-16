@@ -53,6 +53,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/calculators" className="text-[var(--color-ink-soft)] no-underline hover:text-[var(--color-gold)]">
+                  Calculators
+                </Link>
+              </li>
+              <li>
                 <Link href="/testimonials" className="text-[var(--color-ink-soft)] no-underline hover:text-[var(--color-gold)]">
                   Testimonials
                 </Link>

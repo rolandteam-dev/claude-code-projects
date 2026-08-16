@@ -44,7 +44,8 @@ export function realEstateAgentSchema() {
     areaServed: site.areaServed.map((name) => ({ "@type": "City", name })),
     knowsAbout: site.knowsAbout,
     sameAs: site.sameAs.filter(Boolean),
-    // NOTE: add aggregateRating/review ONLY from real, verified reviews.
+    // aggregateRating reflects real, verified reviews (combined Zillow + Google
+    // tally). Source is defined and documented in site.aggregateRating.
   };
 }
 

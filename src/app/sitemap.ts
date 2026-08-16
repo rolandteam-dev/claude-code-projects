@@ -4,6 +4,7 @@ import { communities } from "@/content/communities";
 import { guides } from "@/content/guides";
 import { areas } from "@/content/areas";
 import { blogPosts } from "@/content/blog";
+import { calculators } from "@/content/calculators";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -13,7 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/guard-gated-communities-las-vegas", "/moving-to-las-vegas",
     "/active-adult-communities-las-vegas", "/golf-communities-las-vegas", "/listings", "/communities",
     "/areas", "/guides", "/market-report", "/about", "/why-the-roland-team", "/testimonials",
-    "/contact", "/blog",
+    "/contact", "/blog", "/calculators",
   ].map(
     (path) => ({
       url: absoluteUrl(path),
@@ -51,5 +52,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }));
 
-  return [...staticRoutes, ...communityRoutes, ...areaRoutes, ...guideRoutes, ...blogRoutes];
+  const calculatorRoutes = calculators.map((c) => ({
+    url: absoluteUrl(`/calculators/${c.slug}`),
+    lastModified: now,
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
+  return [...staticRoutes, ...communityRoutes, ...areaRoutes, ...guideRoutes, ...blogRoutes, ...calculatorRoutes];
 }
