@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Container } from "@/components/Container";
 import { JsonLd } from "@/components/JsonLd";
+import { TrackCommunityView } from "@/components/ConciergeTracking";
 import { HeroBg } from "@/components/HeroBg";
 import { communityHero } from "@/lib/heroImages";
 import { breadcrumbSchema, faqSchema } from "@/lib/schema";
@@ -47,6 +48,7 @@ export default async function CommunityPage({
 
   return (
     <>
+      <TrackCommunityView slug={c.slug} name={c.name} />
       <JsonLd
         data={[
           breadcrumbSchema([

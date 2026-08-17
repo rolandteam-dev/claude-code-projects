@@ -88,6 +88,59 @@ Remarketing flow this enables: email/text your FUB database → contact clicks a
 link to the site → pixel attributes their browsing to their FUB record → FUB
 notifies the assigned agent and triggers any Action Plans / pond routing.
 
+**Event types:** FUB only accepts a fixed list of event types, and only some of
+them start automations. `src/lib/fub.ts` is the single place that knows the
+list — it maps our internal intent names (e.g. "Showing Request") onto a valid
+type and keeps the original as a tag, so nothing is rejected and the team can
+still filter on it in FUB.
+
+| Intent | FUB event type | Starts action plans / AI texting |
+| --- | --- | --- |
+| Tour request, hot concierge lead | `Property Inquiry` | Yes |
+| General contact form | `General Inquiry` | Yes |
+| Home valuation | `Seller Inquiry` | Yes |
+| Listing view (known contact) | `Viewed Property` | No — timeline + smart lists |
+| Filtered search (known contact) | `Property Search` | No — timeline + smart lists |
+
+## Proactive concierge (behavior-triggered outreach)
+
+The concierge doesn't just wait to be asked — it watches how someone is
+shopping and speaks first at the right moment. All tracking is client-side
+(localStorage/sessionStorage in the visitor's own browser); no profile is
+stored on a server and nothing identifies anyone until they hand over details.
+
+**What it watches** (`src/lib/concierge/behavior.ts`): homes opened, the area
+they keep returning to, the price band and bed count they're circling, filtered
+searches, time on the home in front of them, repeat visits, and seller-side
+pages.
+
+**When it speaks** (`src/lib/concierge/triggers.ts`): rules in priority order —
+lingering on one listing, three-plus homes in one area, a return visit, repeat
+searches, exit intent, and a separate no-tour-pitch path for sellers. Each rule
+fires at most once per visitor, with caps on messages per visit, a quiet gap
+between them, and a back-off after two dismissals.
+
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_CONCIERGE_AGGRESSION` | `gentle`, `balanced` (default), or `assertive`. Sets the dwell/listing thresholds, how many proactive messages a visit can get, the back-off after a dismissal, and whether the chat panel opens itself (assertive, desktop only — never on a phone). |
+
+**How it reaches the team** (`src/app/api/intent/route.ts`):
+
+- *Already known* (they've submitted any form on the site from this browser —
+  remembered by `src/lib/concierge/identity.ts`): accepting a tour offer posts a
+  `Property Inquiry` straight to their FUB record. That's the type FUB starts
+  action plans on, so the assigned agent is alerted and FUB's AI texting can
+  fire without the visitor filling in anything. Their listing views and searches
+  also flow in as `Viewed Property` / `Property Search`, once per home or search
+  per visit.
+- *Anonymous*: there's no FUB contact to attach to, so the concierge asks for a
+  name and number first, then submits it as a `Property Inquiry` with the home
+  and criteria attached.
+
+To dial the whole thing back, set `NEXT_PUBLIC_CONCIERGE_AGGRESSION=gentle`; to
+turn proactive messaging off entirely, remove `<BehaviorTracker />` from
+`src/app/layout.tsx`.
+
 ## Blog auto-drafting engine
 
 Give it a topic and it writes a full, SEO-optimized, internally-linked post

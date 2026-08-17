@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { normalizeEventType, postFubEvent, splitName, type FubProperty } from "@/lib/fub";
 
 export const runtime = "nodejs";
 
@@ -7,6 +8,9 @@ export const runtime = "nodejs";
  * Set FUB_API_KEY in Vercel → Settings → Environment Variables to go live.
  * Until then the endpoint accepts submissions gracefully (queued:false) so
  * the site's forms still work; no lead is stored until the key is present.
+ *
+ * Event types are normalized in `@/lib/fub` — FUB rejects anything outside its
+ * fixed list, and only a few types start action plans / AI texting.
  *
  * FUB Events API: https://docs.followupboss.com/reference/events-post
  */
@@ -22,6 +26,8 @@ type LeadInput = {
   tag?: string; // single tag (back-compat)
   tags?: string[] | string; // one or more tags (array or comma-separated)
   source?: string;
+  /** structured listing details, so the lead lands on the right home in FUB */
+  property?: FubProperty;
 };
 
 const CORS = {
@@ -46,34 +52,32 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "An email or phone is required." }, { status: 400, headers: CORS });
   }
 
-  const key = process.env.FUB_API_KEY;
-  if (!key) {
-    // CRM not configured yet — don't break the UX; Mike adds the key in Vercel.
-    return NextResponse.json({ ok: true, queued: false }, { headers: CORS });
-  }
-
   // Prefer explicit first/last fields; fall back to splitting a single name.
   let firstName = (data.firstName ?? "").trim();
   let lastName = (data.lastName ?? "").trim();
   if (!firstName && !lastName && data.name) {
-    const parts = data.name.trim().split(/\s+/);
-    firstName = parts[0] ?? "";
-    lastName = parts.slice(1).join(" ");
+    const split = splitName(data.name);
+    firstName = split.firstName ?? "";
+    lastName = split.lastName ?? "";
   }
 
-  // Merge single `tag` and/or `tags` (array or comma-separated) into a unique list.
+  const address = data.address?.trim();
+  const property = data.property && Object.keys(data.property).length ? data.property : undefined;
+  const { type, keptAsTag } = normalizeEventType(data.type, Boolean(property || address));
+
+  // Merge single `tag` and/or `tags` (array or comma-separated) into a unique
+  // list, keeping any intent label FUB itself won't accept as an event type.
   const rawTags = [
     ...(Array.isArray(data.tags) ? data.tags : typeof data.tags === "string" ? data.tags.split(",") : []),
     ...(data.tag ? [data.tag] : []),
+    ...(keptAsTag ? [keptAsTag] : []),
   ].map((t) => String(t).trim());
   const tags = [...new Set(rawTags.filter(Boolean))];
 
-  const address = data.address?.trim();
-
-  const body = {
+  const result = await postFubEvent({
     source: data.source || "Luxury Website",
     system: "Roland Luxury Website",
-    type: data.type || "General Inquiry",
+    type,
     message: [address ? `Property address: ${address}` : "", data.message || ""].filter(Boolean).join("\n"),
     person: {
       firstName: firstName || undefined,
@@ -84,24 +88,15 @@ export async function POST(req: Request) {
       addresses: address ? [{ type: "home", street: address }] : undefined,
       tags,
     },
-  };
+    property,
+  });
 
-  try {
-    const res = await fetch("https://api.followupboss.com/v1/events", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Basic ${Buffer.from(`${key}:`).toString("base64")}`,
-        "X-System": "TheRolandTeamWebsite",
-      },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) {
-      const detail = (await res.text()).slice(0, 300);
-      return NextResponse.json({ ok: false, error: `CRM error ${res.status}`, detail }, { status: 502, headers: CORS });
-    }
-    return NextResponse.json({ ok: true, queued: true }, { headers: CORS });
-  } catch {
-    return NextResponse.json({ ok: false, error: "Could not reach CRM." }, { status: 502, headers: CORS });
+  if (!result.ok) {
+    return NextResponse.json(
+      { ok: false, error: result.status ? `CRM error ${result.status}` : "Could not reach CRM.", detail: result.detail },
+      { status: 502, headers: CORS },
+    );
   }
+
+  return NextResponse.json({ ok: true, queued: result.queued }, { headers: CORS });
 }

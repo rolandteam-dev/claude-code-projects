@@ -7,6 +7,7 @@ import { IdxDisclaimer } from "@/components/IdxDisclaimer";
 import { ListingGallery } from "@/components/ListingGallery";
 import { PaymentEstimator } from "@/components/PaymentEstimator";
 import { ScheduleTour } from "@/components/ScheduleTour";
+import { TrackListingView } from "@/components/ConciergeTracking";
 import { ListingStickyBar } from "@/components/ListingStickyBar";
 import { ListingShareBar } from "@/components/ListingShareBar";
 import { WhatsNearby } from "@/components/WhatsNearby";
@@ -133,6 +134,24 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
 
   return (
     <>
+      <TrackListingView
+        listing={{
+          id: l.id,
+          price: l.listPrice,
+          beds: l.beds,
+          baths: l.baths,
+          sqft: l.sqft,
+          street: l.address.line1,
+          city: l.address.city,
+          state: l.address.state,
+          postalCode: l.address.postalCode,
+          mlsNumber: l.mlsNumber,
+          propertyType: l.propertyType,
+          communitySlug: l.address.communitySlug,
+          communityName: community?.name,
+          url: `/listings/${l.id}`,
+        }}
+      />
       <JsonLd
         data={[
           breadcrumbSchema([

@@ -15,6 +15,9 @@ organically for community/neighborhood and buyer/seller search terms.
 ## Structure
 - `src/lib/site.ts` — global site config (name, URL, phone, nav). **Update contact + URL before launch.**
 - `src/lib/schema.ts` — JSON-LD builders (RealEstateAgent, BreadcrumbList, FAQPage)
+- `src/lib/fub.ts` — Follow Up Boss event types + posting (the only place that knows FUB's valid types)
+- `src/lib/concierge/` — proactive chat: behavior tracking, trigger rules, identity, CRM hand-off
+  (tune with `NEXT_PUBLIC_CONCIERGE_AGGRESSION`; see README)
 - `src/content/communities.ts` — community/neighborhood pages (the main traffic engine)
 - `src/content/guides.ts` — buyer/seller/relocation guides
 - `src/components/` — Header, Footer, Container, CommunityCard, JsonLd

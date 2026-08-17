@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { site } from "@/lib/site";
+import { markConverted } from "@/lib/concierge/behavior";
+import { rememberIdentity } from "@/lib/concierge/identity";
 
 /**
  * Agent-forward contact card for a listing. The three intents — Email Agent,
@@ -75,7 +77,12 @@ export function ScheduleTour({ address, mlsNumber }: { address: string; mlsNumbe
         }),
       });
       const j = await res.json().catch(() => ({ ok: false }));
-      setStatus(res.ok && j.ok ? "ok" : "error");
+      const ok = res.ok && j.ok;
+      if (ok) {
+        rememberIdentity({ name: f.name, email: f.email, phone: f.phone });
+        markConverted();
+      }
+      setStatus(ok ? "ok" : "error");
     } catch {
       setStatus("error");
     }

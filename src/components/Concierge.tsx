@@ -3,6 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { site } from "@/lib/site";
+import { markConverted } from "@/lib/concierge/behavior";
+import { firstName as identityFirstName, getIdentity, rememberIdentity } from "@/lib/concierge/identity";
+import { reportIntent, toProperty } from "@/lib/concierge/report";
+import type { Nudge, NudgeChip } from "@/lib/concierge/triggers";
+import { useProactiveNudge } from "@/lib/concierge/useProactiveNudge";
 
 type Card = {
   id: string;
@@ -14,7 +19,7 @@ type Card = {
   photo: string | null;
   url: string;
 };
-type Msg = { role: "user" | "assistant"; content: string; cards?: Card[]; searchUrl?: string };
+type Msg = { role: "user" | "assistant"; content: string; cards?: Card[]; searchUrl?: string; chips?: NudgeChip[] };
 
 /** Render inline **bold** and [label](href) markdown as real elements. */
 function renderInline(text: string, keyBase: string): React.ReactNode[] {
@@ -119,7 +124,29 @@ export function Concierge() {
   const [lead, setLead] = useState({ name: "", email: "", phone: "", message: "" });
   const [leadState, setLeadState] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [lastUser, setLastUser] = useState("");
+  const [leadIntent, setLeadIntent] = useState<"general" | "tour">("general");
+  const [nudgeContext, setNudgeContext] = useState<Nudge | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<Msg[]>(messages);
+
+  /** Append messages, keeping the ref in sync so back-to-back calls compose. */
+  function pushMessages(...msgs: Msg[]) {
+    const next = [...messagesRef.current, ...msgs];
+    messagesRef.current = next;
+    setMessages(next);
+  }
+
+  // The concierge only speaks first while the panel is shut and we haven't
+  // already captured this visitor. In assertive mode it opens the panel around
+  // the message itself; otherwise the nudge comes back as a teaser bubble.
+  const { nudge, clear: clearNudge, dismiss: dismissNudge } = useProactiveNudge(
+    !open && leadState !== "done",
+    (n) => {
+      setOpen(true);
+      setNudgeContext(n);
+      pushMessages({ role: "assistant", content: n.message, chips: n.chips });
+    },
+  );
 
   // Prefill the lead form's hidden message with what they were just asking about,
   // so the team sees real context on the FUB lead.
@@ -135,10 +162,83 @@ export function Concierge() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading, showLead]);
 
+  /**
+   * A high-intent moment. If we already know who this is, it goes straight to
+   * Follow Up Boss as a Property Inquiry — the event type FUB fires action
+   * plans on — so an agent is alerted and the AI follow-up starts without the
+   * visitor filling in anything. If we don't know them, we ask.
+   */
+  async function requestTour(n: Nudge, tour: boolean) {
+    const id = getIdentity();
+    const property = n.listing ? toProperty(n.listing) : undefined;
+    if (id) {
+      const queued = await reportIntent(tour ? "tour-request" : "hot-lead", {
+        message: [
+          tour ? "Asked to tour a home from the website concierge." : "Asked the team to reach out from the website concierge.",
+          n.context,
+        ].join("\n"),
+        tags: [...n.tags, tour ? "Tour Request" : "Concierge Request"],
+        property,
+      });
+      if (queued) {
+        const who = identityFirstName(id);
+        pushMessages({
+          role: "assistant",
+          content: `Consider it handled${who ? `, ${who}` : ""}. I've sent this straight to ${site.founder}'s team with the details — expect a text or call shortly to lock in a time.`,
+        });
+        return;
+      }
+    }
+    setLeadIntent(tour ? "tour" : "general");
+    pushMessages({
+      role: "assistant",
+      content: tour
+        ? "Wonderful. What's the best name and mobile number for the showing? I'll have the team confirm the times that work for you."
+        : "Happy to help. Where should the team reach you?",
+    });
+    openLead(n.context);
+  }
+
+  /** Carry out a quick-reply choice from a proactive message. */
+  async function runChip(n: Nudge, chip: NudgeChip) {
+    if (chip.action === "dismiss") {
+      dismissNudge();
+      return;
+    }
+    // Spent chips disappear so a nudge can't be answered twice.
+    const spent = messagesRef.current.map((m) => (m.chips ? { ...m, chips: undefined } : m));
+    messagesRef.current = spent;
+    setMessages(spent);
+    setNudgeContext(n);
+    setOpen(true);
+
+    if (chip.action === "similar") {
+      await send(n.similar || "Show me homes like the ones I've been viewing.");
+      return;
+    }
+    pushMessages({ role: "user", content: chip.label });
+    if (chip.action === "value") {
+      pushMessages({
+        role: "assistant",
+        content: `Happy to arrange that — start with [what your home is worth](/home-value) and the team will follow up with a real, human valuation. Or call ${site.phone} and we'll talk it through.`,
+      });
+      return;
+    }
+    await requestTour(n, chip.action === "tour");
+  }
+
+  /** From the teaser bubble: move the line into the transcript, then act on it. */
+  function onTeaserChip(n: Nudge, chip: NudgeChip) {
+    if (chip.action !== "dismiss") pushMessages({ role: "assistant", content: n.message });
+    clearNudge();
+    void runChip(n, chip);
+  }
+
   async function send(text: string) {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
-    const next = [...messages, { role: "user" as const, content: trimmed }];
+    const next = [...messagesRef.current, { role: "user" as const, content: trimmed }];
+    messagesRef.current = next;
     setMessages(next);
     setLastUser(trimmed);
     setInput("");
@@ -156,21 +256,18 @@ export function Concierge() {
       const leadMatch = reply.match(/\[\[\s*LEAD\s*(?::\s*([^\]]+))?\]\]/i);
       const leadSummary = leadMatch?.[1]?.trim();
       reply = reply.replace(/\[\[\s*LEAD\s*(?::[^\]]*)?\]\]/gi, "").trim();
-      setMessages((m) => [
-        ...m,
-        {
-          role: "assistant",
-          content: reply,
-          cards: Array.isArray(data.listings) ? data.listings : undefined,
-          searchUrl: typeof data.searchUrl === "string" ? data.searchUrl : undefined,
-        },
-      ]);
+      pushMessages({
+        role: "assistant",
+        content: reply,
+        cards: Array.isArray(data.listings) ? data.listings : undefined,
+        searchUrl: typeof data.searchUrl === "string" ? data.searchUrl : undefined,
+      });
       if (leadMatch && leadState !== "done") openLead(leadSummary || trimmed);
     } catch {
-      setMessages((m) => [
-        ...m,
-        { role: "assistant", content: `I had trouble responding just now — please call ${site.phone} and we'll help right away.` },
-      ]);
+      pushMessages({
+        role: "assistant",
+        content: `I had trouble responding just now — please call ${site.phone} and we'll help right away.`,
+      });
     } finally {
       setLoading(false);
     }
@@ -181,6 +278,8 @@ export function Concierge() {
     if (!lead.email && !lead.phone) return;
     setLeadState("sending");
     try {
+      const tour = leadIntent === "tour";
+      const listing = nudgeContext?.listing;
       const res = await fetch("/api/lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -188,23 +287,28 @@ export function Concierge() {
           name: lead.name,
           email: lead.email,
           phone: lead.phone,
-          message: lead.message,
-          type: "Buyer Inquiry",
-          tags: ["Luxury Buyer", "AI Concierge"],
+          message: [lead.message, nudgeContext?.context].filter(Boolean).join("\n"),
+          // Property Inquiry is one of the few types FUB starts action plans on.
+          type: tour || listing ? "Property Inquiry" : "Inquiry",
+          tags: ["Luxury Buyer", "AI Concierge", ...(tour ? ["Tour Request"] : []), ...(nudgeContext?.tags ?? [])],
+          property: listing ? toProperty(listing) : undefined,
           source: "Luxury Website Chatbot",
         }),
       });
       const data = await res.json();
       if (data.ok) {
+        // From here on, this browser is a known contact: every home they open
+        // and every tour they ask for can be logged against their CRM record.
+        rememberIdentity({ name: lead.name, email: lead.email, phone: lead.phone });
+        markConverted();
         setLeadState("done");
         setShowLead(false);
-        setMessages((m) => [
-          ...m,
-          {
-            role: "assistant",
-            content: `Thank you${lead.name ? `, ${lead.name.split(" ")[0]}` : ""}. Mike's team has your details and will reach out personally. In the meantime, feel free to keep asking me anything.`,
-          },
-        ]);
+        pushMessages({
+          role: "assistant",
+          content: tour
+            ? `Thank you${lead.name ? `, ${lead.name.split(" ")[0]}` : ""}. ${site.founder}'s team has your showing request and will reach out to confirm a time. Anything else you'd like to see while I'm here?`
+            : `Thank you${lead.name ? `, ${lead.name.split(" ")[0]}` : ""}. Mike's team has your details and will reach out personally. In the meantime, feel free to keep asking me anything.`,
+        });
       } else {
         setLeadState("error");
       }
@@ -215,10 +319,50 @@ export function Concierge() {
 
   return (
     <>
+      {/* Proactive teaser — the concierge speaking first, based on how this
+          visitor has been shopping. Never auto-opens the panel on a phone. */}
+      {!open && nudge && (
+        <div className="fixed bottom-[5.75rem] right-5 z-[60] w-[min(330px,calc(100vw-2.5rem))] overflow-hidden rounded-[12px] border border-[rgba(216,189,132,0.4)] bg-[var(--color-graphite)] text-white shadow-[0_18px_45px_rgba(14,16,20,0.45)]">
+          <div className="flex items-start gap-2.5 px-3.5 pt-3.5">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-gold)] font-serif text-[0.9rem]">
+              ✦
+            </span>
+            <p className="flex-1 font-sans text-[0.86rem] leading-snug text-[#e8eaee]">{nudge.message}</p>
+            <button
+              onClick={dismissNudge}
+              aria-label="Dismiss message"
+              className="-mt-0.5 shrink-0 text-[#7f8792] hover:text-white"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+          <div className="space-y-1.5 px-3.5 pb-3.5 pt-3">
+            {nudge.chips.map((chip, ci) => (
+              <button
+                key={chip.action}
+                onClick={() => onTeaserChip(nudge, chip)}
+                className={"w-full rounded-[8px] px-3 py-2 text-left font-sans text-[0.82rem] font-semibold transition-colors " +
+                  (ci === 0
+                    ? "bg-[var(--color-gold)] text-white hover:bg-[#86692f]"
+                    : "border border-[var(--color-line-dark)] text-[#cbcfd6] hover:border-[rgba(216,189,132,0.4)] hover:text-white")}
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Launcher */}
       {!open && (
         <button
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            // Opening the chat themselves answers the teaser — don't re-show it.
+            clearNudge();
+            setOpen(true);
+          }}
           aria-label="Open the Roland Luxury concierge"
           className="fixed bottom-5 right-5 z-[60] flex items-center gap-3 rounded-full bg-[var(--color-graphite)] py-3 pl-3 pr-5 text-white shadow-[0_10px_30px_rgba(20,22,27,0.35)] transition-transform hover:-translate-y-0.5"
         >
@@ -276,6 +420,24 @@ export function Concierge() {
                         Open these filters in search →
                       </a>
                     )}
+                  </div>
+                )}
+
+                {/* Quick replies attached to a proactive message */}
+                {m.role === "assistant" && m.chips && m.chips.length > 0 && nudgeContext && (
+                  <div className="mt-2 space-y-1.5">
+                    {m.chips.map((chip, ci) => (
+                      <button
+                        key={chip.action}
+                        onClick={() => void runChip(nudgeContext, chip)}
+                        className={"w-full rounded-[8px] px-3 py-2 text-left font-sans text-[0.82rem] font-semibold transition-colors " +
+                  (ci === 0
+                    ? "bg-[var(--color-gold)] text-white hover:bg-[#86692f]"
+                    : "border border-[var(--color-line-dark)] text-[#cbcfd6] hover:border-[rgba(216,189,132,0.4)] hover:text-white")}
+                      >
+                        {chip.label}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
