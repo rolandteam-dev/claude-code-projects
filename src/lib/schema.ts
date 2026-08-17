@@ -4,6 +4,7 @@
  * AI Overviews) understand and cite the business.
  */
 import { site, absoluteUrl } from "./site";
+import { stripInline } from "./prose";
 import type { Faq } from "@/content/communities";
 
 /** The core business entity — referenced by @id across the site. */
@@ -85,8 +86,8 @@ export function faqSchema(faqs: Faq[]) {
     "@type": "FAQPage",
     mainEntity: faqs.map((f) => ({
       "@type": "Question",
-      name: f.q,
-      acceptedAnswer: { "@type": "Answer", text: f.a },
+      name: stripInline(f.q),
+      acceptedAnswer: { "@type": "Answer", text: stripInline(f.a) },
     })),
   };
 }

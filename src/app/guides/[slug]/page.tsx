@@ -6,6 +6,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { breadcrumbSchema, faqSchema } from "@/lib/schema";
 import { guides, getGuide } from "@/content/guides";
 import { site } from "@/lib/site";
+import { ProseText } from "@/lib/prose";
 
 export function generateStaticParams() {
   return guides.map((g) => ({ slug: g.slug }));
@@ -73,12 +74,12 @@ export default async function GuidePage({
           <section key={s.heading}>
             <h2 className="mt-11 text-[1.5rem]">{s.heading}</h2>
             {s.body.map((p, i) => (
-              <p key={i}>{p}</p>
+              <p key={i}><ProseText text={p} /></p>
             ))}
             {s.bullets && (
               <ul className="ml-5 list-disc space-y-2">
                 {s.bullets.map((b, i) => (
-                  <li key={i}>{b}</li>
+                  <li key={i}><ProseText text={b} /></li>
                 ))}
               </ul>
             )}
@@ -92,7 +93,7 @@ export default async function GuidePage({
               <summary className="cursor-pointer font-sans text-[1.05rem] font-semibold text-[var(--color-ink)]">
                 {f.q}
               </summary>
-              <p className="mt-3">{f.a}</p>
+              <p className="mt-3"><ProseText text={f.a} /></p>
             </details>
           ))}
         </div>
