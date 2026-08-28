@@ -83,6 +83,21 @@ function cutoffISO(): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Fields requested for comp rows. Kept narrow so a comp scan stays cheap. */
+const COMP_FIELDS = "mlsNumber,soldPrice,soldDate,lastStatus,class,address,details";
+
+const errMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
+
+/** One Repliers comp query. Throws with the upstream status on a non-2xx. */
+async function fetchComps(params: URLSearchParams, key: string): Promise<any> {
+  const res = await fetch(`${API_BASE}/listings?${params.toString()}`, {
+    headers: { "REPLIERS-API-KEY": key, "Content-Type": "application/json" },
+    next: { revalidate: 3600 }, // comps move slowly; cache an hour
+  });
+  if (!res.ok) throw new Error(`Repliers request failed: ${res.status} ${res.statusText}`);
+  return res.json();
+}
+
 export async function estimateHomeValue(input: EstimateInput): Promise<EstimateResponse> {
   const key = process.env.REPLIERS_API_KEY;
   if (!key) return { ok: false, reason: "not_configured" };
@@ -112,18 +127,26 @@ export async function estimateHomeValue(input: EstimateInput): Promise<EstimateR
   if (cls) p.set("class", cls);
   p.set("resultsPerPage", "100");
   p.set("sortBy", "soldDateDesc");
-  p.set("fields", "mlsNumber,soldPrice,soldDate,lastStatus,class,address,details");
+
+  const withFields = new URLSearchParams(p);
+  withFields.set("fields", COMP_FIELDS);
 
   let data: any;
   try {
-    const res = await fetch(`${API_BASE}/listings?${p.toString()}`, {
-      headers: { "REPLIERS-API-KEY": key, "Content-Type": "application/json" },
-      next: { revalidate: 3600 }, // comps move slowly; cache an hour
-    });
-    if (!res.ok) return { ok: false, reason: "upstream_error" };
-    data = await res.json();
-  } catch {
-    return { ok: false, reason: "upstream_error" };
+    data = await fetchComps(withFields, key);
+  } catch (err) {
+    // A board that rejects an unrecognized key in the `fields` whitelist fails
+    // the whole request, which would sink EVERY estimate while /listings kept
+    // working. Retry once without the whitelist — same fallback the listings
+    // provider uses (fetchRows in repliers.ts). Costs a heavier payload, but a
+    // slow estimate beats a permanently silent one.
+    console.warn(`[estimate] comp query with fields whitelist failed (${errMsg(err)}); retrying without it`);
+    try {
+      data = await fetchComps(p, key);
+    } catch (err2) {
+      console.error(`[estimate] comp query failed for zip ${zip}: ${errMsg(err2)}`);
+      return { ok: false, reason: "upstream_error" };
+    }
   }
 
   const rows: any[] = Array.isArray(data?.listings) ? data.listings : [];
@@ -151,7 +174,16 @@ export async function estimateHomeValue(input: EstimateInput): Promise<EstimateR
     if (Number.isFinite(perSqft) && perSqft > 0) ppsf.push(perSqft);
   }
 
-  if (ppsf.length < MIN_COMPS) return { ok: false, reason: "insufficient_comps" };
+  if (ppsf.length < MIN_COMPS) {
+    // Logged so a genuinely thin ZIP is distinguishable from a broken feed:
+    // rows=0 across many ZIPs means the key has no SOLD access, not that Las
+    // Vegas stopped selling homes.
+    console.warn(
+      `[estimate] insufficient comps for zip ${zip} (${beds}bd/${sqft}sqft): ` +
+        `${rows.length} rows returned, ${ppsf.length} usable (need ${MIN_COMPS})`,
+    );
+    return { ok: false, reason: "insufficient_comps" };
+  }
 
   // Trim the top & bottom 5% of $/sqft (distressed sales, non-arm's-length flips).
   ppsf.sort((a, b) => a - b);
