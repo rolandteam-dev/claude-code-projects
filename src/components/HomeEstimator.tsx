@@ -3,12 +3,36 @@
 import { useState } from "react";
 import { site } from "@/lib/site";
 
-type Estimate = { low: number; mid: number; high: number; compCount: number; ppsfMedian: number };
+type EstimateWindow = { sqftTolerance: number; bedsMatched: boolean; monthsBack: number; widened: boolean };
+type Estimate = {
+  low: number;
+  mid: number;
+  high: number;
+  compCount: number;
+  ppsfMedian: number;
+  window?: EstimateWindow;
+};
 type ApiResponse =
   | { ok: true; estimate: Estimate }
   | { ok: false; reason: string };
 
 const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+
+/**
+ * Plain-English description of the comp window actually used. When the tight
+ * window came up short the estimator widens it (bigger size band, any bed
+ * count, further back), so we say which window produced the number rather than
+ * implying every estimate is equally tight.
+ */
+function describeWindow(w: EstimateWindow | undefined): string {
+  const months = w?.monthsBack ?? 6;
+  const period = months === 12 ? "past 12 months" : `past ${months} months`;
+  if (!w?.widened) return `over the ${period}`;
+  const size = `±${Math.round(w.sqftTolerance * 100)}% of your size`;
+  return w.bedsMatched
+    ? `within ${size} over the ${period}`
+    : `within ${size}, any bed count, over the ${period}`;
+}
 
 const field =
   "w-full rounded-md border border-[var(--color-line)] bg-white px-3 py-2.5 font-sans text-[0.95rem] text-[var(--color-ink)] focus:border-[var(--color-gold)] focus:outline-none";
@@ -79,8 +103,14 @@ export function HomeEstimator() {
           Likely range <strong>{fmt(estimate.low)}</strong> – <strong>{fmt(estimate.high)}</strong>
         </div>
         <div className="mt-3 rounded-md bg-[var(--color-sand)] px-3 py-2 font-sans text-[0.78rem] text-[var(--color-ink-soft)]">
-          Based on <strong>{estimate.compCount}</strong> sold comps in {f.zip} over the past 6 months · median{" "}
-          {fmt(estimate.ppsfMedian)}/sqft.
+          Based on <strong>{estimate.compCount}</strong> sold comps in {f.zip} {describeWindow(estimate.window)} ·
+          median {fmt(estimate.ppsfMedian)}/sqft.
+          {estimate.window?.widened && (
+            <span className="mt-1 block">
+              Close matches were limited in {f.zip}, so we widened the comp set — treat this range as a starting point
+              and request a CMA for a precise figure.
+            </span>
+          )}
         </div>
         <a href="#request-cma" className="btn mt-5 w-full">
           Get my precise CMA →

@@ -64,8 +64,11 @@ export const site = {
   ],
   nav: [
     { label: "Search", href: "/listings" },
+    // Top-level, not just a "Sell a Home" child: the instant valuation is the
+    // strongest seller lead magnet on the site and shouldn't need a hover to find.
+    { label: "Home Value", href: "/home-value" },
     {
-      label: "Buy a Home",
+      label: "Buy",
       href: "/buy",
       children: [
         { label: "Search Homes for Sale", href: "/listings" },
@@ -81,7 +84,7 @@ export const site = {
       ],
     },
     {
-      label: "Sell a Home",
+      label: "Sell",
       href: "/sell",
       children: [
         { label: "What's My Home Worth?", href: "/home-value" },
