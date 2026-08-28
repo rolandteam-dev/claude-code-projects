@@ -58,6 +58,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/neighborhood-finder" className="text-[var(--color-ink-soft)] no-underline hover:text-[var(--color-gold)]">
+                  Neighborhood Finder
+                </Link>
+              </li>
+              <li>
                 <Link href="/testimonials" className="text-[var(--color-ink-soft)] no-underline hover:text-[var(--color-gold)]">
                   Testimonials
                 </Link>
