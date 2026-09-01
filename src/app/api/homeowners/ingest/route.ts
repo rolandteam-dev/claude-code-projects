@@ -1,35 +1,20 @@
 import { NextResponse } from "next/server";
-import { homeownerStore, newToken, type Homeowner } from "@/lib/homeowners/store";
-import { fetchEstimate } from "@/lib/homeowners/avm";
-import { dashboardUrl } from "@/lib/homeowners/brand";
+import { ingestHomeowner, type IngestInput } from "@/lib/homeowners/ingest";
+import { sendWelcomeEmail } from "@/lib/homeowners/email";
 
 export const runtime = "nodejs";
 
 /**
- * Create (or refresh) a homeowner record and return their dashboard link. This
- * is the funnel the home-value tool calls: a homeowner asks for their value,
- * we store them, pull an initial estimate, and hand back a private dashboard
- * URL they'll keep receiving updates for. An email/phone + address are required.
+ * Create (or refresh) a homeowner record and return their private dashboard
+ * link. This is the funnel the public estimator calls when a homeowner opts to
+ * "track" their home: we store them, seed the value they just saw, send a
+ * welcome email with the dashboard link, and hand the link back to the UI.
+ * Email + address are required.
  */
-type Input = {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  beds?: number;
-  baths?: number;
-  sqft?: number;
-  source?: string;
-};
-
 export async function POST(req: Request) {
-  let d: Input;
+  let d: IngestInput;
   try {
-    d = (await req.json()) as Input;
+    d = (await req.json()) as IngestInput;
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid request" }, { status: 400 });
   }
@@ -37,39 +22,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "email and address are required" }, { status: 400 });
   }
 
-  const store = homeownerStore();
-  const token = newToken();
-  const nowIso = new Date().toISOString();
-  const record: Homeowner = {
-    id: token,
-    token,
-    firstName: d.firstName ?? "",
-    lastName: d.lastName ?? "",
-    email: d.email,
-    phone: d.phone,
-    address: d.address,
-    city: d.city ?? "",
-    state: d.state ?? "NV",
-    zip: d.zip ?? "",
-    beds: d.beds,
-    baths: d.baths,
-    sqft: d.sqft,
-    subscribed: true,
-    source: d.source ?? "home-value",
-    createdAt: nowIso,
-    updatedAt: nowIso,
-    estimates: [],
-    views: [],
-  };
-
   try {
-    await store.upsert(record);
-    // Seed an initial estimate so the dashboard has data immediately.
-    const est = await fetchEstimate(record);
-    if (est) await store.addEstimate(token, est);
+    const { token, url, homeowner } = await ingestHomeowner(d);
+    // Best-effort welcome email; never fail the request if email isn't configured.
+    const email = await sendWelcomeEmail(homeowner);
+    return NextResponse.json({ ok: true, token, url, emailed: email.sent });
   } catch (e) {
     return NextResponse.json({ ok: false, error: String(e) }, { status: 500 });
   }
-
-  return NextResponse.json({ ok: true, token, url: dashboardUrl(token) });
 }

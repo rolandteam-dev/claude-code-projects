@@ -31,8 +31,51 @@ export function HomeEstimator() {
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "nocomps" | "error">("idle");
   const [estimate, setEstimate] = useState<Estimate | null>(null);
 
+  // "Track my home" capture → homeowner dashboard + value updates.
+  const [track, setTrack] = useState({ name: "", email: "", address: "" });
+  const [trackStatus, setTrackStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const [dashUrl, setDashUrl] = useState<string | null>(null);
+
   function set<K extends keyof typeof f>(k: K, v: string) {
     setF((prev) => ({ ...prev, [k]: v }));
+  }
+
+  async function saveTracking(e: React.FormEvent) {
+    e.preventDefault();
+    const address = (track.address || f.address).trim();
+    if (!track.email.trim() || !address) {
+      setTrackStatus("error");
+      return;
+    }
+    setTrackStatus("sending");
+    const parts = track.name.trim().split(/\s+/);
+    try {
+      const res = await fetch("/api/homeowners/ingest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: parts[0] || undefined,
+          lastName: parts.slice(1).join(" ") || undefined,
+          email: track.email,
+          address,
+          city: f.city,
+          zip: f.zip,
+          beds: Number(f.beds) || undefined,
+          sqft: Number(f.sqft) || undefined,
+          source: "home-value",
+          initialEstimate: estimate ? { value: estimate.mid, low: estimate.low, high: estimate.high } : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setDashUrl(data.url as string);
+        setTrackStatus("done");
+      } else {
+        setTrackStatus("error");
+      }
+    } catch {
+      setTrackStatus("error");
+    }
   }
 
   async function submit(e: React.FormEvent) {
@@ -85,6 +128,71 @@ export function HomeEstimator() {
         <a href="#request-cma" className="btn mt-5 w-full">
           Get my precise CMA →
         </a>
+
+        {/* Track this home → private homeowner dashboard + value updates */}
+        <div className="mt-5 rounded-[12px] border border-[var(--color-line)] bg-[var(--color-sand)] p-4">
+          {trackStatus === "done" ? (
+            <div className="text-center">
+              <div className="font-serif text-[1.15rem] text-[var(--color-ink)]">Your dashboard is ready ✦</div>
+              <p className="mt-1 font-sans text-[0.82rem] text-[var(--color-ink-soft)]">
+                We&apos;ll email you value updates as the market moves. Check your inbox for the link.
+              </p>
+              {dashUrl && (
+                <a href={dashUrl} target="_blank" rel="noreferrer" className="btn mt-3 inline-block">
+                  View my home dashboard →
+                </a>
+              )}
+            </div>
+          ) : (
+            <form onSubmit={saveTracking}>
+              <div className="font-sans text-[0.92rem] font-semibold text-[var(--color-ink)]">
+                Track this home&apos;s value — free
+              </div>
+              <p className="mt-1 font-sans text-[0.78rem] text-[var(--color-ink-soft)]">
+                Get a private dashboard and value updates as the market moves.
+              </p>
+              <div className="mt-3 space-y-2">
+                {!f.address.trim() && (
+                  <input
+                    className={field}
+                    placeholder="Street address"
+                    value={track.address}
+                    onChange={(e) => setTrack((p) => ({ ...p, address: e.target.value }))}
+                    aria-label="Street address"
+                  />
+                )}
+                <input
+                  className={field}
+                  placeholder="Your name"
+                  value={track.name}
+                  onChange={(e) => setTrack((p) => ({ ...p, name: e.target.value }))}
+                  aria-label="Your name"
+                />
+                <input
+                  className={field}
+                  type="email"
+                  placeholder="Email"
+                  value={track.email}
+                  onChange={(e) => setTrack((p) => ({ ...p, email: e.target.value }))}
+                  aria-label="Email"
+                  required
+                />
+                {trackStatus === "error" && (
+                  <div className="font-sans text-[0.76rem] text-[#b4433a]">
+                    Please add your email and street address.
+                  </div>
+                )}
+                <button type="submit" disabled={trackStatus === "sending"} className="btn w-full disabled:opacity-60">
+                  {trackStatus === "sending" ? "Setting up…" : "Track my home value"}
+                </button>
+                <p className="text-center font-sans text-[0.62rem] text-[var(--color-muted)]">
+                  Periodic value updates from {site.parentBrand}. Unsubscribe anytime.
+                </p>
+              </div>
+            </form>
+          )}
+        </div>
+
         <button
           type="button"
           onClick={() => {
