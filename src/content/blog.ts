@@ -4838,3 +4838,45 @@ export function postsByCategory(category?: string): BlogPost[] {
   if (!category) return sorted;
   return sorted.filter((p) => p.category === category);
 }
+
+/**
+ * Lightweight card metadata for the blog index. Deliberately omits the full
+ * `sections`/`faqs` bodies so the client search bundle stays small — only the
+ * fields a card renders, plus a lowercased `search` blob (title + excerpt +
+ * category + section headings) for instant in-browser filtering.
+ */
+export type BlogListItem = {
+  slug: string;
+  title: string;
+  category: BlogCategory;
+  excerpt: string;
+  date: string;
+  author: string;
+  readMinutes: number;
+  coverPhoto?: string;
+  /** precomputed lowercase haystack for client-side search */
+  search: string;
+};
+
+export function blogListItems(): BlogListItem[] {
+  return [...blogPosts]
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
+    .map((p) => ({
+      slug: p.slug,
+      title: p.title,
+      category: p.category,
+      excerpt: p.excerpt,
+      date: p.date,
+      author: p.author,
+      readMinutes: p.readMinutes,
+      coverPhoto: p.coverPhoto,
+      search: [
+        p.title,
+        p.excerpt,
+        p.category,
+        ...p.sections.map((s) => s.heading),
+      ]
+        .join(" ")
+        .toLowerCase(),
+    }));
+}

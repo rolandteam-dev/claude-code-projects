@@ -91,7 +91,7 @@ notifies the assigned agent and triggers any Action Plans / pond routing.
 ## Client Portal & Agent Console
 
 An in-house version of what teams normally rent from Ruuster: a branded client
-hub at **`/portal`** and an internal team console at **`/agent`**.
+hub at **`/portal`** and an internal dashboard at **`/admin/clients`**.
 
 **What the client gets** (`/portal`): a step-by-step buying or selling journey
 they can check off, their saved homes and searches (prices refreshed live from
@@ -99,14 +99,16 @@ the MLS), a payment / cash-to-close planner — or net-proceeds planner for
 sellers — a vetted vendor list they can request introductions from, and a direct
 line to their agent.
 
-**What the team gets** (`/agent`): who's active in the portal, who's gone quiet,
-a builder for pre-filled hub links to send a client, and a playbook for the FUB
-tags portal activity creates.
+**What the team gets** (`/admin/clients`): who's active in the portal, who's gone
+quiet, a builder for pre-filled hub links to send a client, and a playbook for
+the FUB tags portal activity creates. It sits beside Seller Radar and uses the
+same access convention — `ADMIN_TOKEN` compared server-side, opened with
+`?key=YOUR_TOKEN`.
 
 | Variable | Purpose |
 | --- | --- |
-| `TEAM_PASSCODE` | **Required for `/agent`.** Shared team passcode. Without it the console returns 503 and no client data is served. |
-| `FUB_API_KEY` | Reused from the lead API. Powers both portal engagement events and the `/agent` roster. Without it the portal still works; nothing reaches the CRM. |
+| `ADMIN_TOKEN` | **Required for `/admin/clients`** (shared with `/admin/sellers`). Without it the page shows setup help and serves no client data. |
+| `FUB_API_KEY` | Reused from the lead API. Powers both portal engagement events and the roster. Without it the portal still works; nothing reaches the CRM. |
 
 **How the data works.** The site is static with no login and no database, so a
 client's profile, progress, saved homes and notes live in *their own browser*
@@ -115,14 +117,15 @@ the browser is engagement: every meaningful action posts to
 `/api/portal/event` → the FUB Events API, tagged `Client Portal` plus a
 per-action tag, so the CRM stays the single source of truth and agents don't
 have a second system to check. Build FUB smart lists off those tags — the
-playbook on `/agent` lists them.
+playbook on `/admin/clients` lists them.
 
 **Consequences worth knowing:** a hub doesn't follow a client across devices or
-survive a cleared browser (agents can re-send a pre-filled link from `/agent`,
-which restores the profile but not saved homes), and the `/agent` page *shell*
-is public static HTML — only the client data behind it is passcode-protected.
-Both are the cost of staying static; moving the portal onto real auth + a
-database is the upgrade path when either starts to hurt.
+survive a cleared browser — agents can re-send a pre-filled link from
+`/admin/clients`, which restores the profile but not saved homes. And as with
+Seller Radar, the access key travels in the URL (`?key=`), so it lands in
+browser history and server logs: treat it as a shared internal secret and
+rotate it if it leaks. Both are the cost of staying static; moving onto real
+auth + a database is the upgrade path when either starts to hurt.
 
 **Adding journey steps or vendor categories:** edit `src/content/portal.ts`.
 Task ids are the storage keys for client progress — never renumber or reuse an

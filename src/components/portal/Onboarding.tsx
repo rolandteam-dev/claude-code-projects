@@ -14,7 +14,7 @@ const TIMELINES = ["ASAP", "1–3 months", "3–6 months", "6–12 months", "Jus
  * to the client's browser *and* pushed to Follow Up Boss, so a new portal user
  * shows up in the CRM like any other lead.
  *
- * Agents can pre-fill this from the invite link built on /agent, e.g.
+ * Agents can pre-fill this from the invite link built on /admin/clients, e.g.
  *   /portal?n=Jane%20Smith&e=jane@example.com&j=buy&b=750000
  * so an invited client only has to confirm what's already there.
  */

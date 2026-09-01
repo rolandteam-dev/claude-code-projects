@@ -23,7 +23,7 @@ organically for community/neighborhood and buyer/seller search terms.
 - `src/content/portal.ts` — Client Portal journeys (buyer/seller stages + tasks) and vendor categories
 - `src/lib/portal/` — portal state (`store.ts`, browser-local), CRM engagement events (`track.ts`), progress math
 - `src/components/portal/`, `src/app/portal/` — the client hub (dashboard, journey, saved, numbers, pros)
-- `src/components/agent/`, `src/app/agent` — internal team console (roster, hub-link builder, signal playbook)
+- `src/app/admin/clients` — internal portal dashboard (roster from FUB, hub-link builder, signal playbook); `src/lib/portal/roster.ts` is its server-side FUB read
 - `src/app/sitemap.ts`, `src/app/robots.ts` — auto-generated
 - `legacy/` — the old standalone HTML pages (pre-rebuild), kept for reference
 
@@ -41,11 +41,11 @@ organically for community/neighborhood and buyer/seller search terms.
 
 ## Environment variables
 - `FUB_API_KEY` — Follow Up Boss; stores leads and portal engagement. Without it forms/portal still work, nothing is stored.
-- `TEAM_PASSCODE` — required for the `/agent` console; gates all client data served to it.
+- `ADMIN_TOKEN` — required for `/admin/sellers` and `/admin/clients`; gates all client data served to them.
 - `REPLIERS_API_KEY` / `IDX_PROVIDER` — MLS feed selection (see `src/lib/idx/provider.ts`).
 
 ## Roadmap (next)
-- Client Portal on real auth + a database (hubs that follow a client across devices; per-agent console access)
+- Client Portal on real auth + a database (hubs that follow a client across devices; per-agent dashboard access)
 - Live IDX/MLS listing search integration
 - MDX blog pipeline wired to `/blog` (the daily draft task can publish here)
 - Real photography/OG images per community
