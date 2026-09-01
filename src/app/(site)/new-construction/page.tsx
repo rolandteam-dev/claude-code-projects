@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/Container";
 import { CommunityCard } from "@/components/CommunityCard";
+import { NewConstructionFinder } from "@/components/NewConstructionFinder";
 import { JsonLd } from "@/components/JsonLd";
 import { HeroBg } from "@/components/HeroBg";
 import { heroImages } from "@/lib/heroImages";
@@ -56,6 +57,17 @@ export default function NewConstructionHub() {
       </section>
 
       <Container size="wide" className="py-16">
+        <div className="eyebrow">Find by area</div>
+        <h2 className="mt-2 text-[1.9rem]">New-construction homes near you</h2>
+        <p className="mt-2 max-w-[640px] text-[var(--color-ink-soft)]">
+          Pick an area to see newly built homes — from the previous year or newer — live from the Las Vegas MLS.
+        </p>
+        <div className="mt-8">
+          <NewConstructionFinder />
+        </div>
+      </Container>
+
+      <Container size="wide" className="pb-16">
         <h2 className="text-[1.7rem]">New-construction communities</h2>
         <p className="mt-2 max-w-[640px] text-[var(--color-ink-soft)]">
           Modern floor plans, energy efficiency, and warranties in the valley&apos;s newest neighborhoods.

@@ -54,6 +54,10 @@ function str(v: string | string[] | undefined): string | undefined {
   const s = Array.isArray(v) ? v[0] : v;
   return s && s.length ? s : undefined;
 }
+function bool(v: string | string[] | undefined): boolean {
+  const s = Array.isArray(v) ? v[0] : v;
+  return s === "1" || s === "true" || s === "on";
+}
 
 /** Preserve the current filters while changing only the page. */
 function pageHref(sp: Record<string, string | string[] | undefined>, page: number): string {
@@ -86,6 +90,8 @@ export default async function ListingsPage({
   const community = communityParam ? getCommunity(communityParam) : undefined;
   // Apply the luxury floor: default to $400k, clamp anything lower to $300k.
   const minPrice = Math.max(HARD_MIN_PRICE, num(sp.minPrice) ?? DEFAULT_MIN_PRICE);
+  // "New construction" means built in the previous calendar year or newer.
+  const newConYear = new Date().getFullYear() - 1;
   const filters: ListingFilters = {
     q,
     city: str(sp.city),
@@ -94,6 +100,11 @@ export default async function ListingsPage({
     maxPrice: num(sp.maxPrice),
     minBeds: num(sp.minBeds),
     propertyType: str(sp.propertyType) as PropertyType | undefined,
+    minGarage: num(sp.minGarage),
+    noHoa: bool(sp.noHoa),
+    ageRestricted: bool(sp.ageRestricted),
+    newConstruction: bool(sp.newConstruction),
+    rvParking: bool(sp.rvParking),
     limit: PAGE_SIZE,
     offset: (page - 1) * PAGE_SIZE,
   };
@@ -183,6 +194,31 @@ export default async function ListingsPage({
                 <option key={p} value={p}>Up to {priceLabel(p)}</option>
               ))}
             </select>
+            <select name="minGarage" defaultValue={(sp.minGarage as string) ?? ""} className={field} aria-label="Minimum garage spaces">
+              <option value="">Garage (any)</option>
+              <option value="2">2+ car garage</option>
+              <option value="3">3+ car garage</option>
+              <option value="4">4+ car garage</option>
+            </select>
+            {/* Boolean facet toggles — submitted only when checked */}
+            <div className="flex basis-full flex-wrap items-center gap-x-5 gap-y-2 pt-1 font-sans text-[0.85rem] text-[var(--color-ink)]">
+              <label className="flex items-center gap-2">
+                <input type="checkbox" name="ageRestricted" value="1" defaultChecked={filters.ageRestricted} className="accent-[var(--color-gold)]" />
+                55+ / Age-restricted
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" name="newConstruction" value="1" defaultChecked={filters.newConstruction} className="accent-[var(--color-gold)]" />
+                New construction ({newConYear}+)
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" name="rvParking" value="1" defaultChecked={filters.rvParking} className="accent-[var(--color-gold)]" />
+                RV parking
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" name="noHoa" value="1" defaultChecked={filters.noHoa} className="accent-[var(--color-gold)]" />
+                No HOA
+              </label>
+            </div>
             <button type="submit" className="btn !py-2 !px-6">Search</button>
           </form>
         </Container>

@@ -10,7 +10,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
   const staticRoutes = [
-    "/", "/buy", "/sell", "/home-value", "/mortgage-pre-approval", "/new-construction", "/las-vegas-luxury-real-estate",
+    "/", "/buy", "/sell", "/home-value", "/mortgage-pre-approval", "/down-payment-assistance",
+    "/new-construction", "/las-vegas-luxury-real-estate",
     "/guard-gated-communities-las-vegas", "/moving-to-las-vegas",
     "/active-adult-communities-las-vegas", "/golf-communities-las-vegas", "/listings", "/communities",
     "/areas", "/guides", "/market-report", "/about", "/why-the-roland-team", "/testimonials",

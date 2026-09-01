@@ -131,6 +131,38 @@ function collect(...sources: any[]): string[] {
   return out;
 }
 
+/**
+ * Pool is carried inconsistently across MLSs: sometimes a descriptive list
+ * (`poolFeatures: ["In Ground","Heated"]`), sometimes a scalar/boolean
+ * (`swimmingPool: "Private"` or `"Y"`), and sometimes only as an entry inside
+ * the exterior-features list. Check all three, and normalize empties/"None" to
+ * undefined so we never render "Pool: None".
+ */
+function poolFrom(details: any): string | undefined {
+  const isNo = (v: string) => {
+    const t = v.trim().toLowerCase();
+    return !t || t === "none" || t === "no" || t === "n" || t === "false" || t === "0";
+  };
+  const isYes = (v: string) => {
+    const t = v.trim().toLowerCase();
+    return t === "y" || t === "yes" || t === "true" || t === "1";
+  };
+
+  // 1) Descriptive list field (best: keeps "In Ground, Heated, Private").
+  const featureList = collect(details.poolFeatures, details.poolDescription);
+  if (featureList.length) return featureList.join(", ");
+
+  // 2) Dedicated scalar field.
+  const direct = s(details.swimmingPool, details.pool, details.privatePool).trim();
+  if (direct && !isNo(direct)) return isYes(direct) ? "Yes" : direct;
+
+  // 3) Last resort: a "pool" mention inside the general exterior/amenity lists.
+  const mention = collect(details.exteriorFeatures, details.features, details.amenities).find(
+    (f) => /\bpool\b/i.test(f) && !/no pool|without pool/i.test(f),
+  );
+  return mention || undefined;
+}
+
 function mapEstimate(est: any): Listing["estimate"] {
   if (!est || typeof est !== "object") return undefined;
   const value = numOpt(est.value, est.estimate, est.predictedValue, est.price);
@@ -250,13 +282,18 @@ function mapRecord(r: any): Listing {
     ),
     heating: s(details.heating, details.heatType) || undefined,
     cooling: s(details.airConditioning, details.cooling, details.coolingType) || undefined,
-    pool: s(details.swimmingPool, details.pool) || undefined,
+    pool: poolFrom(details),
     view: s(details.view) || undefined,
     features: collect(
       details.exteriorFeatures,
       details.interiorFeatures,
       details.features,
       details.amenities,
+      // HOA / community amenities carry the 55+/age-restricted flag; parking
+      // features carry RV parking — collect both so those facets are searchable.
+      details.associationAmenities,
+      details.communityFeatures,
+      details.parkingFeatures,
       details.appliances,
       details.flooring,
       r.condominium?.amenities,
@@ -325,6 +362,35 @@ function latestUpdate(rows: any[]): string | undefined {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
+/* ---- In-app facet filters (facets Repliers can't filter server-side) ---- */
+
+/** 55+/age-restricted — the flag lives in the HOA/community amenities, so scan
+ *  the collected feature list plus remarks and subdivision for the phrasing. */
+function isAgeRestricted(l: Listing): boolean {
+  const hay = [l.features?.join(" ") ?? "", l.description, l.subdivision ?? ""].join(" ");
+  return /(age[-\s]?restrict|55\s*\+|55\s+(?:and|or)\s+(?:older|up|over)|active\s+adult|senior\s+community)/i.test(hay);
+}
+
+/** RV parking — a plain "RV" keyword match across features and remarks. */
+function hasRvParking(l: Listing): boolean {
+  const hay = [l.features?.join(" ") ?? "", l.description].join(" ");
+  return /\brv\b/i.test(hay);
+}
+
+/** Build the set of predicates for whichever facet filters are active. */
+function buildPostFilters(f: ListingFilters): Array<(l: Listing) => boolean> {
+  const preds: Array<(l: Listing) => boolean> = [];
+  if (f.minGarage) preds.push((l) => (l.garageSpaces ?? 0) >= f.minGarage!);
+  if (f.noHoa) preds.push((l) => !l.hoaFee);
+  if (f.newConstruction) {
+    const cutoff = new Date().getFullYear() - 1; // "previous year or newer"
+    preds.push((l) => (l.yearBuilt ?? 0) >= cutoff);
+  }
+  if (f.ageRestricted) preds.push(isAgeRestricted);
+  if (f.rvParking) preds.push(hasRvParking);
+  return preds;
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /** Fetch one page of raw listing rows, requesting card image fields with a
  *  safe fallback if the board rejects the fields whitelist. */
@@ -339,38 +405,25 @@ async function fetchRows(filters: ListingFilters): Promise<{ rows: any[]; count:
   return { rows, count: Number(data.count ?? data.total ?? rows.length) };
 }
 
-/** Standard city/valley-wide search. */
-async function cityListings(filters: ListingFilters): Promise<ListingResult> {
-  const { rows, count } = await fetchRows(filters);
-  return {
-    listings: rows.map(mapRecord),
-    total: count,
-    isSampleData: false,
-    lastUpdated: latestUpdate(rows),
-  };
-}
-
 /**
- * Community-scoped search. Repliers has no single "community" filter and MLS
- * subdivision/neighborhood naming varies, so we scope the query to the
- * community's CITY (plus any price/bed/type filters) and keep only the rows
- * that map back to this community via the same structured-field matching used
- * to cross-link listings to community pages. That guarantees a home appears on
- * a community's page exactly when it would link to that community.
- *
- * We scan up to MAX_PAGES of the city to find the community's homes, then
- * paginate the matched set in-app. Default price-descending sort surfaces
- * higher-end communities' homes first.
+ * Scan up to MAX_PAGES of a city and keep the rows that pass an optional
+ * community match plus every active facet predicate, then paginate the matched
+ * set in-app. This is the one path for any search Repliers can't do
+ * server-side: community mapping, 55+, no-HOA, garage count, RV, new build.
+ * Coverage is bounded to ~PER * MAX_PAGES listings per search — matches beyond
+ * that window aren't counted (same trade-off the community search has always
+ * had). Default price-descending sort surfaces higher-end homes first.
  */
-async function communityListings(filters: ListingFilters): Promise<ListingResult> {
-  const slug = filters.communitySlug!;
-  const community = getCommunity(slug);
-  const city = community?.city ?? filters.city;
+async function scanAndFilter(
+  filters: ListingFilters,
+  slug: string | undefined,
+  preds: Array<(l: Listing) => boolean>,
+): Promise<ListingResult> {
   const pageSize = filters.limit ?? 24;
   const offset = filters.offset ?? 0;
 
   const PER = 100; // rows per Repliers request
-  const MAX_PAGES = 4; // scan up to ~400 city listings for this community
+  const MAX_PAGES = 4; // scan up to ~400 city listings
 
   const matched: Listing[] = [];
   const matchedRaw: any[] = [];
@@ -380,8 +433,7 @@ async function communityListings(filters: ListingFilters): Promise<ListingResult
   for (let pageNum = 1; pageNum <= MAX_PAGES && scanned < cityCount; pageNum++) {
     const { rows, count } = await fetchRows({
       ...filters,
-      city,
-      communitySlug: undefined, // Repliers doesn't know our community; filter below
+      communitySlug: undefined, // Repliers doesn't know our communities; match below
       limit: PER,
       offset: (pageNum - 1) * PER,
     });
@@ -389,10 +441,10 @@ async function communityListings(filters: ListingFilters): Promise<ListingResult
     if (rows.length === 0) break;
     for (const r of rows) {
       const l = mapRecord(r);
-      if (l.address.communitySlug === slug) {
-        matched.push(l);
-        matchedRaw.push(r);
-      }
+      if (slug && l.address.communitySlug !== slug) continue;
+      if (!preds.every((p) => p(l))) continue;
+      matched.push(l);
+      matchedRaw.push(r);
     }
     scanned += rows.length;
     if (rows.length < PER) break;
@@ -404,6 +456,37 @@ async function communityListings(filters: ListingFilters): Promise<ListingResult
     isSampleData: false,
     lastUpdated: latestUpdate(matchedRaw),
   };
+}
+
+/** Standard city/valley-wide search. Fast single-page path unless a facet
+ *  filter is active, in which case we scan + filter to keep counts correct. */
+async function cityListings(filters: ListingFilters): Promise<ListingResult> {
+  const preds = buildPostFilters(filters);
+  if (preds.length === 0) {
+    const { rows, count } = await fetchRows(filters);
+    return {
+      listings: rows.map(mapRecord),
+      total: count,
+      isSampleData: false,
+      lastUpdated: latestUpdate(rows),
+    };
+  }
+  return scanAndFilter(filters, undefined, preds);
+}
+
+/**
+ * Community-scoped search. Repliers has no single "community" filter and MLS
+ * subdivision/neighborhood naming varies, so we scope the query to the
+ * community's CITY and keep only the rows that map back to this community via
+ * the same structured-field matching used to cross-link listings to community
+ * pages (plus any active facet filters). That guarantees a home appears on a
+ * community's page exactly when it would link to that community.
+ */
+async function communityListings(filters: ListingFilters): Promise<ListingResult> {
+  const slug = filters.communitySlug!;
+  const community = getCommunity(slug);
+  const city = community?.city ?? filters.city;
+  return scanAndFilter({ ...filters, city }, slug, buildPostFilters(filters));
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 

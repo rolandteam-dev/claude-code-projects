@@ -14,6 +14,12 @@ export const site = {
   // Contact
   phone: "(702) 793-2158",
   email: "mike@therolandteam.com",
+  // Home-value tool — embedded CloudCMA widget (routes seller leads to Follow Up Boss).
+  // Loaded over https to avoid mixed-content blocking on the secure site.
+  homeValueWidgetUrl:
+    "https://app.cloudcma.com/api_widget/bc1441806b829a6b95ed2067895ce75b/show?post_url=https://app.cloudcma.com&source_url=ua",
+  // Alternate: hiFello conversational landing page (link-out option if we ever swap off the embed).
+  homeValueUrl: "https://therolandteam.hifello.com/lp/64498c5d926083001921425d",
   founder: "Mike Roland",
   founderTitle: "Founder · The Roland Team",
   // Mike's headshot (in /public). Set to "" to fall back to the monogram.
@@ -77,6 +83,7 @@ export const site = {
         { label: "Affordability Calculator", href: "/calculators/home-affordability" },
         { label: "Rent vs. Buy Calculator", href: "/calculators/rent-vs-buy" },
         { label: "All Calculators", href: "/calculators" },
+        { label: "Down Payment Assistance", href: "/down-payment-assistance" },
         { label: "Market Report", href: "/market-report" },
       ],
     },
