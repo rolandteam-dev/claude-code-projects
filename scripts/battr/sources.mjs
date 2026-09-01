@@ -49,7 +49,6 @@ export const sourceBuckets = {
   "Past Client": 82,
   Recruiting: 82,
   Lender: 82,
-  "Schneider Lender": 82,
   Commercial: 82,
   "<unspecified>": 82,
   // Open-house capture: protected per Mike, 2026-09-01. Whoever sat the open
@@ -58,8 +57,6 @@ export const sourceBuckets = {
   "Open House": 82,
   "Open House Signs": 82,
   "Open House (Ylopo)": 82,
-  "Schneider Open House": 82,
-  "Schneider Open House (Ylopo)": 82,
 
   // ── 1: Zillow family ──────────────────────────────────────────────────────
   Zillow: 1,
@@ -196,14 +193,32 @@ export const sourceBuckets = {
  */
 export const unmappedPolicy = "exclude";
 
+/**
+ * Source-name prefixes that are protected outright, whatever follows.
+ *
+ * "Schneider" covers Bruce's own lead flow — protected per Mike, 2026-09-01.
+ * A prefix rather than a list because that family keeps growing: Schneider
+ * Ylopo, Schneider zBuyer, Schneider Google LSA and a dozen more, with new ones
+ * appearing over time. Enumerating them would leave each new variant
+ * unprotected until someone noticed.
+ */
+export const protectedSourcePrefixes = ["Schneider"];
+
 const norm = (s) => String(s ?? "").trim().replace(/\s+/g, " ").toLowerCase();
 
 const BUCKET_BY_SOURCE = new Map(Object.entries(sourceBuckets).map(([source, id]) => [norm(source), id]));
 const BUCKET_BY_ID = new Map(leadBuckets.map((b) => [b.id, b]));
 
+/** Does this source match one of the protected prefixes? */
+export function hasProtectedPrefix(source) {
+  const n = norm(source);
+  return protectedSourcePrefixes.some((p) => n.startsWith(`${norm(p)} `) || n === norm(p));
+}
+
 /** Resolve a raw CRM source string to a bucket id, or null when unmapped. */
 export function bucketForSource(source) {
   if (!source) return null;
+  if (hasProtectedPrefix(source)) return 82;
   return BUCKET_BY_SOURCE.get(norm(source)) ?? null;
 }
 

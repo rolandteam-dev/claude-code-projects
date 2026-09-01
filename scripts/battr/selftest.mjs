@@ -573,6 +573,20 @@ check("signs and mailers are swept", () => {
   }
 });
 
+check("every Schneider source is protected, including ones not yet created", () => {
+  for (const s of ["Schneider Ylopo", "Schneider zBuyer", "Schneider Lender", "Schneider Google LSA"]) {
+    assert.equal(isSourceAudited(s), false, `${s} must never be swept`);
+  }
+  // A prefix rule, not a list, so a new variant is protected the day it appears.
+  assert.equal(isSourceAudited("Schneider Some Vendor Invented Later"), false);
+});
+
+check("the Schneider prefix stops at a word boundary", () => {
+  // "Schneiderman Leads" is a different source and must not inherit protection
+  // just because it shares a prefix.
+  assert.equal(bucketForSource("Schneiderman Leads"), null);
+});
+
 check("stray double spaces in a FUB source string still match", () => {
   // FUB really does store "CallAction  > Riders" with two spaces.
   assert.equal(bucketForSource("CallAction  > Riders"), bucketForSource("CallAction > Riders"));
