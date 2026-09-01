@@ -351,6 +351,13 @@ async function main() {
     if (unresolved) {
       log(`  WARNING: ${unresolved} nurture-stage contacts have no readable timeframe — the four nurture lists will under-report. Check the timeframe field name on a FUB contact.`);
     }
+
+    // The combined list excludes an owner group, but that condition reads a
+    // field FUB may not return on a person. If nobody has any group ids, the
+    // exclusion cannot fire and the protection it implies does not exist.
+    if (!contacts.some((c) => (c.owner_group_ids ?? []).length)) {
+      log(`  WARNING: no contact carries owner_group_ids — the owner-group exclusion (${rules.excludeOwnerGroupIds.join(", ")}) is NOT being enforced. Exempt those agents by name in rules.exemptAgents instead.`);
+    }
     log(`  ${run.records.length} in the combined list, ${run.excluded.length} excluded by bucket/group`);
 
     // Two exclusions applied after the union, both surfaced as "excluded" in the
