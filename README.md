@@ -88,6 +88,55 @@ Remarketing flow this enables: email/text your FUB database → contact clicks a
 link to the site → pixel attributes their browsing to their FUB record → FUB
 notifies the assigned agent and triggers any Action Plans / pond routing.
 
+## Lead sweep engine (internal Battr)
+
+A daily audit of the FUB database that finds leads the assigned agent has gone
+quiet on, nudges them, and sweeps the ones past the neglect line into a pond —
+the in-house replacement for the paid Battr subscription.
+
+```bash
+npm run battr:test              # rule engine self-test, no API key needed
+npm run battr:dry               # full audit against live FUB, writes nothing
+FUB_API_KEY=... BATTR_LIVE=true node scripts/battr-audit.mjs
+```
+
+**Tune the rules in `scripts/battr/rules.mjs`** — thresholds, sweep ponds,
+protected stages and tags, exempt agents and sources. That file is the whole
+policy surface; the engine is not meant to be edited to change behavior.
+
+| How a lead is judged | |
+| --- | --- |
+| Last touch | The most recent **agent-initiated** call, text, or email. A lead contacting *us* is not a touch. Never-contacted leads run the clock from their creation date. |
+| At Risk | `atRiskDays` with no touch → a note lands on the lead and `Battr At Risk Since` is stamped. Re-flagging is skipped on later runs. |
+| Neglected | `neglectedDays` with no touch → the lead is reassigned to the sweep pond, with a note recording who had it. |
+| Excluded | Protected stages (under contract, closed), DNC-family tags, exempt agents, leads newer than `minLeadAgeDays`, and leads already sitting in a pond. |
+
+**Safety.** Every run is a dry run unless `BATTR_LIVE=true` — the scheduled
+workflow stays in shadow mode until the repo variable `BATTR_LIVE` is set to
+`true`. Sweeps are capped per run (`maxSweepsPerRun`), and every sweep is written
+to `battr-logs/<run-id>.json`, so a bad run is fully reversible:
+
+```bash
+node scripts/battr-audit.mjs --undo=2026-09-01-a1b2
+```
+
+**Scheduling:** the `Battr audit` GitHub Action
+(`.github/workflows/battr-audit.yml`) runs it at 7 PM PT daily and commits the
+report + audit trail to `battr-logs/`. You can also trigger it from the
+**Actions** tab, choosing dry or live and which stage to run.
+
+| Variable | Where | Purpose |
+| --- | --- | --- |
+| `FUB_API_KEY` | Actions secret | Required. Same key as the site's lead intake. |
+| `BATTR_LIVE` | Actions variable | Set to `true` to let the schedule write. Unset = shadow mode. |
+| `BATTR_SMART_LIST_ID` | Actions variable | Optional. Audit one FUB smart list instead of the whole database. |
+| `BATTR_REPORT_TO` | Actions variable | Optional. Where the daily report is emailed. |
+| `RESEND_API_KEY` | Actions secret | Optional. Enables emailing the report. |
+| `BATTR_WEBHOOK_URL` | Actions secret | Optional. Posts the report to a Slack incoming webhook. |
+
+> The report is always written to `battr-logs/` and to the GitHub Actions job
+> summary, so it survives even with no email or Slack configured.
+
 ## Blog auto-drafting engine
 
 Give it a topic and it writes a full, SEO-optimized, internally-linked post

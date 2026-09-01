@@ -1,0 +1,92 @@
+name: Battr audit
+
+# Daily lead-neglect audit of Follow Up Boss — the internal replacement for the
+# Battr subscription. Nudges leads the assigned agent has gone quiet on, sweeps
+# the ones past the neglect line into a pond, and posts an agent scoreboard.
+#
+# Runs at 7 PM PT, matching the time the paid Battr audit runs today.
+#
+# SAFETY: this is a DRY RUN unless the repository variable BATTR_LIVE is set to
+# "true" (Settings → Secrets and variables → Actions → Variables). Leave it unset
+# to shadow the paid product for a few weeks and compare the numbers first.
+#
+# Required secret: FUB_API_KEY
+# Optional secrets: RESEND_API_KEY (emails the report), BATTR_WEBHOOK_URL (Slack)
+# Optional variables: BATTR_LIVE, BATTR_SMART_LIST_ID, BATTR_REPORT_TO
+
+on:
+  schedule:
+    - cron: "0 2 * * *" # 02:00 UTC = 7 PM PT
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Run mode"
+        type: choice
+        default: "dry"
+        options:
+          - "dry"
+          - "live"
+      stage:
+        description: "Which rules to act on"
+        type: choice
+        default: "both"
+        options:
+          - "both"
+          - "at-risk"
+          - "neglected"
+      max_sweeps:
+        description: "Override the per-run sweep cap (optional)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: battr-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Self-test the rule engine
+        run: node scripts/battr/selftest.mjs
+
+      - name: Run the audit
+        env:
+          FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          BATTR_WEBHOOK_URL: ${{ secrets.BATTR_WEBHOOK_URL }}
+          BATTR_SMART_LIST_ID: ${{ vars.BATTR_SMART_LIST_ID }}
+          BATTR_REPORT_TO: ${{ vars.BATTR_REPORT_TO }}
+          # A manual run honors its own choice; the schedule honors the repo variable.
+          BATTR_LIVE: ${{ inputs.mode == 'live' || (github.event_name == 'schedule' && vars.BATTR_LIVE == 'true') }}
+        run: |
+          node scripts/battr-audit.mjs \
+            --stage="${{ inputs.stage || 'both' }}" \
+            ${{ inputs.max_sweeps && format('--max-sweeps={0}', inputs.max_sweeps) || '' }}
+
+      - name: Commit the audit trail
+        run: |
+          if [ -z "$(git status --porcelain battr-logs/)" ]; then
+            echo "Nothing to record."
+            exit 0
+          fi
+          git config user.name "roland-luxury-bot"
+          git config user.email "bot@therolandteam.com"
+          git add battr-logs/
+          git commit -m "Battr audit $(date -u +%Y-%m-%d)"
+          # The schedule and a manual run can race; rebase rather than fail.
+          for i in 1 2 3; do
+            git pull --rebase origin ${{ github.ref_name }} && git push origin HEAD:${{ github.ref_name }} && exit 0
+            sleep $((i * 5))
+          done
+          echo "Could not push the audit trail" >&2
+          exit 1

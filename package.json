@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "battr:test": "node scripts/battr/selftest.mjs",
+    "battr:dry": "node scripts/battr-audit.mjs --dry"
   },
   "dependencies": {
     "next": "16.2.12",
