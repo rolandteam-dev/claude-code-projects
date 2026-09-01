@@ -430,6 +430,67 @@ check("an unknown day filter fails closed", () => {
   assert.equal(isDayAllowed("Whenever", dayAt("2026-09-01")), false);
 });
 
+// --------------------------------------------------------------- pagination
+
+console.log("\nUnit — FUB pagination");
+
+// FUB rejects offset paging past the first page with
+// "Deep pagination disabled, use 'nextLink' url", so the client must follow the
+// cursor it hands back. This serves two pages and fails any offset request the
+// way FUB does.
+await (async () => {
+  const { FubClient } = await import("./fub.mjs");
+  const seen = [];
+
+  const pager = createServer((req, res) => {
+    const url = new URL(req.url, "http://127.0.0.1");
+    seen.push(url.pathname + url.search);
+
+    if (url.searchParams.has("offset")) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ errorMessage: "Deep pagination disabled, use 'nextLink' url" }));
+    }
+
+    const page = url.searchParams.get("page");
+    const body =
+      page === "2"
+        ? { people: [{ id: 3 }], _metadata: {} }
+        : { people: [{ id: 1 }, { id: 2 }], _metadata: { nextLink: `http://127.0.0.1:${pager.address().port}/people?page=2` } };
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(body));
+  });
+
+  await new Promise((r) => pager.listen(0, "127.0.0.1", r));
+  const base = `http://127.0.0.1:${pager.address().port}`;
+
+  try {
+    const fub = new FubClient("k", { dry: true, log: () => {} });
+    process.env.FUB_API_BASE = base;
+    // Re-import with the base applied; the module reads it at load time.
+    const { FubClient: Fresh } = await import(`./fub.mjs?base=${pager.address().port}`);
+    const client = new Fresh("k", { dry: true, log: () => {} });
+    void fub;
+
+    const rows = await client.paginate("/people");
+
+    check("every page is fetched by following nextLink", () => {
+      assert.deepEqual(rows.map((r) => r.id), [1, 2, 3]);
+    });
+
+    check("no request uses an offset — FUB rejects those", () => {
+      assert.ok(!seen.some((u) => u.includes("offset=")), `offset request made: ${seen.join(", ")}`);
+    });
+
+    check("the cursor is followed verbatim, not rebuilt", () => {
+      assert.ok(seen.some((u) => u.includes("page=2")), `never followed the cursor: ${seen.join(", ")}`);
+    });
+  } finally {
+    pager.close();
+    delete process.env.FUB_API_BASE;
+  }
+})();
+
 // ------------------------------------------------------------ lead sources
 
 console.log("\nUnit — lead source buckets");
@@ -697,7 +758,10 @@ const run = (env) =>
     execFile(
       process.execPath,
       [join(ROOT, "scripts", "battr-audit.mjs"), "--dry"],
-      { cwd: ROOT, env: { ...process.env, ...env } },
+      // GITHUB_STEP_SUMMARY is blanked deliberately: the engine appends its
+      // report there when set, and a fixture run must never write test data
+      // into the real job summary where it reads as live output.
+      { cwd: ROOT, env: { ...process.env, GITHUB_STEP_SUMMARY: "", ...env } },
       (err, stdout, stderr) => (err ? reject(new Error(`${err.message}\n${stderr}`)) : resolve({ stdout, stderr }))
     );
   });

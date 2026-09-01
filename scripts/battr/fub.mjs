@@ -6,8 +6,8 @@
  *
  * Written defensively on purpose. FUB names its collection keys inconsistently
  * ("people", "textmessages", "smartlists"), so `collection()` finds the array
- * rather than trusting a guessed key, and pagination follows `_metadata.next`
- * when FUB provides it and falls back to offset walking when it doesn't.
+ * rather than trusting a guessed key, and pagination follows FUB's `nextLink`
+ * cursor — offset paging is rejected past the first page.
  */
 
 /** Overridable so the self-test can point the real client at a local fixture server. */
@@ -17,6 +17,8 @@ const SYSTEM = "TheRolandTeamBattr";
 /** FUB allows bursts but throttles hard; this keeps us well under the ceiling. */
 const PAGE_SIZE = 100;
 const MAX_RETRIES = 5;
+/** Guard against a server that always hands back a cursor. */
+const MAX_PAGES = 500;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -39,8 +41,12 @@ export class FubClient {
     this.writes = 0;
   }
 
-  async request(method, path, { query, body } = {}) {
-    const url = new URL(`${BASE}${path}`);
+  /**
+   * `target` is either a path ("/people") or an absolute URL — FUB's pagination
+   * cursor comes back as a full nextLink, and it is followed verbatim.
+   */
+  async request(method, target, { query, body } = {}) {
+    const url = new URL(target.startsWith("http") ? target : `${BASE}${target}`);
     for (const [k, v] of Object.entries(query ?? {})) {
       if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v));
     }
@@ -65,18 +71,18 @@ export class FubClient {
       // Throttled or a transient server error — back off and retry.
       if (res.status === 429 || res.status >= 500) {
         if (attempt === MAX_RETRIES) {
-          throw new Error(`FUB ${method} ${path} failed after ${MAX_RETRIES} retries (${res.status})`);
+          throw new Error(`FUB ${method} ${target} failed after ${MAX_RETRIES} retries (${res.status})`);
         }
         const retryAfter = Number(res.headers.get("Retry-After"));
         const waitMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 2 ** attempt * 500;
-        this.log(`  ${res.status} from ${path}, retrying in ${Math.round(waitMs / 1000)}s`);
+        this.log(`  ${res.status} from ${target}, retrying in ${Math.round(waitMs / 1000)}s`);
         await sleep(waitMs);
         continue;
       }
 
       if (!res.ok) {
         const detail = (await res.text()).slice(0, 300);
-        throw new Error(`FUB ${method} ${path} → ${res.status}: ${detail}`);
+        throw new Error(`FUB ${method} ${target} → ${res.status}: ${detail}`);
       }
 
       if (isWrite) this.writes++;
@@ -85,24 +91,29 @@ export class FubClient {
     }
   }
 
-  /** Walk every page of a collection endpoint and return the flattened rows. */
+  /**
+   * Walk every page of a collection endpoint and return the flattened rows.
+   *
+   * Follows FUB's `_metadata.nextLink` cursor. Offset paging is NOT used: FUB
+   * rejects it past the first page with
+   * `400 Deep pagination disabled, use 'nextLink' url`.
+   */
   async paginate(path, query = {}, { max = Infinity } = {}) {
     const rows = [];
-    let offset = 0;
+    let cursor = null;
 
-    for (;;) {
-      const payload = await this.request("GET", path, {
-        query: { ...query, limit: PAGE_SIZE, offset },
-      });
-      const batch = collection(payload);
-      rows.push(...batch);
+    // Bounded so a server that always returns a cursor can't loop forever.
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const payload = cursor
+        ? await this.request("GET", cursor)
+        : await this.request("GET", path, { query: { ...query, limit: PAGE_SIZE } });
 
-      const total = payload?._metadata?.total;
-      const hasNext = payload?._metadata?.next;
-      const exhausted = batch.length < PAGE_SIZE || (Number.isFinite(total) && rows.length >= total);
+      rows.push(...collection(payload));
+      if (rows.length >= max) break;
 
-      if (rows.length >= max || exhausted || (hasNext === undefined && batch.length === 0)) break;
-      offset += PAGE_SIZE;
+      const next = payload?._metadata?.nextLink ?? payload?._metadata?.next;
+      if (!next || typeof next !== "string") break;
+      cursor = next;
     }
 
     return max === Infinity ? rows : rows.slice(0, max);
