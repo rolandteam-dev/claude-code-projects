@@ -13,7 +13,8 @@ function sql() {
   if (!sqlClient) {
     // max:1 keeps connection use serverless-friendly; use a pooled connection
     // string (e.g. Neon's -pooler host) in production.
-    sqlClient = postgres(process.env.DATABASE_URL as string, { max: 1, prepare: false });
+    const url = (process.env.DATABASE_URL || process.env.POSTGRES_URL) as string;
+    sqlClient = postgres(url, { max: 1, prepare: false });
   }
   return sqlClient;
 }

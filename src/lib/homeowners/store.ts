@@ -152,7 +152,8 @@ const memoryStore: HomeownerStore = {
  * the HomeownerStore interface, so the swap is invisible to them.
  */
 export function homeownerStore(): HomeownerStore {
-  if (process.env.DATABASE_URL) {
+  // POSTGRES_URL is what Vercel Postgres injects; DATABASE_URL is the generic name.
+  if (process.env.DATABASE_URL || process.env.POSTGRES_URL) {
     // Lazy require so the pg client is never loaded in the in-memory path.
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     return (require("./postgres") as typeof import("./postgres")).postgresStore;
