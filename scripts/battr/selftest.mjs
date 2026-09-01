@@ -36,14 +36,23 @@ const daysAgo = (n) => new Date(NOW - n * DAY_MS).toISOString();
 
 let passed = 0;
 const check = (label, fn) => {
-  try {
-    fn();
+  const ok = () => {
     passed++;
     console.log(`  ✓ ${label}`);
-  } catch (err) {
+  };
+  const fail = (err) => {
     console.error(`  ✗ ${label}\n    ${err.message}`);
     process.exitCode = 1;
+  };
+  try {
+    const out = fn();
+    // Some checks are async; a rejected promise must fail the run, not vanish.
+    if (out && typeof out.then === "function") return out.then(ok, fail);
+    ok();
+  } catch (err) {
+    fail(err);
   }
+  return undefined;
 };
 
 // --------------------------------------------------------------- unit fixtures
@@ -480,6 +489,27 @@ await (async () => {
 
     check("no request uses an offset — FUB rejects those", () => {
       assert.ok(!seen.some((u) => u.includes("offset=")), `offset request made: ${seen.join(", ")}`);
+    });
+
+    await check("a collection that never exhausts throws rather than truncating", async () => {
+      // A server that always returns a cursor used to stop silently at the page
+      // cap, which reads downstream as a small database rather than a short read.
+      const endless = createServer((req, res) => {
+        const port = endless.address().port;
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ people: [{ id: 1 }], _metadata: { nextLink: `http://127.0.0.1:${port}/people?p=x` } }));
+      });
+      await new Promise((r) => endless.listen(0, "127.0.0.1", r));
+      try {
+        process.env.FUB_API_BASE = `http://127.0.0.1:${endless.address().port}`;
+        const { FubClient: Endless } = await import(`./fub.mjs?endless=${endless.address().port}`);
+        await assert.rejects(
+          () => new Endless("k", { dry: true, log: () => {} }).paginate("/people", {}, { max: 12000 }),
+          /page cap|do not trust a truncated audit/
+        );
+      } finally {
+        endless.close();
+      }
     });
 
     check("the cursor is followed verbatim, not rebuilt", () => {

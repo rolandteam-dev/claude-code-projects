@@ -17,8 +17,11 @@ const SYSTEM = "TheRolandTeamBattr";
 /** FUB allows bursts but throttles hard; this keeps us well under the ceiling. */
 const PAGE_SIZE = 100;
 const MAX_RETRIES = 5;
-/** Guard against a server that always hands back a cursor. */
-const MAX_PAGES = 500;
+/**
+ * Guard against a server that always hands back a cursor. Sized well past the
+ * real database; hitting it is treated as an error, never a silent stop.
+ */
+const MAX_PAGES = 5000;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -101,22 +104,43 @@ export class FubClient {
   async paginate(path, query = {}, { max = Infinity } = {}) {
     const rows = [];
     let cursor = null;
+    let reportedTotal = null;
+    let exhausted = false;
 
-    // Bounded so a server that always returns a cursor can't loop forever.
     for (let page = 0; page < MAX_PAGES; page++) {
       const payload = cursor
         ? await this.request("GET", cursor)
         : await this.request("GET", path, { query: { ...query, limit: PAGE_SIZE } });
 
+      if (reportedTotal === null && Number.isFinite(payload?._metadata?.total)) {
+        reportedTotal = payload._metadata.total;
+      }
+
       rows.push(...collection(payload));
-      if (rows.length >= max) break;
+      if (rows.length >= max) return rows.slice(0, max);
 
       const next = payload?._metadata?.nextLink ?? payload?._metadata?.next;
-      if (!next || typeof next !== "string") break;
+      if (!next || typeof next !== "string") {
+        exhausted = true;
+        break;
+      }
       cursor = next;
     }
 
-    return max === Infinity ? rows : rows.slice(0, max);
+    // Silent truncation is the dangerous failure here: a short read looks like a
+    // small database, and an audit over a fraction of the leads still produces a
+    // confident-looking report. Refuse instead.
+    if (!exhausted) {
+      throw new Error(
+        `FUB GET ${path} hit the ${MAX_PAGES}-page cap at ${rows.length} rows without exhausting the collection. ` +
+          `Raise MAX_PAGES or narrow the query — do not trust a truncated audit.`
+      );
+    }
+    if (Number.isFinite(reportedTotal) && rows.length < reportedTotal) {
+      this.log(`  WARNING: ${path} returned ${rows.length} of ${reportedTotal} reported rows`);
+    }
+
+    return rows;
   }
 
   // ------------------------------------------------------------------- reads
