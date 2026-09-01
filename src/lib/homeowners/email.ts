@@ -109,6 +109,51 @@ export async function sendWelcomeEmail(h: Homeowner): Promise<{ sent: boolean; r
   }
 }
 
+export async function sendCashOfferEmail(to: {
+  email: string;
+  firstName?: string;
+  address?: string;
+}): Promise<{ sent: boolean; reason?: string }> {
+  const key = process.env.RESEND_API_KEY;
+  const from = process.env.HOMEOWNER_FROM_EMAIL;
+  if (!key || !from) return { sent: false, reason: "email not configured" };
+  if (!to.email) return { sent: false, reason: "missing email" };
+  const html = `
+  <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;color:#1c1c1c;">
+    <div style="padding:20px 0;text-align:center;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#8a6d2b;font-weight:600;">
+      ${homeownerBrand.name}
+    </div>
+    <div style="background:#fff;border:1px solid #e7e3db;border-radius:14px;padding:28px;">
+      <p style="margin:0 0 10px;font-size:19px;font-weight:600;">We got your cash-offer request${to.firstName ? `, ${to.firstName}` : ""}</p>
+      <p style="margin:0 0 12px;font-size:15px;color:#3a3a3a;">
+        Thanks for reaching out${to.address ? ` about <strong>${to.address}</strong>` : ""}. ${homeownerBrand.founder}&apos;s
+        team will review your home and get back to you shortly with your cash-offer options — and a side-by-side of
+        what the same home could bring on the open market, so you can compare with no pressure.
+      </p>
+      <a href="tel:${homeownerBrand.phone}" style="display:inline-block;margin-top:8px;background:#8a6d2b;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:600;font-size:15px;">
+        Call ${homeownerBrand.phone}
+      </a>
+    </div>
+    <div style="padding:16px 8px;text-align:center;font-size:11px;color:#9a9a9a;line-height:1.6;">
+      ${homeownerBrand.legalName} · Equal Housing Opportunity.
+    </div>
+  </div>`;
+  try {
+    const resend = new Resend(key);
+    const { error } = await resend.emails.send({
+      from,
+      to: to.email,
+      subject: "Your cash-offer request — next steps",
+      html,
+      replyTo: homeownerBrand.email,
+    });
+    if (error) return { sent: false, reason: String(error) };
+    return { sent: true };
+  } catch (e) {
+    return { sent: false, reason: String(e) };
+  }
+}
+
 export async function sendValueEmail(h: Homeowner): Promise<{ sent: boolean; reason?: string }> {
   const key = process.env.RESEND_API_KEY;
   const from = process.env.HOMEOWNER_FROM_EMAIL; // e.g. "The Roland Team <home@therolandteam.com>"

@@ -93,6 +93,7 @@ export const site = {
       href: "/sell",
       children: [
         { label: "What's My Home Worth?", href: "/home-value" },
+        { label: "Get a Cash Offer", href: "/cash-offer" },
         { label: "Selling Guide", href: "/guides/selling-your-home-in-las-vegas" },
         { label: "Seller Net Proceeds Calculator", href: "/calculators/seller-net-proceeds" },
         { label: "Market Report", href: "/market-report" },
