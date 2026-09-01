@@ -97,8 +97,12 @@ export const rules = {
    */
   reportOnlyTags: ["BAD_PHONE"],
 
-  /** Agents exempt from the audit — team lead, admin, ISA seats. By name. */
-  exemptAgents: ["Mike Roland", "Adin Roland"],
+  /**
+   * Agents exempt from the audit entirely: their leads are never flagged, never
+   * swept, and never generate an alert. Matched on the FUB "Assigned to" name,
+   * case-insensitively.
+   */
+  exemptAgents: ["Mike Roland"],
 
   /**
    * Owner groups excluded from audits, sweeps, and alerts. 52555 is the group
