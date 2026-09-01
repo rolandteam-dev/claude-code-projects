@@ -8,6 +8,7 @@ import { communityHero } from "@/lib/heroImages";
 import { breadcrumbSchema, faqSchema } from "@/lib/schema";
 import { communities, getCommunity } from "@/content/communities";
 import { site } from "@/lib/site";
+import { ProseText } from "@/lib/prose";
 
 export function generateStaticParams() {
   return communities.map((c) => ({ slug: c.slug }));
@@ -116,7 +117,7 @@ export default async function CommunityPage({
       </header>
 
       <Container size="narrow" className="prose-body py-12">
-        <p className="text-[1.2rem] leading-relaxed">{c.lead}</p>
+        <p className="text-[1.2rem] leading-relaxed"><ProseText text={c.lead} /></p>
 
         {/* Quick facts */}
         <div className="my-9 rounded-[12px] border border-[var(--color-line)] bg-[var(--color-sand)] p-7">
@@ -136,12 +137,12 @@ export default async function CommunityPage({
           <section key={s.heading}>
             <h2 className="mt-11 text-[1.6rem]">{s.heading}</h2>
             {s.body.map((p, i) => (
-              <p key={i}>{p}</p>
+              <p key={i}><ProseText text={p} /></p>
             ))}
             {s.bullets && (
               <ul className="ml-5 list-disc space-y-2">
                 {s.bullets.map((b, i) => (
-                  <li key={i}>{b}</li>
+                  <li key={i}><ProseText text={b} /></li>
                 ))}
               </ul>
             )}
@@ -156,7 +157,7 @@ export default async function CommunityPage({
               <summary className="cursor-pointer font-sans text-[1.05rem] font-semibold text-[var(--color-ink)]">
                 {f.q}
               </summary>
-              <p className="mt-3">{f.a}</p>
+              <p className="mt-3"><ProseText text={f.a} /></p>
             </details>
           ))}
         </div>

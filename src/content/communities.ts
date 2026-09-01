@@ -1839,6 +1839,700 @@ export const communities: Community[] = [
       },
     ],
   },
+
+  {
+    slug: "sun-city-anthem",
+    name: "Sun City Anthem",
+    city: "Henderson",
+    zip: "89052",
+    seoTitle: "Sun City Anthem Homes for Sale in Henderson, NV",
+    seoDescription: "Explore Sun City Anthem homes for sale in Henderson, NV — a 55+ active-adult Del Webb community with resort-style amenities and mountain views.",
+    h1: "Sun City Anthem Homes for Sale in Henderson, NV",
+    eyebrow: "Henderson, Nevada · 55+ Active Adult",
+    intro: "A landmark Del Webb active-adult community set in the Anthem foothills of south Henderson, offering resort-style recreation and single-story living.",
+    lead: "Sun City Anthem is one of the Las Vegas Valley's largest and most established age-restricted 55+ communities, occupying an elevated pocket of Anthem in south Henderson with sweeping mountain and valley views. Built by Del Webb, the community is known for its multiple resident recreation centers, resort-style and indoor pools, fitness facilities, and a packed calendar of clubs and social activities. Homes are predominantly single-story, ranging from cozy attached villas to spacious detached floor plans on larger homesites. For buyers comparing options among [active-adult communities in Las Vegas](/active-adult-communities-las-vegas), Sun City Anthem stands out for its scale, amenity depth, and convenient access to shopping, dining, and the M Resort. Contact Roland Luxury to tour available homes and discuss current pricing and availability.",
+    quickFacts: [
+      { label: "Location", value: "Anthem, Henderson, NV 89052" },
+      { label: "Community Type", value: "Age-restricted 55+ active adult" },
+      { label: "Setting", value: "Elevated south Henderson foothills with mountain and valley views" },
+      { label: "Home Style", value: "Predominantly single-story homes" },
+      { label: "Approx. Price Range", value: "Approx. $350,000–$700,000+" },
+      { label: "Signature Amenity", value: "Multiple resident recreation centers with resort-style and indoor pools" },
+      { label: "Distance to the Strip", value: "Approx. 20–25 minutes" },
+    ],
+    sections: [
+      {
+        heading: "About Sun City Anthem",
+        body: [
+          "Developed by Del Webb, Sun City Anthem is a large, well-known 55+ active-adult community occupying an elevated portion of the Anthem master plan in south Henderson. Its hillside setting gives many streets and backyards views of the surrounding mountains and the valley below, a feature that has long made it a sought-after option among Henderson's [age-restricted communities](/active-adult-communities-las-vegas).",
+          "The community is age-restricted to residents 55 and older but is not guard-gated, keeping access straightforward for residents, family, and guests while still maintaining the community's active-adult character.",
+        ],
+      },
+      {
+        heading: "Homes & Real Estate",
+        body: [
+          "Sun City Anthem's housing stock spans a wide range of single-story floor plans, from efficient attached villas to larger detached homes with three-car garages and expansive great rooms. Because the community was built out over several phases, floor plans, lot sizes, and finish levels vary meaningfully from one neighborhood to the next.",
+          "Pricing is approximate and shifts with inventory, lot premiums, and level of updating — Approx. $350,000 to $700,000 or more for larger, view-oriented homes. Buyers weighing budget against space and finishes may find it useful to run numbers through an [affordability calculator](/calculators/home-affordability) before touring, and to check [current listings](/listings) for up-to-date availability. Contact Roland Luxury for current availability and pricing.",
+        ],
+      },
+      {
+        heading: "Amenities & Active-Adult Lifestyle",
+        body: [
+          "Sun City Anthem is built around several resident recreation centers, each offering a different mix of fitness, social, and recreational space. Amenities across the community include resort-style outdoor pools, an indoor pool, fully equipped fitness centers, and dedicated spaces for classes, cards, and hobby groups.",
+          "Outdoor recreation includes pickleball and tennis courts, walking and biking trails, and a full calendar of clubs and organized activities that residents can join year-round.",
+        ],
+        bullets: [
+          "Multiple resident recreation centers",
+          "Resort-style outdoor pools and an indoor pool",
+          "Fitness centers and group exercise classes",
+          "Pickleball and tennis courts",
+          "Walking trails and an active social/clubs calendar",
+        ],
+      },
+      {
+        heading: "Location & Nearby",
+        body: [
+          "Sun City Anthem sits just off Anthem Parkway with convenient access to I-15 and US-95, putting the Las Vegas Strip within an easy drive. The community is close to the M Resort and other Henderson dining, shopping, and entertainment options.",
+          "Buyers exploring the broader area can browse more of [Henderson](/areas/henderson) or compare Sun City Anthem with sister communities like [Solera at Anthem](/communities/solera-at-anthem) and [Sun City Summerlin](/communities/sun-city-summerlin) on the opposite side of the valley.",
+        ],
+      },
+      {
+        heading: "Who Sun City Anthem Suits",
+        body: [
+          "Sun City Anthem is best suited to buyers 55 and older who want an amenity-rich, low-maintenance single-story home within a large, established active-adult community. Its scale and amenity variety appeal to residents who value an active social calendar as much as the home itself.",
+          "It also draws relocating retirees and downsizers who want elevated views and quick freeway access without sacrificing community connection. To see what's currently available, [browse all communities](/communities) or reach out directly.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Sun City Anthem located?",
+        a: "Sun City Anthem is located in the Anthem area of south Henderson, Nevada, in the approximately 89052 ZIP code, with elevated streets offering mountain and valley views and easy access to I-15 and US-95.",
+      },
+      {
+        q: "What is the price range for homes in Sun City Anthem?",
+        a: "Homes in Sun City Anthem generally range from approximately $350,000 to $700,000 or more, depending on floor plan, lot, view, and updates. Contact Roland Luxury for current availability and pricing.",
+      },
+      {
+        q: "Is Sun City Anthem age-restricted?",
+        a: "Yes, Sun City Anthem is an age-restricted 55+ active-adult community. It is not guard-gated, though access and community rules still reflect its active-adult focus.",
+      },
+      {
+        q: "What types of homes are available in Sun City Anthem?",
+        a: "Sun City Anthem offers predominantly single-story homes, including attached villas and larger detached floor plans with two- and three-car garages. Contact Roland Luxury for current availability and pricing.",
+      },
+      {
+        q: "What amenities does Sun City Anthem offer?",
+        a: "Residents have access to multiple recreation centers, resort-style and indoor pools, fitness centers, pickleball and tennis courts, walking trails, and an active calendar of clubs and social events.",
+      },
+    ],
+  },
+
+  {
+    slug: "anthem-country-club",
+    name: "Anthem Country Club",
+    city: "Henderson",
+    zip: "89052",
+    seoTitle: "Anthem Country Club Homes for Sale in Henderson, NV",
+    seoDescription: "Explore Anthem Country Club homes for sale in Henderson, NV — a guard-gated private golf community with mountain and Strip views. Contact Roland Luxury.",
+    h1: "Anthem Country Club Homes for Sale in Henderson, NV",
+    eyebrow: "Henderson, Nevada · Guard-Gated Golf",
+    intro: "Custom and semi-custom luxury homes wrapped around a private championship golf course in the guard-gated hills of Anthem.",
+    lead: "Anthem Country Club sits within the master-planned community of Anthem in Henderson, Nevada, offering a guard-gated, membership-based lifestyle built around a private championship golf course. The elevated terrain here gives many home sites sweeping views of the surrounding mountains and the Las Vegas Strip skyline in the distance. Residences range from spacious semi-custom estates to fully custom luxury homes, many finished with courtyard entries, resort-style pools, and multi-car garages. A full-service clubhouse anchors the community with dining, fitness, tennis, and social programming for members. For buyers seeking privacy, architectural variety, and an established golf-club setting close to the Las Vegas Strip, Anthem Country Club remains one of Henderson's most recognized addresses.",
+    quickFacts: [
+      { label: "Location", value: "Anthem, Henderson, NV 89052" },
+      { label: "Community Type", value: "Guard-gated golf community" },
+      { label: "Setting", value: "Elevated hillside with mountain & Strip views" },
+      { label: "Approx. Price Range", value: "Approx. $900K – $3M+" },
+      { label: "Distance to Strip", value: "Approx. 20–25 minutes" },
+      { label: "Signature Amenity", value: "Private championship golf course" },
+      { label: "Home Style", value: "Custom & semi-custom luxury estates" },
+      { label: "Club Access", value: "Membership-based private club" },
+    ],
+    sections: [
+      {
+        heading: "About Anthem Country Club",
+        body: [
+          "Anthem Country Club is a guard-gated enclave within the broader Anthem community in Henderson, developed around a private championship golf course. The neighborhood's elevated position in the foothills gives it a distinct sense of separation from the valley floor below, with many streets offering long sightlines toward the mountains and, on clear days, the Strip.",
+          "The community was designed with curb appeal and architectural consistency in mind, blending Mediterranean, Tuscan, and contemporary desert influences across its custom and semi-custom home sections.",
+        ],
+      },
+      {
+        heading: "Homes & Real Estate in Anthem Country Club",
+        body: [
+          "Home sizes and finishes vary widely across Anthem Country Club's guard-gated neighborhoods, from semi-custom production estates to one-off custom builds on larger lots. Pricing is approximate and shifts with inventory and finish level, so buyers should [contact Roland Luxury for current availability and pricing](/contact) or explore [current listings](/listings) for up-to-date options.",
+        ],
+        bullets: [
+          "Semi-custom and fully custom single-story and two-story floor plans",
+          "Golf course, mountain, and city-light view lots in select sections",
+          "Private pools, casitas, and multi-car garages common in larger estates",
+          "Gated sub-neighborhoods within the broader guard-gated perimeter",
+        ],
+      },
+      {
+        heading: "Golf & Club Amenities",
+        body: [
+          "At the center of the community is a private championship golf course, accessible through club membership rather than public play. The clubhouse complements the course with dining venues, a fitness center, and tennis facilities, giving residents a full country-club experience without leaving the neighborhood.",
+          "Buyers interested in a golf-centric lifestyle may also want to compare Anthem Country Club with other private layouts on our [golf communities in Las Vegas](/golf-communities-las-vegas) page.",
+        ],
+      },
+      {
+        heading: "Location & Nearby Conveniences",
+        body: [
+          "Anthem Country Club sits in Henderson's Anthem district, within easy reach of shopping, dining, and everyday services along the Eastern Avenue and St. Rose Parkway corridors. The location offers a quieter, elevated setting while remaining a manageable drive to the Las Vegas Strip and McCarran-area employment centers.",
+          "For a broader look at homes and neighborhoods throughout the city, visit our [Henderson area guide](/areas/henderson) or browse [all communities](/communities).",
+        ],
+      },
+      {
+        heading: "Who Anthem Country Club Suits",
+        body: [
+          "Anthem Country Club tends to appeal to buyers who want a private, guard-gated setting paired with an active golf and club lifestyle, along with move-up buyers and relocating professionals drawn to its elevated views and architectural variety.",
+          "Comparable guard-gated golf options in the valley include [Seven Hills](/communities/seven-hills) and [Red Rock Country Club](/communities/red-rock-country-club); browse [guard-gated communities in Las Vegas](/guard-gated-communities-las-vegas) for a fuller comparison, or get a free [home value estimate](/home-value) if you're considering selling here.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where is Anthem Country Club located?",
+        a: "Anthem Country Club is located within the Anthem master-planned community in Henderson, Nevada, ZIP code approximately 89052, in the hills above the valley floor.",
+      },
+      {
+        q: "What is the price range for homes in Anthem Country Club?",
+        a: "Home prices in Anthem Country Club vary by size, lot, and finish level, generally ranging from the high $900,000s to $3 million or more. Contact Roland Luxury for current availability and pricing.",
+      },
+      {
+        q: "Is Anthem Country Club guard-gated?",
+        a: "Yes, Anthem Country Club is a guard-gated community with controlled access, offering an added layer of privacy and security for residents.",
+      },
+      {
+        q: "Is the golf course at Anthem Country Club private?",
+        a: "Yes, the championship golf course at Anthem Country Club is private and operates on a membership basis rather than public or resort play.",
+      },
+      {
+        q: "What types of homes are available in Anthem Country Club?",
+        a: "Anthem Country Club offers both semi-custom and fully custom single- and two-story luxury homes, including options with golf course, mountain, or city-light views. Contact Roland Luxury for current availability and pricing.",
+      },
+    ],
+  },
+
+  {
+    slug: "green-valley-ranch",
+    name: "Green Valley Ranch",
+    city: "Henderson",
+    zip: "89052",
+    seoTitle: "Green Valley Ranch Homes for Sale | Henderson, NV",
+    seoDescription: "See homes for sale in Green Valley Ranch, Henderson, NV — tree-lined streets, The District shops and dining, parks, trails, and 215 Beltway access.",
+    h1: "Green Valley Ranch Homes for Sale in Henderson, NV",
+    eyebrow: "Henderson, Nevada · Master-Planned",
+    intro: "Green Valley Ranch is one of Henderson's most established master-planned communities, known for its tree-lined streets, walkable open-air retail, and easy freeway access.",
+    lead: "Developed over several decades, Green Valley Ranch has grown into one of the Las Vegas Valley's most recognizable master-planned communities. Its layout favors mature landscaping, curving tree-lined streets, and a network of parks and trails that give the area a settled, walkable feel uncommon in newer Henderson developments. Homes range from traditional single-family layouts to select gated enclaves, offering options for a wide range of buyers and price points. At the community's core sits The District at Green Valley Ranch, an open-air shopping and dining destination, along with the Green Valley Ranch Resort & Spa. For buyers weighing several Henderson neighborhoods, our [Henderson area guide](/areas/henderson) is a useful starting point.",
+    quickFacts: [
+      { label: "Location", value: "Henderson, NV (ZIP 89052)" },
+      { label: "Community Type", value: "Master-planned" },
+      { label: "Setting", value: "Tree-lined streets, parks, and trails" },
+      { label: "Approx. Price Range", value: "Approx. $450K–$1.5M+" },
+      { label: "Distance to the Strip", value: "Approx. 15–20 minutes" },
+      { label: "Signature Amenity", value: "The District at Green Valley Ranch" },
+      { label: "Home Styles", value: "Single-family homes, some gated enclaves" },
+    ],
+    sections: [
+      {
+        heading: "About Green Valley Ranch",
+        body: [
+          "Green Valley Ranch was among the earlier large-scale master-planned communities to take shape in Henderson, and its maturity shows — established trees, developed landscaping, and a layout built around walkable pockets of retail rather than isolated subdivisions. The community blends into the surrounding Green Valley area while retaining its own distinct identity anchored by The District.",
+          "The result is a neighborhood that feels settled rather than newly built, appealing to buyers who prefer established infrastructure, mature streetscapes, and proximity to daily conveniences over a brand-new build site.",
+        ],
+      },
+      {
+        heading: "Homes & Real Estate",
+        body: [
+          "Housing stock in Green Valley Ranch is varied, spanning single-family homes on traditional lots as well as a number of smaller gated enclaves offering additional privacy. Architectural styles reflect the community's build-out over multiple phases, giving buyers a range of floor plans, lot sizes, and price points to choose from.",
+          "Because inventory and pricing shift regularly, the most accurate way to see what's currently available is to browse [current listings](/listings) or reach out directly for a tailored search.",
+        ],
+        bullets: [
+          "Single-family homes on a range of lot sizes",
+          "Select gated enclaves within the larger community",
+          "Mix of resale and periodically updated properties",
+          "Options spanning starter to move-up and luxury price points",
+        ],
+      },
+      {
+        heading: "Amenities & Lifestyle",
+        body: [
+          "Daily life in Green Valley Ranch centers on walkability and green space. Parks and multi-use trails connect residential pockets throughout the community, while The District at Green Valley Ranch provides open-air shopping, restaurants, and a movie theater within easy reach of most homes.",
+          "The Green Valley Ranch Resort & Spa adds a resort-style anchor to the area, with dining, a spa, and event space that give the community a hospitality feel beyond a typical suburban development.",
+        ],
+      },
+      {
+        heading: "Location & Nearby",
+        body: [
+          "Green Valley Ranch sits in central Henderson with convenient access to the 215 Beltway, making commutes to the Las Vegas Strip, McCarran-area employment, and neighboring Henderson communities straightforward. The District at Green Valley Ranch and the Green Valley Ranch Resort & Spa are both within the community, reducing the need to leave the neighborhood for everyday errands or a night out.",
+          "Buyers comparing options nearby often also look at Green Valley or Seven Hills; you can review all of Henderson's neighborhoods on our [communities](/communities) page or dig deeper into the broader [Henderson area guide](/areas/henderson).",
+        ],
+      },
+      {
+        heading: "Who It Suits",
+        body: [
+          "Green Valley Ranch tends to appeal to buyers who value an established, tree-lined setting with walkable retail and dining, without sacrificing quick access to major roadways. Its mix of home types also makes it flexible for buyers moving between price points within the same community.",
+          "If you're weighing Green Valley Ranch against other Henderson neighborhoods, our team can walk through the tradeoffs — [contact us](/contact) to get started.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "What ZIP code is Green Valley Ranch in?",
+        a: "Green Valley Ranch is primarily located in the 89052 ZIP code in Henderson, NV.",
+      },
+      {
+        q: "Is Green Valley Ranch a gated community?",
+        a: "The community overall is not fully gated, though it includes several smaller gated enclaves within its boundaries offering additional privacy.",
+      },
+      {
+        q: "What is The District at Green Valley Ranch?",
+        a: "The District is an open-air shopping and dining center within the community, featuring restaurants, retail shops, and a movie theater.",
+      },
+      {
+        q: "How far is Green Valley Ranch from the Las Vegas Strip?",
+        a: "Green Valley Ranch is approximately 15–20 minutes from the Las Vegas Strip via the 215 Beltway, depending on traffic.",
+      },
+      {
+        q: "What is the price range for homes in Green Valley Ranch?",
+        a: "Home prices in Green Valley Ranch generally range from the mid $400,000s to well over $1.5 million depending on size, lot, and location within the community. Contact Roland Luxury for current availability and pricing.",
+      },
+    ],
+  },
+
+  {
+    slug: "whitney-ranch",
+    name: "Whitney Ranch",
+    city: "Henderson",
+    zip: "89014",
+    seoTitle: "Whitney Ranch Homes for Sale | Henderson, NV",
+    seoDescription: "Explore Whitney Ranch in Henderson, NV — an established master-planned community with a recreation center, parks, and strong value near Galleria at Sunset.",
+    h1: "Whitney Ranch Homes for Sale in Henderson, NV",
+    eyebrow: "Henderson, Nevada · Established Value",
+    intro: "Whitney Ranch is an established master-planned community in Henderson offering solid value, everyday convenience, and a well-used recreation center for residents of all ages.",
+    lead: "Tucked into central Henderson, Whitney Ranch has long been a favorite for buyers who want a settled, tree-lined neighborhood without a new-construction price tag. The community mixes single-family homes and townhomes across a range of layouts, most built with mature landscaping already in place. A central recreation center anchors the community with parks and shared green space nearby. Its location near the Galleria at Sunset mall and quick freeway access make daily errands, commuting, and dining simple. For buyers comparing established Henderson neighborhoods, Whitney Ranch consistently stands out on price relative to location.",
+    quickFacts: [
+      { label: "Location", value: "Henderson, NV · ZIP 89014" },
+      { label: "Community Type", value: "Established master-planned" },
+      { label: "Setting", value: "Central Henderson, near shopping and freeways" },
+      { label: "Approx. Price Range", value: "Approx. $350,000–$500,000" },
+      { label: "Distance to the Strip", value: "Approx. 15–20 minutes" },
+      { label: "Signature Amenity", value: "Community recreation center & parks" },
+      { label: "Home Styles", value: "Single-family homes & townhomes" },
+      { label: "Typical Buyer", value: "First-time & move-up buyers" },
+    ],
+    sections: [
+      {
+        heading: "About Whitney Ranch",
+        body: [
+          "Whitney Ranch is one of Henderson's established master-planned communities, developed with a mix of housing types designed to serve a broad range of budgets and lifestyles. Mature trees, consistent landscaping, and a network of parks give the community a settled, walkable feel that newer subdivisions often take years to achieve.",
+          "The neighborhood's central Henderson location places residents within easy reach of shopping, dining, schools, and major roadways — a big part of why it continues to attract steady buyer interest year after year.",
+        ],
+      },
+      {
+        heading: "Homes & Real Estate in Whitney Ranch",
+        body: [
+          "Whitney Ranch offers a mix of single-family detached homes and townhomes, with floor plans ranging from cozy starter layouts to larger family-sized homes. Because the community is well established, resale inventory varies throughout the year, and lot sizes, upgrades, and condition can differ significantly from block to block.",
+          "Pricing in Whitney Ranch tends to run below many of Henderson's newer master-planned communities, making it a popular entry point for buyers who want a Henderson address without a premium price tag.",
+        ],
+        bullets: [
+          "Single-family homes and townhome options",
+          "Range of lot sizes and floor plans",
+          "Many homes feature mature, established landscaping",
+          "Frequent turnover keeps resale inventory active",
+        ],
+      },
+      {
+        heading: "Amenities & Recreation",
+        body: [
+          "The community's recreation center is the social hub of Whitney Ranch, offering residents a gathering space along with nearby parks and open green areas for walking, play, and everyday outdoor time. Sidewalks and community pathways connect much of the neighborhood, making it easy to get around on foot or by bike.",
+        ],
+      },
+      {
+        heading: "Location & Nearby Conveniences",
+        body: [
+          "Whitney Ranch's central Henderson location is one of its biggest draws. The Galleria at Sunset mall is just minutes away, offering shopping, dining, and entertainment options without a long drive. Quick access to US-95, I-515, and the 215 Beltway makes commuting to the Las Vegas Strip, Henderson Executive Airport area, or other parts of the valley straightforward.",
+          "Buyers who want to compare nearby options often look at [Green Valley](/communities/green-valley) or browse the broader [Henderson area guide](/areas/henderson) for additional context on schools, commute times, and neighborhood character.",
+        ],
+      },
+      {
+        heading: "Who Whitney Ranch Suits",
+        body: [
+          "Whitney Ranch is especially well suited to first-time buyers looking for an affordable entry point into Henderson, as well as move-up buyers who want more space or an upgraded home without leaving the area. Its blend of value pricing and established infrastructure makes it a practical choice for buyers prioritizing location and budget together.",
+          "If you're planning your next steps, try the [home affordability calculator](/calculators/home-affordability) or start the [mortgage pre-approval](/mortgage-pre-approval) process to understand your buying power in Whitney Ranch.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Is Whitney Ranch a good area for first-time homebuyers?",
+        a: "Yes. Whitney Ranch is known as one of Henderson's more accessible established communities, offering a mix of home sizes and price points that tend to appeal to first-time and move-up buyers alike.",
+      },
+      {
+        q: "What amenities does Whitney Ranch offer?",
+        a: "The community features a central recreation center along with parks and shared green space, giving residents convenient options for recreation close to home.",
+      },
+      {
+        q: "How far is Whitney Ranch from the Las Vegas Strip?",
+        a: "Whitney Ranch is roughly 15–20 minutes from the Las Vegas Strip, depending on traffic, with quick access to US-95, I-515, and the 215 Beltway for commuting around the valley.",
+      },
+      {
+        q: "What types of homes are available in Whitney Ranch?",
+        a: "Whitney Ranch offers a mix of single-family homes and townhomes with a range of floor plans and lot sizes. You can browse current [listings](/listings) to see what's actively available.",
+      },
+      {
+        q: "What is the price range for homes in Whitney Ranch?",
+        a: "Home prices in Whitney Ranch generally run lower than many newer Henderson communities, offering strong relative value. Contact Roland Luxury for current availability and pricing.",
+      },
+    ],
+  },
+
+  {
+    slug: "the-cliffs",
+    name: "The Cliffs",
+    city: "Las Vegas",
+    zip: "89135",
+    seoTitle: "The Cliffs at Summerlin Homes for Sale | Las Vegas",
+    seoDescription: "Explore The Cliffs, a contemporary desert-modern village in Summerlin near Red Rock Canyon. Newer construction, trails, and mountain views in Las Vegas.",
+    h1: "The Cliffs at Summerlin Homes for Sale",
+    eyebrow: "Summerlin, Las Vegas · Modern Desert Village",
+    intro: "The Cliffs is a contemporary desert-modern village on the western edge of the Summerlin master plan, prized for newer construction and proximity to Red Rock Canyon.",
+    lead: "Tucked along the western edge of [Summerlin](/communities/summerlin), The Cliffs is known for its clean-lined, contemporary desert-modern architecture and predominantly newer construction. The village sits near Exploration Peak Park and backs up toward Red Rock Canyon, giving residents an unusually direct connection to open desert and mountain scenery. An extensive trail network threads through the area, linking homes to parks, greenbelts, and the broader Summerlin trail system. Buyers considering The Cliffs are often drawn to its architecture, walkability, and setting rather than any single amenity, making it a distinct pocket within Summerlin's larger footprint.",
+    quickFacts: [
+      { label: "Location", value: "ZIP 89135, western Summerlin" },
+      { label: "Community Type", value: "Summerlin village" },
+      { label: "Setting", value: "Near Red Rock Canyon and Exploration Peak Park" },
+      { label: "Approx. Price Range", value: "Approx. $700K–$2M+, varies by home and lot" },
+      { label: "Distance to the Strip", value: "Approximately 20–25 minutes" },
+      { label: "Signature Feature", value: "Extensive trail network and mountain-view parks" },
+      { label: "Home Style", value: "Contemporary desert-modern, largely newer construction" },
+      { label: "Nearby Recreation", value: "Exploration Peak Park and Red Rock Canyon trailheads" },
+    ],
+    sections: [
+      {
+        heading: "About the Village",
+        body: [
+          "The Cliffs is one of the newer villages within the [Summerlin](/communities/summerlin) master plan, developed with an emphasis on contemporary architecture and a strong indoor-outdoor connection to the surrounding desert landscape.",
+          "Streets throughout the village are designed around walkability, with landscaped parks and trail connections woven between residential pockets rather than isolated at the edges.",
+        ],
+      },
+      {
+        heading: "Homes & Real Estate",
+        body: [
+          "Homes in The Cliffs tend to reflect current design trends, including clean facades, larger windows, and open layouts, with many properties built in recent years compared to older Summerlin villages.",
+          "Pricing and inventory shift with the broader Las Vegas market, so buyers should treat any range as a general guide rather than a current quote.",
+        ],
+        bullets: [
+          "Predominantly newer, contemporary desert-modern construction",
+          "Mix of single-family homes across varying lot sizes",
+          "Some properties offer elevated or canyon-facing views",
+        ],
+      },
+      {
+        heading: "Amenities & Summerlin Lifestyle",
+        body: [
+          "As part of Summerlin, residents of The Cliffs have access to the master plan's broader network of parks, trails, and community centers, in addition to amenities specific to the village itself.",
+          "The area's parks and trailheads make outdoor recreation a routine part of daily life rather than an occasional destination.",
+        ],
+      },
+      {
+        heading: "Location & Nearby",
+        body: [
+          "The Cliffs sits near Exploration Peak Park, a popular local green space, and is close to trailheads leading toward Red Rock Canyon.",
+          "Its western position within Summerlin keeps it a short drive from shopping, dining, and everyday services, while still offering a quieter, more scenic setting than communities closer to the urban core.",
+        ],
+      },
+      {
+        heading: "Who It Suits",
+        body: [
+          "The Cliffs tends to appeal to buyers who want modern architecture paired with easy access to trails and open desert scenery, whether they are relocating, upsizing, or looking for a newer-construction home within Summerlin.",
+          "Those exploring options nearby may also want to browse current [new construction](/new-construction) or compare it with other [Las Vegas area](/areas/las-vegas) communities.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "What kind of architecture is found in The Cliffs?",
+        a: "The Cliffs is known for contemporary desert-modern architecture, with clean lines, larger windows, and design that emphasizes a connection to the surrounding desert landscape.",
+      },
+      {
+        q: "Is The Cliffs part of Summerlin?",
+        a: "Yes, The Cliffs is a village within the larger [Summerlin](/communities/summerlin) master-planned community on the western edge of Las Vegas.",
+      },
+      {
+        q: "What outdoor recreation is near The Cliffs?",
+        a: "The village is close to Exploration Peak Park and trailheads leading toward Red Rock Canyon, with an extensive local trail network connecting to the broader Summerlin trail system.",
+      },
+      {
+        q: "How far is The Cliffs from the Las Vegas Strip?",
+        a: "The Cliffs is roughly 20–25 minutes from the Strip by car, depending on traffic and exact destination.",
+      },
+      {
+        q: "What does it cost to buy a home in The Cliffs?",
+        a: "Home prices in The Cliffs vary by size, lot, and view, and shift with market conditions. You can also check your own home's estimated value using our [home value tool](/home-value) or browse current [listings](/listings). Contact Roland Luxury for current availability and pricing.",
+      },
+    ],
+  },
+
+  {
+    slug: "stonebridge",
+    name: "Stonebridge",
+    city: "Las Vegas",
+    zip: "89138",
+    seoTitle: "Stonebridge Summerlin Homes for Sale | Las Vegas, NV",
+    seoDescription: "Explore Stonebridge, a newer Summerlin West village near Red Rock Canyon with modern homes, parks, and trails. See current homes for sale.",
+    h1: "Stonebridge at Summerlin Homes for Sale",
+    eyebrow: "Summerlin West, Las Vegas · Newer Village",
+    intro: "Stonebridge is one of Summerlin West's newer villages, set along the base of Red Rock Canyon on the western edge of Las Vegas.",
+    lead: "Tucked into the western reaches of Summerlin, Stonebridge pairs newer-construction homes with a setting that backs right up to the red rock foothills. The village mixes traditional single-family streets with a handful of gated enclaves, connected by the walking paths and parks that define Summerlin's master-planned design. Its western position means dramatic mountain views are common, along with quick access to hiking, biking, and open desert space. For buyers who want a contemporary home without leaving the Summerlin lifestyle behind, Stonebridge is one of the newer options worth a look — see how it compares to the rest of [Summerlin](/communities/summerlin) or browse current [listings](/listings).",
+    quickFacts: [
+      { label: "Location", value: "Summerlin West, ZIP 89138" },
+      { label: "Community Type", value: "Newer Summerlin West village" },
+      { label: "Setting", value: "Along the base of Red Rock Canyon" },
+      { label: "Approx. Price Range", value: "Approx. $700,000–$1.5 million+" },
+      { label: "Distance to the Strip", value: "Roughly 20–25 minutes" },
+      { label: "Signature Feature", value: "Trails, parks & mountain views" },
+      { label: "Home Style", value: "Newer construction, single-family homes" },
+      { label: "Enclaves", value: "Some sections are gated" },
+    ],
+    sections: [
+      {
+        heading: "About the Village",
+        body: [
+          "Stonebridge sits among the newer villages built out on the western side of Summerlin, closer to the foothills than the community's original, more established neighborhoods. As part of the broader Summerlin master plan, it follows the same emphasis on connected trails, neighborhood parks, and thoughtful street design.",
+          "Because it developed more recently, Stonebridge tends to offer more contemporary architecture and floor plans than some of Summerlin's earlier villages, while still tying into the same trail network, village parks, and nearby retail that residents across [Summerlin](/communities/summerlin) rely on.",
+        ],
+      },
+      {
+        heading: "Homes & Real Estate",
+        body: [
+          "Stonebridge's housing stock leans newer, with single-family homes built to more current construction standards and, in select pockets, gated enclaves that add an extra layer of privacy. Lot sizes and layouts vary by section, from smaller low-maintenance homesites to larger view lots along the western edge.",
+          "Pricing spans a wide range depending on lot location, view, and how recently a given section was built. Buyers interested in brand-new product nearby can also compare [new construction](/new-construction) options, and sellers curious what a Stonebridge home is worth today can start with a [home value](/home-value) estimate.",
+        ],
+      },
+      {
+        heading: "Amenities & Lifestyle",
+        body: [
+          "Life in Stonebridge centers on the outdoors. Neighborhood parks, walking paths, and connections into Summerlin's larger trail system make it easy to get outside without a car, and the village's position near Red Rock Canyon puts hiking, climbing, and scenic drives within easy reach.",
+        ],
+        bullets: [
+          "Neighborhood parks and green space",
+          "Direct ties into Summerlin's trail network",
+          "Close proximity to Red Rock Canyon recreation",
+          "Mountain and desert views from many streets",
+        ],
+      },
+      {
+        heading: "Location & Nearby",
+        body: [
+          "Stonebridge's western position keeps it close to Red Rock Canyon and the trailheads along the edge of the valley, while still being a manageable drive from Summerlin's shopping, dining, and golf. Downtown Summerlin and the broader retail and freeway network sit a short drive to the east, with the Las Vegas Strip roughly 20–25 minutes away depending on traffic. For a wider view of the surrounding area, see our overview of [Las Vegas neighborhoods](/areas/las-vegas).",
+        ],
+      },
+      {
+        heading: "Who It Suits",
+        body: [
+          "Stonebridge tends to appeal to buyers who want the Summerlin lifestyle in a newer package — move-up buyers seeking modern floor plans, those drawn to gated privacy, and anyone who prioritizes mountain views and trail access. It's also a strong fit for buyers relocating to the west side who want newer construction over an older resale.",
+          "Curious whether Stonebridge or another Summerlin village fits your search better? Browse our full list of [communities](/communities) or [contact](/contact) our team for guidance.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "What makes Stonebridge different from older Summerlin villages?",
+        a: "Stonebridge is one of the newer villages in Summerlin West, so it generally features more contemporary architecture and construction standards than some of Summerlin's earlier, more established neighborhoods, while still sharing the same trails, parks, and master-planned amenities.",
+      },
+      {
+        q: "What types of homes are available in Stonebridge?",
+        a: "The village offers primarily newer single-family homes, with some sections organized as gated enclaves. Lot sizes, views, and floor plans vary, so it's worth comparing a few sections before narrowing in.",
+      },
+      {
+        q: "How much do homes in Stonebridge cost?",
+        a: "Prices vary based on lot size, view, and how recently a section was built, and the market shifts over time. Contact Roland Luxury for current availability and pricing.",
+      },
+      {
+        q: "Is Stonebridge close to Red Rock Canyon?",
+        a: "Yes. Stonebridge sits along the western edge of Summerlin near the base of Red Rock Canyon, giving residents quick access to hiking trails and scenic drives.",
+      },
+      {
+        q: "Are there gated sections within Stonebridge?",
+        a: "Some pockets of Stonebridge are gated, offering added privacy within the larger village. Availability of gated versus non-gated homes changes often, so contact Roland Luxury for current availability and pricing.",
+      },
+    ],
+  },
+
+  {
+    slug: "lone-mountain",
+    name: "Lone Mountain",
+    city: "Las Vegas",
+    zip: "89129",
+    seoTitle: "Lone Mountain Las Vegas Homes for Sale | 89129/89149",
+    seoDescription: "Explore Lone Mountain in northwest Las Vegas — larger lots, custom and some equestrian properties, mountain views, and easy access to the 215 Beltway.",
+    h1: "Lone Mountain Homes for Sale in Las Vegas, NV",
+    eyebrow: "Northwest Las Vegas · Larger Lots & Custom Homes",
+    intro: "Lone Mountain is an established northwest Las Vegas community known for larger lots, custom and semi-custom homes, and a quieter, semi-rural feel near the Lone Mountain landmark.",
+    lead: "Named for the rocky landmark that rises above the northwest valley, Lone Mountain has long been a draw for buyers who want more breathing room than a typical suburban lot allows. The area's housing stock leans toward custom and semi-custom homes on larger parcels, and pockets of equestrian and horse-friendly properties remain part of its character. Despite the more open, semi-rural feel, Lone Mountain sits close to the shopping, dining, and services of [Centennial Hills](/communities/centennial-hills) and the amenities of [Providence](/communities/providence), with convenient access to the 215 Beltway for commutes across the valley. Mountain views and mature desert landscaping are common throughout the area. For buyers who want space and privacy without leaving the northwest Las Vegas corridor, Lone Mountain is worth a close look.",
+    quickFacts: [
+      { label: "Location", value: "ZIP 89129/89149, northwest Las Vegas valley" },
+      { label: "Community Type", value: "Established, larger-lot area" },
+      { label: "Setting", value: "Around the Lone Mountain landmark" },
+      { label: "Approx. Price Range", value: "Approx. $500K–$1.5M+, varies by lot size and custom finishes" },
+      { label: "Distance to the Strip", value: "Approx. 20–25 minutes via the 215 Beltway" },
+      { label: "Signature Feature", value: "Larger lots with some equestrian/horse properties" },
+      { label: "Home Style Mix", value: "Custom and semi-custom homes alongside production builds" },
+      { label: "Nearby Amenities", value: "Close to Centennial Hills and Providence shopping and dining" },
+    ],
+    sections: [
+      {
+        heading: "About the Lone Mountain Area",
+        body: [
+          "Lone Mountain takes its name from the prominent rock outcropping that marks the northwest Las Vegas skyline. The surrounding neighborhoods developed over time with an emphasis on space, offering some of the larger residential lots available in this part of the valley.",
+          "The result is a community that feels more open and established than many newer master-planned areas, with mature trees, wider setbacks, and a mix of architectural styles built up gradually rather than in a single planned phase.",
+        ],
+      },
+      {
+        heading: "Homes & Real Estate in Lone Mountain",
+        body: [
+          "Housing in Lone Mountain is defined by larger lot sizes relative to much of the northwest valley, drawing buyers who want extra yard space, room for a workshop or RV parking, or land for horses. Custom and semi-custom single-story and two-story homes are common, often built individually rather than as part of a single production tract.",
+          "Production-built homes are also part of the mix in several pockets, giving buyers a range of price points and home styles within the same general area. Because inventory is varied — from horse properties to more conventional single-family homes — pricing and lot characteristics can shift significantly from street to street.",
+        ],
+        bullets: [
+          "Larger-than-average residential lots for the northwest valley",
+          "Custom and semi-custom home construction alongside production builds",
+          "Some properties zoned for horses or other equestrian use",
+          "Mix of single-story and two-story floor plans",
+        ],
+      },
+      {
+        heading: "Lifestyle & Recreation",
+        body: [
+          "Lone Mountain Regional Park anchors outdoor life in the area, with trails that wind around the base of the mountain and offer valley and mountain views. It's a popular spot for walking, hiking, and taking in sunset views over the northwest valley.",
+          "The semi-rural feel of the neighborhood — larger lots, mature landscaping, and a slower pace — appeals to residents looking for a bit more distance between homes while still being minutes from everyday conveniences.",
+        ],
+      },
+      {
+        heading: "Location & Nearby Communities",
+        body: [
+          "Lone Mountain sits within easy reach of the retail, dining, and medical services concentrated in [Centennial Hills](/communities/centennial-hills), and is a short drive from the amenities of [Providence](/communities/providence). The 215 Beltway provides efficient access to other parts of the [Las Vegas area](/areas/las-vegas), making commutes to the Strip, the airport, and other employment centers manageable.",
+        ],
+      },
+      {
+        heading: "Who Lone Mountain Suits",
+        body: [
+          "Lone Mountain tends to appeal to buyers who want more land than a typical suburban lot provides — whether for horses, hobbies, outdoor space, or simply privacy — without giving up proximity to shopping, dining, and beltway access. It's also a fit for buyers drawn to custom-built homes rather than standardized production layouts.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "What is Lone Mountain known for?",
+        a: "Lone Mountain is known for its larger residential lots, custom and semi-custom homes, some equestrian and horse properties, and its semi-rural feel near the Lone Mountain landmark and Lone Mountain Regional Park in the northwest Las Vegas valley.",
+      },
+      {
+        q: "Are there horse properties in Lone Mountain?",
+        a: "Yes, pockets of Lone Mountain include horse-friendly or equestrian-zoned properties, though availability varies by street and section. Contact Roland Luxury for current availability and pricing.",
+      },
+      {
+        q: "How far is Lone Mountain from the Las Vegas Strip?",
+        a: "Lone Mountain is roughly 20 to 25 minutes from the Las Vegas Strip via the 215 Beltway, depending on traffic and exact destination.",
+      },
+      {
+        q: "What is the price range for homes in Lone Mountain?",
+        a: "Home prices in Lone Mountain vary widely based on lot size, custom features, and whether a property includes equestrian amenities. Contact Roland Luxury for current availability and pricing.",
+      },
+      {
+        q: "How do I find current Lone Mountain listings?",
+        a: "You can browse current [listings](/listings), explore other [communities](/communities), or get a free [home value estimate](/home-value). Contact Roland Luxury for current availability and pricing.",
+      },
+    ],
+  },
+
+  {
+    slug: "the-willows",
+    name: "The Willows",
+    city: "Las Vegas",
+    zip: "89135",
+    seoTitle: "The Willows at Summerlin | Las Vegas Homes for Sale",
+    seoDescription: "Discover The Willows, an established Summerlin village with parks, trails, and single-family homes near Downtown Summerlin. Contact Roland Luxury.",
+    h1: "The Willows at Summerlin Homes for Sale",
+    eyebrow: "Summerlin, Las Vegas · Established Village",
+    intro: "The Willows is an established, family-oriented village within the Summerlin master plan, known for its tree-lined streets, neighborhood parks, and walking trails.",
+    lead: "Tucked into one of Summerlin's earlier-built villages, The Willows offers an established, tree-lined setting with a mix of single-family homes and easy access to neighborhood parks and walking trails. The village's mature landscaping and quiet streets give it a settled, lived-in character that appeals to buyers who prefer established neighborhoods over new construction. Residents are just minutes from Downtown Summerlin's shopping, dining, and entertainment, while still enjoying a quieter, residential feel. Because it sits within the larger Summerlin master plan, The Willows also benefits from the area's parks system, trail network, and overall community planning. For buyers exploring the Las Vegas valley, it represents a well-located option that balances convenience with a more established, residential atmosphere.",
+    quickFacts: [
+      { label: "Location", value: "ZIP 89135, Summerlin, Las Vegas" },
+      { label: "Community Type", value: "Established Summerlin village" },
+      { label: "Setting", value: "Tree-lined streets with neighborhood parks" },
+      { label: "Approx. Price Range", value: "Approx. $600K–$1.2M+" },
+      { label: "Distance to the Strip", value: "Approx. 20–25 minutes" },
+      { label: "Signature Features", value: "Village parks and walking trails" },
+      { label: "Home Style", value: "Established single-family homes" },
+      { label: "Nearby Shopping & Dining", value: "Minutes to Downtown Summerlin" },
+    ],
+    sections: [
+      {
+        heading: "About The Willows",
+        body: [
+          "The Willows is one of the established villages that make up the broader Summerlin master plan on the western side of Las Vegas. It's characterized by mature, tree-lined streets, well-kept neighborhood parks, and a settled residential feel that comes from being built out in an earlier phase of Summerlin's development.",
+          "Like other villages within [Summerlin](/communities/summerlin), The Willows benefits from the master plan's emphasis on parks, trails, and walkable neighborhood design, while offering its own distinct, established character.",
+        ],
+      },
+      {
+        heading: "Homes & Real Estate in The Willows",
+        body: [
+          "Homes in The Willows are primarily single-family residences reflecting the architectural styles common to Summerlin's earlier construction phases. Lot sizes, floor plans, and finishes vary from home to home, so pricing depends heavily on the specific property, its condition, and any updates.",
+          "Because inventory and pricing shift regularly, buyers are encouraged to get a [current home value estimate](/home-value) or run the numbers with an [affordability calculator](/calculators/home-affordability) before starting their search.",
+        ],
+      },
+      {
+        heading: "Amenities & the Summerlin Lifestyle",
+        body: [
+          "Residents of The Willows have access to neighborhood parks and walking trails within the village, along with the broader trail network and recreational amenities found throughout Summerlin.",
+        ],
+        bullets: [
+          "Neighborhood parks and green space",
+          "Walking and pedestrian trails",
+          "Tree-lined, established streetscapes",
+          "Access to Summerlin's community amenities",
+        ],
+      },
+      {
+        heading: "Location & Nearby — Downtown Summerlin",
+        body: [
+          "The Willows sits just minutes from Downtown Summerlin, giving residents convenient access to shopping, dining, and entertainment without leaving the Summerlin area. Its location also provides reasonable access to other parts of the Las Vegas valley for work and errands.",
+        ],
+      },
+      {
+        heading: "Who The Willows Suits",
+        body: [
+          "The Willows tends to appeal to buyers who want an established, tree-lined neighborhood rather than new construction, along with easy access to parks, trails, and nearby Downtown Summerlin amenities.",
+          "To see what's currently on the market or to start a conversation about the area, [contact Roland Luxury](/contact) directly.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "What ZIP code is The Willows in?",
+        a: "The Willows is located in the 89135 ZIP code within the Summerlin master plan in Las Vegas.",
+      },
+      {
+        q: "What type of homes are in The Willows?",
+        a: "The Willows features an established mix of single-family homes on tree-lined streets, typically reflecting earlier phases of Summerlin's development.",
+      },
+      {
+        q: "How much do homes in The Willows cost?",
+        a: "Home prices in The Willows vary by lot, size, and condition, and shift with market conditions. Contact Roland Luxury for current availability and pricing.",
+      },
+      {
+        q: "Is The Willows close to Downtown Summerlin?",
+        a: "Yes, The Willows is just minutes from Downtown Summerlin's shopping, dining, and entertainment options.",
+      },
+      {
+        q: "How do I find current listings in The Willows?",
+        a: "Availability in The Willows changes regularly. Contact Roland Luxury for current availability and pricing.",
+      },
+    ],
+  },
 ];
 
 export function getCommunity(slug: string): Community | undefined {
