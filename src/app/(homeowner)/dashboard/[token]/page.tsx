@@ -1,6 +1,7 @@
 import { homeownerStore, latestEstimate, appreciation } from "@/lib/homeowners/store";
 import { homeownerBrand } from "@/lib/homeowners/brand";
 import { HomeownerDashboard } from "@/components/HomeownerDashboard";
+import { recentComps, zipMarketStats } from "@/lib/idx/market";
 
 // Token-addressed, per-recipient page — always rendered on demand.
 export const dynamic = "force-dynamic";
@@ -32,6 +33,12 @@ export default async function DashboardPage({
     );
   }
 
+  // Neighborhood context (graceful: empty/null when the feed isn't configured).
+  const [comps, market] = await Promise.all([
+    recentComps({ zip: h.zip, beds: h.beds, sqft: h.sqft }),
+    zipMarketStats({ zip: h.zip }),
+  ]);
+
   return (
     <HomeownerDashboard
       token={h.token}
@@ -49,6 +56,8 @@ export default async function DashboardPage({
       asOf={latest.date}
       series={h.estimates.map((e) => ({ date: e.date, value: e.value }))}
       appreciation={appreciation(h)}
+      market={market}
+      comps={comps}
     />
   );
 }
