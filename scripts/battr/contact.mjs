@@ -62,10 +62,20 @@ export function normalizeContact(person, touch, stamps = {}) {
     custom_fields: {
       fub: {
         system_lastCommunication: lastCommunication,
-        system_timeframeId: first(person.timeframeId, null),
+        // The nurture lists branch on timeframe. FUB exposes it as a name on
+        // some accounts and an id on others, so both are carried and the rules
+        // match the name. `timeframeUnresolved` below drives a diagnostic — a
+        // timeframe we can't read would silently empty four of the six lists.
+        system_timeframe: first(person.timeframe, person.timeframeName, null),
+        system_timeframeId: first(person.timeframeId, null) ?? null,
         customBattrAtRiskSince: person[atRiskSinceKey] ?? null,
       },
     },
+
+    /** True when this contact is in a nurture stage but has no readable timeframe. */
+    timeframeUnresolved:
+      !first(person.timeframe, person.timeframeName, null) &&
+      ["nurture", "spoke with customer"].includes(String(first(person.stage, person.stageName, "")).toLowerCase()),
 
     // carried through for reporting and actions, not addressed by rules
     _raw: person,

@@ -19,13 +19,12 @@ export const rules = {
   // ----------------------------------------------------------------- mode
   /**
    * "lists"  — faithful: each list in scripts/battr/lists.mjs carries its own
-   *            thresholds and actions, combined worst-status-wins. This is how
-   *            the live system works. Blocked on exporting the four missing
-   *            member lists (see the note at the top of lists.mjs).
-   * "simple" — one global threshold pair across the database. Needs no list
-   *            configuration; use it for a baseline in the meantime.
+   *            thresholds, combined worst-status-wins. All six member lists are
+   *            configured, so this is the mode that matches the live system.
+   * "simple" — one global threshold pair across the database. Kept as a fallback
+   *            that depends on no list configuration at all.
    */
-  mode: "simple",
+  mode: "lists",
 
   /** Team timezone — all "days since" math and day filters run in it. */
   timezone: "America/Los_Angeles",

@@ -123,21 +123,42 @@ time gets taken away with no warning ever issued. Leave it on.
 working day of agent attention before anything is taken away. A blocked day is
 recorded in the report as a skip, never silently dropped.
 
+### The six lists that feed the sweep
+
+`⭐️ Team Leads (Nudges & Sweeps)` pools six lists and applies the notes, sweeps,
+and alerts on top — none of the six carries actions of its own. Together they
+form a graduated sequence: the hotter the lead, the less silence it tolerates.
+
+| List | Who's in it | At Risk | Neglected |
+| --- | --- | ---: | ---: |
+| 🌶️ Hot Leads | Lead / Attempted Contact, created < 10 days, not tagged `Import` | 2 d | 4 d |
+| 🌤️ Warm Back Up | Lead / Attempted Contact, created > 10 days | 10 d | 13 d |
+| 🔥 Weekly Nurture | Nurture / Spoke with Customer, timeframe 0–3 months | 10 d | 13 d |
+| 😎 Bi-Weekly Nurture | …timeframe 3–6 months | 16 d | 19 d |
+| 🌱 Monthly Nurture | …timeframe 6–12 months | 33 d | 36 d |
+| 👀 Quarterly Nurture | …timeframe 12+ months | 93 d | 96 d |
+
+All six also require the lead to not already be sitting in a pond. A contact can
+match several lists at once; it keeps its **worst** status across them.
+
+`❗Active Leads` (6 d / 9 d) is a real list but is **not** one of the six — it
+belongs to the Database Health Score roll-up. It's defined for reporting only.
+Adding it to `source_list_ids` would sweep leads the live system never touches.
+
 ### Two modes
 
 `rules.mode` selects how leads are classified:
 
-- **`"simple"`** (default) — one global threshold pair across the database. Needs
-  no list configuration.
-- **`"lists"`** — the faithful model. Each list in `scripts/battr/lists.mjs`
-  carries its own thresholds, written in the same filter JSON the live system
-  uses, and the combined list unions them worst-status-wins. Thresholds are
-  genuinely per-segment: Hot Leads warn at 2 days and sweep at 4, while Active
-  Leads warn at 6 and sweep at 9.
+- **`"lists"`** (default) — the faithful model above. Each list carries its own
+  thresholds in the same filter JSON the live system uses.
+- **`"simple"`** — one global threshold pair across the database. A fallback that
+  depends on no list configuration at all.
 
-List mode is not yet at full parity — four member lists of
-`⭐️ Team Leads (Nudges & Sweeps)` (ids 1106–1109) still need their rule JSON
-exported. The engine warns loudly when it runs without them.
+Note one deliberate difference: the live config only puts the warn-first
+interlock on Hot Leads, relying on the 3-day gap between tiers to warn first on
+the other five. We apply it to all six (`requireWarningBeforeSweep`), which is
+strictly more conservative — a lead that enters a list already past its sweep
+line still gets warned before it's taken away.
 
 **Safety.** Every run is a dry run unless `BATTR_LIVE=true` — the scheduled
 workflow stays in shadow mode until the repo variable `BATTR_LIVE` is set to

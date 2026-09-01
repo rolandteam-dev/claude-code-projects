@@ -317,6 +317,13 @@ async function main() {
     if (run.missingMemberLists.length) {
       log(`  WARNING: member lists ${run.missingMemberLists.join(", ")} have no rule JSON — population is narrower than the live audit.`);
     }
+
+    // Four of the six member lists branch on FUB timeframe. If we can't read it,
+    // those lists silently come back empty rather than erroring — so say so.
+    const unresolved = contacts.filter((c) => c.timeframeUnresolved).length;
+    if (unresolved) {
+      log(`  WARNING: ${unresolved} nurture-stage contacts have no readable timeframe — the four nurture lists will under-report. Check the timeframe field name on a FUB contact.`);
+    }
     log(`  ${run.records.length} in the combined list, ${run.excluded.length} excluded by bucket/group`);
     results = run.records;
   } else {

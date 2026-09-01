@@ -1,64 +1,78 @@
 /**
- * Audit list definitions — the real rule configurations, in the same JSON shape
- * the live system stores them in, so they can be pasted across verbatim.
+ * Audit list definitions — the real rule configurations.
  *
  * Each contact list answers three questions:
  *   list_filters       who is in this list
  *   at_risk_filters    of those, who is At Risk
  *   neglected_filters  of those, who is Neglected
  *
- * A combined list has no thresholds of its own. It unions the most recent run of
- * each member list, dedupes by contact, and each contact keeps its WORST status
- * across the member lists. That is why thresholds are per-list: a Hot Lead goes
- * At Risk after 2 quiet days while an Active Lead gets 6.
+ * The six member lists form a graduated sequence: the hotter the lead, the less
+ * silence it tolerates. Hot Leads warn after 2 quiet days, Quarterly Nurture
+ * after 93. None of the six carries actions of its own — every note, sweep, and
+ * alert lives on the combined `⭐️ Team Leads (Nudges & Sweeps)` list, which
+ * pools all six and applies its own compliance actions on top.
  *
- * ─────────────────────────────────────────────────────────────────────────────
- * COVERAGE GAP — read before going live.
- * `⭐️ Team Leads (Nudges & Sweeps)` combines SIX member lists (ids 1104, 1106,
- * 1107, 1108, 1109, 1144). Only two of those rule sets were supplied. The other
- * four are marked below and must be exported from the Aida list editor before
- * this can be considered at parity — until then our audit sees a narrower
- * population than the live one, and will under-report.
- * ─────────────────────────────────────────────────────────────────────────────
+ * ── Two deliberate departures from the live config, both documented below ─────
+ *
+ * 1. FIELDS BY NAME, NOT EXTERNAL ID. The live rules address stages and
+ *    timeframes by numeric CRM id (`crm_stage_exid IS ANY OF [98,2,99,10,8]`).
+ *    Those id-to-name mappings were never supplied, and guessing them would fail
+ *    silently — a wrong id simply matches nothing. Matching on the name FUB
+ *    returns on the contact is verifiable at a glance and survives a re-import.
+ *
+ * 2. LIST IDS ARE POSITIONAL. `source_list_ids` is confirmed as
+ *    [1104, 1106, 1107, 1108, 1109, 1144], and the six member lists are
+ *    confirmed by name — but which id belongs to which name was never stated.
+ *    Since all six are members, a mismatched pairing cannot change any
+ *    classification; it would only mislabel a source chip in the report.
  */
 
-/** Stage external ids referenced by the rules. Confirm against /v1/stages. */
+/** FUB stage names the rules match on. Verify against /v1/stages. */
 export const STAGES = {
-  converted: [8, 106], // Closed, Under Contract — what the KPIs count as converted
+  earlyPipeline: ["Lead", "Attempted Contact"],
+  nurture: ["Nurture", "Spoke with Customer"],
+  converted: ["Closed", "Under Contract"],
 };
 
-export const lists = [
-  {
-    id: 1104,
-    name: "❗Active Leads",
-    audit_type: "contact_list",
-    is_active: true,
-    // Active pipeline stages, seen on the website in the last 10 days, not parked in a pond.
-    list_filters: {
-      groups: [
-        [
-          { object: "battr.contact", field: "crm_stage_exid", operator: "IS ANY OF", value: [98, 2, 99, 10, 8], value_data_type: "int" },
-          { object: "battr.contact", field: "last_website_visit", operator: "<", value: 10, transform: { type: "days_since" }, value_data_type: "int" },
-          { object: "battr.contact", field: "crm_pond_id", operator: "=", value: null, value_data_type: "int" },
-        ],
-      ],
-    },
-    at_risk_filters: {
-      groups: [
-        [
-          { object: "battr.contact", field: "custom_fields.fub.system_lastCommunication", operator: ">", value: 6, transform: { type: "days_since" }, value_data_type: "int" },
-        ],
-      ],
-    },
-    neglected_filters: {
-      groups: [
-        [
-          { object: "battr.contact", field: "custom_fields.fub.system_lastCommunication", operator: ">", value: 9, transform: { type: "days_since" }, value_data_type: "int" },
-        ],
-      ],
-    },
-  },
+/** FUB timeframe values that drive the nurture cadence. Verify against a contact record. */
+export const TIMEFRAMES = {
+  months0to3: ["0-3 months", "0-3 Months", "0 - 3 months"],
+  months3to6: ["3-6 months", "3-6 Months", "3 - 6 months"],
+  months6to12: ["6-12 months", "6-12 Months", "6 - 12 months"],
+  months12plus: ["12+ months", "12+ Months", "12 + months", "Over a year"],
+};
 
+const contact = (field, operator, value, extra = {}) => ({ object: "battr.contact", field, operator, value, ...extra });
+
+const daysSince = (field, operator, value) =>
+  contact(field, operator, value, { transform: { type: "days_since" }, value_data_type: "int" });
+
+const LAST_COMM = "custom_fields.fub.system_lastCommunication";
+const AT_RISK_SINCE = "custom_fields.fub.customBattrAtRiskSince";
+const TIMEFRAME = "custom_fields.fub.system_timeframe";
+
+const notInAPond = contact("crm_pond_id", "=", null, { value_data_type: "int" });
+
+/** The nurture lists differ only by timeframe and thresholds. */
+const nurtureList = ({ id, name, timeframe, atRiskDays, neglectedDays }) => ({
+  id,
+  name,
+  audit_type: "contact_list",
+  is_active: true,
+  list_filters: {
+    groups: [
+      [
+        contact("stage_name", "IS ANY OF", STAGES.nurture, { value_data_type: "text" }),
+        contact(TIMEFRAME, "IS ANY OF", timeframe, { value_data_type: "text" }),
+        notInAPond,
+      ],
+    ],
+  },
+  at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", atRiskDays)]] },
+  neglected_filters: { groups: [[daysSince(LAST_COMM, ">", neglectedDays)]] },
+});
+
+export const lists = [
   {
     id: 1144,
     name: "🌶️ Hot Leads",
@@ -67,51 +81,58 @@ export const lists = [
     list_filters: {
       groups: [
         [
-          { object: "battr.contact", field: "crm_created_at", operator: "<", value: "10", transform: { type: "days_since" }, value_data_type: "int" },
-          { object: "battr.contact", field: "crm_stage_exid", operator: "IS ANY OF", value: [2, 98], value_data_type: "text" },
-          { object: "battr.contact", field: "tags_array", operator: "DOES NOT CONTAIN ANY", value: ["Import"], value_data_type: "text" },
-          { object: "battr.contact", field: "crm_pond_id", operator: "=", value: null, value_data_type: "int" },
+          daysSince("crm_created_at", "<", 10),
+          contact("stage_name", "IS ANY OF", STAGES.earlyPipeline, { value_data_type: "text" }),
+          contact("tags_array", "DOES NOT CONTAIN ANY", ["Import"], { value_data_type: "text" }),
+          notInAPond,
         ],
       ],
     },
-    at_risk_filters: {
-      groups: [
-        [
-          { object: "battr.contact", field: "custom_fields.fub.system_lastCommunication", operator: ">", value: "2", transform: { type: "days_since" }, value_data_type: "int" },
-        ],
-      ],
-    },
-    // The escalation pattern: a Hot Lead can only be swept if it was already
-    // stamped At Risk on a previous run. This is the warn-first interlock.
+    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 2)]] },
+    // The only list whose neglected tier carries the interlock explicitly: a Hot
+    // Lead can only be swept if a previous run already stamped it At Risk.
     neglected_filters: {
-      groups: [
-        [
-          { object: "battr.contact", field: "custom_fields.fub.system_lastCommunication", operator: ">", value: "4", transform: { type: "days_since" }, value_data_type: "int" },
-          { object: "battr.contact", field: "custom_fields.fub.customBattrAtRiskSince", operator: "!=", value: null, value_data_type: "text" },
-        ],
-      ],
+      groups: [[daysSince(LAST_COMM, ">", 4), contact(AT_RISK_SINCE, "!=", null, { value_data_type: "text" })]],
     },
   },
 
-  // ─── MISSING MEMBER LISTS ──────────────────────────────────────────────────
-  // Ids 1106, 1107, 1108, 1109 are members of Team Leads but their rule JSON was
-  // not supplied. Export each from the Aida list editor and add it here in the
-  // same shape. Leaving them out narrows the audited population.
-  // ───────────────────────────────────────────────────────────────────────────
+  {
+    id: 1104,
+    name: "🌤️ Warm Back Up",
+    audit_type: "contact_list",
+    is_active: true,
+    // The mirror of Hot Leads: same stages, but older than 10 days.
+    list_filters: {
+      groups: [
+        [
+          daysSince("crm_created_at", ">", 10),
+          contact("stage_name", "IS ANY OF", STAGES.earlyPipeline, { value_data_type: "text" }),
+          notInAPond,
+        ],
+      ],
+    },
+    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 10)]] },
+    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 13)]] },
+  },
+
+  nurtureList({ id: 1106, name: "🔥 Weekly Nurture", timeframe: TIMEFRAMES.months0to3, atRiskDays: 10, neglectedDays: 13 }),
+  nurtureList({ id: 1107, name: "😎 Bi-Weekly Nurture", timeframe: TIMEFRAMES.months3to6, atRiskDays: 16, neglectedDays: 19 }),
+  nurtureList({ id: 1108, name: "🌱 Monthly Nurture", timeframe: TIMEFRAMES.months6to12, atRiskDays: 33, neglectedDays: 36 }),
+  nurtureList({ id: 1109, name: "👀 Quarterly Nurture", timeframe: TIMEFRAMES.months12plus, atRiskDays: 93, neglectedDays: 96 }),
 
   {
     id: 9001,
     name: "⭐️ Team Leads (Nudges & Sweeps)",
     audit_type: "combined_contact_lists",
     is_active: true,
-    // Union the member lists, then apply two exclusions: one lead bucket and one
-    // owner group (the paused-agent group — their leads are not swept).
+    // Pool the six, then apply two exclusions: one lead bucket, and the paused
+    // owner group whose leads are never swept.
     list_filters: {
       groups: [
         [
           { object: "battr.aida_lists", field: "source_list_ids", operator: "IS ANY OF", value: [1104, 1106, 1107, 1108, 1109, 1144], value_data_type: "integer" },
-          { object: "battr.lead_buckets", field: "lead_bucket_id", operator: "!=", value: 82, value_data_type: "integer" },
-          { object: "battr.contact", field: "owner_group_ids", operator: "DOES NOT CONTAIN ANY", value: [52555], value_data_type: "integer" },
+          contact("lead_bucket_id", "!=", 82, { object: "battr.lead_buckets", value_data_type: "integer" }),
+          contact("owner_group_ids", "DOES NOT CONTAIN ANY", [52555], { value_data_type: "integer" }),
         ],
       ],
     },
@@ -161,6 +182,30 @@ export const lists = [
         },
       },
     ],
+  },
+
+  // ─── NOT a member of Team Leads ────────────────────────────────────────────
+  // ❗Active Leads is a real list with its own 6/9 thresholds, but it is NOT one
+  // of the six that feed the sweep — it belongs to the Database Health Score
+  // roll-up instead. It is defined here for reporting only. Adding it to
+  // source_list_ids would sweep leads the live system never touches.
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    id: 1105,
+    name: "❗Active Leads",
+    audit_type: "contact_list",
+    is_active: false,
+    list_filters: {
+      groups: [
+        [
+          contact("stage_name", "IS ANY OF", [...STAGES.earlyPipeline, ...STAGES.nurture], { value_data_type: "text" }),
+          daysSince("last_website_visit", "<", 10),
+          notInAPond,
+        ],
+      ],
+    },
+    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 6)]] },
+    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 9)]] },
   },
 ];
 

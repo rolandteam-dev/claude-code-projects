@@ -21,7 +21,7 @@ import { classify, buildTouchIndex, classifyForList, runCombinedList, DAY_MS } f
 import { evaluateCondition, evaluateSet } from "./filters.mjs";
 import { normalizeContact } from "./contact.mjs";
 import { isDayAllowed } from "./schedule.mjs";
-import { lists, listById } from "./lists.mjs";
+import { lists, listById, memberListsOf } from "./lists.mjs";
 import { detectAtBats, summarizeAgents, formatRate } from "./atbats.mjs";
 import { buildAgentDigests, deliverDigests, renderDigestText } from "./alerts.mjs";
 import { parseCsv, findColumn, mapRows } from "./import-atbats.mjs";
@@ -240,11 +240,11 @@ check("dotted paths resolve into custom_fields", () => {
 console.log("\nUnit — real list rules");
 
 const hotLeads = listById(1144);
-const activeLeads = listById(1104);
+const activeLeads = listById(1105);
 
 const hotLead = (over = {}) =>
   normalizeContact(
-    { id: 1, name: "Hot One", created: daysAgo(3), stageId: 2, tags: [], assignedUserId: 5, assignedTo: "Jason Shawver", ...over },
+    { id: 1, name: "Hot One", created: daysAgo(3), stage: "Lead", tags: [], assignedUserId: 5, assignedTo: "Jason Shawver", ...over },
     { lastOutbound: 0, lastInbound: 0 }
   );
 
@@ -280,7 +280,7 @@ check("Hot Leads: a lead already in a pond is not in the list", () => {
 });
 
 check("Active Leads uses its own 6/9 thresholds, not Hot Leads' 2/4", () => {
-  const base = { id: 2, created: daysAgo(40), stageId: 98, tags: [], assignedUserId: 5, lastVisit: daysAgo(2) };
+  const base = { id: 2, created: daysAgo(40), stage: "Lead", tags: [], assignedUserId: 5, lastVisit: daysAgo(2) };
   const at = normalizeContact(base, { lastOutbound: 0 });
   at.custom_fields.fub.system_lastCommunication = daysAgo(7);
   assert.equal(classifyForList(at, activeLeads, NOW), "at_risk", "7 days is past 6 but short of 9");
@@ -288,6 +288,71 @@ check("Active Leads uses its own 6/9 thresholds, not Hot Leads' 2/4", () => {
   const neg = normalizeContact(base, { lastOutbound: 0 });
   neg.custom_fields.fub.system_lastCommunication = daysAgo(10);
   assert.equal(classifyForList(neg, activeLeads, NOW), "neglected");
+});
+
+check("Active Leads is NOT one of the six that feed the sweep", () => {
+  const { ids, resolved } = memberListsOf(lists.find((l) => l.audit_type === "combined_contact_lists"));
+  assert.equal(ids.length, 6);
+  assert.ok(!resolved.some((l) => l.name.includes("Active Leads")), "sweeping it would touch leads the live system never does");
+  assert.deepEqual(
+    resolved.map((l) => l.name).sort(),
+    ["😎 Bi-Weekly Nurture", "🌤️ Warm Back Up", "🌱 Monthly Nurture", "🌶️ Hot Leads", "🔥 Weekly Nurture", "👀 Quarterly Nurture"].sort()
+  );
+});
+
+// Every member list's graduated thresholds, checked at each boundary.
+const NURTURE_CADENCE = [
+  { list: 1106, name: "Weekly Nurture", timeframe: "0-3 months", atRisk: 10, neglected: 13 },
+  { list: 1107, name: "Bi-Weekly Nurture", timeframe: "3-6 months", atRisk: 16, neglected: 19 },
+  { list: 1108, name: "Monthly Nurture", timeframe: "6-12 months", atRisk: 33, neglected: 36 },
+  { list: 1109, name: "Quarterly Nurture", timeframe: "12+ months", atRisk: 93, neglected: 96 },
+];
+
+for (const { list, name, timeframe, atRisk, neglected } of NURTURE_CADENCE) {
+  check(`${name}: compliant below ${atRisk}d, at risk past it, neglected past ${neglected}d`, () => {
+    const build = (quietDays) => {
+      const c = normalizeContact(
+        { id: 3, stage: "Nurture", timeframe, created: daysAgo(200), assignedUserId: 5, tags: [] },
+        { lastOutbound: 0 }
+      );
+      c.custom_fields.fub.system_lastCommunication = daysAgo(quietDays);
+      return c;
+    };
+    assert.equal(classifyForList(build(atRisk - 1), listById(list), NOW), "compliant");
+    assert.equal(classifyForList(build(atRisk + 1), listById(list), NOW), "at_risk");
+    assert.equal(classifyForList(build(neglected + 1), listById(list), NOW), "neglected");
+  });
+}
+
+check("a nurture lead lands in exactly one cadence list, by timeframe", () => {
+  const c = normalizeContact(
+    { id: 4, stage: "Nurture", timeframe: "6-12 months", created: daysAgo(200), assignedUserId: 5, tags: [] },
+    { lastOutbound: 0 }
+  );
+  c.custom_fields.fub.system_lastCommunication = daysAgo(40);
+  const matched = NURTURE_CADENCE.filter(({ list }) => classifyForList(c, listById(list), NOW) !== null);
+  assert.deepEqual(matched.map((m) => m.name), ["Monthly Nurture"]);
+});
+
+check("Warm Back Up picks up early-stage leads older than 10 days", () => {
+  const warm = listById(1104);
+  const build = (age, quiet) => {
+    const c = normalizeContact({ id: 5, stage: "Attempted Contact", created: daysAgo(age), assignedUserId: 5, tags: [] }, { lastOutbound: 0 });
+    c.custom_fields.fub.system_lastCommunication = daysAgo(quiet);
+    return c;
+  };
+  assert.equal(classifyForList(build(30, 14), warm, NOW), "neglected");
+  assert.equal(classifyForList(build(30, 11), warm, NOW), "at_risk");
+  assert.equal(classifyForList(build(5, 14), warm, NOW), null, "younger than 10 days belongs to Hot Leads");
+});
+
+check("Hot Leads and Warm Back Up partition early-stage leads at the 10-day line", () => {
+  const build = (age) => normalizeContact({ id: 6, stage: "Lead", created: daysAgo(age), assignedUserId: 5, tags: [] }, { lastOutbound: 0 });
+  const inHot = (c) => classifyForList(c, listById(1144), NOW) !== null;
+  const inWarm = (c) => classifyForList(c, listById(1104), NOW) !== null;
+
+  assert.ok(inHot(build(3)) && !inWarm(build(3)), "a 3-day-old lead is Hot only");
+  assert.ok(!inHot(build(30)) && inWarm(build(30)), "a 30-day-old lead is Warm only");
 });
 
 check("neglected beats at_risk — evaluated first", () => {
@@ -324,9 +389,9 @@ check("the excluded lead bucket is dropped from the combined list", () => {
   assert.equal(records.length, 0);
 });
 
-check("missing member lists are reported, not silently ignored", () => {
+check("every member list now has rule JSON — nothing is silently missing", () => {
   const { missingMemberLists } = runCombinedList([], teamLeads, NOW);
-  assert.deepEqual(missingMemberLists, [1106, 1107, 1108, 1109]);
+  assert.deepEqual(missingMemberLists, [], "an unresolved member list narrows the audited population");
 });
 
 // ---------------------------------------------------------------- day filters
@@ -530,22 +595,25 @@ check("rows without a usable id or date are dropped, not guessed at", () => {
 
 /** A stand-in FUB API serving fixtures, so the real client code is exercised. */
 function fixtureServer() {
+  // Early-stage leads older than 10 days land in Warm Back Up (at risk >10d,
+  // neglected >13d), which is what these fixtures exercise.
+  const warm = (over) => lead({ stage: "Lead", created: daysAgo(60), ...over });
   const people = [
     // compliant
-    lead({ id: 101, name: "Fresh Contact", assignedTo: "Nicole Miller", assignedUserId: 11 }),
+    warm({ id: 101, name: "Fresh Contact", assignedTo: "Nicole Miller", assignedUserId: 11 }),
     // at risk
-    lead({ id: 102, name: "Going Quiet", assignedTo: "Nicole Miller", assignedUserId: 11 }),
+    warm({ id: 102, name: "Going Quiet", assignedTo: "Nicole Miller", assignedUserId: 11 }),
     // neglected
-    lead({ id: 103, name: "Long Gone", assignedTo: "Brett Smith", assignedUserId: 12 }),
+    warm({ id: 103, name: "Long Gone", assignedTo: "Brett Smith", assignedUserId: 12 }),
     // neglected, but unworkable — report only
-    lead({ id: 104, name: "Bad Number", assignedTo: "Brett Smith", assignedUserId: 12, tags: ["BAD_PHONE"] }),
-    // excluded
-    lead({ id: 105, name: "In Escrow", assignedTo: "Brett Smith", assignedUserId: 12, stage: "Under Contract" }),
+    warm({ id: 104, name: "Bad Number", assignedTo: "Brett Smith", assignedUserId: 12, tags: ["BAD_PHONE"] }),
+    // excluded: no list covers a contract stage
+    warm({ id: 105, name: "In Escrow", assignedTo: "Brett Smith", assignedUserId: 12, stage: "Under Contract" }),
   ];
 
   const calls = [
     { personId: 101, created: daysAgo(1), isIncoming: false },
-    { personId: 102, created: daysAgo(9), isIncoming: false },
+    { personId: 102, created: daysAgo(11), isIncoming: false },
     { personId: 103, created: daysAgo(40), isIncoming: false },
     { personId: 104, created: daysAgo(40), isIncoming: false },
   ];
