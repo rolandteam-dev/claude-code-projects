@@ -153,9 +153,46 @@ node scripts/battr-audit.mjs --undo=2026-09-01-a1b2
 report + audit trail to `battr-logs/`. You can also trigger it from the
 **Actions** tab, choosing dry or live and which stage to run.
 
+### Telling the agents
+
+The nudge note lands on the lead; the **agent digest** is what tells the person
+who owns it. Without it, the first an agent hears about a neglected lead is when
+it vanishes from their pipeline — which is how a sweep automation loses a team's
+trust. Set `BATTR_ALERT_CHANNEL`:
+
+- **`report_only`** (default) — digests appear in the daily report only.
+- **`fub_task`** — one task per agent inside FUB, attached to their most overdue
+  lead. No email setup, and tasks notify only the assignee (unlike notes, which
+  email the whole team).
+- **`email`** — one email per agent. Needs `RESEND_API_KEY` and an email address
+  on each FUB user record.
+
+Agents in `excludeOwnerGroupIds` never get alerts and their leads are never swept.
+
+### At Bats
+
+Every run diffs lead ownership against the previous run and records the changes:
+a brand-new lead assigned, a pond claim, or a transfer. That's the denominator
+for the only question worth asking at review time — of the chances this agent
+got, how many did they convert, and how many did they keep? Sweeps we caused are
+excluded, since taking a lead away isn't a chance anyone was given.
+
+The report carries per-agent conversion and retention. Undefined rates render as
+`--`, never a misleading `0%`.
+
+Tracking accrues **forward** from the first run — it can't see history it wasn't
+running for. Export At Bats from Battr **before the subscription lapses** and
+seed it:
+
+```bash
+node scripts/battr/import-atbats.mjs ~/Downloads/at-bats.csv --dry   # check the column mapping
+node scripts/battr/import-atbats.mjs ~/Downloads/at-bats.csv         # import
+```
+
 | Variable | Where | Purpose |
 | --- | --- | --- |
 | `FUB_API_KEY` | Actions secret | Required. Same key as the site's lead intake. |
+| `BATTR_ALERT_CHANNEL` | Actions variable | `report_only` (default), `fub_task`, or `email`. |
 | `BATTR_LIVE` | Actions variable | Set to `true` to let the schedule write. Unset = shadow mode. |
 | `BATTR_SMART_LIST_ID` | Actions variable | Optional. Audit one FUB smart list instead of the whole database. |
 | `BATTR_REPORT_TO` | Actions variable | Optional. Where the daily report is emailed. |

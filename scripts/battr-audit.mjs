@@ -28,6 +28,16 @@ import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, lower
 import { normalizeContact } from "./battr/contact.mjs";
 import { isDayAllowed } from "./battr/schedule.mjs";
 import { lists } from "./battr/lists.mjs";
+import {
+  loadOwnership,
+  saveOwnership,
+  appendAtBats,
+  loadAtBats,
+  detectAtBats,
+  summarizeAgents,
+  DEFAULT_CONVERTED_STAGES,
+} from "./battr/atbats.mjs";
+import { buildAgentDigests, deliverDigests, renderAtBatsSection } from "./battr/alerts.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const LOG_DIR = join(ROOT, "battr-logs");
@@ -89,7 +99,7 @@ async function resolveCustomFields(fub, log) {
 
 // ---------------------------------------------------------------------- report
 
-function buildReport({ runId, dry, population, results, actions, ponds }) {
+function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] } }) {
   const byAgent = new Map();
   for (const r of results) {
     if (r.status === "excluded" || !r.owner) continue;
@@ -155,6 +165,18 @@ function buildReport({ runId, dry, population, results, actions, ponds }) {
     lines.push(`## Neglected but not swept (${actions.heldBack.length})`);
     lines.push("");
     for (const h of actions.heldBack) lines.push(`- ${h.name} (${h.owner}) — ${h.holdReason}`);
+    lines.push("");
+  }
+
+  lines.push(renderAtBatsSection(agentStats));
+
+  if (alerts.delivered.length || alerts.failed.length) {
+    lines.push(`## Agent alerts (${alerts.delivered.length} sent, ${alerts.failed.length} failed)`);
+    lines.push("");
+    for (const d of alerts.delivered) {
+      lines.push(`- ${d.agent}: ${d.atRisk.length} at risk, ${d.neglected.length} sweeping — ${d.via}`);
+    }
+    for (const f of alerts.failed) lines.push(`- ${f.agent}: FAILED — ${f.reason}`);
     lines.push("");
   }
 
@@ -418,11 +440,46 @@ async function main() {
     actions.skipped.push({ what: "sweeps", count: neglected.length, reason: `day filter "${rules.sweepDayFilter}"` });
   }
 
-  // 6. report + undo trail
+  // 6. At Bats — ownership-change tracking.
+  //
+  // This runs in dry mode too. The ledger is local bookkeeping, not a CRM write,
+  // and letting it accrue through the shadow period means there's real history
+  // on the day we go live instead of starting from zero.
+  const statePath = join(LOG_DIR, "state", "ownership.csv");
+  const ledgerPath = join(LOG_DIR, "at-bats.jsonl");
+
+  const sweptIds = new Set(actions.swept.map((s) => s.personId));
+  const newAtBats = detectAtBats(loadOwnership(statePath), contacts, { sweptIds });
+  appendAtBats(ledgerPath, newAtBats);
+  saveOwnership(statePath, contacts);
+  if (newAtBats.length) log(`  ${newAtBats.length} new at bats recorded`);
+
+  const stageList = await fub.stages().catch(() => []);
+  const convertedStageExids = stageList
+    .filter((s) => DEFAULT_CONVERTED_STAGES.some((n) => lower(n) === lower(s.name)))
+    .map((s) => s.id);
+
+  const contactsById = new Map(contacts.map((c) => [c.id, c]));
+  const usersById = new Map(users.map((u) => [u.id, u]));
+  const agentStats = summarizeAgents(loadAtBats(ledgerPath), contactsById, {
+    convertedStageExids,
+    userNames: new Map(users.map((u) => [u.id, u.name])),
+  });
+
+  // 7. Per-agent alerts — what tells the AGENT, as opposed to the note on the lead.
+  const channel = process.env.BATTR_ALERT_CHANNEL || "report_only";
+  const digests = buildAgentDigests(results, {
+    excludeGroupIds: rules.excludeOwnerGroupIds,
+    sweepDays: rules.neglectedDays,
+  });
+  const alerts = await deliverDigests(digests, { channel, fub, usersById, dry, log });
+  if (digests.length) log(`  ${digests.length} agent digests (${channel}${dry ? ", dry" : ""})`);
+
+  // 8. report + undo trail
   mkdirSync(LOG_DIR, { recursive: true });
   if (sweepLog.sweeps.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
 
-  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds });
+  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts });
   const reportPath = await deliverReport(markdown, { runId, dry });
 
   console.log(markdown);

@@ -22,6 +22,9 @@ import { evaluateCondition, evaluateSet } from "./filters.mjs";
 import { normalizeContact } from "./contact.mjs";
 import { isDayAllowed } from "./schedule.mjs";
 import { lists, listById } from "./lists.mjs";
+import { detectAtBats, summarizeAgents, formatRate } from "./atbats.mjs";
+import { buildAgentDigests, deliverDigests, renderDigestText } from "./alerts.mjs";
+import { parseCsv, findColumn, mapRows } from "./import-atbats.mjs";
 import { rules } from "./rules.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -359,6 +362,168 @@ check("nudges run every day", () => {
 
 check("an unknown day filter fails closed", () => {
   assert.equal(isDayAllowed("Whenever", dayAt("2026-09-01")), false);
+});
+
+// ---------------------------------------------------------------- at bats
+
+console.log("\nUnit — At Bats detection");
+
+const owned = (id, ownerUserId, pondId = null) =>
+  normalizeContact({ id, name: `Lead ${id}`, created: daysAgo(30), assignedUserId: ownerUserId, assignedPondId: pondId }, {});
+
+check("a newly seen owned lead is a brand new lead", () => {
+  const events = detectAtBats(new Map(), [owned(1, 11)], { now: NOW });
+  assert.equal(events.length, 1);
+  assert.equal(events[0].at_bat_type, "brand_new_lead");
+  assert.equal(events[0].new_owner_id, 11);
+});
+
+check("a newly seen lead sitting in a pond is not an at bat yet", () => {
+  const events = detectAtBats(new Map(), [owned(1, null, 900)], { now: NOW });
+  assert.equal(events.length, 0, "nobody has been given a chance yet");
+});
+
+check("pond to owner is a pond claim", () => {
+  const previous = new Map([[1, { ownerUserId: null, pondId: 900 }]]);
+  const events = detectAtBats(previous, [owned(1, 11)], { now: NOW });
+  assert.equal(events[0].at_bat_type, "pond_claim");
+  assert.equal(events[0].previous_pond_id, 900);
+});
+
+check("agent to agent is a transfer", () => {
+  const previous = new Map([[1, { ownerUserId: 11, pondId: null }]]);
+  const events = detectAtBats(previous, [owned(1, 12)], { now: NOW });
+  assert.equal(events[0].at_bat_type, "other_transfer");
+  assert.equal(events[0].previous_owner_id, 11);
+});
+
+check("unchanged ownership produces no event", () => {
+  const previous = new Map([[1, { ownerUserId: 11, pondId: null }]]);
+  assert.equal(detectAtBats(previous, [owned(1, 11)], { now: NOW }).length, 0);
+});
+
+check("our own sweep is flagged so it isn't credited as a chance", () => {
+  const previous = new Map([[1, { ownerUserId: 11, pondId: null }]]);
+  const events = detectAtBats(previous, [owned(1, null, 900)], { sweptIds: new Set([1]), now: NOW });
+  assert.equal(events[0].is_battr_sweep, true);
+});
+
+console.log("\nUnit — At Bats metrics");
+
+check("conversion and retention are computed per agent", () => {
+  const atBats = [
+    { contact_id: 1, at_bat_type: "brand_new_lead", at_bat_timestamp: daysAgo(30), new_owner_id: 11, is_battr_sweep: false },
+    { contact_id: 2, at_bat_type: "pond_claim", at_bat_timestamp: daysAgo(20), new_owner_id: 11, is_battr_sweep: false },
+  ];
+  const contacts = new Map([
+    [1, { crm_stage_exid: 8, owner_user_id: 11 }], // converted, retained
+    [2, { crm_stage_exid: 2, owner_user_id: 12 }], // neither
+  ]);
+  const [row] = summarizeAgents(atBats, contacts, { convertedStageExids: [8, 106], userNames: new Map([[11, "Nicole Miller"]]), now: NOW });
+  assert.equal(row.agent, "Nicole Miller");
+  assert.equal(row.atBats, 2);
+  assert.equal(row.converted, 1);
+  assert.equal(row.retained, 1);
+  assert.equal(formatRate(row.conversionRate), "50.0%");
+  assert.equal(row.pondClaims, 1);
+});
+
+check("swept leads are excluded from an agent's denominator", () => {
+  const atBats = [{ contact_id: 1, at_bat_type: "other_transfer", at_bat_timestamp: daysAgo(5), new_owner_id: 11, is_battr_sweep: true }];
+  assert.equal(summarizeAgents(atBats, new Map(), { now: NOW }).length, 0);
+});
+
+check("an agent with no at bats renders -- , never 0%", () => {
+  assert.equal(formatRate(null), "--");
+  assert.equal(formatRate(0), "0.0%");
+});
+
+check("at bats outside the window are ignored", () => {
+  const atBats = [{ contact_id: 1, at_bat_type: "brand_new_lead", at_bat_timestamp: daysAgo(400), new_owner_id: 11, is_battr_sweep: false }];
+  assert.equal(summarizeAgents(atBats, new Map(), { windowDays: 180, now: NOW }).length, 0);
+});
+
+// ------------------------------------------------------------- agent alerts
+
+console.log("\nUnit — per-agent alerts");
+
+const record = (over) => ({ id: 1, name: "A Lead", ownerId: 11, owner: "Nicole Miller", status: "at_risk", daysSinceTouch: 8, contact: { owner_group_ids: [] }, ...over });
+
+check("digests group non-compliant leads by owning agent", () => {
+  const digests = buildAgentDigests([
+    record({ id: 1 }),
+    record({ id: 2, status: "neglected" }),
+    record({ id: 3, ownerId: 12, owner: "Brett Smith" }),
+    record({ id: 4, status: "compliant" }),
+  ]);
+  assert.equal(digests.length, 2);
+  const nicole = digests.find((d) => d.agentId === 11);
+  assert.equal(nicole.atRisk.length, 1);
+  assert.equal(nicole.neglected.length, 1);
+});
+
+check("an agent with a clean board gets no digest", () => {
+  assert.equal(buildAgentDigests([record({ status: "compliant" })]).length, 0);
+});
+
+check("the paused owner-group gets no alerts", () => {
+  const digests = buildAgentDigests([record({ contact: { owner_group_ids: [52555] } })], { excludeGroupIds: [52555] });
+  assert.equal(digests.length, 0);
+});
+
+check("the digest leads with the admin message and flags what is sweeping", () => {
+  const [digest] = buildAgentDigests([record({ status: "neglected", name: "Long Gone" })]);
+  const text = renderDigestText(digest);
+  assert.match(text, /At risk leads need to be worked ASAP/);
+  assert.match(text, /SWEEPING NEXT RUN \(1\)/);
+  assert.match(text, /Long Gone/);
+  assert.match(text, /only swept after it has been flagged at risk first/);
+});
+
+check("a dry delivery sends nothing but still reports what it would send", async () => {
+  const digests = buildAgentDigests([record({})]);
+  const { delivered, failed } = await deliverDigests(digests, { channel: "fub_task", dry: true, log: () => {} });
+  assert.equal(delivered.length, 1);
+  assert.equal(failed.length, 0);
+  assert.match(delivered[0].via, /^fub_task:/);
+});
+
+check("email delivery fails loudly when an agent has no address on file", async () => {
+  const digests = buildAgentDigests([record({})]);
+  const { delivered, failed } = await deliverDigests(digests, { channel: "email", usersById: new Map(), dry: true, log: () => {} });
+  assert.equal(delivered.length, 0);
+  assert.match(failed[0].reason, /no email address/);
+});
+
+// ------------------------------------------------------------- CSV importer
+
+console.log("\nUnit — At Bats CSV import");
+
+check("the CSV parser handles quoted fields with commas", () => {
+  const rows = parseCsv('Name,Source\n"Smith, John",Zillow\n');
+  assert.deepEqual(rows[1], ["Smith, John", "Zillow"]);
+});
+
+check("column names are matched loosely", () => {
+  const headers = ["FUB ID", "Changed At", "At Bat Type", "To"];
+  assert.equal(findColumn(headers, ["fub id", "contact id"]), 0);
+  assert.equal(findColumn(headers, ["at bat timestamp", "changed at"]), 1);
+  assert.equal(findColumn(headers, ["nonexistent"]), -1);
+});
+
+check("export rows map onto ledger events", () => {
+  const rows = parseCsv('FUB ID,Name,At Bat Type,Changed At,To,Source\n41460,Javier Martinez,Pond Claim,2026-08-01,Quetza Adame,Ylopo\n');
+  const { events } = mapRows(rows);
+  assert.equal(events.length, 1);
+  assert.equal(events[0].contact_id, 41460);
+  assert.equal(events[0].at_bat_type, "pond_claim");
+  assert.equal(events[0].imported, true);
+  assert.match(events[0].at_bat_timestamp, /^2026-08-01/);
+});
+
+check("rows without a usable id or date are dropped, not guessed at", () => {
+  const rows = parseCsv("FUB ID,Changed At\n,2026-08-01\nabc,2026-08-01\n41460,\n");
+  assert.equal(mapRows(rows).events.length, 0);
 });
 
 // ------------------------------------------------------------------ end-to-end

@@ -101,6 +101,13 @@ export const rules = {
   /** Agents exempt from the audit — team lead, admin, ISA seats. By name. */
   exemptAgents: ["Mike Roland", "Adin Roland"],
 
+  /**
+   * Owner groups excluded from audits, sweeps, and alerts. 52555 is the group
+   * the live config excludes — the paused-agent group. Leads owned by someone
+   * in it are never swept and their owner never gets an alert.
+   */
+  excludeOwnerGroupIds: [52555],
+
   /** Lead sources exempt from the audit ("lead bucket" in Battr's language). */
   exemptSources: [],
 

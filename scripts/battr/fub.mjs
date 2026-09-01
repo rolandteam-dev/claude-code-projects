@@ -122,6 +122,10 @@ export class FubClient {
     return this.paginate("/smartLists");
   }
 
+  stages() {
+    return this.paginate("/stages");
+  }
+
   customFields() {
     return this.paginate("/customFields");
   }
