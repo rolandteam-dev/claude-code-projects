@@ -32,9 +32,8 @@ export const leadBuckets = [
  * Source string → bucket id. Matching is case- and whitespace-insensitive.
  *
  * Anything NOT listed here is unmapped, and `unmappedPolicy` below decides what
- * that means. Five groups of sources are deliberately left unmapped pending a
- * decision: the Schneider family, self-sourced prospecting, offline/sign
- * capture, inbound phone, and a set of unidentified vendors.
+ * that means. Every source present in the database as of 2026-09-01 is
+ * classified; unmapped now means genuinely new.
  */
 export const sourceBuckets = {
   // ── 82: never swept ───────────────────────────────────────────────────────
@@ -57,6 +56,16 @@ export const sourceBuckets = {
   "Open House": 82,
   "Open House Signs": 82,
   "Open House (Ylopo)": 82,
+  // Self-sourced prospecting: protected per Mike, 2026-09-01. The agent found
+  // these themselves off a dialer or an expired/FSBO list, which is a different
+  // thing from a lead the team bought and handed them.
+  FSBO: 82,
+  Redx: 82,
+  Mojo: 82,
+  "Mojo FSBO": 82,
+  Expireds: 82,
+  "ileads-Purchase": 82,
+  speculo_buyer: 82,
 
   // ── 1: Zillow family ──────────────────────────────────────────────────────
   Zillow: 1,
@@ -99,6 +108,18 @@ export const sourceBuckets = {
   "Citywide Long Form": 2,
   "Real Geeks": 2,
   "Lead Findr": 2,
+  // Swept per Mike, 2026-09-01.
+  "my +plus leads": 2,
+  Sierra: 2,
+  "Lexy Lead": 2,
+  Quali: 2,
+  AgentMachine: 2,
+  zipTitan: 2,
+  "RAIYA Call": 2,
+  "Pad Split": 2,
+  "Listing Booster": 2,
+  "Click Mortgage": 2,
+  Craigslist: 2,
 
   // ── 3: paid search & social ───────────────────────────────────────────────
   "Google PPC": 3,
@@ -117,6 +138,7 @@ export const sourceBuckets = {
   YouTube: 3,
   Yahoo: 3,
   Duckduckgo: 3,
+  "Google Business": 3,
 
   // ── 4: website & organic ──────────────────────────────────────────────────
   "TheRolandTeam.com": 4,
@@ -125,6 +147,7 @@ export const sourceBuckets = {
   Website: 4,
   "Direct Traffic": 4,
   "Google Organic": 4,
+  "search.findvegasproperty.com": 4,
   "Luxury Website": 4, // this site's own lead intake
 
   // ── 5: seller & valuation ─────────────────────────────────────────────────
@@ -142,6 +165,9 @@ export const sourceBuckets = {
   "Fhaloans.com": 5,
   "Usdaloans.com": 5,
   "Eligibility.org": 5,
+  Revaluate: 5,
+  Homebot: 5,
+  Homestory: 5,
 
   // ── 6: signs & mailers ────────────────────────────────────────────────────
   // Swept per Mike, 2026-09-01: team-generated offline demand, unlike open
@@ -156,6 +182,7 @@ export const sourceBuckets = {
   "CallAction > Mike Roland": 6,
   "CallAction > SlyDial": 6,
   "CallAction > Cash Offer Mailers": 6,
+  "LPT Rider": 6,
 
   // ── 7: team & internal ────────────────────────────────────────────────────
   // Moved out of "never swept" per Mike, 2026-09-01: these are team-owned leads
@@ -173,6 +200,10 @@ export const sourceBuckets = {
   "ISA Transfer": 7,
   Company: 7,
   "Office Walk In": 7,
+  // Inbound phone: swept per Mike, 2026-09-01 — someone called the team and was
+  // routed to whoever was up.
+  "Direct Call": 7,
+  "Inbound Call": 7,
   API: 7,
   Zapier: 7,
   "Website Registration": 7,

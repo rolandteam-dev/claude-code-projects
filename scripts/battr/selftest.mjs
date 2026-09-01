@@ -587,6 +587,18 @@ check("the Schneider prefix stops at a word boundary", () => {
   assert.equal(bucketForSource("Schneiderman Leads"), null);
 });
 
+check("self-sourced prospecting is protected", () => {
+  for (const src of ["FSBO", "Redx", "Mojo", "Mojo FSBO", "Expireds", "ileads-Purchase", "speculo_buyer"]) {
+    assert.equal(isSourceAudited(src), false, `${src} was prospected by the agent, not bought`);
+  }
+});
+
+check("inbound phone and the remaining vendors are swept", () => {
+  for (const src of ["my +plus leads", "Direct Call", "Inbound Call", "Sierra", "Revaluate", "LPT Rider"]) {
+    assert.equal(isSourceAudited(src), true, `${src} should be in scope`);
+  }
+});
+
 check("stray double spaces in a FUB source string still match", () => {
   // FUB really does store "CallAction  > Riders" with two spaces.
   assert.equal(bucketForSource("CallAction  > Riders"), bucketForSource("CallAction > Riders"));
