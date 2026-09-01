@@ -147,11 +147,26 @@ const memoryStore: HomeownerStore = {
 };
 
 /**
- * Returns the active store. Today: in-memory. When DATABASE_URL is set, this is
- * where the Postgres driver will be selected instead — callers are unaffected.
+ * Returns the active store: Postgres when DATABASE_URL is configured, otherwise
+ * the in-memory driver (dev / build / UI verification). Callers depend only on
+ * the HomeownerStore interface, so the swap is invisible to them.
  */
 export function homeownerStore(): HomeownerStore {
+  if (process.env.DATABASE_URL) {
+    // Lazy require so the pg client is never loaded in the in-memory path.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return (require("./postgres") as typeof import("./postgres")).postgresStore;
+  }
   return memoryStore;
+}
+
+/** Unguessable token for dashboard URLs. */
+export function newToken(): string {
+  return (
+    Math.random().toString(36).slice(2) +
+    Math.random().toString(36).slice(2) +
+    Date.now().toString(36)
+  ).slice(0, 24);
 }
 
 /* ---------------- Derived helpers (shared by dashboard + emails) ---------------- */
