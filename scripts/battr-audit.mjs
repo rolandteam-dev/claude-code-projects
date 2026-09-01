@@ -28,6 +28,7 @@ import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, lower
 import { normalizeContact } from "./battr/contact.mjs";
 import { isDayAllowed } from "./battr/schedule.mjs";
 import { lists } from "./battr/lists.mjs";
+import { bucketName } from "./battr/sources.mjs";
 import {
   loadOwnership,
   saveOwnership,
@@ -165,6 +166,32 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     lines.push(`## Neglected but not swept (${actions.heldBack.length})`);
     lines.push("");
     for (const h of actions.heldBack) lines.push(`- ${h.name} (${h.owner}) — ${h.holdReason}`);
+    lines.push("");
+  }
+
+  // Which sources drive the sweeps — this is what tells you whether a source
+  // belongs in the audit at all, or in the excluded bucket.
+  const bySource = new Map();
+  for (const r of results) {
+    if (r.status !== "at_risk" && r.status !== "neglected") continue;
+    const key = r.source || "(no source)";
+    const row = bySource.get(key) ?? { source: key, atRisk: 0, neglected: 0, bucket: bucketName(r.contact?.lead_bucket_id ?? null) };
+    if (r.status === "at_risk") row.atRisk++;
+    else row.neglected++;
+    bySource.set(key, row);
+  }
+  const sourceRows = [...bySource.values()].sort((a, b) => b.neglected + b.atRisk - (a.neglected + a.atRisk));
+  if (sourceRows.length) {
+    lines.push("## By lead source");
+    lines.push("");
+    lines.push("| Source | Bucket | At risk | Neglected |");
+    lines.push("| --- | --- | ---: | ---: |");
+    for (const s of sourceRows) lines.push(`| ${s.source} | ${s.bucket} | ${s.atRisk} | ${s.neglected} |`);
+    const unmapped = sourceRows.filter((s) => s.bucket === "Unmapped");
+    if (unmapped.length) {
+      lines.push("");
+      lines.push(`> ${unmapped.length} of these sources are unmapped. Map them in \`scripts/battr/sources.mjs\` — run \`npm run battr:sources\` to list every source in the database.`);
+    }
     lines.push("");
   }
 

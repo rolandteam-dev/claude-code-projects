@@ -10,6 +10,8 @@
  * mapping tries several candidates rather than trusting one.
  */
 
+import { bucketForSource } from "./sources.mjs";
+
 const first = (...values) => values.find((v) => v !== undefined && v !== null && v !== "");
 
 /**
@@ -48,7 +50,10 @@ export function normalizeContact(person, touch, stamps = {}) {
     // provenance
     source_raw: first(person.source, person.sourceName, "") ?? "",
     source_normalized: first(person.source, person.sourceName, "") ?? "",
-    lead_bucket_id: person.leadBucketId ?? null,
+    // FUB has no lead-bucket field — it's a Battr concept. We resolve it from
+    // the source string, which is what makes the combined list's
+    // `lead_bucket_id != 82` exclusion actually exclude anything.
+    lead_bucket_id: person.leadBucketId ?? bucketForSource(first(person.source, person.sourceName, "")),
 
     // timestamps the day_since transforms read
     crm_created_at: first(person.created, person.createdAt, null),

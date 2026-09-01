@@ -25,6 +25,7 @@ import { lists, listById, memberListsOf } from "./lists.mjs";
 import { detectAtBats, summarizeAgents, formatRate } from "./atbats.mjs";
 import { buildAgentDigests, deliverDigests, renderDigestText } from "./alerts.mjs";
 import { parseCsv, findColumn, mapRows } from "./import-atbats.mjs";
+import { bucketForSource, bucketName, isSourceAudited, leadBuckets, unmappedPolicy } from "./sources.mjs";
 import { rules } from "./rules.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -427,6 +428,53 @@ check("nudges run every day", () => {
 
 check("an unknown day filter fails closed", () => {
   assert.equal(isDayAllowed("Whenever", dayAt("2026-09-01")), false);
+});
+
+// ------------------------------------------------------------ lead sources
+
+console.log("\nUnit — lead source buckets");
+
+check("the Zillow family collapses into one bucket", () => {
+  const family = ["Zillow", "Zillow.com", "Zillow Flex", "Zillow Preferred", "Zillow-Long Form", "zbuyer.com"];
+  const buckets = new Set(family.map(bucketForSource));
+  assert.equal(buckets.size, 1, "one bucket for every Zillow spelling");
+  assert.equal([...buckets][0], 1);
+});
+
+check("source matching ignores case and surrounding whitespace", () => {
+  assert.equal(bucketForSource("  zillow preferred  "), bucketForSource("Zillow Preferred"));
+});
+
+check("an unknown source is unmapped, not misfiled", () => {
+  assert.equal(bucketForSource("Some New Portal"), null);
+  assert.equal(bucketName(null), "Unmapped");
+});
+
+check("a bucket flagged excludeFromSweeps takes its sources out of the audit", () => {
+  const excluded = leadBuckets.find((b) => b.excludeFromSweeps);
+  assert.equal(excluded.id, 82, "82 is the id the live combined list excludes");
+});
+
+check("unmapped sources follow the stated policy", () => {
+  assert.equal(isSourceAudited("Some New Portal"), unmappedPolicy === "include");
+});
+
+check("a mapped, non-excluded source is audited", () => {
+  assert.equal(isSourceAudited("Zillow Preferred"), true);
+});
+
+check("the bucket is resolved onto the contact, so the exclusion can fire", () => {
+  const c = normalizeContact({ id: 9, source: "Zillow Preferred", assignedUserId: 5, created: daysAgo(30) }, {});
+  assert.equal(c.lead_bucket_id, 1, "null here would silently disable the combined list's bucket exclusion");
+});
+
+check("a bucket-82 lead is dropped from the combined list", () => {
+  const c = normalizeContact(
+    { id: 10, stage: "Lead", created: daysAgo(60), assignedUserId: 5, tags: [], leadBucketId: 82 },
+    { lastOutbound: 0 }
+  );
+  c.custom_fields.fub.system_lastCommunication = daysAgo(40);
+  assert.equal(runCombinedList([c], teamLeads, NOW).records.length, 0);
 });
 
 // ---------------------------------------------------------------- at bats

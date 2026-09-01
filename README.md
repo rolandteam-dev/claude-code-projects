@@ -174,6 +174,32 @@ node scripts/battr-audit.mjs --undo=2026-09-01-a1b2
 report + audit trail to `battr-logs/`. You can also trigger it from the
 **Actions** tab, choosing dry or live and which stage to run.
 
+### Lead sources and buckets
+
+A **lead bucket** groups many raw CRM source strings under one name, so a rule can
+say "not bucket 82" instead of naming every Zillow spelling. Follow Up Boss has no
+such field — it's ours, resolved from the contact's source string in
+`scripts/battr/sources.mjs`. **A source that isn't mapped to a bucket cannot be
+excluded by bucket**, so the mapping is what makes the exclusion real.
+
+To see every source actually in the database, with lead counts and current bucket:
+
+```bash
+FUB_API_KEY=... npm run battr:sources
+```
+
+It prints a ready-to-paste block for everything still unmapped. Assign each a
+bucket id — **82 is the never-sweep bucket**.
+
+`unmappedPolicy` decides what happens to a source nobody has classified yet.
+It defaults to `"include"`, matching the live behavior: an unmapped source has a
+null bucket, `lead_bucket_id != 82` is true for null, so those leads *are* swept.
+Worth knowing — a brand-new lead source enrolls in sweeping the day it appears.
+Set it to `"exclude"` to make new sources opt-in instead.
+
+The daily report carries a **By lead source** table showing which sources are
+driving at-risk and neglected counts, and flags any that are still unmapped.
+
 ### Telling the agents
 
 The nudge note lands on the lead; the **agent digest** is what tells the person
