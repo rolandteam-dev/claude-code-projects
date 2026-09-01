@@ -19,8 +19,15 @@ on:
     - cron: "0 2 * * *" # 02:00 UTC = 7 PM PT
   workflow_dispatch:
     inputs:
+      task:
+        description: "What to run"
+        type: choice
+        default: "audit"
+        options:
+          - "audit"
+          - "discover-lead-sources"
       mode:
-        description: "Run mode"
+        description: "Run mode (audit only)"
         type: choice
         default: "dry"
         options:
@@ -59,7 +66,23 @@ jobs:
       - name: Self-test the rule engine
         run: node scripts/battr/selftest.mjs
 
+      # Lists every lead source in the database with counts and current bucket,
+      # so the mapping can be filled in without anyone running node locally.
+      - name: Discover lead sources
+        if: inputs.task == 'discover-lead-sources'
+        env:
+          FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
+        run: |
+          node scripts/battr/sources.mjs --discover | tee sources.txt
+          {
+            echo '## Lead sources'
+            echo '```'
+            cat sources.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Run the audit
+        if: inputs.task != 'discover-lead-sources'
         env:
           FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
@@ -76,6 +99,7 @@ jobs:
             ${{ inputs.max_sweeps && format('--max-sweeps={0}', inputs.max_sweeps) || '' }}
 
       - name: Commit the audit trail
+        if: inputs.task != 'discover-lead-sources'
         run: |
           if [ -z "$(git status --porcelain battr-logs/)" ]; then
             echo "Nothing to record."
