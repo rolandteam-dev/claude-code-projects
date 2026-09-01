@@ -3,6 +3,7 @@ import { site } from "@/lib/site";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Concierge } from "@/components/Concierge";
+import { FollowUpBossPixel } from "@/components/FollowUpBossPixel";
 import { JsonLd } from "@/components/JsonLd";
 import { realEstateAgentSchema, webSiteSchema } from "@/lib/schema";
 
@@ -57,6 +58,7 @@ export default function SiteLayout({ children }: Readonly<{ children: React.Reac
       <main className="flex-1">{children}</main>
       <Footer />
       <Concierge />
+      <FollowUpBossPixel />
     </>
   );
 }

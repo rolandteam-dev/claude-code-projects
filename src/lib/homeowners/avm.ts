@@ -4,8 +4,9 @@
  * to the value history. Returns null (no-op) when the Repliers key or the
  * minimum property attributes are missing, so the refresh job degrades safely.
  *
- * Mirrors the request/response mapping used by /api/valuation; confirm exact
- * field names against a live Repliers response once the Estimates add-on is on.
+ * Used by the digest cron and as a fallback when the funnel has no precomputed
+ * estimate; confirm exact field names against a live Repliers response once the
+ * Estimates add-on is on.
  */
 import type { EstimatePoint, Homeowner } from "./store";
 
