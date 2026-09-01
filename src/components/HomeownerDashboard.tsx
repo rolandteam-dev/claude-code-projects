@@ -9,6 +9,7 @@
  */
 import { useEffect, useState } from "react";
 import { homeownerBrand } from "@/lib/homeowners/brand";
+import type { Comp, ZipMarketStats } from "@/lib/idx/market";
 
 export type DashboardProps = {
   token: string;
@@ -26,7 +27,17 @@ export type DashboardProps = {
   asOf: string;
   series: { date: string; value: number }[];
   appreciation: { abs: number; pct: number } | null;
+  market?: ZipMarketStats | null;
+  comps?: Comp[];
 };
+
+const fmtShortDate = (iso: string) =>
+  iso
+    ? new Date(iso + (iso.length === 10 ? "T00:00:00" : "")).toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric",
+      })
+    : "";
 
 const money = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -150,6 +161,60 @@ export function HomeownerDashboard(p: DashboardProps) {
 
         <Sparkline series={p.series} />
       </div>
+
+      {/* Local market snapshot */}
+      {p.market && (
+        <div className="mt-6 rounded-[16px] border border-[var(--color-line)] bg-white p-7 shadow-[var(--shadow-soft)] md:p-9">
+          <div className="font-sans text-[0.72rem] uppercase tracking-[0.14em] text-[var(--color-muted)]">
+            Your local market · {p.market.zip}
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <div>
+              <div className="font-serif text-[1.7rem] text-[var(--color-ink)]">{p.market.activeCount}</div>
+              <div className="font-sans text-[0.78rem] text-[var(--color-muted)]">Homes for sale now</div>
+            </div>
+            <div>
+              <div className="font-serif text-[1.7rem] text-[var(--color-ink)]">{money(p.market.medianList)}</div>
+              <div className="font-sans text-[0.78rem] text-[var(--color-muted)]">Median list price</div>
+            </div>
+            <div>
+              <div className="font-serif text-[1.7rem] text-[var(--color-ink)]">{p.market.medianDom}</div>
+              <div className="font-sans text-[0.78rem] text-[var(--color-muted)]">Median days on market</div>
+            </div>
+          </div>
+          <p className="mt-4 font-sans text-[0.8rem] text-[var(--color-ink-soft)]">
+            Active listings in {p.market.zip} are asking a median of {money(p.market.medianPpsf)}/sqft. A rising or
+            falling market changes what your home could sell for — that&apos;s what a full analysis pins down.
+          </p>
+        </div>
+      )}
+
+      {/* Recent nearby sales */}
+      {p.comps && p.comps.length > 0 && (
+        <div className="mt-6 rounded-[16px] border border-[var(--color-line)] bg-white p-7 shadow-[var(--shadow-soft)] md:p-9">
+          <div className="font-sans text-[0.72rem] uppercase tracking-[0.14em] text-[var(--color-muted)]">
+            Recent nearby sales
+          </div>
+          <div className="mt-4 divide-y divide-[var(--color-line)]">
+            {p.comps.map((c, i) => (
+              <div key={i} className="flex items-center justify-between gap-4 py-2.5">
+                <div>
+                  <div className="font-sans text-[0.92rem] font-medium text-[var(--color-ink)]">{c.address}</div>
+                  <div className="font-sans text-[0.76rem] text-[var(--color-muted)]">
+                    {c.beds > 0 ? `${c.beds} bd · ` : ""}
+                    {c.sqft.toLocaleString()} sqft · {money(c.ppsf)}/sqft
+                    {c.soldDate ? ` · sold ${fmtShortDate(c.soldDate)}` : ""}
+                  </div>
+                </div>
+                <div className="font-serif text-[1.15rem] text-[var(--color-gold)]">{money(c.soldPrice)}</div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 font-sans text-[0.72rem] text-[var(--color-muted)]">
+            Sold comparables near your home from the past six months (Nevada MLS).
+          </p>
+        </div>
+      )}
 
       {/* CTA — request full CMA */}
       <div className="mt-6 rounded-[16px] bg-[var(--color-graphite)] p-7 text-white md:p-9">
