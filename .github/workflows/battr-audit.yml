@@ -26,6 +26,7 @@ on:
         options:
           - "audit"
           - "discover-lead-sources"
+          - "inspect-fub-fields"
       mode:
         description: "Run mode (audit only)"
         type: choice
@@ -84,8 +85,25 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # Reports which fields a FUB person record actually carries, so a rule
+      # depending on a mis-guessed field name is caught directly instead of
+      # silently protecting or flagging nobody.
+      - name: Inspect FUB fields
+        if: inputs.task == 'inspect-fub-fields'
+        env:
+          FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
+        run: |
+          set -o pipefail
+          node scripts/battr/inspect.mjs | tee fields.txt
+          {
+            echo '## FUB person fields'
+            echo '```'
+            cat fields.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Run the audit
-        if: inputs.task != 'discover-lead-sources'
+        if: inputs.task == 'audit'
         env:
           FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
@@ -102,7 +120,7 @@ jobs:
             ${{ inputs.max_sweeps && format('--max-sweeps={0}', inputs.max_sweeps) || '' }}
 
       - name: Commit the audit trail
-        if: inputs.task != 'discover-lead-sources'
+        if: inputs.task == 'audit'
         run: |
           if [ -z "$(git status --porcelain battr-logs/)" ]; then
             echo "Nothing to record."

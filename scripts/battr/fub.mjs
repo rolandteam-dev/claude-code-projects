@@ -184,12 +184,17 @@ export class FubClient {
    * audit inside a few dozen API calls instead of a few thousand.
    */
   async activity(sinceIso) {
-    const [calls, texts, emails] = await Promise.all([
+    // NOTE: /v1/emails is deliberately absent. FUB refuses to serve it in bulk —
+    //   400 "id list, inboxThreadId, personId or personId and threadId arguments
+    //   must be specified for GET /v1/emails"
+    // and fetching per person would be one request per contact, ~54,000 of them.
+    // Email activity therefore reaches us only through the person's own
+    // last-communication field; see normalizeContact.
+    const [calls, texts] = await Promise.all([
       this.paginate("/calls", { createdAfter: sinceIso }),
       this.paginate("/textMessages", { createdAfter: sinceIso }),
-      this.paginate("/emails", { createdAfter: sinceIso }),
     ]);
-    return { calls, texts, emails };
+    return { calls, texts, emails: [] };
   }
 
   // ------------------------------------------------------------------ writes
