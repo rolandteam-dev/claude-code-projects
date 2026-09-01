@@ -9,6 +9,7 @@ import { PaymentEstimator } from "@/components/PaymentEstimator";
 import { ScheduleTour } from "@/components/ScheduleTour";
 import { ListingStickyBar } from "@/components/ListingStickyBar";
 import { ListingShareBar } from "@/components/ListingShareBar";
+import { SaveHomeButton } from "@/components/portal/SaveHomeButton";
 import { WhatsNearby } from "@/components/WhatsNearby";
 import { RelocationTaxSavings } from "@/components/RelocationTaxSavings";
 import { breadcrumbSchema } from "@/lib/schema";
@@ -153,11 +154,18 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
             {" › "}
             <span className="text-[var(--color-ink-soft)]">{l.address.line1}</span>
           </nav>
-          <ListingShareBar
-            url={absoluteUrl(`/listings/${l.id}`)}
-            title={`${l.address.line1}, ${l.address.city} — ${formatPrice(l.listPrice)}`}
-            listingId={l.id}
-          />
+          <div className="flex items-center gap-3">
+            <SaveHomeButton
+              id={l.id}
+              address={`${l.address.line1}, ${l.address.city}`}
+              variant="button"
+            />
+            <ListingShareBar
+              url={absoluteUrl(`/listings/${l.id}`)}
+              title={`${l.address.line1}, ${l.address.city} — ${formatPrice(l.listPrice)}`}
+              listingId={l.id}
+            />
+          </div>
         </div>
       </Container>
 

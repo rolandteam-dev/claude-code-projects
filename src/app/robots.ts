@@ -8,8 +8,9 @@ export default function robots(): MetadataRoute.Robots {
 
   return {
     rules: [
-      { userAgent: "*", allow: "/" },
-      ...aiBots.map((ua) => ({ userAgent: ua, allow: "/" })),
+      // /agent is the internal team console — never meant to be crawled.
+      { userAgent: "*", allow: "/", disallow: "/agent" },
+      ...aiBots.map((ua) => ({ userAgent: ua, allow: "/", disallow: "/agent" })),
     ],
     sitemap: absoluteUrl("/sitemap.xml"),
     host: absoluteUrl("/"),

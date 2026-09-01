@@ -14,7 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/guard-gated-communities-las-vegas", "/moving-to-las-vegas",
     "/active-adult-communities-las-vegas", "/golf-communities-las-vegas", "/listings", "/communities",
     "/areas", "/guides", "/market-report", "/about", "/why-the-roland-team", "/testimonials",
-    "/contact", "/blog",
+    "/contact", "/blog", "/portal",
   ].map(
     (path) => ({
       url: absoluteUrl(path),

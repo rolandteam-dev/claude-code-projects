@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Container } from "@/components/Container";
+import { SaveSearchButton } from "@/components/portal/SaveSearchButton";
 import { ListingCard } from "@/components/ListingCard";
 import { IdxDisclaimer } from "@/components/IdxDisclaimer";
 import { JsonLd } from "@/components/JsonLd";
@@ -225,9 +226,12 @@ export default async function ListingsPage({
       </section>
 
       <Container size="wide" className="py-12">
-        <div className="mb-6 font-sans text-[0.85rem] text-[var(--color-muted)]">
-          {total.toLocaleString()} {total === 1 ? "home" : "homes"} found
-          {totalPages > 1 && <> · page {page} of {totalPages}</>}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 font-sans text-[0.85rem] text-[var(--color-muted)]">
+          <div>
+            {total.toLocaleString()} {total === 1 ? "home" : "homes"} found
+            {totalPages > 1 && <> · page {page} of {totalPages}</>}
+          </div>
+          <SaveSearchButton />
         </div>
 
         {error ? (
