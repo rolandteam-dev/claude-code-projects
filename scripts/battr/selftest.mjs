@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 import { rmSync } from "node:fs";
 import assert from "node:assert/strict";
 
-import { classify, buildTouchIndex, classifyForList, runCombinedList, DAY_MS } from "./classify.mjs";
+import { classify, buildTouchIndex, classifyForList, runCombinedList, isExemptAgent, DAY_MS } from "./classify.mjs";
 import { evaluateCondition, evaluateSet } from "./filters.mjs";
 import { normalizeContact } from "./contact.mjs";
 import { isDayAllowed } from "./schedule.mjs";
@@ -36,14 +36,23 @@ const daysAgo = (n) => new Date(NOW - n * DAY_MS).toISOString();
 
 let passed = 0;
 const check = (label, fn) => {
-  try {
-    fn();
+  const ok = () => {
     passed++;
     console.log(`  ✓ ${label}`);
-  } catch (err) {
+  };
+  const fail = (err) => {
     console.error(`  ✗ ${label}\n    ${err.message}`);
     process.exitCode = 1;
+  };
+  try {
+    const out = fn();
+    // Some checks are async; a rejected promise must fail the run, not vanish.
+    if (out && typeof out.then === "function") return out.then(ok, fail);
+    ok();
+  } catch (err) {
+    fail(err);
   }
+  return undefined;
 };
 
 // --------------------------------------------------------------- unit fixtures
@@ -482,6 +491,27 @@ await (async () => {
       assert.ok(!seen.some((u) => u.includes("offset=")), `offset request made: ${seen.join(", ")}`);
     });
 
+    await check("a collection that never exhausts throws rather than truncating", async () => {
+      // A server that always returns a cursor used to stop silently at the page
+      // cap, which reads downstream as a small database rather than a short read.
+      const endless = createServer((req, res) => {
+        const port = endless.address().port;
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ people: [{ id: 1 }], _metadata: { nextLink: `http://127.0.0.1:${port}/people?p=x` } }));
+      });
+      await new Promise((r) => endless.listen(0, "127.0.0.1", r));
+      try {
+        process.env.FUB_API_BASE = `http://127.0.0.1:${endless.address().port}`;
+        const { FubClient: Endless } = await import(`./fub.mjs?endless=${endless.address().port}`);
+        await assert.rejects(
+          () => new Endless("k", { dry: true, log: () => {} }).paginate("/people", {}, { max: 12000 }),
+          /page cap|do not trust a truncated audit/
+        );
+      } finally {
+        endless.close();
+      }
+    });
+
     check("the cursor is followed verbatim, not rebuilt", () => {
       assert.ok(seen.some((u) => u.includes("page=2")), `never followed the cursor: ${seen.join(", ")}`);
     });
@@ -518,6 +548,67 @@ check("a bucket flagged excludeFromSweeps takes its sources out of the audit", (
 
 check("unmapped sources follow the stated policy", () => {
   assert.equal(isSourceAudited("Some New Portal"), unmappedPolicy === "include");
+});
+
+check("a new, unclassified source is protected by default", () => {
+  assert.equal(unmappedPolicy, "exclude", "new sources must not enroll themselves in sweeping");
+  assert.equal(isSourceAudited("Brand New Vendor 2027"), false);
+});
+
+check("relationship sources are protected", () => {
+  for (const s of ["SOI", "Sphere", "Past Client", "Referral", "Import", "Imported"]) {
+    assert.equal(isSourceAudited(s), false, `${s} must never be swept`);
+  }
+});
+
+check("open-house capture is protected across every vendor", () => {
+  for (const s of ["Open House", "Open House Signs", "Open House (Ylopo)", "Schneider Open House"]) {
+    assert.equal(isSourceAudited(s), false, `${s} must never be swept`);
+  }
+});
+
+check("signs and mailers are swept", () => {
+  for (const s of ["Sign Calls/Mailers", "Listing Sign Call", "For Sale Signs", "Mailers", "Billboard"]) {
+    assert.equal(isSourceAudited(s), true, `${s} should be in scope`);
+  }
+});
+
+check("every Schneider source is protected, including ones not yet created", () => {
+  for (const s of ["Schneider Ylopo", "Schneider zBuyer", "Schneider Lender", "Schneider Google LSA"]) {
+    assert.equal(isSourceAudited(s), false, `${s} must never be swept`);
+  }
+  // A prefix rule, not a list, so a new variant is protected the day it appears.
+  assert.equal(isSourceAudited("Schneider Some Vendor Invented Later"), false);
+});
+
+check("the Schneider prefix stops at a word boundary", () => {
+  // "Schneiderman Leads" is a different source and must not inherit protection
+  // just because it shares a prefix.
+  assert.equal(bucketForSource("Schneiderman Leads"), null);
+});
+
+check("self-sourced prospecting is protected", () => {
+  for (const src of ["FSBO", "Redx", "Mojo", "Mojo FSBO", "Expireds", "ileads-Purchase", "speculo_buyer"]) {
+    assert.equal(isSourceAudited(src), false, `${src} was prospected by the agent, not bought`);
+  }
+});
+
+check("inbound phone and the remaining vendors are swept", () => {
+  for (const src of ["my +plus leads", "Direct Call", "Inbound Call", "Sierra", "Revaluate", "LPT Rider"]) {
+    assert.equal(isSourceAudited(src), true, `${src} should be in scope`);
+  }
+});
+
+check("stray double spaces in a FUB source string still match", () => {
+  // FUB really does store "CallAction  > Riders" with two spaces.
+  assert.equal(bucketForSource("CallAction  > Riders"), bucketForSource("CallAction > Riders"));
+  assert.equal(isSourceAudited("CallAction  > Riders"), true);
+});
+
+check("team-owned sources are swept, but an exempt agent still keeps them", () => {
+  assert.equal(isSourceAudited("Mike Roland Direct Lead"), true, "the source itself is in scope");
+  const owned = { owner_name: "Mike Roland" };
+  assert.equal(isExemptAgent(owned.owner_name, rules), true, "the agent exemption overrides the source");
 });
 
 check("a mapped, non-excluded source is audited", () => {
@@ -638,6 +729,15 @@ check("digests group non-compliant leads by owning agent", () => {
 
 check("an agent with a clean board gets no digest", () => {
   assert.equal(buildAgentDigests([record({ status: "compliant" })]).length, 0);
+});
+
+check("an exempt agent's leads are excluded in list mode too", () => {
+  // This lived only in classifySimple, so once "lists" became the default the
+  // exemption silently stopped applying.
+  assert.equal(isExemptAgent("Mike Roland", rules), true);
+  assert.equal(isExemptAgent("mike roland", rules), true, "matching is case-insensitive");
+  assert.equal(isExemptAgent("Nicole Miller", rules), false);
+  assert.equal(isExemptAgent(null, rules), false);
 });
 
 check("the paused owner-group gets no alerts", () => {

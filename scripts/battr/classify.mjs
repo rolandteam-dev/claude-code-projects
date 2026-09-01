@@ -70,6 +70,19 @@ export function buildTouchIndex({ calls = [], texts = [], emails = [] }) {
   return index;
 }
 
+// ------------------------------------------------------------ agent exemption
+
+/**
+ * Is this lead's owner exempt from the audit entirely?
+ *
+ * Applied in BOTH modes. It used to live only inside classifySimple, which meant
+ * that once "lists" became the default the exemption silently stopped applying —
+ * an exempt agent's leads were classified and swept like anyone else's.
+ */
+export function isExemptAgent(ownerName, rules) {
+  return Boolean(ownerName) && hasAny([ownerName], rules?.exemptAgents ?? []);
+}
+
 // ---------------------------------------------------------------- list mode
 
 export const STATUS_RANK = { compliant: 0, at_risk: 1, neglected: 2 };

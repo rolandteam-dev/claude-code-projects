@@ -24,11 +24,11 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { FubClient } from "./battr/fub.mjs";
 import { rules } from "./battr/rules.mjs";
-import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, lower, hasAny } from "./battr/classify.mjs";
+import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, isExemptAgent, lower, hasAny } from "./battr/classify.mjs";
 import { normalizeContact } from "./battr/contact.mjs";
 import { isDayAllowed } from "./battr/schedule.mjs";
 import { lists } from "./battr/lists.mjs";
-import { bucketName } from "./battr/sources.mjs";
+import { bucketName, isSourceAudited } from "./battr/sources.mjs";
 import {
   loadOwnership,
   saveOwnership,
@@ -351,8 +351,31 @@ async function main() {
     if (unresolved) {
       log(`  WARNING: ${unresolved} nurture-stage contacts have no readable timeframe — the four nurture lists will under-report. Check the timeframe field name on a FUB contact.`);
     }
+
+    // The combined list excludes an owner group, but that condition reads a
+    // field FUB may not return on a person. If nobody has any group ids, the
+    // exclusion cannot fire and the protection it implies does not exist.
+    if (!contacts.some((c) => (c.owner_group_ids ?? []).length)) {
+      log(`  WARNING: no contact carries owner_group_ids — the owner-group exclusion (${rules.excludeOwnerGroupIds.join(", ")}) is NOT being enforced. Exempt those agents by name in rules.exemptAgents instead.`);
+    }
     log(`  ${run.records.length} in the combined list, ${run.excluded.length} excluded by bucket/group`);
-    results = run.records;
+
+    // Two exclusions applied after the union, both surfaced as "excluded" in the
+    // report rather than quietly vanishing from the counts.
+    //
+    // The source check cannot be left to the combined list's `lead_bucket_id !=
+    // 82` condition: an unmapped source has a null bucket, and `null != 82` is
+    // true, so an unclassified source would sail through regardless of
+    // unmappedPolicy. isSourceAudited is the only thing that honours it.
+    results = run.records.map((r) => {
+      if (isExemptAgent(r.owner, rules)) {
+        return { ...r, status: "excluded", reason: `exempt agent (${r.owner})` };
+      }
+      if (!isSourceAudited(r.source)) {
+        return { ...r, status: "excluded", reason: `protected source (${r.source || "none"})` };
+      }
+      return r;
+    });
   } else {
     results = contacts.map((c) => classifySimple(c, touchIndex, rules));
   }
@@ -411,6 +434,18 @@ async function main() {
       }
       if (hasAny(lead.tags, rules.reportOnlyTags)) {
         actions.heldBack.push({ ...lead, holdReason: "report-only tag (unworkable contact info)" });
+        continue;
+      }
+
+      // Second, independent checks on the agent exemption and the source policy.
+      // Classification already removes these; this guarantees no future change
+      // to classification can let a sweep through.
+      if (isExemptAgent(lead.owner, rules)) {
+        actions.heldBack.push({ ...lead, holdReason: `exempt agent (${lead.owner})` });
+        continue;
+      }
+      if (!isSourceAudited(lead.source)) {
+        actions.heldBack.push({ ...lead, holdReason: `protected source (${lead.source || "none"})` });
         continue;
       }
 
