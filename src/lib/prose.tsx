@@ -44,3 +44,12 @@ function renderInline(text: string, keyBase: string): ReactNode[] {
 export function ProseText({ text }: { text: string }) {
   return <>{renderInline(text, "p")}</>;
 }
+
+/**
+ * Strip inline markdown to plain text — [label](href) → label, **x** → x.
+ * Used for structured-data (JSON-LD) fields, which must be clean prose without
+ * markup even when the visible copy carries links.
+ */
+export function stripInline(text: string): string {
+  return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1").replace(/\*\*([^*]+)\*\*/g, "$1");
+}

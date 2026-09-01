@@ -68,6 +68,17 @@ const communityImages: Record<string, string> = {
   "spanish-hills": img("hf_20260810_145032_ec190858-f199-4cac-90d1-04873d899770.png"),
   reverence: img("hf_20260810_145547_2f13d62b-2e36-47ce-8fbe-a5c6295f081f.png"),
   "tournament-hills": img("hf_20260810_145547_393809bb-024e-409b-85c8-9c5069879275.png"),
+  // Newer community pages — mapped to thematically-fitting generic imagery for
+  // now (varied so no page is blank); replace with dedicated photography when
+  // available, like the entries above.
+  "sun-city-anthem": heroImages.henderson,
+  "anthem-country-club": heroImages.golf,
+  "green-valley-ranch": heroImages.lake,
+  "whitney-ranch": heroImages.estate,
+  "the-cliffs": heroImages.redRock,
+  "stonebridge": heroImages.newConstruction,
+  "lone-mountain": heroImages.home,
+  "the-willows": heroImages.luxuryEstate,
 };
 
 export function communityHero(slug: string): string {

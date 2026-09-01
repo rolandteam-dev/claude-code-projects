@@ -48,8 +48,23 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href={site.portal.href} className="text-[var(--color-ink-soft)] no-underline hover:text-[var(--color-gold)]">
+                  {site.portal.label}
+                </Link>
+              </li>
+              <li>
                 <Link href="/home-value" className="text-[var(--color-ink-soft)] no-underline hover:text-[var(--color-gold)]">
                   Home Valuation
+                </Link>
+              </li>
+              <li>
+                <Link href="/calculators" className="text-[var(--color-ink-soft)] no-underline hover:text-[var(--color-gold)]">
+                  Calculators
+                </Link>
+              </li>
+              <li>
+                <Link href="/neighborhood-finder" className="text-[var(--color-ink-soft)] no-underline hover:text-[var(--color-gold)]">
+                  Neighborhood Finder
                 </Link>
               </li>
               <li>

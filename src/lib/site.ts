@@ -42,6 +42,9 @@ export const site = {
   ],
   foundedYear: 2015,
   teamSize: "22",
+  // Real, verified rating — a combined tally of the team's Zillow + Google
+  // reviews. Keep reviewCount at or below the true published total so the
+  // AggregateRating markup stays defensible; update as the totals grow.
   aggregateRating: { ratingValue: 5, reviewCount: 800 },
   areaServed: ["Las Vegas", "Henderson", "Summerlin", "North Las Vegas", "Boulder City", "Clark County"],
   // Entity topics — reinforces what the brand is known for (for AI + Google).
@@ -69,6 +72,7 @@ export const site = {
       href: "/buy",
       children: [
         { label: "Search Homes for Sale", href: "/listings" },
+        { label: "Neighborhood Finder", href: "/neighborhood-finder" },
         { label: "Luxury Real Estate", href: "/las-vegas-luxury-real-estate" },
         { label: "Communities", href: "/communities" },
         { label: "Areas We Serve", href: "/areas" },
@@ -76,8 +80,12 @@ export const site = {
         { label: "Buyer Guides", href: "/guides" },
         { label: "First-Time Buyers", href: "/guides/first-time-home-buyer-las-vegas" },
         { label: "Mortgage Pre-Approval", href: "/mortgage-pre-approval" },
+        { label: "Affordability Calculator", href: "/calculators/home-affordability" },
+        { label: "Rent vs. Buy Calculator", href: "/calculators/rent-vs-buy" },
+        { label: "All Calculators", href: "/calculators" },
         { label: "Down Payment Assistance", href: "/down-payment-assistance" },
         { label: "Market Report", href: "/market-report" },
+        { label: "Client Portal", href: "/portal" },
       ],
     },
     {
@@ -86,8 +94,9 @@ export const site = {
       children: [
         { label: "What's My Home Worth?", href: "/home-value" },
         { label: "Selling Guide", href: "/guides/selling-your-home-in-las-vegas" },
-        { label: "Seller Net Proceeds", href: "/blog/las-vegas-luxury-seller-net-proceeds" },
+        { label: "Seller Net Proceeds Calculator", href: "/calculators/seller-net-proceeds" },
         { label: "Market Report", href: "/market-report" },
+        { label: "Client Portal", href: "/portal" },
       ],
     },
     { label: "New Construction", href: "/new-construction" },
@@ -129,6 +138,9 @@ export const site = {
     },
   ],
   cta: { label: "Contact The Team", href: "/contact" },
+  // Client Portal — the branded home hub. Linked from the Buy/Sell dropdowns,
+  // the mobile menu and the footer (not the desktop header row, which is full).
+  portal: { label: "Client Portal", href: "/portal" },
 } as const;
 
 export function absoluteUrl(path = "/"): string {
