@@ -17,7 +17,11 @@ import { fileURLToPath } from "node:url";
 import { rmSync } from "node:fs";
 import assert from "node:assert/strict";
 
-import { classify, buildTouchIndex, DAY_MS } from "./classify.mjs";
+import { classify, buildTouchIndex, classifyForList, runCombinedList, DAY_MS } from "./classify.mjs";
+import { evaluateCondition, evaluateSet } from "./filters.mjs";
+import { normalizeContact } from "./contact.mjs";
+import { isDayAllowed } from "./schedule.mjs";
+import { lists, listById } from "./lists.mjs";
 import { rules } from "./rules.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -147,6 +151,214 @@ check("the most recent touch across channels wins", () => {
     emails: [{ personId: 1, created: daysAgo(1), isIncoming: false }],
   });
   assert.equal(classify(lead(), index, rules, NOW).daysSinceTouch, 1);
+});
+
+// ------------------------------------------------------------ filter DSL
+
+console.log("\nUnit — filter DSL");
+
+const c = (over) => ({ crm_pond_id: null, tags_array: ["Buyer"], owner_group_ids: [10, 20], stage: 2, ...over });
+
+check("empty groups mean no constraint", () => {
+  assert.equal(evaluateSet({ groups: [] }, c({})), true);
+  assert.equal(evaluateSet({ groups: [[]] }, c({})), true);
+});
+
+check("OR of ANDs", () => {
+  const set = {
+    groups: [
+      [{ field: "stage", operator: "=", value: 99, value_data_type: "int" }],
+      [{ field: "stage", operator: "=", value: 2, value_data_type: "int" }],
+    ],
+  };
+  assert.equal(evaluateSet(set, c({})), true);
+});
+
+check("value:null with '=' means IS NULL (not in a pond)", () => {
+  assert.equal(evaluateCondition({ field: "crm_pond_id", operator: "=", value: null }, c({})), true);
+  assert.equal(evaluateCondition({ field: "crm_pond_id", operator: "=", value: null }, c({ crm_pond_id: 900 })), false);
+});
+
+check("value:null with '!=' means IS NOT NULL (the interlock check)", () => {
+  const cond = { field: "stamp", operator: "!=", value: null, value_data_type: "text" };
+  assert.equal(evaluateCondition(cond, { stamp: "2026-09-01" }), true);
+  assert.equal(evaluateCondition(cond, { stamp: null }), false);
+});
+
+check("a null timestamp with days_since is infinitely old", () => {
+  const overdue = { field: "t", operator: ">", value: 6, transform: { type: "days_since" }, value_data_type: "int" };
+  const recent = { field: "t", operator: "<", value: 6, transform: { type: "days_since" }, value_data_type: "int" };
+  assert.equal(evaluateCondition(overdue, { t: null }, NOW), true, "never contacted = maximally overdue");
+  assert.equal(evaluateCondition(recent, { t: null }, NOW), false);
+});
+
+check("days_since compares whole days", () => {
+  const cond = { field: "t", operator: ">", value: 6, transform: { type: "days_since" }, value_data_type: "int" };
+  assert.equal(evaluateCondition(cond, { t: daysAgo(7) }, NOW), true);
+  assert.equal(evaluateCondition(cond, { t: daysAgo(6) }, NOW), false);
+});
+
+check("string and number values both coerce for int fields", () => {
+  const asString = { field: "stage", operator: "=", value: "2", value_data_type: "int" };
+  const asNumber = { field: "stage", operator: "=", value: 2, value_data_type: "int" };
+  assert.equal(evaluateCondition(asString, c({})), true);
+  assert.equal(evaluateCondition(asNumber, c({})), true);
+});
+
+check("IS ANY OF / IS NONE OF", () => {
+  assert.equal(evaluateCondition({ field: "stage", operator: "IS ANY OF", value: [2, 98], value_data_type: "int" }, c({})), true);
+  assert.equal(evaluateCondition({ field: "stage", operator: "IS NONE OF", value: [2, 98], value_data_type: "int" }, c({})), false);
+});
+
+check("CONTAINS ANY / DOES NOT CONTAIN ANY on array columns", () => {
+  const excludeImports = { field: "tags_array", operator: "DOES NOT CONTAIN ANY", value: ["Import"], value_data_type: "text" };
+  assert.equal(evaluateCondition(excludeImports, c({})), true);
+  assert.equal(evaluateCondition(excludeImports, c({ tags_array: ["Import"] })), false);
+
+  const pausedGroup = { field: "owner_group_ids", operator: "DOES NOT CONTAIN ANY", value: [52555], value_data_type: "integer" };
+  assert.equal(evaluateCondition(pausedGroup, c({})), true);
+  assert.equal(evaluateCondition(pausedGroup, c({ owner_group_ids: [10, 52555] })), false);
+});
+
+check("dotted paths resolve into custom_fields", () => {
+  const contact = { custom_fields: { fub: { system_lastCommunication: daysAgo(9) } } };
+  const cond = {
+    field: "custom_fields.fub.system_lastCommunication",
+    operator: ">",
+    value: 6,
+    transform: { type: "days_since" },
+    value_data_type: "int",
+  };
+  assert.equal(evaluateCondition(cond, contact, NOW), true);
+});
+
+// --------------------------------------------------- real list rules + interlock
+
+console.log("\nUnit — real list rules");
+
+const hotLeads = listById(1144);
+const activeLeads = listById(1104);
+
+const hotLead = (over = {}) =>
+  normalizeContact(
+    { id: 1, name: "Hot One", created: daysAgo(3), stageId: 2, tags: [], assignedUserId: 5, assignedTo: "Jason Shawver", ...over },
+    { lastOutbound: 0, lastInbound: 0 }
+  );
+
+/** Build a contact whose last agent communication was N days ago. */
+const quietFor = (days, over = {}) => {
+  const contact = hotLead(over);
+  contact.custom_fields.fub.system_lastCommunication = daysAgo(days);
+  return contact;
+};
+
+check("Hot Leads: quiet 3 days is At Risk (threshold is 2, not 7)", () => {
+  assert.equal(classifyForList(quietFor(3), hotLeads, NOW), "at_risk");
+});
+
+check("Hot Leads: quiet 5 days but never warned is only At Risk", () => {
+  const contact = quietFor(5);
+  contact.custom_fields.fub.customBattrAtRiskSince = null;
+  assert.equal(classifyForList(contact, hotLeads, NOW), "at_risk", "the interlock blocks escalation");
+});
+
+check("Hot Leads: quiet 5 days AND previously warned is Neglected", () => {
+  const contact = quietFor(5);
+  contact.custom_fields.fub.customBattrAtRiskSince = "2026-08-28";
+  assert.equal(classifyForList(contact, hotLeads, NOW), "neglected");
+});
+
+check("Hot Leads: an imported lead is not in the list at all", () => {
+  assert.equal(classifyForList(quietFor(5, { tags: ["Import"] }), hotLeads, NOW), null);
+});
+
+check("Hot Leads: a lead already in a pond is not in the list", () => {
+  assert.equal(classifyForList(quietFor(5, { assignedPondId: 900 }), hotLeads, NOW), null);
+});
+
+check("Active Leads uses its own 6/9 thresholds, not Hot Leads' 2/4", () => {
+  const base = { id: 2, created: daysAgo(40), stageId: 98, tags: [], assignedUserId: 5, lastVisit: daysAgo(2) };
+  const at = normalizeContact(base, { lastOutbound: 0 });
+  at.custom_fields.fub.system_lastCommunication = daysAgo(7);
+  assert.equal(classifyForList(at, activeLeads, NOW), "at_risk", "7 days is past 6 but short of 9");
+
+  const neg = normalizeContact(base, { lastOutbound: 0 });
+  neg.custom_fields.fub.system_lastCommunication = daysAgo(10);
+  assert.equal(classifyForList(neg, activeLeads, NOW), "neglected");
+});
+
+check("neglected beats at_risk — evaluated first", () => {
+  const contact = quietFor(30);
+  contact.custom_fields.fub.customBattrAtRiskSince = "2026-08-01";
+  assert.equal(classifyForList(contact, hotLeads, NOW), "neglected");
+});
+
+// ------------------------------------------------------------ combined lists
+
+console.log("\nUnit — combined list");
+
+const teamLeads = lists.find((l) => l.audit_type === "combined_contact_lists");
+
+check("a contact matching two member lists appears once, worst status wins", () => {
+  const contact = quietFor(10, { created: daysAgo(5), stageId: 2, lastVisit: daysAgo(1) });
+  contact.custom_fields.fub.customBattrAtRiskSince = "2026-08-20";
+  const { records } = runCombinedList([contact], teamLeads, NOW);
+  assert.equal(records.length, 1, "deduped by contact");
+  assert.equal(records[0].status, "neglected");
+  assert.ok(records[0].source_list_ids.length >= 1);
+});
+
+check("the paused owner-group is excluded from the combined list", () => {
+  const contact = quietFor(10, { created: daysAgo(5), groupIds: [52555] });
+  const { records, excluded } = runCombinedList([contact], teamLeads, NOW);
+  assert.equal(records.length, 0);
+  assert.equal(excluded.length, 1);
+});
+
+check("the excluded lead bucket is dropped from the combined list", () => {
+  const contact = quietFor(10, { created: daysAgo(5), leadBucketId: 82 });
+  const { records } = runCombinedList([contact], teamLeads, NOW);
+  assert.equal(records.length, 0);
+});
+
+check("missing member lists are reported, not silently ignored", () => {
+  const { missingMemberLists } = runCombinedList([], teamLeads, NOW);
+  assert.deepEqual(missingMemberLists, [1106, 1107, 1108, 1109]);
+});
+
+// ---------------------------------------------------------------- day filters
+
+console.log("\nUnit — action day filters");
+
+// 2026-09-01 is a Tuesday; walk a full week from the preceding Sunday.
+const dayAt = (iso) => new Date(`${iso}T19:00:00-07:00`);
+
+check("sweeps run Tue-Fri only", () => {
+  const allowed = {
+    "2026-08-30": false, // Sunday
+    "2026-08-31": false, // Monday
+    "2026-09-01": true, // Tuesday
+    "2026-09-02": true, // Wednesday
+    "2026-09-03": true, // Thursday
+    "2026-09-04": true, // Friday
+    "2026-09-05": false, // Saturday
+  };
+  for (const [date, expected] of Object.entries(allowed)) {
+    assert.equal(
+      isDayAllowed("Weekdays Excluding Monday", dayAt(date)),
+      expected,
+      `${date} should be ${expected ? "allowed" : "blocked"}`
+    );
+  }
+});
+
+check("nudges run every day", () => {
+  assert.equal(isDayAllowed("Every Day", dayAt("2026-08-31")), true);
+  assert.equal(isDayAllowed("Every Day", dayAt("2026-09-05")), true);
+});
+
+check("an unknown day filter fails closed", () => {
+  assert.equal(isDayAllowed("Whenever", dayAt("2026-09-01")), false);
 });
 
 // ------------------------------------------------------------------ end-to-end

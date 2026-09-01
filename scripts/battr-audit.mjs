@@ -24,7 +24,10 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { FubClient } from "./battr/fub.mjs";
 import { rules } from "./battr/rules.mjs";
-import { DAY_MS, ptDate, buildTouchIndex, classify, lower, hasAny } from "./battr/classify.mjs";
+import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, lower, hasAny } from "./battr/classify.mjs";
+import { normalizeContact } from "./battr/contact.mjs";
+import { isDayAllowed } from "./battr/schedule.mjs";
+import { lists } from "./battr/lists.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const LOG_DIR = join(ROOT, "battr-logs");
@@ -123,6 +126,9 @@ function buildReport({ runId, dry, population, results, actions, ponds }) {
     `- Neglected: **${actions.neglected.length}** (${actions.swept.length} swept, ${actions.heldBack.length} held back)`
   );
   lines.push(`- Excluded: ${results.filter((r) => r.status === "excluded").length}`);
+  for (const s of actions.skipped ?? []) {
+    lines.push(`- **${s.count} ${s.what} skipped today** — ${s.reason}`);
+  }
   lines.push("");
 
   lines.push("## Agent scoreboard (worst first)");
@@ -273,19 +279,46 @@ async function main() {
   );
 
   // 4. classify
-  const results = people.map((p) => classify(p, touchIndex, rules));
+  //
+  // Custom fields are resolved BEFORE classification, not after: list mode reads
+  // `customBattrAtRiskSince` off each contact to enforce the warn-first
+  // interlock, so the field's API name has to be known while normalizing.
+  const fields = await resolveCustomFields(fub, log);
+  const contacts = people.map((p) => normalizeContact(p, touchIndex.get(p.id), fields));
+
+  let results;
+  if (rules.mode === "lists") {
+    const combined = lists.find((l) => l.audit_type === "combined_contact_lists");
+    if (!combined) throw new Error("mode is 'lists' but no combined list is configured.");
+
+    const run = runCombinedList(contacts, combined, Date.now());
+    if (run.missingMemberLists.length) {
+      log(`  WARNING: member lists ${run.missingMemberLists.join(", ")} have no rule JSON — population is narrower than the live audit.`);
+    }
+    log(`  ${run.records.length} in the combined list, ${run.excluded.length} excluded by bucket/group`);
+    results = run.records;
+  } else {
+    results = contacts.map((c) => classifySimple(c, touchIndex, rules));
+  }
+
   const atRisk = results.filter((r) => r.status === "at_risk");
   const neglected = results.filter((r) => r.status === "neglected");
   log(`  ${atRisk.length} at risk, ${neglected.length} neglected`);
 
-  const fields = dry ? {} : await resolveCustomFields(fub, log);
   const today = ptDate();
-  const actions = { atRisk, neglected, nudged: [], alreadyFlagged: [], swept: [], heldBack: [] };
+  const actions = { atRisk, neglected, nudged: [], alreadyFlagged: [], swept: [], heldBack: [], skipped: [] };
 
   const peopleById = new Map(people.map((p) => [p.id, p]));
 
+  // Day filters gate each action independently. A blocked day is logged as a
+  // skip with its reason — never silently dropped.
+  const nudgesAllowedToday = isDayAllowed(rules.nudgeDayFilter, new Date(), rules.timezone);
+  const sweepsAllowedToday = isDayAllowed(rules.sweepDayFilter, new Date(), rules.timezone);
+  if (!nudgesAllowedToday) log(`  nudges skipped: day filter "${rules.nudgeDayFilter}"`);
+  if (!sweepsAllowedToday) log(`  sweeps skipped: day filter "${rules.sweepDayFilter}"`);
+
   // 5a. nudge
-  if (args.stage === "both" || args.stage === "at-risk") {
+  if ((args.stage === "both" || args.stage === "at-risk") && nudgesAllowedToday) {
     for (const lead of atRisk) {
       const person = peopleById.get(lead.id);
       const alreadyFlagged = fields.atRiskSince ? Boolean(person?.[fields.atRiskSince]) : false;
@@ -311,7 +344,7 @@ async function main() {
 
   // 5b. sweep
   const sweepLog = { runId, timestamp: new Date().toISOString(), dry, sweeps: [] };
-  if (args.stage === "both" || args.stage === "neglected") {
+  if ((args.stage === "both" || args.stage === "neglected") && sweepsAllowedToday) {
     const cap = args.maxSweeps ?? rules.maxSweepsPerRun;
     let primaryCount = 0;
 
@@ -323,6 +356,18 @@ async function main() {
       if (hasAny(lead.tags, rules.reportOnlyTags)) {
         actions.heldBack.push({ ...lead, holdReason: "report-only tag (unworkable contact info)" });
         continue;
+      }
+
+      // The warn-first interlock: no sweep unless a previous run already warned
+      // the agent and stamped the lead. Without this, a lead that has simply
+      // been quiet a long time is taken away with no warning ever issued.
+      if (rules.requireWarningBeforeSweep) {
+        const person = peopleById.get(lead.id);
+        const warned = fields.atRiskSince ? Boolean(person?.[fields.atRiskSince]) : false;
+        if (!warned) {
+          actions.heldBack.push({ ...lead, holdReason: "never warned — interlock held the sweep" });
+          continue;
+        }
       }
 
       // Primary pond fills first, then overflow — matching the observed
@@ -363,6 +408,14 @@ async function main() {
         actions.heldBack.push({ ...lead, holdReason: `sweep failed: ${err.message}` });
       }
     }
+  }
+
+  // A blocked day is a recorded skip, not a silent no-op.
+  if (!nudgesAllowedToday && atRisk.length) {
+    actions.skipped.push({ what: "nudges", count: atRisk.length, reason: `day filter "${rules.nudgeDayFilter}"` });
+  }
+  if (!sweepsAllowedToday && neglected.length) {
+    actions.skipped.push({ what: "sweeps", count: neglected.length, reason: `day filter "${rules.sweepDayFilter}"` });
   }
 
   // 6. report + undo trail

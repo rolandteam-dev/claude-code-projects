@@ -107,9 +107,37 @@ policy surface; the engine is not meant to be edited to change behavior.
 | How a lead is judged | |
 | --- | --- |
 | Last touch | The most recent **agent-initiated** call, text, or email. A lead contacting *us* is not a touch. Never-contacted leads run the clock from their creation date. |
-| At Risk | `atRiskDays` with no touch → a note lands on the lead and `Battr At Risk Since` is stamped. Re-flagging is skipped on later runs. |
-| Neglected | `neglectedDays` with no touch → the lead is reassigned to the sweep pond, with a note recording who had it. |
+| At Risk | Past the warn threshold with no touch → a note lands on the lead and `Battr At Risk Since` is stamped. Re-flagging is skipped on later runs. |
+| Neglected | Past the sweep threshold **and already warned** → reassigned to the sweep pond, with a note recording who had it. |
 | Excluded | Protected stages (under contract, closed), DNC-family tags, exempt agents, leads newer than `minLeadAgeDays`, and leads already sitting in a pond. |
+
+### The two rules that matter most
+
+**The warn-first interlock** (`requireWarningBeforeSweep`, on by default). A lead is
+never swept unless an earlier run already warned the agent and stamped
+`Battr At Risk Since`. Without it, a lead that has simply been quiet for a long
+time gets taken away with no warning ever issued. Leave it on.
+
+**Day filters.** Notes go out every day; sweeps only run Tuesday–Friday
+(`sweepDayFilter: "Weekdays Excluding Monday"`), so the weekend's backlog gets one
+working day of agent attention before anything is taken away. A blocked day is
+recorded in the report as a skip, never silently dropped.
+
+### Two modes
+
+`rules.mode` selects how leads are classified:
+
+- **`"simple"`** (default) — one global threshold pair across the database. Needs
+  no list configuration.
+- **`"lists"`** — the faithful model. Each list in `scripts/battr/lists.mjs`
+  carries its own thresholds, written in the same filter JSON the live system
+  uses, and the combined list unions them worst-status-wins. Thresholds are
+  genuinely per-segment: Hot Leads warn at 2 days and sweep at 4, while Active
+  Leads warn at 6 and sweep at 9.
+
+List mode is not yet at full parity — four member lists of
+`⭐️ Team Leads (Nudges & Sweeps)` (ids 1106–1109) still need their rule JSON
+exported. The engine warns loudly when it runs without them.
 
 **Safety.** Every run is a dry run unless `BATTR_LIVE=true` — the scheduled
 workflow stays in shadow mode until the repo variable `BATTR_LIVE` is set to

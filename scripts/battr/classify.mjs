@@ -1,10 +1,20 @@
 /**
- * Pure classification logic for the Battr audit — no network, no side effects.
+ * Classification — pure logic, no network, no side effects.
  *
- * Split out from the engine so it can be exercised against fixtures without a
- * live Follow Up Boss key. Everything here is a function of (lead, activity,
- * rules); if this file is right, the audit is right.
+ * Two modes:
+ *
+ *   "lists"  — the faithful model. Runs each contact list's own rule JSON, then
+ *              unions the member lists into the combined list, worst-status-wins.
+ *              Thresholds are per-list, which is how the live system works.
+ *
+ *   "simple" — one global threshold pair for the whole database. Less faithful,
+ *              but it needs no list configuration and is useful for a baseline
+ *              while member-list rules are still being exported.
+ *
+ * Both are exercised by the self-test.
  */
+import { evaluateSet } from "./filters.mjs";
+import { memberListsOf } from "./lists.mjs";
 
 export const DAY_MS = 86_400_000;
 
@@ -60,52 +70,120 @@ export function buildTouchIndex({ calls = [], texts = [], emails = [] }) {
   return index;
 }
 
-/**
- * Decide one lead's compliance status.
- *
- * Returns `excluded` (with a reason), `compliant`, `at_risk`, or `neglected`.
- * Exclusions are evaluated first and most-decisive-first, so a protected stage
- * always beats a day count.
- */
-export function classify(person, touchIndex, rules, now = Date.now()) {
-  const tags = Array.isArray(person.tags) ? person.tags : [];
-  const name = person.name || [person.firstName, person.lastName].filter(Boolean).join(" ") || `#${person.id}`;
-  const owner = person.assignedTo || null;
+// ---------------------------------------------------------------- list mode
 
-  const base = {
-    id: person.id,
-    name,
-    owner,
-    ownerId: person.assignedUserId ?? null,
-    source: person.source || "",
-    stage: person.stage || "",
-    tags,
+export const STATUS_RANK = { compliant: 0, at_risk: 1, neglected: 2 };
+
+/** The more severe of two statuses. */
+export const worstStatus = (a, b) => (STATUS_RANK[b] > STATUS_RANK[a] ? b : a);
+
+/**
+ * Classify one contact against one contact list.
+ *
+ * Returns null when the contact isn't in the list at all. Neglected is evaluated
+ * FIRST and wins over At Risk — a lead past the sweep line is not merely at risk.
+ */
+export function classifyForList(contact, list, now = Date.now()) {
+  if (!evaluateSet(list.list_filters, contact, now)) return null;
+  if (evaluateSet(list.neglected_filters, contact, now) && !isEmpty(list.neglected_filters)) return "neglected";
+  if (evaluateSet(list.at_risk_filters, contact, now) && !isEmpty(list.at_risk_filters)) return "at_risk";
+  return "compliant";
+}
+
+// An empty tier means "never flag at this tier", NOT "flag everything" — which
+// is what a bare evaluateSet would say, since an empty set is vacuously true.
+const isEmpty = (set) => {
+  const groups = set?.groups;
+  if (!Array.isArray(groups) || groups.length === 0) return true;
+  return groups.every((g) => !Array.isArray(g) || g.length === 0);
+};
+
+/** Run every member list, then combine. Returns one record per contact. */
+export function runCombinedList(contacts, combinedList, now = Date.now()) {
+  const { resolved, missing } = memberListsOf(combinedList);
+  const byContact = new Map();
+
+  for (const list of resolved) {
+    for (const contact of contacts) {
+      const status = classifyForList(contact, list, now);
+      if (status === null) continue;
+
+      const existing = byContact.get(contact.id);
+      if (existing) {
+        existing.status = worstStatus(existing.status, status);
+        existing.source_list_ids.push(list.id);
+      } else {
+        byContact.set(contact.id, {
+          contact,
+          id: contact.id,
+          name: contact.full_name,
+          owner: contact.owner_name,
+          ownerId: contact.owner_user_id,
+          source: contact.source_normalized,
+          stage: contact.stage_name,
+          tags: contact.tags_array,
+          status,
+          source_list_ids: [list.id],
+        });
+      }
+    }
+  }
+
+  // The combined list's own conditions are exclusions applied after the union
+  // (lead bucket, owner group). The source_list_ids condition is what we just
+  // consumed to build the union, so it is skipped here.
+  const exclusions = {
+    groups: (combinedList.list_filters?.groups ?? []).map((group) =>
+      group.filter((c) => !(c.object === "battr.aida_lists" && c.field === "source_list_ids"))
+    ),
   };
 
-  // --- exclusions ----------------------------------------------------------
-  if (!person.assignedUserId) return { ...base, status: "excluded", reason: "already in a pond / unassigned" };
-  if (hasAny([person.stage], rules.protectedStages))
-    return { ...base, status: "excluded", reason: `protected stage (${person.stage})` };
+  const records = [];
+  const excluded = [];
+  for (const record of byContact.values()) {
+    if (evaluateSet(exclusions, record.contact, now)) records.push(record);
+    else excluded.push(record);
+  }
+
+  return { records, excluded, missingMemberLists: missing };
+}
+
+// -------------------------------------------------------------- simple mode
+
+/**
+ * One global threshold pair across the whole database. Kept because it needs no
+ * list configuration — useful for a baseline before every member list's rule
+ * JSON has been exported.
+ */
+export function classifySimple(contact, touchIndex, rules, now = Date.now()) {
+  const person = contact._raw ?? contact;
+  const tags = contact.tags_array ?? (Array.isArray(person.tags) ? person.tags : []);
+  const name = contact.full_name ?? person.name ?? `#${person.id}`;
+  const owner = contact.owner_name ?? person.assignedTo ?? null;
+  const ownerId = contact.owner_user_id ?? person.assignedUserId ?? null;
+  const stage = contact.stage_name ?? person.stage ?? "";
+  const source = contact.source_normalized ?? person.source ?? "";
+  const created = contact.crm_created_at ?? person.created;
+
+  const base = { id: person.id, name, owner, ownerId, source, stage, tags };
+
+  if (!ownerId) return { ...base, status: "excluded", reason: "already in a pond / unassigned" };
+  if (hasAny([stage], rules.protectedStages)) return { ...base, status: "excluded", reason: `protected stage (${stage})` };
   if (hasAny(tags, rules.protectedTags)) return { ...base, status: "excluded", reason: "protected tag" };
   if (owner && hasAny([owner], rules.exemptAgents)) return { ...base, status: "excluded", reason: "exempt agent" };
-  if (person.source && hasAny([person.source], rules.exemptSources))
-    return { ...base, status: "excluded", reason: "exempt source" };
+  if (source && hasAny([source], rules.exemptSources)) return { ...base, status: "excluded", reason: "exempt source" };
 
-  const age = daysBetween(person.created, now);
+  const age = daysBetween(created, now);
   if (age < rules.minLeadAgeDays) return { ...base, status: "excluded", reason: `too new (${age}d)` };
 
-  // --- the actual measurement ----------------------------------------------
   const touch = touchIndex.get(person.id);
   const lastOutbound = touch?.lastOutbound || 0;
   const lastInbound = touch?.lastInbound || 0;
 
-  // Never touched: the clock runs from when the lead came in.
-  const clockFrom = lastOutbound || new Date(person.created).getTime();
+  const clockFrom = lastOutbound || new Date(created).getTime();
   const daysSinceTouch = Math.max(0, daysBetween(clockFrom, now));
   const unanswered = lastInbound > lastOutbound;
 
-  // An ignored inbound message is worse neglect than silence, so the at-risk
-  // clock runs at half speed on it — off by default, to mirror Battr exactly.
   const effectiveAtRisk =
     rules.escalateUnanswered && unanswered ? Math.max(1, Math.ceil(rules.atRiskDays / 2)) : rules.atRiskDays;
 
@@ -115,3 +193,6 @@ export function classify(person, touchIndex, rules, now = Date.now()) {
   if (daysSinceTouch >= effectiveAtRisk) return { ...detail, status: "at_risk" };
   return { ...detail, status: "compliant" };
 }
+
+// Back-compat alias — the engine's simple path still calls this name.
+export const classify = classifySimple;
