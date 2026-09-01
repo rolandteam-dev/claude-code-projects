@@ -88,6 +88,166 @@ Remarketing flow this enables: email/text your FUB database → contact clicks a
 link to the site → pixel attributes their browsing to their FUB record → FUB
 notifies the assigned agent and triggers any Action Plans / pond routing.
 
+## Lead sweep engine (internal Battr)
+
+A daily audit of the FUB database that finds leads the assigned agent has gone
+quiet on, nudges them, and sweeps the ones past the neglect line into a pond —
+the in-house replacement for the paid Battr subscription.
+
+```bash
+npm run battr:test              # rule engine self-test, no API key needed
+npm run battr:dry               # full audit against live FUB, writes nothing
+FUB_API_KEY=... BATTR_LIVE=true node scripts/battr-audit.mjs
+```
+
+**Tune the rules in `scripts/battr/rules.mjs`** — thresholds, sweep ponds,
+protected stages and tags, exempt agents and sources. That file is the whole
+policy surface; the engine is not meant to be edited to change behavior.
+
+| How a lead is judged | |
+| --- | --- |
+| Last touch | The most recent **agent-initiated** call, text, or email. A lead contacting *us* is not a touch. Never-contacted leads run the clock from their creation date. |
+| At Risk | Past the warn threshold with no touch → a note lands on the lead and `Battr At Risk Since` is stamped. Re-flagging is skipped on later runs. |
+| Neglected | Past the sweep threshold **and already warned** → reassigned to the sweep pond, with a note recording who had it. |
+| Excluded | Protected stages (under contract, closed), DNC-family tags, exempt agents, leads newer than `minLeadAgeDays`, and leads already sitting in a pond. |
+
+### The two rules that matter most
+
+**The warn-first interlock** (`requireWarningBeforeSweep`, on by default). A lead is
+never swept unless an earlier run already warned the agent and stamped
+`Battr At Risk Since`. Without it, a lead that has simply been quiet for a long
+time gets taken away with no warning ever issued. Leave it on.
+
+**Day filters.** Notes go out every day; sweeps only run Tuesday–Friday
+(`sweepDayFilter: "Weekdays Excluding Monday"`), so the weekend's backlog gets one
+working day of agent attention before anything is taken away. A blocked day is
+recorded in the report as a skip, never silently dropped.
+
+### The six lists that feed the sweep
+
+`⭐️ Team Leads (Nudges & Sweeps)` pools six lists and applies the notes, sweeps,
+and alerts on top — none of the six carries actions of its own. Together they
+form a graduated sequence: the hotter the lead, the less silence it tolerates.
+
+| List | Who's in it | At Risk | Neglected |
+| --- | --- | ---: | ---: |
+| 🌶️ Hot Leads | Lead / Attempted Contact, created < 10 days, not tagged `Import` | 2 d | 4 d |
+| 🌤️ Warm Back Up | Lead / Attempted Contact, created > 10 days | 10 d | 13 d |
+| 🔥 Weekly Nurture | Nurture / Spoke with Customer, timeframe 0–3 months | 10 d | 13 d |
+| 😎 Bi-Weekly Nurture | …timeframe 3–6 months | 16 d | 19 d |
+| 🌱 Monthly Nurture | …timeframe 6–12 months | 33 d | 36 d |
+| 👀 Quarterly Nurture | …timeframe 12+ months | 93 d | 96 d |
+
+All six also require the lead to not already be sitting in a pond. A contact can
+match several lists at once; it keeps its **worst** status across them.
+
+`❗Active Leads` (6 d / 9 d) is a real list but is **not** one of the six — it
+belongs to the Database Health Score roll-up. It's defined for reporting only.
+Adding it to `source_list_ids` would sweep leads the live system never touches.
+
+### Two modes
+
+`rules.mode` selects how leads are classified:
+
+- **`"lists"`** (default) — the faithful model above. Each list carries its own
+  thresholds in the same filter JSON the live system uses.
+- **`"simple"`** — one global threshold pair across the database. A fallback that
+  depends on no list configuration at all.
+
+Note one deliberate difference: the live config only puts the warn-first
+interlock on Hot Leads, relying on the 3-day gap between tiers to warn first on
+the other five. We apply it to all six (`requireWarningBeforeSweep`), which is
+strictly more conservative — a lead that enters a list already past its sweep
+line still gets warned before it's taken away.
+
+**Safety.** Every run is a dry run unless `BATTR_LIVE=true` — the scheduled
+workflow stays in shadow mode until the repo variable `BATTR_LIVE` is set to
+`true`. Sweeps are capped per run (`maxSweepsPerRun`), and every sweep is written
+to `battr-logs/<run-id>.json`, so a bad run is fully reversible:
+
+```bash
+node scripts/battr-audit.mjs --undo=2026-09-01-a1b2
+```
+
+**Scheduling:** the `Battr audit` GitHub Action
+(`.github/workflows/battr-audit.yml`) runs it at 7 PM PT daily and commits the
+report + audit trail to `battr-logs/`. You can also trigger it from the
+**Actions** tab, choosing dry or live and which stage to run.
+
+### Lead sources and buckets
+
+A **lead bucket** groups many raw CRM source strings under one name, so a rule can
+say "not bucket 82" instead of naming every Zillow spelling. Follow Up Boss has no
+such field — it's ours, resolved from the contact's source string in
+`scripts/battr/sources.mjs`. **A source that isn't mapped to a bucket cannot be
+excluded by bucket**, so the mapping is what makes the exclusion real.
+
+To see every source actually in the database, with lead counts and current bucket:
+
+```bash
+FUB_API_KEY=... npm run battr:sources
+```
+
+It prints a ready-to-paste block for everything still unmapped. Assign each a
+bucket id — **82 is the never-sweep bucket**.
+
+`unmappedPolicy` decides what happens to a source nobody has classified yet.
+It defaults to `"include"`, matching the live behavior: an unmapped source has a
+null bucket, `lead_bucket_id != 82` is true for null, so those leads *are* swept.
+Worth knowing — a brand-new lead source enrolls in sweeping the day it appears.
+Set it to `"exclude"` to make new sources opt-in instead.
+
+The daily report carries a **By lead source** table showing which sources are
+driving at-risk and neglected counts, and flags any that are still unmapped.
+
+### Telling the agents
+
+The nudge note lands on the lead; the **agent digest** is what tells the person
+who owns it. Without it, the first an agent hears about a neglected lead is when
+it vanishes from their pipeline — which is how a sweep automation loses a team's
+trust. Set `BATTR_ALERT_CHANNEL`:
+
+- **`report_only`** (default) — digests appear in the daily report only.
+- **`fub_task`** — one task per agent inside FUB, attached to their most overdue
+  lead. No email setup, and tasks notify only the assignee (unlike notes, which
+  email the whole team).
+- **`email`** — one email per agent. Needs `RESEND_API_KEY` and an email address
+  on each FUB user record.
+
+Agents in `excludeOwnerGroupIds` never get alerts and their leads are never swept.
+
+### At Bats
+
+Every run diffs lead ownership against the previous run and records the changes:
+a brand-new lead assigned, a pond claim, or a transfer. That's the denominator
+for the only question worth asking at review time — of the chances this agent
+got, how many did they convert, and how many did they keep? Sweeps we caused are
+excluded, since taking a lead away isn't a chance anyone was given.
+
+The report carries per-agent conversion and retention. Undefined rates render as
+`--`, never a misleading `0%`.
+
+Tracking accrues **forward** from the first run — it can't see history it wasn't
+running for. Export At Bats from Battr **before the subscription lapses** and
+seed it:
+
+```bash
+node scripts/battr/import-atbats.mjs ~/Downloads/at-bats.csv --dry   # check the column mapping
+node scripts/battr/import-atbats.mjs ~/Downloads/at-bats.csv         # import
+```
+
+| Variable | Where | Purpose |
+| --- | --- | --- |
+| `FUB_API_KEY` | Actions secret | Required. Same key as the site's lead intake. |
+| `BATTR_ALERT_CHANNEL` | Actions variable | `report_only` (default), `fub_task`, or `email`. |
+| `BATTR_LIVE` | Actions variable | Set to `true` to let the schedule write. Unset = shadow mode. |
+| `BATTR_SMART_LIST_ID` | Actions variable | Optional. Audit one FUB smart list instead of the whole database. |
+| `BATTR_REPORT_TO` | Actions variable | Optional. Where the daily report is emailed. |
+| `RESEND_API_KEY` | Actions secret | Optional. Enables emailing the report. |
+| `BATTR_WEBHOOK_URL` | Actions secret | Optional. Posts the report to a Slack incoming webhook. |
+
+> The report is always written to `battr-logs/` and to the GitHub Actions job
+> summary, so it survives even with no email or Slack configured.
 ## Client Portal & Agent Console
 
 An in-house version of what teams normally rent from Ruuster: a branded client
