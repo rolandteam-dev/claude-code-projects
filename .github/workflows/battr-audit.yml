@@ -73,6 +73,9 @@ jobs:
         env:
           FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
         run: |
+          # pipefail: without it the pipe into tee masks a node failure and the
+          # step "succeeds" with an empty report.
+          set -o pipefail
           node scripts/battr/sources.mjs --discover | tee sources.txt
           {
             echo '## Lead sources'

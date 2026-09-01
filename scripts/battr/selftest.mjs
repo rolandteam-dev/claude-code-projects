@@ -697,7 +697,10 @@ const run = (env) =>
     execFile(
       process.execPath,
       [join(ROOT, "scripts", "battr-audit.mjs"), "--dry"],
-      { cwd: ROOT, env: { ...process.env, ...env } },
+      // GITHUB_STEP_SUMMARY is blanked deliberately: the engine appends its
+      // report there when set, and a fixture run must never write test data
+      // into the real job summary where it reads as live output.
+      { cwd: ROOT, env: { ...process.env, GITHUB_STEP_SUMMARY: "", ...env } },
       (err, stdout, stderr) => (err ? reject(new Error(`${err.message}\n${stderr}`)) : resolve({ stdout, stderr }))
     );
   });
