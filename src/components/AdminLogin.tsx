@@ -1,13 +1,20 @@
 "use client";
 
 /**
- * Minimal access gate for the internal Seller Radar. Submits the entered key as
- * a GET ?key= to the same page, which the server compares against ADMIN_TOKEN.
- * Not a full auth system — a shared-secret gate for a single internal tool.
+ * Minimal access gate for the internal dashboards (Seller Radar, Portal
+ * Clients). Submits the entered key as a GET ?key= to the same page, which the
+ * server compares against ADMIN_TOKEN. Not a full auth system — a shared-secret
+ * gate for internal tools.
  */
 import { useState } from "react";
 
-export function AdminLogin() {
+export function AdminLogin({
+  title = "Seller Radar",
+  submitLabel = "Open Seller Radar",
+}: {
+  title?: string;
+  submitLabel?: string;
+} = {}) {
   const [key, setKey] = useState("");
   return (
     <div className="mx-auto max-w-[420px] px-6 py-24">
@@ -15,7 +22,7 @@ export function AdminLogin() {
         <div className="font-sans text-[0.7rem] uppercase tracking-[0.18em] text-[var(--color-gold)]">
           The Roland Team
         </div>
-        <h1 className="mt-2 font-serif text-[1.5rem] text-[var(--color-ink)]">Seller Radar</h1>
+        <h1 className="mt-2 font-serif text-[1.5rem] text-[var(--color-ink)]">{title}</h1>
         <p className="mt-2 font-sans text-[0.88rem] text-[var(--color-ink-soft)]">
           Enter your access key to continue.
         </p>
@@ -33,7 +40,7 @@ export function AdminLogin() {
             type="submit"
             className="w-full rounded-full bg-[var(--color-gold)] px-6 py-2.5 font-sans text-[0.9rem] font-semibold text-white"
           >
-            Open Seller Radar
+            {submitLabel}
           </button>
         </form>
       </div>
