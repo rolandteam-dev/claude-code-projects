@@ -22,12 +22,25 @@ const first = (...values) => values.find((v) => v !== undefined && v !== null &&
 export function normalizeContact(person, touch, stamps = {}) {
   const tags = Array.isArray(person.tags) ? person.tags : [];
 
-  // "Last communication" is the most recent AGENT-INITIATED contact. We compute
-  // it from the calls/texts/emails feed rather than trusting a CRM field, so an
-  // inbound message from the lead can never look like the agent doing the work.
-  const lastCommunication = touch?.lastOutbound
-    ? new Date(touch.lastOutbound).toISOString()
-    : first(person.lastCommunication, person.lastCommunicationAt, null);
+  // "Last communication" — the later of what we can see and what FUB reports.
+  //
+  // We compute an agent-initiated touch from the calls and texts feed, which is
+  // stricter than FUB's own field: an inbound message from the lead should not
+  // look like the agent doing the work.
+  //
+  // But FUB will not serve /v1/emails in bulk, so an agent who works a lead
+  // purely by email is invisible to that feed and would look neglected. FUB's
+  // own last-communication field does include email, so we take whichever is
+  // later. That is looser than ideal — it can count an inbound touch — but it
+  // errs toward NOT sweeping, which is the right direction to be wrong in.
+  const crmLastComm = first(person.lastCommunication, person.lastCommunicationAt, null);
+  const computed = touch?.lastOutbound ? new Date(touch.lastOutbound).toISOString() : null;
+  const lastCommunication =
+    computed && crmLastComm
+      ? new Date(computed) > new Date(crmLastComm)
+        ? computed
+        : crmLastComm
+      : (computed ?? crmLastComm);
 
   const atRiskSinceKey = stamps.atRiskSince || "customBattrAtRiskSince";
 
