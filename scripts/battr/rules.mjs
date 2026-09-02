@@ -136,6 +136,35 @@ export const rules = {
    */
   requireWarningBeforeSweep: true,
 
+  // ------------------------------------------------- the lead wrote back
+  /**
+   * A REPLY from the lead spares it from the sweep.
+   *
+   * Outbound email is never counted as working a lead: FUB batch-emails thirty
+   * people in one click, so a single blast would mark the database worked. A
+   * reply is the opposite — it cannot be sent in bulk, and it means there is a
+   * live conversation that should not be yanked out from under the agent.
+   *
+   * Checked per-lead at sweep time only (FUB won't serve email in bulk), which
+   * is affordable because only a couple of dozen leads reach that point a day.
+   *
+   * NOTE: a reply nobody answered is arguably WORSE neglect than silence, and
+   * this rule protects it. That is deliberate but it is not free — spared leads
+   * are listed by name every day under "Neglected but not swept", so an ignored
+   * conversation shows up in the report instead of hiding in it.
+   */
+  inboundEmailSparesSweep: true,
+
+  /** How recent the reply has to be to count. Older than this and the sweep proceeds. */
+  inboundEmailWindowDays: 14,
+
+  /**
+   * Ceiling on per-lead email lookups in one run. Sweeps are capped at 30, so
+   * this is generous; it exists so a strange run can't turn into thousands of
+   * API calls.
+   */
+  maxEmailChecksPerRun: 100,
+
   // ------------------------------------------------------------------ behavior
   /**
    * OFF mirrors Battr exactly. ON is our improvement: when a lead has spoken

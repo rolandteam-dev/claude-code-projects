@@ -54,7 +54,7 @@ const SAFE_VALUES = new Set([
 const CRITICAL = [
   ["timeframe", "four of the six audit lists branch on it — wrong means they return empty"],
   ["timeframeId", "the id form of the same field"],
-  ["lastCommunication", "the fallback that makes email-only outreach visible"],
+  ["lastCommunication", "NOT used — it counts email and inbound; shown only to confirm we are right to ignore it"],
   ["stageId", "stage matching falls back to the stage name if absent"],
   ["assignedUserGroupIds", "the owner-group exclusion (52555) depends on it"],
   ["groupIds", "alternate spelling of the same"],
@@ -124,6 +124,30 @@ async function main() {
     );
   }
   console.log("\nA null above is a rule that is silently doing nothing. That is what to fix.\n");
+
+  // The reply reprieve depends on two things nobody has confirmed: that FUB
+  // serves /v1/emails filtered to one person, and that the rows say which way
+  // the email went. If either is wrong, no lead can ever be swept — loudly, by
+  // design, but better to find out here than on the first live run.
+  console.log("\nREPLY REPRIEVE — can we tell a reply from a blast?");
+  console.log("-".repeat(70));
+  try {
+    const sample = await fub.emailsForPerson(people[0].id, new Date(Date.now() - 365 * 86400000).toISOString());
+    console.log(`/emails?personId=… returned ${sample.length} rows for one person (bulk is refused; per-person is not).`);
+    const keys = new Set();
+    for (const row of sample) for (const k of Object.keys(row)) keys.add(k);
+    console.log(`fields: ${[...keys].sort().join(", ") || "(no rows to inspect — try a person with email history)"}`);
+    const directional = sample.filter((r) => r.isIncoming !== undefined || r.direction !== undefined).length;
+    console.log(
+      directional === sample.length && sample.length
+        ? "direction: PRESENT on every row — the reprieve can tell a reply from a blast."
+        : `direction: present on ${directional}/${sample.length} rows *** the rest count as neither ***`
+    );
+  } catch (err) {
+    console.log(`*** /emails per-person FAILED: ${err.message}`);
+    console.log("    Until this works the engine holds every sweep rather than sweeping blind.");
+  }
+  console.log("");
 }
 
 main().catch((err) => {

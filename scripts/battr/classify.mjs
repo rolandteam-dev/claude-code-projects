@@ -70,6 +70,41 @@ export function buildTouchIndex({ calls = [], texts = [], emails = [] }) {
   return index;
 }
 
+/**
+ * Did the lead write back?
+ *
+ * Outbound email is never a touch — Follow Up Boss sends one batch email to
+ * thirty leads in a single click, so counting it would let one blast mark the
+ * whole database as worked. A REPLY is the opposite: it cannot be manufactured
+ * in bulk, and it is direct evidence the lead is alive and in conversation.
+ *
+ * Direction is read the same way the touch index reads calls and texts. Rows
+ * that carry no direction at all are counted separately rather than guessed —
+ * treating an unreadable row as inbound would quietly reopen the batch-email
+ * hole, and treating it as outbound would quietly sweep live conversations.
+ *
+ * @returns {{ latest: number, undirected: number }} latest inbound epoch ms (0 = none)
+ */
+export function readInboundEmails(emails = []) {
+  let latest = 0;
+  let undirected = 0;
+
+  for (const row of emails) {
+    const at = new Date(row?.created ?? row?.createdAt ?? 0).getTime();
+    if (!Number.isFinite(at) || at === 0) continue;
+
+    if (row?.isIncoming === undefined && row?.direction === undefined) {
+      undirected++;
+      continue;
+    }
+    if (row.isIncoming === true || lower(row.direction) === "inbound") {
+      latest = Math.max(latest, at);
+    }
+  }
+
+  return { latest, undirected };
+}
+
 // ------------------------------------------------------------ agent exemption
 
 /**

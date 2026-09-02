@@ -24,7 +24,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { FubClient } from "./battr/fub.mjs";
 import { rules } from "./battr/rules.mjs";
-import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, isExemptAgent, lower, hasAny } from "./battr/classify.mjs";
+import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, isExemptAgent, lower, hasAny, daysBetween, readInboundEmails } from "./battr/classify.mjs";
 import { normalizeContact } from "./battr/contact.mjs";
 import { isDayAllowed } from "./battr/schedule.mjs";
 import { lists } from "./battr/lists.mjs";
@@ -98,9 +98,37 @@ async function resolveCustomFields(fub, log) {
   return map;
 }
 
+// ------------------------------------------------------------ reply reprieve
+
+/**
+ * Has this lead written back? If so it is spared the sweep.
+ *
+ * Failure is treated as "spared", not "sweep anyway". A lead left in place today
+ * is swept tomorrow once the lookup works; a lead swept mid-conversation is a
+ * client relationship handed to a stranger. The count of unchecked leads goes in
+ * the report so a broken lookup is loud rather than invisible.
+ */
+async function replyReprieve(fub, personId, sinceIso, diag) {
+  if (diag.checks >= rules.maxEmailChecksPerRun) {
+    diag.budgetSpent++;
+    return { spared: true, reason: `email check budget (${rules.maxEmailChecksPerRun}) spent` };
+  }
+
+  diag.checks++;
+  try {
+    const { latest, undirected } = readInboundEmails(await fub.emailsForPerson(personId, sinceIso));
+    diag.undirected += undirected;
+    if (!latest) return { spared: false };
+    return { spared: true, reason: `lead replied by email ${daysBetween(latest)}d ago` };
+  } catch (err) {
+    diag.failures.push(err.message);
+    return { spared: true, reason: `could not check for a reply (${err.message})` };
+  }
+}
+
 // ---------------------------------------------------------------------- report
 
-function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] } }) {
+function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null }) {
   const byAgent = new Map();
   for (const r of results) {
     if (r.status === "excluded" || !r.owner) continue;
@@ -166,6 +194,28 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     lines.push(`## Neglected but not swept (${actions.heldBack.length})`);
     lines.push("");
     for (const h of actions.heldBack) lines.push(`- ${h.name} (${h.owner}) — ${h.holdReason}`);
+    lines.push("");
+  }
+
+  // A reply lookup that quietly stops working would spare every lead forever and
+  // the run would still look healthy. Say so on the face of the report instead.
+  if (replyDiag?.failures?.length) {
+    lines.push(
+      `> **${replyDiag.failures.length} leads were not swept because the reply lookup failed** — ` +
+        `e.g. \`${replyDiag.failures[0]}\`. Nothing was swept blind, but fix this: ` +
+        `until it works, no lead can be swept.`
+    );
+    lines.push("");
+  }
+  if (replyDiag?.undirected) {
+    lines.push(
+      `> ${replyDiag.undirected} emails carried no direction field, so they counted as neither sent nor received. ` +
+        `Check what \`/v1/emails\` returns before trusting the reply reprieve.`
+    );
+    lines.push("");
+  }
+  if (replyDiag?.budgetSpent) {
+    lines.push(`> ${replyDiag.budgetSpent} leads were held back unchecked: the per-run reply-lookup budget was spent.`);
     lines.push("");
   }
 
@@ -423,8 +473,10 @@ async function main() {
 
   // 5b. sweep
   const sweepLog = { runId, timestamp: new Date().toISOString(), dry, sweeps: [] };
+  const replyDiag = { checks: 0, undirected: 0, budgetSpent: 0, spared: 0, failures: [] };
   if ((args.stage === "both" || args.stage === "neglected") && sweepsAllowedToday) {
     const cap = args.maxSweeps ?? rules.maxSweepsPerRun;
+    const replyWindow = new Date(Date.now() - rules.inboundEmailWindowDays * DAY_MS).toISOString();
     let primaryCount = 0;
 
     for (const lead of neglected) {
@@ -457,6 +509,20 @@ async function main() {
         const warned = fields.atRiskSince ? Boolean(person?.[fields.atRiskSince]) : false;
         if (!warned) {
           actions.heldBack.push({ ...lead, holdReason: "never warned — interlock held the sweep" });
+          continue;
+        }
+      }
+
+      // Last gate before the lead moves: did the lead write back? An agent can
+      // batch-email thirty people in one click, so outbound email never counts
+      // as working a lead — but a reply cannot be sent in bulk, and sweeping a
+      // live conversation away from the agent holding it is the one mistake
+      // this engine must not make.
+      if (rules.inboundEmailSparesSweep) {
+        const reprieve = await replyReprieve(fub, lead.id, replyWindow, replyDiag);
+        if (reprieve.spared) {
+          replyDiag.spared++;
+          actions.heldBack.push({ ...lead, holdReason: reprieve.reason });
           continue;
         }
       }
@@ -548,7 +614,7 @@ async function main() {
   mkdirSync(LOG_DIR, { recursive: true });
   if (sweepLog.sweeps.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
 
-  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts });
+  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag });
   const reportPath = await deliverReport(markdown, { runId, dry });
 
   console.log(markdown);

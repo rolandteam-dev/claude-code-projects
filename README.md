@@ -106,7 +106,7 @@ policy surface; the engine is not meant to be edited to change behavior.
 
 | How a lead is judged | |
 | --- | --- |
-| Last touch | The most recent **agent-initiated** call, text, or email. A lead contacting *us* is not a touch. Never-contacted leads run the clock from their creation date. |
+| Last touch | The most recent **agent-initiated call or text**. Email is not a touch — see below. A lead contacting *us* is not a touch either. Never-contacted leads run the clock from their creation date. |
 | At Risk | Past the warn threshold with no touch → a note lands on the lead and `Battr At Risk Since` is stamped. Re-flagging is skipped on later runs. |
 | Neglected | Past the sweep threshold **and already warned** → reassigned to the sweep pond, with a note recording who had it. |
 | Excluded | Protected stages (under contract, closed), DNC-family tags, exempt agents, leads newer than `minLeadAgeDays`, and leads already sitting in a pond. |
@@ -117,6 +117,18 @@ policy surface; the engine is not meant to be edited to change behavior.
 never swept unless an earlier run already warned the agent and stamped
 `Battr At Risk Since`. Without it, a lead that has simply been quiet for a long
 time gets taken away with no warning ever issued. Leave it on.
+
+**Email is not outreach, but a reply is.** Follow Up Boss batch-emails thirty
+leads in a single click, so counting a sent email as working a lead would let one
+blast mark the whole database as worked — outbound email is ignored entirely, and
+an agent who only ever emails will show as neglected. That is the intended
+answer. A *reply from the lead* is the opposite: it can't be sent in bulk, and it
+means a live conversation. `inboundEmailSparesSweep` checks the lead's email
+thread in the last moment before the sweep, and a reply inside
+`inboundEmailWindowDays` holds the lead in place. Spared leads are listed by name
+under "Neglected but not swept", so a conversation nobody is answering shows up in
+the report every day rather than hiding from it. If the lookup itself fails, the
+sweep is held and the report says so — nothing is ever swept unchecked.
 
 **Day filters.** Notes go out every day; sweeps only run Tuesday–Friday
 (`sweepDayFilter: "Weekdays Excluding Monday"`), so the weekend's backlog gets one

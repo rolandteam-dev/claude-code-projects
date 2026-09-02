@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 import { rmSync } from "node:fs";
 import assert from "node:assert/strict";
 
-import { classify, buildTouchIndex, classifyForList, runCombinedList, isExemptAgent, DAY_MS } from "./classify.mjs";
+import { classify, buildTouchIndex, classifyForList, runCombinedList, isExemptAgent, readInboundEmails, DAY_MS } from "./classify.mjs";
 import { evaluateCondition, evaluateSet } from "./filters.mjs";
 import { normalizeContact } from "./contact.mjs";
 import { isDayAllowed } from "./schedule.mjs";
@@ -192,6 +192,49 @@ check("the most recent touch across channels wins", () => {
     emails: [{ personId: 1, created: daysAgo(1), isIncoming: false }],
   });
   assert.equal(classify(lead(), index, rules, NOW).daysSinceTouch, 1);
+});
+
+check("a reply from the lead is found, a blast to the lead is not", () => {
+  // The whole asymmetry in one test. An agent batch-emails thirty leads in a
+  // click; not one of them can batch-reply.
+  const { latest, undirected } = readInboundEmails([
+    { created: daysAgo(9), isIncoming: false }, // the blast — ignored
+    { created: daysAgo(3), isIncoming: true }, // the reply — this is what counts
+    { created: daysAgo(1), isIncoming: false },
+  ]);
+  assert.equal(new Date(latest).toISOString(), daysAgo(3));
+  assert.equal(undirected, 0);
+});
+
+check("outbound-only email earns no reprieve", () => {
+  const { latest } = readInboundEmails([
+    { created: daysAgo(1), isIncoming: false },
+    { created: daysAgo(2), direction: "outbound" },
+  ]);
+  assert.equal(latest, 0, "a mass email must never spare a lead from the sweep");
+});
+
+check("an email with no direction is counted, never guessed", () => {
+  // Guessing inbound reopens the mass-email hole; guessing outbound sweeps live
+  // conversations. Neither — count it and put it in the report.
+  const { latest, undirected } = readInboundEmails([{ created: daysAgo(1) }]);
+  assert.equal(latest, 0);
+  assert.equal(undirected, 1);
+});
+
+check("undated and malformed email rows are skipped, not thrown on", () => {
+  // A row with no usable timestamp says nothing about when the lead replied, so
+  // it is dropped before direction is even considered — it is not an unreadable
+  // row worth reporting.
+  const { latest, undirected } = readInboundEmails([{ isIncoming: true }, {}, null, { created: "not a date", isIncoming: true }]);
+  assert.equal(latest, 0);
+  assert.equal(undirected, 0);
+});
+
+check("the reply window is what decides, and it is configurable", () => {
+  assert.equal(rules.inboundEmailSparesSweep, true, "Mike's rule: a reply stops the sweep");
+  assert.ok(rules.inboundEmailWindowDays > 0);
+  assert.ok(rules.maxEmailChecksPerRun >= rules.maxSweepsPerRun, "the budget must not be tighter than the sweep cap");
 });
 
 // ------------------------------------------------------------ filter DSL

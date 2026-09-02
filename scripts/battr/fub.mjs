@@ -195,6 +195,18 @@ export class FubClient {
     return { calls, texts, emails: [] };
   }
 
+  /**
+   * The email thread for ONE lead since `sinceIso`.
+   *
+   * FUB refuses `/v1/emails` in bulk, which is why the daily activity pull
+   * carries no email at all — but a single person's thread is served fine. The
+   * sweep loop uses this on the handful of leads that are about to move, to
+   * check whether the lead has written back.
+   */
+  emailsForPerson(personId, sinceIso) {
+    return this.paginate("/emails", { personId, createdAfter: sinceIso });
+  }
+
   // ------------------------------------------------------------------ writes
 
   note(personId, body, subject = "Battr audit") {
