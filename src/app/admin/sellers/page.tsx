@@ -48,7 +48,9 @@ export default async function SellerRadarPage({
     return <AdminLogin />;
   }
 
-  const all = await homeownerStore().list();
+  const WORKING_SET = 1000;
+  const total = await homeownerStore().count();
+  const all = await homeownerStore().list(WORKING_SET);
   const rows: RadarRow[] = all
     .map((h): RadarRow => {
       const latest = latestEstimate(h);
@@ -100,7 +102,7 @@ export default async function SellerRadarPage({
       {/* Summary tiles */}
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
-          { label: "Homeowners tracked", value: rows.length.toLocaleString() },
+          { label: "Homeowners tracked", value: total.toLocaleString() },
           { label: "Hot (engaging now)", value: hot.toLocaleString() },
           { label: "Warm", value: warm.toLocaleString() },
           { label: "Portfolio value", value: money(totalValue) },
@@ -113,6 +115,13 @@ export default async function SellerRadarPage({
           </div>
         ))}
       </div>
+
+      {total > rows.length && (
+        <p className="mt-6 font-sans text-[0.78rem] text-[var(--color-muted)]">
+          Showing the {rows.length.toLocaleString()} most recently updated of {total.toLocaleString()} tracked
+          homeowners. As homeowners engage with their dashboards, the hottest sellers rise to the top here.
+        </p>
+      )}
 
       {/* Interactive table: filters, CSV export, push-to-FUB */}
       <SellerRadarTable rows={rows} adminKey={key} />

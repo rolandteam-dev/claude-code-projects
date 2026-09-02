@@ -89,10 +89,17 @@ export const postgresStore: HomeownerStore = {
     return rows.length ? rowToHomeowner(rows[0]) : null;
   },
 
-  async list() {
+  async list(limit) {
     await ensureSchema();
-    const rows = await sql()`SELECT * FROM homeowners ORDER BY updated_at DESC`;
+    const rows = limit
+      ? await sql()`SELECT * FROM homeowners ORDER BY updated_at DESC LIMIT ${limit}`
+      : await sql()`SELECT * FROM homeowners ORDER BY updated_at DESC`;
     return rows.map(rowToHomeowner);
+  },
+  async count() {
+    await ensureSchema();
+    const rows = await sql()`SELECT count(*)::int AS n FROM homeowners`;
+    return (rows[0]?.n as number) ?? 0;
   },
 
   async listDueForEmail(intervalDays) {

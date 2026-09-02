@@ -55,7 +55,10 @@ export type Homeowner = {
 
 export interface HomeownerStore {
   getByToken(token: string): Promise<Homeowner | null>;
-  list(): Promise<Homeowner[]>;
+  /** Most-recently-updated homeowners, optionally capped (for large databases). */
+  list(limit?: number): Promise<Homeowner[]>;
+  /** Total tracked homeowners. */
+  count(): Promise<number>;
   /** records whose last email is older than `intervalDays` (or never sent) and still subscribed */
   listDueForEmail(intervalDays: number): Promise<Homeowner[]>;
   upsert(h: Homeowner): Promise<Homeowner>;
@@ -114,8 +117,12 @@ const memoryStore: HomeownerStore = {
   async getByToken(token) {
     return mem.get(token) ?? null;
   },
-  async list() {
-    return [...mem.values()];
+  async list(limit) {
+    const all = [...mem.values()].sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
+    return limit ? all.slice(0, limit) : all;
+  },
+  async count() {
+    return mem.size;
   },
   async listDueForEmail(intervalDays) {
     const cutoff = Date.now() - intervalDays * 86_400_000;
