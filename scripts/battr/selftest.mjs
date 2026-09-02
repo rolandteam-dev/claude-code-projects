@@ -152,6 +152,34 @@ check("escalateUnanswered halves the at-risk clock when enabled", () => {
   assert.equal(r.status, "at_risk");
 });
 
+check("email never counts as working a lead", () => {
+  // FUB makes mass email one click, so counting it would let a single blast
+  // mark the whole database as worked. Calls and texts only.
+  const emailed = normalizeContact(
+    { id: 77, stage: "Lead", created: daysAgo(60), assignedUserId: 5, tags: [], lastCommunication: daysAgo(1) },
+    { lastOutbound: 0, lastInbound: 0 }
+  );
+  assert.equal(
+    emailed.custom_fields.fub.system_lastCommunication,
+    null,
+    "FUB's own lastCommunication counts email and inbound, so it is not a fallback"
+  );
+
+  const called = normalizeContact(
+    { id: 78, stage: "Lead", created: daysAgo(60), assignedUserId: 5, tags: [] },
+    { lastOutbound: new Date(daysAgo(2)).getTime(), lastInbound: 0 }
+  );
+  assert.ok(called.custom_fields.fub.system_lastCommunication, "a call or text does count");
+});
+
+check("an email-only lead reads as neglected — intended, not a bug", () => {
+  const c = normalizeContact(
+    { id: 79, stage: "Lead", created: daysAgo(60), assignedUserId: 5, assignedTo: "Some Agent", tags: [], lastCommunication: daysAgo(1) },
+    { lastOutbound: 0, lastInbound: 0 }
+  );
+  assert.equal(classifyForList(c, listById(1104), NOW), "neglected");
+});
+
 check("inbound activity alone is not an agent touch", () => {
   const index = buildTouchIndex({ texts: [{ personId: 1, created: daysAgo(1), isIncoming: true }] });
   const r = classify(lead({ created: daysAgo(40) }), index, rules, NOW);
