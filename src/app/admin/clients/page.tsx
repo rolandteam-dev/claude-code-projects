@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { portalRoster, type RosterClient } from "@/lib/portal/roster";
 import { PortalInviteBuilder } from "@/components/portal/PortalInviteBuilder";
+import { homeownerBrand } from "@/lib/homeowners/brand";
 import { AdminLogin } from "@/components/AdminLogin";
 
 export const dynamic = "force-dynamic";
@@ -196,7 +197,7 @@ export default async function PortalClientsPage({
       <p className="mb-4 mt-1 font-sans text-[0.88rem] text-[var(--color-ink-soft)]">
         No login for them to manage — the link opens their hub with everything pre-filled.
       </p>
-      <PortalInviteBuilder />
+      <PortalInviteBuilder baseUrl={homeownerBrand.baseUrl} />
 
       <h2 className="mt-12 font-serif text-[1.5rem] text-[var(--color-ink)]">Signal playbook</h2>
       <p className="mb-4 mt-1 max-w-[70ch] font-sans text-[0.88rem] text-[var(--color-ink-soft)]">

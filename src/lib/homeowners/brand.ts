@@ -11,6 +11,7 @@ export const homeownerBrand = {
   name: "The Roland Team",
   legalName: "The Roland Team | LPT Realty",
   founder: site.founder,
+  founderPhoto: site.founderPhoto,
   phone: site.phone,
   email: site.email,
   brokerage: site.brokerage,

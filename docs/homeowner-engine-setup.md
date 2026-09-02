@@ -30,6 +30,10 @@ pooled connection string as `DATABASE_URL` in Vercel.)*
   - `RESEND_API_KEY` = your Resend key
   - `HOMEOWNER_FROM_EMAIL` = `The Roland Team <home@therolandteam.com>`
 
+> **Setting these keys does not start any sending.** Homeowner email is off until
+> `HOMEOWNER_EMAIL_ENABLED` is set to `true` — see *Turning sending on* at the end.
+> Provision the keys now; flip the switch only once the subdomain resolves.
+
 ## 3. The subdomain (where homeowners land) — required
 Dashboards and emails link to a Roland Team subdomain (kept separate from the
 Roland Luxury marketing site).
@@ -66,7 +70,36 @@ Roland Luxury marketing site).
    `…/api/cron/homeowner-digest?secret=YOUR_CRON_SECRET&dryRun=1` → shows how many are
    due. Drop `&dryRun=1` to actually refresh values + send one round of emails.
 
+## Turning sending on (do this LAST)
+
+Homeowner email is **off by default**. All three senders — the welcome email from
+the home-value funnel, the cash-offer confirmation, and the weekly value digest —
+refuse to send until this is set. Nothing goes to a consumer before then.
+
+Do not flip this until:
+
+- [ ] `https://home.therolandteam.com/dashboard/demo` loads in a browser. Until the
+      subdomain resolves, every button *and the unsubscribe link* in a delivered
+      email is dead — an unsubscribe that 404s is the CAN-SPAM problem, not just a
+      broken link.
+- [ ] You have sent yourself one real email and clicked both the dashboard button
+      and the unsubscribe link.
+
+Then, and only then:
+
+- [ ] Vercel → Environment Variables → `HOMEOWNER_EMAIL_ENABLED` = `true`.
+- [ ] Restore the weekly digest cron in `vercel.json` (removed while sending was
+      held), then redeploy:
+      `{ "path": "/api/cron/homeowner-digest", "schedule": "0 16 * * 1" }`
+
+To pause sending again at any time, set `HOMEOWNER_EMAIL_ENABLED` to anything other
+than `true` (or delete it) and redeploy. The funnels keep working and keep capturing
+leads — they just stop emailing.
+
 ## What runs automatically
+*(The value digest is currently held — its cron is removed and sending is off. The
+FUB sync still runs; it only imports contacts and never emails.)*
+
 - **Mondays ~8 AM PT:** FUB sync (new/updated contacts) + the value-update digest to
   anyone due (every ~2 weeks per person). Schedules live in `vercel.json`.
 

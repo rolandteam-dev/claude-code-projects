@@ -85,7 +85,6 @@ export const site = {
         { label: "All Calculators", href: "/calculators" },
         { label: "Down Payment Assistance", href: "/down-payment-assistance" },
         { label: "Market Report", href: "/market-report" },
-        { label: "Client Portal", href: "/portal" },
       ],
     },
     {
@@ -97,7 +96,6 @@ export const site = {
         { label: "Selling Guide", href: "/guides/selling-your-home-in-las-vegas" },
         { label: "Seller Net Proceeds Calculator", href: "/calculators/seller-net-proceeds" },
         { label: "Market Report", href: "/market-report" },
-        { label: "Client Portal", href: "/portal" },
       ],
     },
     { label: "New Construction", href: "/new-construction" },
@@ -139,9 +137,6 @@ export const site = {
     },
   ],
   cta: { label: "Contact The Team", href: "/contact" },
-  // Client Portal — the branded home hub. Linked from the Buy/Sell dropdowns,
-  // the mobile menu and the footer (not the desktop header row, which is full).
-  portal: { label: "Client Portal", href: "/portal" },
 } as const;
 
 export function absoluteUrl(path = "/"): string {

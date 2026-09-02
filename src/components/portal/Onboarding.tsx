@@ -5,7 +5,7 @@ import { usePortal, type PortalProfile } from "@/lib/portal/store";
 import { useLocationSearch } from "@/lib/portal/browser";
 import { trackPortal } from "@/lib/portal/track";
 import { fieldClass, labelClass } from "./ui";
-import { site } from "@/lib/site";
+import { homeownerBrand } from "@/lib/homeowners/brand";
 
 const TIMELINES = ["ASAP", "1–3 months", "3–6 months", "6–12 months", "Just exploring"] as const;
 
@@ -74,7 +74,7 @@ export function Onboarding() {
         </h2>
         <p className="mt-3 font-sans text-[0.92rem] text-[var(--color-ink-soft)]">
           Takes about thirty seconds. Your hub then tracks your steps, your saved homes and your numbers in one place —
-          and your {site.parentBrand} agent can see where you need help.
+          and your {homeownerBrand.name} agent can see where you need help.
         </p>
 
         {/* Re-key so an invite link's values populate the uncontrolled inputs
@@ -159,7 +159,7 @@ export function Onboarding() {
           </button>
 
           <p className="text-center font-sans text-[0.76rem] leading-relaxed text-[var(--color-muted)]">
-            Your hub is saved in this browser. We share your details with your {site.parentBrand} agent so they can help —
+            Your hub is saved in this browser. We share your details with your {homeownerBrand.name} agent so they can help —
             we don&apos;t sell your information, and there&apos;s no password to remember.
           </p>
         </form>

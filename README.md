@@ -253,6 +253,13 @@ node scripts/battr/import-atbats.mjs ~/Downloads/at-bats.csv         # import
 An in-house version of what teams normally rent from Ruuster: a branded client
 hub at **`/portal`** and an internal dashboard at **`/admin/clients`**.
 
+The hub carries **The Roland Team** brand, not Roland Luxury — same reasoning as
+the homeowner engine: it serves the whole client base, not just luxury buyers.
+It lives in the `(homeowner)` route group, so it inherits that chrome and its
+noindex, and it is reached by an invite link rather than the marketing nav.
+Invite links are absolute against `HOMEOWNER_BASE_URL`, so a client always lands
+on the Roland Team host whichever domain the agent generated the link from.
+
 **What the client gets** (`/portal`): a step-by-step buying or selling journey
 they can check off, their saved homes and searches (prices refreshed live from
 the MLS), a payment / cash-to-close planner — or net-proceeds planner for

@@ -1,15 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useOrigin } from "@/lib/portal/browser";
 import { fieldClass, labelClass, money } from "./ui";
 
 /**
  * Builds a pre-filled hub link for a client, plus a ready-to-send message.
+ * Links are absolute against the Roland Team base URL.
  * The link carries the client's details as query params, which /portal reads
  * to pre-fill sign-up — so an invited client only confirms what's there.
  */
-export function PortalInviteBuilder() {
+export function PortalInviteBuilder({ baseUrl }: { baseUrl: string }) {
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
   const [email, setEmail] = useState("");
@@ -17,7 +17,9 @@ export function PortalInviteBuilder() {
   const [journey, setJourney] = useState<"buy" | "sell">("buy");
   const [budget, setBudget] = useState("");
   const [copied, setCopied] = useState("");
-  const origin = useOrigin();
+  // Passed in from the server so the link always uses the Roland Team host,
+  // never whichever domain this console happens to be open on.
+  const origin = baseUrl.replace(/\/$/, "");
 
   const link = useMemo(() => {
     const q = new URLSearchParams();
