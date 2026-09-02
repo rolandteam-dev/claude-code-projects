@@ -22,7 +22,12 @@ export const homeownerBrand = {
    * HOMEOWNER_BASE_URL to a dedicated subdomain (e.g. https://home.therolandteam.com)
    * later if desired — no code change needed.
    */
-  baseUrl: process.env.HOMEOWNER_BASE_URL || site.url,
+  // Always the main site origin — the dashboards live at /dashboard/<token>
+  // there and it always resolves. (A dedicated subdomain was intentionally
+  // dropped: a stray HOMEOWNER_BASE_URL pointing at an unconfigured subdomain
+  // sends every dashboard/email link to a dead host. Re-introduce a subdomain
+  // here only once its DNS is verified.)
+  baseUrl: site.url,
 } as const;
 
 export function dashboardUrl(token: string): string {
