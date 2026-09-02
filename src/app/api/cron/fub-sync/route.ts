@@ -43,7 +43,9 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   let offset = Number(url.searchParams.get("offset") ?? 0) || 0;
   const limit = 100;
-  const maxPages = 5; // bound work per invocation
+  const maxPages = 30; // up to ~3,000 contacts per invocation
+  const timeBudgetMs = 45_000; // stop before the 60s function limit; return nextOffset to continue
+  const startedAt = Date.now();
   const store = homeownerStore();
   const auth = `Basic ${Buffer.from(`${key}:`).toString("base64")}`;
 
@@ -54,6 +56,7 @@ export async function GET(req: Request) {
 
   try {
     for (; pages < maxPages; pages++) {
+      if (Date.now() - startedAt > timeBudgetMs) break; // hand back nextOffset for a follow-up run
       const res = await fetch(
         `https://api.followupboss.com/v1/people?limit=${limit}&offset=${offset}&fields=allFields`,
         { headers: { Authorization: auth, "X-System": "TheRolandTeamWebsite" } }
