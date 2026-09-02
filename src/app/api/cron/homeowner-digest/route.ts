@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { homeownerStore } from "@/lib/homeowners/store";
-import { fetchEstimate } from "@/lib/homeowners/avm";
+import { valueHome } from "@/lib/homeowners/nvValue";
 import { sendValueEmail } from "@/lib/homeowners/email";
 
 export const runtime = "nodejs";
@@ -41,7 +41,7 @@ async function run(req: Request) {
 
   for (const h of due) {
     try {
-      const est = await fetchEstimate(h);
+      const est = await valueHome(h);
       if (est) {
         if (!dryRun) await store.addEstimate(h.token, est);
         // reflect the new estimate locally so the email shows it
