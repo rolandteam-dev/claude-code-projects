@@ -42,7 +42,6 @@ export async function fetchEstimate(h: Homeowner): Promise<EstimatePoint | null>
   const streetNumber = m?.[1];
   const streetName = m?.[2] ?? street;
 
-  /* eslint-disable @typescript-eslint/no-explicit-any */
   const body: any = {
     boardId: Number(process.env.REPLIERS_BOARD_ID ?? 193),
     address: { streetNumber, streetName, city: h.city, state: h.state, zip: h.zip },
@@ -50,7 +49,6 @@ export async function fetchEstimate(h: Homeowner): Promise<EstimatePoint | null>
   if (h.beds) body.numBedrooms = h.beds;
   if (h.baths) body.numBathrooms = h.baths;
   if (h.sqft) body.sqft = h.sqft;
-  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   try {
     const res = await fetch("https://api.repliers.io/estimates", {
