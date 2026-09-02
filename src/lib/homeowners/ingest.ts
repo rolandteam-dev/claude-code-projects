@@ -7,7 +7,7 @@
  * Repliers estimate.
  */
 import { homeownerStore, newToken, type EstimatePoint, type Homeowner } from "./store";
-import { fetchEstimate } from "./avm";
+import { valueHome } from "./nvValue";
 import { dashboardUrl } from "./brand";
 
 export type IngestInput = {
@@ -69,7 +69,7 @@ export async function ingestHomeowner(
       high: input.initialEstimate.high,
     };
   } else {
-    seeded = await fetchEstimate(record);
+    seeded = await valueHome(record);
   }
   if (seeded) {
     await store.addEstimate(token, seeded);
