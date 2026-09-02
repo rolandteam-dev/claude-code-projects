@@ -53,6 +53,7 @@ export async function GET(req: Request) {
   let skipped = 0;
   let pages = 0;
   let done = false;
+  let total: number | null = null;
 
   try {
     for (; pages < maxPages; pages++) {
@@ -62,9 +63,17 @@ export async function GET(req: Request) {
         { headers: { Authorization: auth, "X-System": "TheRolandTeamWebsite" } }
       );
       if (!res.ok) {
+        // FUB commonly 400s once the offset runs past the end of the list. If
+        // we've already processed contacts, that's a clean finish — not a
+        // failure. Only surface an error if the very first page fails.
+        if (imported + skipped > 0) {
+          done = true;
+          break;
+        }
         return NextResponse.json({ ok: false, error: `FUB ${res.status}`, imported, skipped }, { status: 502 });
       }
       const data: any = await res.json();
+      total = Number(data?._metadata?.total) || total;
       const people: any[] = data.people ?? [];
       if (people.length === 0) {
         done = true;
@@ -112,6 +121,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: String(e), imported, skipped }, { status: 502 });
   }
 
-  return NextResponse.json({ ok: true, imported, skipped, nextOffset: done ? null : offset });
+  return NextResponse.json({ ok: true, imported, skipped, total, processed: offset, nextOffset: done ? null : offset });
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
