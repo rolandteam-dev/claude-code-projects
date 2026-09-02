@@ -32,16 +32,29 @@ pooled connection string as `DATABASE_URL` in Vercel.)*
 
 > **Setting these keys does not start any sending.** Homeowner email is off until
 > `HOMEOWNER_EMAIL_ENABLED` is set to `true` — see *Turning sending on* at the end.
-> Provision the keys now; flip the switch only once the subdomain resolves.
+> Provision the keys now; flip the switch only once you have clicked a real email
+> end to end yourself.
 
-## 3. The subdomain (where homeowners land) — required
-Dashboards and emails link to a Roland Team subdomain (kept separate from the
-Roland Luxury marketing site).
+## 3. The subdomain (where homeowners land) — OPTIONAL
+**No DNS work is required.** Dashboards, portal hubs and every link in an email
+default to the main site origin (`site.url`), where these pages already live at
+`/dashboard/<token>` and `/portal`. That works today.
+
+Do this section only if you want the Roland Team brand in the URL as well as on
+the page — homeowners landing on `home.therolandteam.com` rather than the
+Roland Luxury domain.
 
 - [ ] In Vercel → project → **Domains**, add `home.therolandteam.com`.
-- [ ] Add the DNS record Vercel shows (a CNAME at your `therolandteam.com` DNS host).
-- [ ] In Environment Variables, add:
+- [ ] Add the CNAME Vercel shows, **wherever `therolandteam.com`'s DNS is
+      managed** — that is your registrar, or whoever runs the Roland Team site
+      today. It is a new record on a new subdomain: your existing site is
+      untouched.
+- [ ] Confirm `https://home.therolandteam.com/dashboard/demo` loads.
+- [ ] Only then, in Environment Variables, add:
   - `HOMEOWNER_BASE_URL` = `https://home.therolandteam.com`
+
+Setting `HOMEOWNER_BASE_URL` before the subdomain resolves is worse than leaving
+it unset: it points every email button and unsubscribe link at a dead host.
 
 ## 4. Automation secret (protects the cron jobs) — required
 - [ ] Add `CRON_SECRET` = any long random string (e.g. from a password generator).
@@ -50,7 +63,7 @@ Roland Luxury marketing site).
 
 ## 5. Seller Radar access (internal dashboard) — required to view it
 - [ ] Add `ADMIN_TOKEN` = a private key only your team knows.
-- [ ] Open the dashboard at `home.therolandteam.com/admin/sellers?key=YOUR_ADMIN_TOKEN`
+- [ ] Open the dashboard at `/admin/sellers?key=YOUR_ADMIN_TOKEN` on your site
       (bookmark it with the key). Without the token it stays locked.
 
 ## Already set (nothing to do) ✅
@@ -61,11 +74,10 @@ Roland Luxury marketing site).
 
 ## After it's live — verify the loop
 1. **Seed a homeowner:** run the FUB import once —
-   `home.therolandteam.com/api/cron/fub-sync?secret=YOUR_CRON_SECRET`
+   `/api/cron/fub-sync?secret=YOUR_CRON_SECRET` on your site
    → should return `{ imported: N }`.
 2. **Check the Radar:** open `/admin/sellers?key=YOUR_ADMIN_TOKEN` → your contacts appear.
-3. **Test a dashboard:** click any "Open" link → the homeowner value page renders on
-   the subdomain.
+3. **Test a dashboard:** click any "Open" link → the homeowner value page renders.
 4. **Test the digest (dry run first):**
    `…/api/cron/homeowner-digest?secret=YOUR_CRON_SECRET&dryRun=1` → shows how many are
    due. Drop `&dryRun=1` to actually refresh values + send one round of emails.
@@ -78,10 +90,11 @@ refuse to send until this is set. Nothing goes to a consumer before then.
 
 Do not flip this until:
 
-- [ ] `https://home.therolandteam.com/dashboard/demo` loads in a browser. Until the
-      subdomain resolves, every button *and the unsubscribe link* in a delivered
-      email is dead — an unsubscribe that 404s is the CAN-SPAM problem, not just a
-      broken link.
+- [ ] A dashboard link loads in a browser — whichever origin you are using. If you
+      set `HOMEOWNER_BASE_URL` to a subdomain, check that subdomain specifically:
+      if it does not resolve, every button *and the unsubscribe link* in a
+      delivered email is dead, and an unsubscribe that 404s is the CAN-SPAM
+      problem, not just a broken link.
 - [ ] You have sent yourself one real email and clicked both the dashboard button
       and the unsubscribe link.
 
