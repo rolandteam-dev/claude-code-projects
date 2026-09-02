@@ -2,6 +2,7 @@ import { homeownerStore, latestEstimate, appreciation } from "@/lib/homeowners/s
 import { homeownerBrand } from "@/lib/homeowners/brand";
 import { HomeownerDashboard } from "@/components/HomeownerDashboard";
 import { recentComps, zipMarketStats } from "@/lib/idx/market";
+import { fetchEstimate } from "@/lib/homeowners/avm";
 
 // Token-addressed, per-recipient page — always rendered on demand.
 export const dynamic = "force-dynamic";
@@ -13,7 +14,19 @@ export default async function DashboardPage({
 }) {
   const { token } = await params;
   const h = await homeownerStore().getByToken(token);
-  const latest = h ? latestEstimate(h) : null;
+  let latest = h ? latestEstimate(h) : null;
+
+  // Lazy valuation: the first time a tracked home with no estimate is opened,
+  // value it from its address and persist — so imported contacts get a number
+  // without pre-valuing all 30k+ up front.
+  if (h && !latest) {
+    const est = await fetchEstimate(h);
+    if (est) {
+      await homeownerStore().addEstimate(token, est);
+      h.estimates.push(est);
+      latest = est;
+    }
+  }
 
   if (!h || !latest) {
     return (

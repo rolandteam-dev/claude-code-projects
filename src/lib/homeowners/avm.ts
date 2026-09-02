@@ -25,21 +25,38 @@ function mapEstimate(json: any): { value: number; low?: number; high?: number } 
   return { value, low, high };
 }
 
+/**
+ * Value a stored home from its address. Repliers' Estimates (AVM) resolves the
+ * property from the address, so beds/baths/sqft are sent only when we happen to
+ * have them (they sharpen the estimate but aren't required). Requires the
+ * Repliers key and a street address; returns null gracefully otherwise.
+ */
 export async function fetchEstimate(h: Homeowner): Promise<EstimatePoint | null> {
   const key = process.env.REPLIERS_API_KEY;
   if (!key) return null;
-  if (!h.address || !h.beds || !h.baths || !h.sqft) return null;
+  const street = (h.address ?? "").trim();
+  if (!street) return null;
+
+  // Split a leading house number off the street for providers that want them apart.
+  const m = street.match(/^(\d+[A-Za-z]?)\s+(.+)$/);
+  const streetNumber = m?.[1];
+  const streetName = m?.[2] ?? street;
+
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const body: any = {
+    boardId: Number(process.env.REPLIERS_BOARD_ID ?? 193),
+    address: { streetNumber, streetName, city: h.city, state: h.state, zip: h.zip },
+  };
+  if (h.beds) body.numBedrooms = h.beds;
+  if (h.baths) body.numBathrooms = h.baths;
+  if (h.sqft) body.sqft = h.sqft;
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+
   try {
     const res = await fetch("https://api.repliers.io/estimates", {
       method: "POST",
       headers: { "content-type": "application/json", "REPLIERS-API-KEY": key },
-      body: JSON.stringify({
-        boardId: Number(process.env.REPLIERS_BOARD_ID ?? 193),
-        numBedrooms: h.beds,
-        numBathrooms: h.baths,
-        sqft: h.sqft,
-        address: { streetName: h.address, city: h.city, state: h.state, zip: h.zip },
-      }),
+      body: JSON.stringify(body),
     });
     if (!res.ok) return null;
     const mapped = mapEstimate(await res.json());
