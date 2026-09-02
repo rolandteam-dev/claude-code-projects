@@ -59,6 +59,8 @@ export interface HomeownerStore {
   /** records whose last email is older than `intervalDays` (or never sent) and still subscribed */
   listDueForEmail(intervalDays: number): Promise<Homeowner[]>;
   upsert(h: Homeowner): Promise<Homeowner>;
+  /** Bulk contact upsert for imports — preserves estimates/views/subscribed on conflict. */
+  upsertContacts(records: Homeowner[]): Promise<void>;
   recordView(token: string, at?: string): Promise<void>;
   addEstimate(token: string, point: EstimatePoint): Promise<void>;
   markEmailed(token: string, at?: string): Promise<void>;
@@ -124,6 +126,21 @@ const memoryStore: HomeownerStore = {
   async upsert(h) {
     mem.set(h.token, { ...h, updatedAt: now() });
     return mem.get(h.token)!;
+  },
+  async upsertContacts(records) {
+    for (const h of records) {
+      const existing = mem.get(h.token);
+      mem.set(h.token, {
+        ...h,
+        // Preserve engagement + subscription history across re-imports.
+        estimates: existing?.estimates ?? h.estimates,
+        views: existing?.views ?? h.views,
+        subscribed: existing?.subscribed ?? h.subscribed,
+        createdAt: existing?.createdAt ?? h.createdAt,
+        lastEmailedAt: existing?.lastEmailedAt ?? h.lastEmailedAt,
+        updatedAt: now(),
+      });
+    }
   },
   async recordView(token, at) {
     const h = mem.get(token);

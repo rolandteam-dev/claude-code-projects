@@ -3,6 +3,7 @@ import { homeownerStore, latestEstimate, appreciation, engagementScore } from "@
 import { dashboardUrl } from "@/lib/homeowners/brand";
 import { AdminLogin } from "@/components/AdminLogin";
 import { SellerRadarTable, type RadarRow } from "@/components/SellerRadarTable";
+import { ImportButton } from "@/components/ImportButton";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -89,6 +90,11 @@ export default async function SellerRadarPage({
             Your database ranked by engagement — who&apos;s watching their home value most closely right now.
           </p>
         </div>
+      </div>
+
+      {/* Import from Follow Up Boss */}
+      <div className="mt-6">
+        <ImportButton adminKey={key} />
       </div>
 
       {/* Summary tiles */}

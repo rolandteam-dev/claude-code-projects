@@ -5,19 +5,33 @@ import { homeownerStore, type Homeowner } from "@/lib/homeowners/store";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+const FUB_BASE = "https://api.followupboss.com";
+const FIRST_PAGE = `${FUB_BASE}/v1/people?limit=100&fields=allFields`;
+
 /**
  * Imports Follow Up Boss contacts that have a home address into the homeowner
- * store so they receive value dashboards + emails. Idempotent: each contact's
- * dashboard token is derived deterministically from its FUB id via a keyed HMAC
- * (unguessable, but stable across re-syncs so rows update rather than
- * duplicate). Auth + gating mirror the digest cron.
+ * store so they receive value dashboards + emails. Uses FUB's cursor pagination
+ * (`_metadata.nextLink`) so it can walk a database of any size — offset paging
+ * caps out around 2,000. Idempotent: each contact's dashboard token is a keyed
+ * HMAC of its FUB id, so re-runs update rather than duplicate, preserving each
+ * homeowner's estimate/view/subscription history.
+ *
+ * One invocation works for ~45s then hands back `nextCursor` (the next FUB page
+ * URL) so a follow-up call resumes exactly where it left off — the Seller Radar
+ * "Import" button loops these calls with a progress bar.
+ *
+ * Auth: CRON_SECRET (Vercel Cron / manual `?secret=`) or ADMIN_TOKEN (`?key=`).
  */
 function authorized(req: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  const auth = req.headers.get("authorization");
-  if (auth === `Bearer ${secret}`) return true;
-  return new URL(req.url).searchParams.get("secret") === secret;
+  const params = new URL(req.url).searchParams;
+  const cron = process.env.CRON_SECRET;
+  const admin = process.env.ADMIN_TOKEN;
+  if (cron) {
+    if (req.headers.get("authorization") === `Bearer ${cron}`) return true;
+    if (params.get("secret") === cron) return true;
+  }
+  if (admin && params.get("key") === admin) return true;
+  return false;
 }
 
 function tokenForFub(id: string): string {
@@ -35,37 +49,42 @@ function pickAddress(person: any): { street: string; city: string; state: string
   return { street, city: (a.city || "").trim(), state: (a.state || "NV").trim(), zip: (a.code || a.zip || "").trim() };
 }
 
+// Only ever follow FUB's own pagination URLs (SSRF guard on the cursor param).
+function safeFubUrl(u: string | null): string | null {
+  if (!u) return null;
+  return u.startsWith(`${FUB_BASE}/`) ? u : null;
+}
+
 export async function GET(req: Request) {
   if (!authorized(req)) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   const key = process.env.FUB_API_KEY;
   if (!key) return NextResponse.json({ ok: false, error: "FUB_API_KEY not set" }, { status: 200 });
 
-  const url = new URL(req.url);
-  let offset = Number(url.searchParams.get("offset") ?? 0) || 0;
-  const limit = 100;
-  const maxPages = 30; // up to ~3,000 contacts per invocation
-  const timeBudgetMs = 45_000; // stop before the 60s function limit; return nextOffset to continue
+  const params = new URL(req.url).searchParams;
+  let pageUrl = safeFubUrl(params.get("cursor")) ?? FIRST_PAGE;
+
+  const timeBudgetMs = 45_000;
   const startedAt = Date.now();
   const store = homeownerStore();
   const auth = `Basic ${Buffer.from(`${key}:`).toString("base64")}`;
 
   let imported = 0;
   let skipped = 0;
-  let pages = 0;
-  let done = false;
   let total: number | null = null;
+  let nextCursor: string | null = null;
+  let done = false;
 
   try {
-    for (; pages < maxPages; pages++) {
-      if (Date.now() - startedAt > timeBudgetMs) break; // hand back nextOffset for a follow-up run
-      const res = await fetch(
-        `https://api.followupboss.com/v1/people?limit=${limit}&offset=${offset}&fields=allFields`,
-        { headers: { Authorization: auth, "X-System": "TheRolandTeamWebsite" } }
-      );
+    for (let page = 0; ; page++) {
+      if (Date.now() - startedAt > timeBudgetMs) {
+        nextCursor = pageUrl; // resume from this page next call
+        break;
+      }
+      const res = await fetch(pageUrl, {
+        headers: { Authorization: auth, "X-System": "TheRolandTeamWebsite" },
+      });
       if (!res.ok) {
-        // FUB commonly 400s once the offset runs past the end of the list. If
-        // we've already processed contacts, that's a clean finish — not a
-        // failure. Only surface an error if the very first page fails.
+        // Past the end / transient: a clean finish if we already made progress.
         if (imported + skipped > 0) {
           done = true;
           break;
@@ -74,11 +93,13 @@ export async function GET(req: Request) {
       }
       const data: any = await res.json();
       total = Number(data?._metadata?.total) || total;
-      const people: any[] = data.people ?? [];
+      const people: any[] = Array.isArray(data.people) ? data.people : [];
       if (people.length === 0) {
         done = true;
         break;
       }
+
+      const batch: Homeowner[] = [];
       for (const person of people) {
         const addr = pickAddress(person);
         const email = person.emails?.[0]?.value ?? "";
@@ -86,11 +107,9 @@ export async function GET(req: Request) {
           skipped++;
           continue;
         }
-        const token = tokenForFub(String(person.id));
-        const existing = await store.getByToken(token);
-        const record: Homeowner = {
+        batch.push({
           id: `fub-${person.id}`,
-          token,
+          token: tokenForFub(String(person.id)),
           firstName: person.firstName ?? "",
           lastName: person.lastName ?? "",
           email,
@@ -99,28 +118,31 @@ export async function GET(req: Request) {
           city: addr.city,
           state: addr.state,
           zip: addr.zip,
-          subscribed: existing?.subscribed ?? true,
+          subscribed: true,
           source: "fub",
           fubPersonId: String(person.id),
-          createdAt: existing?.createdAt ?? new Date().toISOString(),
+          createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          estimates: existing?.estimates ?? [],
-          views: existing?.views ?? [],
-          lastEmailedAt: existing?.lastEmailedAt,
-        };
-        await store.upsert(record);
-        imported++;
+          estimates: [],
+          views: [],
+        });
       }
-      offset += people.length;
-      if (people.length < limit) {
+      if (batch.length) {
+        await store.upsertContacts(batch);
+        imported += batch.length;
+      }
+
+      const nl = safeFubUrl(data?._metadata?.nextLink ?? null);
+      if (!nl) {
         done = true;
         break;
       }
+      pageUrl = nl;
     }
   } catch (e) {
     return NextResponse.json({ ok: false, error: String(e), imported, skipped }, { status: 502 });
   }
 
-  return NextResponse.json({ ok: true, imported, skipped, total, processed: offset, nextOffset: done ? null : offset });
+  return NextResponse.json({ ok: true, imported, skipped, total, done, nextCursor: done ? null : nextCursor });
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */

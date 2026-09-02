@@ -124,11 +124,38 @@ export const postgresStore: HomeownerStore = {
         email = EXCLUDED.email, phone = EXCLUDED.phone, address = EXCLUDED.address,
         city = EXCLUDED.city, state = EXCLUDED.state, zip = EXCLUDED.zip,
         beds = EXCLUDED.beds, baths = EXCLUDED.baths, sqft = EXCLUDED.sqft,
-        subscribed = EXCLUDED.subscribed, source = EXCLUDED.source,
-        fub_person_id = EXCLUDED.fub_person_id, updated_at = now()
+        source = EXCLUDED.source, fub_person_id = EXCLUDED.fub_person_id, updated_at = now()
     `;
     const saved = await this.getByToken(h.token);
     return saved ?? h;
+  },
+
+  async upsertContacts(records) {
+    if (records.length === 0) return;
+    await ensureSchema();
+    const s = sql();
+    // Per-row insert (no read-back) preserving estimates/views/subscribed on
+    // conflict — the bulk import path. New rows get empty history + subscribed.
+    for (const h of records) {
+      await s`
+        INSERT INTO homeowners (
+          id, token, first_name, last_name, email, phone, address, city, state, zip,
+          beds, baths, sqft, subscribed, source, fub_person_id, created_at, updated_at,
+          estimates, views
+        ) VALUES (
+          ${h.id}, ${h.token}, ${h.firstName}, ${h.lastName}, ${h.email}, ${h.phone ?? null},
+          ${h.address}, ${h.city}, ${h.state}, ${h.zip}, ${h.beds ?? null}, ${h.baths ?? null},
+          ${h.sqft ?? null}, true, ${h.source}, ${h.fubPersonId ?? null},
+          ${h.createdAt}, now(), '[]'::jsonb, '[]'::jsonb
+        )
+        ON CONFLICT (token) DO UPDATE SET
+          first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name,
+          email = EXCLUDED.email, phone = EXCLUDED.phone, address = EXCLUDED.address,
+          city = EXCLUDED.city, state = EXCLUDED.state, zip = EXCLUDED.zip,
+          beds = EXCLUDED.beds, baths = EXCLUDED.baths, sqft = EXCLUDED.sqft,
+          source = EXCLUDED.source, fub_person_id = EXCLUDED.fub_person_id, updated_at = now()
+      `;
+    }
   },
 
   async recordView(token, at) {
