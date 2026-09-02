@@ -22,25 +22,19 @@ const first = (...values) => values.find((v) => v !== undefined && v !== null &&
 export function normalizeContact(person, touch, stamps = {}) {
   const tags = Array.isArray(person.tags) ? person.tags : [];
 
-  // "Last communication" — the later of what we can see and what FUB reports.
+  // "Last communication" is a CALL or a TEXT, agent-initiated. Nothing else.
   //
-  // We compute an agent-initiated touch from the calls and texts feed, which is
-  // stricter than FUB's own field: an inbound message from the lead should not
-  // look like the agent doing the work.
+  // Email is deliberately excluded, per Mike: Follow Up Boss makes mass email
+  // trivial, so one blast to five hundred leads would mark every one of them as
+  // worked and the audit would find nothing. A metric that easy to satisfy
+  // measures nothing.
   //
-  // But FUB will not serve /v1/emails in bulk, so an agent who works a lead
-  // purely by email is invisible to that feed and would look neglected. FUB's
-  // own last-communication field does include email, so we take whichever is
-  // later. That is looser than ideal — it can count an inbound touch — but it
-  // errs toward NOT sweeping, which is the right direction to be wrong in.
-  const crmLastComm = first(person.lastCommunication, person.lastCommunicationAt, null);
-  const computed = touch?.lastOutbound ? new Date(touch.lastOutbound).toISOString() : null;
-  const lastCommunication =
-    computed && crmLastComm
-      ? new Date(computed) > new Date(crmLastComm)
-        ? computed
-        : crmLastComm
-      : (computed ?? crmLastComm);
+  // FUB's own `lastCommunication` field is NOT used as a fallback for the same
+  // reason — it counts email, and it counts inbound messages from the lead.
+  //
+  // The cost is real and intended: an agent who only ever emails a lead will
+  // show as neglected here. Under this rule, that is the correct answer.
+  const lastCommunication = touch?.lastOutbound ? new Date(touch.lastOutbound).toISOString() : null;
 
   const atRiskSinceKey = stamps.atRiskSince || "customBattrAtRiskSince";
 
