@@ -112,13 +112,7 @@ export function Header() {
                     </div>
                   );
                 })}
-                <Link
-                  href={site.portal.href}
-                  className="mt-1 block rounded-md px-3 py-2 font-sans text-[0.92rem] font-semibold text-[var(--color-ink)] no-underline hover:bg-[var(--color-sand)]"
-                >
-                  {site.portal.label}
-                </Link>
-                <a href={`tel:${site.phone}`} className="block rounded-md px-3 py-2 font-sans text-[0.92rem] font-semibold text-[var(--color-gold)] no-underline">
+                <a href={`tel:${site.phone}`} className="mt-1 block rounded-md px-3 py-2 font-sans text-[0.92rem] font-semibold text-[var(--color-gold)] no-underline">
                   {site.phone}
                 </a>
               </div>

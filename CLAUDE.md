@@ -22,7 +22,7 @@ organically for community/neighborhood and buyer/seller search terms.
 - `src/app/guides/[slug]` — dynamic guide pages
 - `src/content/portal.ts` — Client Portal journeys (buyer/seller stages + tasks) and vendor categories
 - `src/lib/portal/` — portal state (`store.ts`, browser-local), CRM engagement events (`track.ts`), progress math
-- `src/components/portal/`, `src/app/portal/` — the client hub (dashboard, journey, saved, numbers, pros)
+- `src/components/portal/`, `src/app/(homeowner)/portal/` — the client hub (dashboard, journey, saved, numbers, pros). Roland Team-branded and noindex, like the homeowner dashboards; reached by invite link, not the marketing nav.
 - `src/app/admin/clients` — internal portal dashboard (roster from FUB, hub-link builder, signal playbook); `src/lib/portal/roster.ts` is its server-side FUB read
 - `src/app/sitemap.ts`, `src/app/robots.ts` — auto-generated
 - `legacy/` — the old standalone HTML pages (pre-rebuild), kept for reference
@@ -42,6 +42,8 @@ organically for community/neighborhood and buyer/seller search terms.
 ## Environment variables
 - `FUB_API_KEY` — Follow Up Boss; stores leads and portal engagement. Without it forms/portal still work, nothing is stored.
 - `ADMIN_TOKEN` — required for `/admin/sellers` and `/admin/clients`; gates all client data served to them.
+- `HOMEOWNER_EMAIL_ENABLED` — must be exactly `"true"` or **no homeowner email sends at all** (welcome, cash offer, weekly digest). Off by default; see `docs/homeowner-engine-setup.md`.
+- `HOMEOWNER_BASE_URL` — the Roland Team host. Homeowner dashboards, portal invite links and email links are all absolute against it.
 - `REPLIERS_API_KEY` / `IDX_PROVIDER` — MLS feed selection (see `src/lib/idx/provider.ts`).
 
 ## Roadmap (next)

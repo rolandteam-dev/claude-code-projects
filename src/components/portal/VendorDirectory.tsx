@@ -4,7 +4,7 @@ import { useState } from "react";
 import { usePortal } from "@/lib/portal/store";
 import { trackPortal } from "@/lib/portal/track";
 import { vendorCategories } from "@/content/portal";
-import { site } from "@/lib/site";
+import { homeownerBrand } from "@/lib/homeowners/brand";
 import { Card, CardTitle, Pill } from "./ui";
 
 /**
@@ -32,7 +32,7 @@ export function VendorDirectory() {
       <CardTitle hint={`${relevant.length} categories`}>People you&apos;ll need</CardTitle>
       <p className="-mt-2 mb-6 max-w-[68ch] font-sans text-[0.9rem] text-[var(--color-ink-soft)]">
         These are the pros we work with repeatedly and trust with our own clients. Ask for an introduction and your{" "}
-        {site.parentBrand} agent makes it personally — usually the same day.
+        {homeownerBrand.name} agent makes it personally — usually the same day.
       </p>
 
       <div className="grid gap-5 sm:grid-cols-2">

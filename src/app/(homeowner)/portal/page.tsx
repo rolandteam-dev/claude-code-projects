@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/Container";
-import { JsonLd } from "@/components/JsonLd";
-import { breadcrumbSchema } from "@/lib/schema";
 import { PortalShell } from "@/components/portal/PortalShell";
 import { Dashboard } from "@/components/portal/Dashboard";
-import { site } from "@/lib/site";
+import { homeownerBrand } from "@/lib/homeowners/brand";
 
+// A private, invite-delivered client tool on the Roland Team side — same
+// posture as the homeowner dashboards, so it inherits the group's noindex.
 export const metadata: Metadata = {
-  title: "Client Portal | Your Las Vegas Home Hub",
+  title: "Your Home Hub | The Roland Team",
   description:
-    "Your personal home hub from Roland Luxury: a step-by-step buying or selling plan, saved homes, your real numbers, and vetted local pros — all in one place.",
-  alternates: { canonical: "/portal" },
+    "Your personal home hub: a step-by-step buying or selling plan, saved homes, your real numbers, and vetted local pros — all in one place.",
 };
 
 const features = [
@@ -36,12 +35,6 @@ const features = [
 export default function PortalPage() {
   return (
     <>
-      <JsonLd
-        data={breadcrumbSchema([
-          { name: "Home", path: "/" },
-          { name: "Client Portal", path: "/portal" },
-        ])}
-      />
       <PortalShell
         intro={
           <section className="border-t border-[var(--color-line)] bg-white py-16">
@@ -54,7 +47,7 @@ export default function PortalPage() {
                 <p className="mt-3 font-sans text-[0.98rem] leading-relaxed text-[var(--color-ink-soft)]">
                   Buying or selling a home in Las Vegas means juggling a lender, an inspector, a title company, a
                   calendar full of deadlines and a hundred small decisions. Your hub keeps all of it straight — and keeps
-                  your {site.parentBrand} agent close enough to help before something becomes a problem.
+                  your {homeownerBrand.name} agent close enough to help before something becomes a problem.
                 </p>
               </div>
 

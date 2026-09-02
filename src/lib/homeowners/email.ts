@@ -5,6 +5,12 @@
  * configured so the digest job runs harmlessly before email is provisioned.
  *
  * CAN-SPAM: every send includes a one-click unsubscribe and a postal identity.
+ *
+ * SENDING IS OFF BY DEFAULT. Every send in this module first checks
+ * HOMEOWNER_EMAIL_ENABLED — see sendingEnabled() below. Two of the three
+ * senders fire from live public funnels (the home-value estimator and the cash
+ * offer form), not just the weekly cron, so the switch lives here at the mailer
+ * rather than on the schedule: that is the only place that catches all of them.
  */
 import { Resend } from "resend";
 import { homeownerBrand, dashboardUrl } from "./brand";
@@ -88,7 +94,28 @@ function welcomeHtml(h: Homeowner): string {
   </div>`;
 }
 
+/**
+ * Master send switch. Homeowner email stays off until someone deliberately sets
+ * HOMEOWNER_EMAIL_ENABLED="true" in the environment.
+ *
+ * Why an explicit opt-in rather than just relying on the Resend keys being
+ * absent: the links in these emails point at HOMEOWNER_BASE_URL
+ * (home.therolandteam.com), and if that host is not yet pointed at this app,
+ * every button and the CAN-SPAM unsubscribe link in a delivered email is dead.
+ * Provisioning Resend should not be what starts the sending — going live should
+ * be, once the domain resolves and the loop has been verified end to end.
+ */
+function sendingEnabled(): boolean {
+  return process.env.HOMEOWNER_EMAIL_ENABLED === "true";
+}
+
+const DISABLED = {
+  sent: false,
+  reason: "sending disabled (HOMEOWNER_EMAIL_ENABLED is not \"true\")",
+} as const;
+
 export async function sendWelcomeEmail(h: Homeowner): Promise<{ sent: boolean; reason?: string }> {
+  if (!sendingEnabled()) return DISABLED;
   const key = process.env.RESEND_API_KEY;
   const from = process.env.HOMEOWNER_FROM_EMAIL;
   if (!key || !from) return { sent: false, reason: "email not configured" };
@@ -114,6 +141,7 @@ export async function sendCashOfferEmail(to: {
   firstName?: string;
   address?: string;
 }): Promise<{ sent: boolean; reason?: string }> {
+  if (!sendingEnabled()) return DISABLED;
   const key = process.env.RESEND_API_KEY;
   const from = process.env.HOMEOWNER_FROM_EMAIL;
   if (!key || !from) return { sent: false, reason: "email not configured" };
@@ -155,6 +183,7 @@ export async function sendCashOfferEmail(to: {
 }
 
 export async function sendValueEmail(h: Homeowner): Promise<{ sent: boolean; reason?: string }> {
+  if (!sendingEnabled()) return DISABLED;
   const key = process.env.RESEND_API_KEY;
   const from = process.env.HOMEOWNER_FROM_EMAIL; // e.g. "The Roland Team <home@therolandteam.com>"
   if (!key || !from) return { sent: false, reason: "email not configured" };

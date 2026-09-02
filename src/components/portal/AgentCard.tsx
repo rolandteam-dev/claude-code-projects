@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { usePortal } from "@/lib/portal/store";
 import { trackPortal } from "@/lib/portal/track";
-import { site } from "@/lib/site";
+import { homeownerBrand } from "@/lib/homeowners/brand";
 import { Card, fieldClass, labelClass } from "./ui";
 
 /**
@@ -27,10 +27,10 @@ export function AgentCard() {
   return (
     <Card>
       <div className="flex items-center gap-4">
-        {site.founderPhoto ? (
+        {homeownerBrand.founderPhoto ? (
           <Image
-            src={site.founderPhoto}
-            alt={site.founder}
+            src={homeownerBrand.founderPhoto}
+            alt={homeownerBrand.founder}
             width={60}
             height={60}
             className="h-[60px] w-[60px] rounded-full object-cover"
@@ -41,16 +41,16 @@ export function AgentCard() {
           </div>
         )}
         <div>
-          <div className="font-sans text-[1rem] font-semibold text-[var(--color-ink)]">{site.founder}</div>
-          <div className="font-sans text-[0.8rem] text-[var(--color-muted)]">{site.founderTitle}</div>
+          <div className="font-sans text-[1rem] font-semibold text-[var(--color-ink)]">{homeownerBrand.founder}</div>
+          <div className="font-sans text-[0.8rem] text-[var(--color-muted)]">{homeownerBrand.name}</div>
         </div>
       </div>
 
       <div className="mt-5 flex flex-wrap gap-3">
-        <a href={`tel:${site.phone}`} className="btn btn-ghost !px-5 !py-2.5">
-          {site.phone}
+        <a href={`tel:${homeownerBrand.phone}`} className="btn btn-ghost !px-5 !py-2.5">
+          {homeownerBrand.phone}
         </a>
-        <a href={`mailto:${site.email}`} className="btn btn-ghost !px-5 !py-2.5">
+        <a href={`mailto:${homeownerBrand.email}`} className="btn btn-ghost !px-5 !py-2.5">
           Email
         </a>
       </div>
@@ -58,7 +58,7 @@ export function AgentCard() {
       {sent ? (
         <div className="mt-5 rounded-md bg-[var(--color-sand)] px-4 py-3 font-sans text-[0.86rem] text-[var(--color-ink-soft)]">
           Message sent{state.profile?.firstName ? `, ${state.profile.firstName}` : ""}. We&apos;ll come back to you
-          shortly — call {site.phone} if it&apos;s urgent.
+          shortly — call {homeownerBrand.phone} if it&apos;s urgent.
         </div>
       ) : (
         <form className="mt-5" onSubmit={onSubmit}>
