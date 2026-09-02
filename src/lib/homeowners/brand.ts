@@ -15,12 +15,13 @@ export const homeownerBrand = {
   email: site.email,
   brokerage: site.brokerage,
   /**
-   * Public origin these pages are served from. Set HOMEOWNER_BASE_URL in the
-   * environment to the therolandteam.com subdomain once DNS points at this app
-   * (e.g. https://home.therolandteam.com); used to build absolute links in
-   * emails. Falls back to a relative path on-page where the origin isn't known.
+   * Public origin these pages are served from — used to build absolute links in
+   * emails. Defaults to the main site origin (dashboards already live at
+   * /dashboard/<token> there), so no subdomain is required. Set
+   * HOMEOWNER_BASE_URL to a dedicated subdomain (e.g. https://home.therolandteam.com)
+   * later if desired — no code change needed.
    */
-  baseUrl: process.env.HOMEOWNER_BASE_URL || "https://home.therolandteam.com",
+  baseUrl: process.env.HOMEOWNER_BASE_URL || site.url,
 } as const;
 
 export function dashboardUrl(token: string): string {
