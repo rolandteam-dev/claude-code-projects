@@ -248,7 +248,10 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
   lines.push(renderAtBatsSection(agentStats));
 
   if (alerts.delivered.length || alerts.failed.length) {
-    lines.push(`## Agent alerts (${alerts.delivered.length} sent, ${alerts.failed.length} failed)`);
+    // On a dry run nothing left the building. Saying "sent" here is how a
+    // shadow report gets mistaken for a live one.
+    const verb = dry ? "would send" : "sent";
+    lines.push(`## Agent alerts (${alerts.delivered.length} ${verb}, ${alerts.failed.length} failed)`);
     lines.push("");
     for (const d of alerts.delivered) {
       lines.push(`- ${d.agent}: ${d.atRisk.length} at risk, ${d.neglected.length} sweeping — ${d.via}`);
@@ -602,7 +605,9 @@ async function main() {
   });
 
   // 7. Per-agent alerts — what tells the AGENT, as opposed to the note on the lead.
-  const channel = process.env.BATTR_ALERT_CHANNEL || "report_only";
+  // Email, matching what Battr did: each agent gets their own list. Override
+  // with the BATTR_ALERT_CHANNEL repository variable (report_only | fub_task).
+  const channel = process.env.BATTR_ALERT_CHANNEL || "email";
   const digests = buildAgentDigests(results, {
     excludeGroupIds: rules.excludeOwnerGroupIds,
     sweepDays: rules.neglectedDays,

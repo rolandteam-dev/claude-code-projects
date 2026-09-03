@@ -12,7 +12,8 @@ name: Battr audit
 #
 # Required secret: FUB_API_KEY
 # Optional secrets: RESEND_API_KEY (emails the report), BATTR_WEBHOOK_URL (Slack)
-# Optional variables: BATTR_LIVE, BATTR_SMART_LIST_ID, BATTR_REPORT_TO
+# Optional variables: BATTR_LIVE, BATTR_SMART_LIST_ID, BATTR_REPORT_TO,
+#                     BATTR_ALERT_CHANNEL, BATTR_REPORT_FROM
 
 on:
   schedule:
@@ -110,8 +111,11 @@ jobs:
           BATTR_WEBHOOK_URL: ${{ secrets.BATTR_WEBHOOK_URL }}
           BATTR_SMART_LIST_ID: ${{ vars.BATTR_SMART_LIST_ID }}
           BATTR_REPORT_TO: ${{ vars.BATTR_REPORT_TO }}
-          # How agents are told: report_only (default), fub_task, or email.
+          # How agents are told: email (default), fub_task, or report_only.
           BATTR_ALERT_CHANNEL: ${{ vars.BATTR_ALERT_CHANNEL }}
+          # From address on the per-agent emails. Must be on a domain verified
+          # in Resend, or Resend refuses the send.
+          BATTR_REPORT_FROM: ${{ vars.BATTR_REPORT_FROM }}
           # A manual run honors its own choice; the schedule honors the repo variable.
           BATTR_LIVE: ${{ inputs.mode == 'live' || (github.event_name == 'schedule' && vars.BATTR_LIVE == 'true') }}
         run: |

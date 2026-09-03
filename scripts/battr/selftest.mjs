@@ -14,7 +14,7 @@ import { createServer } from "node:http";
 import { execFile } from "node:child_process";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { rmSync } from "node:fs";
+import { rmSync, readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 
 import { classify, buildTouchIndex, classifyForList, runCombinedList, isExemptAgent, readInboundEmails, DAY_MS } from "./classify.mjs";
@@ -868,6 +868,41 @@ check("a dry delivery sends nothing but still reports what it would send", async
   assert.equal(delivered.length, 1);
   assert.equal(failed.length, 0);
   assert.match(delivered[0].via, /^fub_task:/);
+});
+
+check("a missing Resend key is one setup failure, not thirty agent failures", async () => {
+  const before = process.env.RESEND_API_KEY;
+  delete process.env.RESEND_API_KEY;
+  try {
+    const digests = buildAgentDigests([record({ id: 1 }), record({ id: 2, ownerId: 12, owner: "Brett Smith" })]);
+    const { delivered, failed } = await deliverDigests(digests, { channel: "email", dry: false, log: () => {} });
+    assert.equal(delivered.length, 0);
+    assert.equal(failed.length, 1, "one failure naming the real cause, not one per agent");
+    assert.match(failed[0].reason, /RESEND_API_KEY/);
+  } finally {
+    if (before !== undefined) process.env.RESEND_API_KEY = before;
+  }
+});
+
+check("a dry run never tries to send, key or no key", async () => {
+  const before = process.env.RESEND_API_KEY;
+  delete process.env.RESEND_API_KEY;
+  try {
+    const digests = buildAgentDigests([record({})]);
+    const usersById = new Map([[11, { id: 11, email: "agent@example.com" }]]);
+    const { delivered, failed } = await deliverDigests(digests, { channel: "email", usersById, dry: true, log: () => {} });
+    assert.equal(failed.length, 0);
+    assert.equal(delivered[0].via, "email:agent@example.com", "the shadow run shows who would get one");
+  } finally {
+    if (before !== undefined) process.env.RESEND_API_KEY = before;
+  }
+});
+
+check("email is the configured channel", () => {
+  // Battr emailed each agent; report_only would be a downgrade from what agents
+  // get today, so the engine defaults to email rather than silence.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /BATTR_ALERT_CHANNEL \|\| "email"/);
 });
 
 check("email delivery fails loudly when an agent has no address on file", async () => {

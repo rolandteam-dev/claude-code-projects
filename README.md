@@ -251,7 +251,8 @@ node scripts/battr/import-atbats.mjs ~/Downloads/at-bats.csv         # import
 | Variable | Where | Purpose |
 | --- | --- | --- |
 | `FUB_API_KEY` | Actions secret | Required. Same key as the site's lead intake. |
-| `BATTR_ALERT_CHANNEL` | Actions variable | `report_only` (default), `fub_task`, or `email`. |
+| `BATTR_ALERT_CHANNEL` | Actions variable | `email` (default — one digest per agent, like Battr), `fub_task`, or `report_only`. |
+| `BATTR_REPORT_FROM` | Actions variable | From address on the agent emails. Must be on a Resend-verified domain. |
 | `BATTR_LIVE` | Actions variable | Set to `true` to let the schedule write. Unset = shadow mode. |
 | `BATTR_SMART_LIST_ID` | Actions variable | Optional. Audit one FUB smart list instead of the whole database. |
 | `BATTR_REPORT_TO` | Actions variable | Optional. Where the daily report is emailed. |

@@ -1,7 +1,7 @@
 # The Nightly Sweep — Complete Instruction
 
 **The Roland Team · Database Operations**
-Rev. 2 — September 3, 2026
+Rev. 3 — September 3, 2026
 
 Readable version: https://claude.ai/code/artifact/6dc505f0-c2bd-4b87-b1b9-186e9e30a2d8
 This file is the same document in plain text. If the two ever disagree, this
@@ -60,7 +60,7 @@ rules are ours, written down here, and adjustable in an afternoon.
 
 ## 3. What it writes — and what it never touches
 
-**It writes exactly three things:**
+**It writes exactly three things in the CRM:**
 
 1. A note on the lead — one warning note when it first goes at risk, and a
    second note when it is swept.
@@ -68,8 +68,12 @@ rules are ours, written down here, and adjustable in an afternoon.
 3. Four date fields on the contact: `Battr At Risk Since`, `Battr Last Nudged`,
    `Battr Last Swept`, `Battr Last Touch`.
 
+**And it emails the agent.** Each agent with anything at risk gets one email a
+night listing their own leads — see section 8a. Agents with a clean board get
+nothing.
+
 **It never:** deletes, merges or archives a contact; changes a stage; adds,
-removes or edits a tag; sends anything to a lead (no email, no text, no call);
+removes or edits a tag; sends anything to a *lead* (no email, no text, no call);
 touches phone numbers, emails or addresses; or changes a smart list or action
 plan.
 
@@ -210,6 +214,40 @@ Previously assigned to Jane Doe. At Risk since 2026-08-19.
 Both notes name the day count and the source, so anyone reading the record
 months later can see exactly why it moved without having to ask.
 
+## 8a. The agent's nightly email
+
+Agents are not left to discover a sweep by noticing a lead has gone. Every agent
+who has anything at risk gets one email a night, subject *"N of your leads need
+outreach"*, laid out in the order they can act on:
+
+```
+At risk leads need to be worked ASAP or they will be swept to the pond.
+
+SWEEPING NEXT RUN (2) — reach out today to keep these:
+  • Jane Doe — 15 days quiet (Zillow Flex)
+  • John Smith — 14 days quiet (Ylopo Search)
+
+AT RISK (4):
+  • ...
+
+MOVED TO THE POND TONIGHT (1) — no longer assigned to you:
+  • Gone Already — 16 days quiet (Realtor.com)
+
+A lead is only swept after it has been flagged at risk first. Working it clears
+the flag.
+```
+
+Three things about it worth knowing:
+
+- **Leads they can still save come first.** Leads already swept are listed last
+  and labelled as gone, so nobody wastes a call on a lead they no longer own.
+- **A clean board gets no email.** An empty digest every night is how people
+  learn to ignore the real one.
+- **Agents in the paused group and Mike's leads generate no alerts at all.**
+
+During the two-week shadow period no email is actually sent. The report shows
+who *would* have received one.
+
 ## 9. Your standing checklist
 
 Nothing here needs you to run anything. It needs the database clean enough for
@@ -279,8 +317,9 @@ To run it by hand: repository → **Actions** → *Battr audit* → **Run workfl
 | Switch | Where | What it does |
 |---|---|---|
 | `BATTR_LIVE` | Actions variable | **The master switch.** Unset or anything but `true` = test mode, writes nothing. Set to `true` and the scheduled run starts acting. |
-| `BATTR_ALERT_CHANNEL` | Actions variable | How agents are told: `report_only` (default), `fub_task` (a task per agent in FUB), or `email`. |
-| `BATTR_REPORT_TO` | Actions variable | Where the nightly report is emailed. Needs `RESEND_API_KEY` too; without both, the report still lands in the run log. |
+| `BATTR_ALERT_CHANNEL` | Actions variable | How agents are told: **`email`** (default — one digest per agent, matching Battr), `fub_task` (a task per agent in FUB), or `report_only` (nothing direct). |
+| `BATTR_REPORT_FROM` | Actions variable | From address on the agent emails. Must be on a domain verified in Resend. |
+| `BATTR_REPORT_TO` | Actions variable | Where *your* nightly report is emailed. Needs `RESEND_API_KEY` too; without both, the report still lands in the run log. |
 | `maxSweepsPerRun` | rules.mjs | Hard ceiling per night. Currently **30**. |
 | `sweepDayFilter` | rules.mjs | Currently Tuesday–Friday. |
 | `exemptAgents` | rules.mjs | Currently **Mike Roland**. Matched on the FUB "Assigned to" name. |
@@ -305,6 +344,19 @@ before anything is live. It prints field names, never client names.
 Both systems run. Every night you get a report; nothing is written to FUB.
 Compare our counts to Battr's email: roughly 10 at risk and 8 sweeps a day. If
 the two track for a week, the mirror is faithful.
+
+**B2. Set up Resend, before going live.**
+The agent emails need it. Create a free Resend account, verify
+`therolandteam.com` as a sending domain (a few DNS records — same kind of setup
+as any mail tool), then add `RESEND_API_KEY` as a repository *secret* and
+`BATTR_REPORT_FROM` as a repository *variable*. Until the domain is verified
+Resend will only deliver to your own address, so verify before flipping the
+switch. If the key is missing on a live run, the report says so in one line
+rather than failing thirty times.
+
+**B3. Check every agent has an email on their FUB user record.**
+The address comes from the FUB user, not the lead. Any agent without one is
+listed as a failure in the report — nobody is silently skipped.
 
 **C. Before you cancel Battr — export the At Bats CSV.**
 That history is not recoverable once the subscription ends. An importer is
@@ -376,8 +428,8 @@ fail, the audit does not run at all.
 
 1. **Run `inspect-fub-fields` and send me the output.** Settles timeframe, owner
    group, stage id, and whether we can read email replies.
-2. **Pick the alert channel** — `report_only`, `fub_task`, or `email`. Default
-   today is report only, so agents are not being told anything directly.
+2. **Set up Resend** so the agent emails can actually send — step B2 above.
+   The channel is decided: email, one digest per agent, matching Battr.
 3. **Export the Battr At Bats CSV before cancelling.** Unrecoverable afterwards.
 4. **Confirm the exempt list is Mike alone.** Battr's own config named nobody
    else.

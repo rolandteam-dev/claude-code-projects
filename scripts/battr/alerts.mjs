@@ -122,6 +122,16 @@ export async function deliverDigests(digests, { channel = "report_only", fub, us
   const delivered = [];
   const failed = [];
 
+  // One clear failure beats thirty identical 401s. A missing key is a setup
+  // problem, not thirty agent problems, and it should read that way.
+  if (channel === "email" && !dry && !process.env.RESEND_API_KEY && digests.length) {
+    log("  RESEND_API_KEY is not set — no agent emails can be sent");
+    return {
+      delivered: [],
+      failed: [{ agent: `all ${digests.length} agents`, atRisk: [], neglected: [], swept: [], reason: "RESEND_API_KEY is not set on the repository" }],
+    };
+  }
+
   for (const digest of digests) {
     try {
       if (channel === "email") {
