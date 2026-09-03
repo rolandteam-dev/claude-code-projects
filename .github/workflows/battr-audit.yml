@@ -64,6 +64,18 @@ concurrency:
 jobs:
   audit:
     runs-on: ubuntu-latest
+    env:
+      # Resolve the task ONCE, with a default.
+      #
+      # This used to be read as `inputs.task` directly in every step condition.
+      # The `inputs` context is only populated for workflow_dispatch — on a
+      # SCHEDULED run it is empty, so `inputs.task == 'audit'` was false and the
+      # nightly 7 PM audit was skipped every single night while the run reported
+      # success in fifteen seconds. Verified against runs #4 and #5.
+      #
+      # A default here makes a scheduled run mean "audit", which is the only
+      # thing a schedule could sensibly mean.
+      TASK: ${{ inputs.task || 'audit' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -74,10 +86,21 @@ jobs:
       - name: Self-test the rule engine
         run: node scripts/battr/selftest.mjs
 
+      # A typo'd or unhandled task would skip every step and still go green —
+      # the exact shape of the bug above. Refuse instead.
+      - name: Check the task is one we handle
+        run: |
+          case "$TASK" in
+            audit|discover-lead-sources|inspect-fub-fields|census|test-email) ;;
+            *) echo "Unknown task '$TASK' — nothing would run." >&2; exit 1 ;;
+          esac
+          echo "Running task: $TASK"
+
+
       # Lists every lead source in the database with counts and current bucket,
       # so the mapping can be filled in without anyone running node locally.
       - name: Discover lead sources
-        if: inputs.task == 'discover-lead-sources'
+        if: env.TASK == 'discover-lead-sources'
         env:
           FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
         run: |
@@ -96,7 +119,7 @@ jobs:
       # depending on a mis-guessed field name is caught directly instead of
       # silently protecting or flagging nobody.
       - name: Inspect FUB fields
-        if: inputs.task == 'inspect-fub-fields'
+        if: env.TASK == 'inspect-fub-fields'
         env:
           FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
         run: |
@@ -113,7 +136,7 @@ jobs:
       # reported: nurture contacts with no timeframe, which matched none of its
       # four nurture lists and were therefore never audited at all.
       - name: Stage and timeframe census
-        if: inputs.task == 'census'
+        if: env.TASK == 'census'
         env:
           FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
         run: |
@@ -130,7 +153,7 @@ jobs:
       # sample agent digest and a sample report, both built from invented leads
       # — no FUB key, nothing read from the database.
       - name: Send a test email
-        if: inputs.task == 'test-email'
+        if: env.TASK == 'test-email'
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           BATTR_REPORT_FROM: ${{ vars.BATTR_REPORT_FROM }}
@@ -147,7 +170,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run the audit
-        if: inputs.task == 'audit'
+        if: env.TASK == 'audit'
         env:
           FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
@@ -167,7 +190,7 @@ jobs:
             ${{ inputs.max_sweeps && format('--max-sweeps={0}', inputs.max_sweeps) || '' }}
 
       - name: Commit the audit trail
-        if: inputs.task == 'audit'
+        if: env.TASK == 'audit'
         run: |
           if [ -z "$(git status --porcelain battr-logs/)" ]; then
             echo "Nothing to record."
