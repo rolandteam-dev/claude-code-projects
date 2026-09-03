@@ -97,6 +97,7 @@ the in-house replacement for the paid Battr subscription.
 ```bash
 npm run battr:test              # rule engine self-test, no API key needed
 npm run battr:dry               # full audit against live FUB, writes nothing
+npm run battr:census            # stage/timeframe census — how much falls outside the audit
 FUB_API_KEY=... BATTR_LIVE=true node scripts/battr-audit.mjs
 ```
 

@@ -1,7 +1,7 @@
 # The Nightly Sweep — Complete Instruction
 
 **The Roland Team · Database Operations**
-Rev. 4 — September 3, 2026
+Rev. 5 — September 3, 2026
 
 Readable version: https://claude.ai/code/artifact/6dc505f0-c2bd-4b87-b1b9-186e9e30a2d8
 This file is the same document in plain text. If the two ever disagree, this
@@ -240,6 +240,9 @@ outreach"*, laid out in the order they can act on:
 ```
 At risk leads need to be worked ASAP or they will be swept to the pond.
 
+THEY CONTACTED YOU, NOBODY CAME BACK (1) — call these first:
+  • Rang Us — waiting 6 days for a call back (Zillow Flex)
+
 SWEEPING NEXT RUN (2) — reach out today to keep these:
   • Jane Doe — 15 days quiet (Zillow Flex)
   • John Smith — 14 days quiet (Ylopo Search)
@@ -260,10 +263,30 @@ Three things about it worth knowing:
   and labelled as gone, so nobody wastes a call on a lead they no longer own.
 - **A clean board gets no email.** An empty digest every night is how people
   learn to ignore the real one.
+- **Someone waiting on a call back tops the list**, above what is about to be
+  swept. Those leads are compliant on the clock — the inbound contact reset it —
+  so an unanswered inbound earns an agent an email on its own.
 - **Agents in the paused group and Mike's leads generate no alerts at all.**
 
 During the two-week shadow period no email is actually sent. The report shows
 who *would* have received one.
+
+## 8b. Where the report goes
+
+The nightly report — the whole thing, including "Inbound, never answered" — is
+**Mike's**, not the agents'. Agents get their own slice by email; the full report
+lands in three places:
+
+| Where | When | Who sees it |
+|---|---|---|
+| The GitHub Actions run log ("job summary") | Always, every run | Anyone with repo access |
+| A file committed to `battr-logs/` in the repo | Always, every run | Permanent history, one file per run |
+| **Emailed to Mike** | Once `RESEND_API_KEY` and `BATTR_REPORT_TO` are set | Whoever is on that list |
+
+Today only the first two are live, so the report is something you go and look at
+rather than something that arrives. Setting up Resend (step B2) turns on the
+nightly email, and the same setup powers the agent emails — one account covers
+both.
 
 ## 9. Your standing checklist
 
@@ -360,6 +383,15 @@ touching the engine itself.
 
 ## 13. What to expect, in order
 
+**A0. Now — run the `census` task.**
+Actions → Battr audit → Run workflow → task `census`. It reports the stage
+breakdown, nurture leads by timeframe with the blanks called out, how many leads
+land in each of the seven lists, and a reason-by-reason account of everything
+outside the audit. This is the number Battr never gave us: how many nurture leads
+have no timeframe. Counts only, no client names. Run it before anything else —
+if it says almost no nurture lead has a readable timeframe, that is a wrong field
+name, not a data problem, and step A is the fix.
+
 **A. Now — run `inspect-fub-fields` once.**
 Actions → Battr audit → Run workflow → task `inspect-fub-fields`. It reports
 whether the fields the rules depend on actually exist: timeframe, owner groups,
@@ -455,8 +487,9 @@ fail, the audit does not run at all.
 
 ## 17. Decisions still open
 
-1. **Run `inspect-fub-fields` and send me the output.** Settles timeframe, owner
-   group, stage id, and whether we can read email replies.
+1. **Run the `census` task, then `inspect-fub-fields`, and send me both.** The
+   census sizes the no-timeframe nurture gap; inspect settles the field names
+   behind it.
 2. **Set up Resend** so the agent emails can actually send — step B2 above.
    The channel is decided: email, one digest per agent, matching Battr.
 3. **Export the Battr At Bats CSV before cancelling.** Unrecoverable afterwards.
