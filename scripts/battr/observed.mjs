@@ -2,11 +2,10 @@
  * Every list Battr actually runs, as seen on the Aida Audits screen.
  *
  * Source: app.battr.ai/aida/audits?date=2026-09-02, scope "The Roland Team",
- * scheduled. The screen reported **15 audits**; nine were captured. This file is
- * the inventory, and it is deliberately allowed to be incomplete — a list we
- * know exists but cannot yet model is recorded here as a NAMED GAP rather than
- * left out. A gap you can see is a decision waiting; a gap you can't is a
- * surprise on go-live night.
+ * scheduled. The screen reported **15 audits**, and all 15 are now accounted
+ * for. A list we know exists but cannot yet model is recorded here as a NAMED
+ * GAP rather than left out: a gap you can see is a decision waiting, one you
+ * can't is a surprise on go-live night.
  *
  * `status` is the honest state of each one:
  *
@@ -21,8 +20,51 @@
 
 export const OBSERVED_DATE = "2026-09-02";
 
-/** The screen said 15 scheduled audits ran that day. */
+/** The screen said 15 scheduled audits ran that day. All 15 are listed below. */
 export const OBSERVED_AUDIT_COUNT = 15;
+
+/**
+ * THE RECONCILIATION NUMBER, and the reason the model can be trusted or not.
+ *
+ * The "View source counts (6)" dropdown on the Team Leads row, read 2 Sep 2026:
+ *
+ *   Warm Back Up        10,783   89.4% of the pool
+ *   Quarterly Nurture      537
+ *   Monthly Nurture        355
+ *   Bi-Weekly Nurture      226
+ *   Weekly Nurture         144
+ *   Hot Leads               19
+ *   ─────────────────────────
+ *   pooled              12,064
+ *   audited                866   <- the combined list keeps 7.2%
+ *
+ * So Battr's combined list SHEDS 92.8% of its own members. Its audit emails
+ * reported "Excluded due to lead bucket: 0" and "Excluded due to agent group:
+ * 0", which cannot both be true of membership — those counters must report
+ * records excluded at ACTION time, not at selection time. The exclusions are
+ * doing enormous work.
+ *
+ * In our model the same reduction comes from `lead_bucket_id != 82` plus the
+ * protected-source check, and Warm Back Up is where it has to happen: 10,783 of
+ * the 12,064 sit there, and that list is early-pipeline leads older than ten
+ * days — exactly where a bulk import lands.
+ *
+ * A dry run that pools ~12,000 and audits ~866 means the model is right.
+ * One that audits ~12,000 means the exclusions are not firing.
+ */
+export const SOURCE_COUNTS = {
+  date: "2026-09-02",
+  pooled: 12064,
+  audited: 866,
+  byList: {
+    1104: { name: "Warm Back Up", records: 10783 },
+    1109: { name: "Quarterly Nurture", records: 537 },
+    1108: { name: "Monthly Nurture", records: 355 },
+    1107: { name: "Bi-Weekly Nurture", records: 226 },
+    1106: { name: "Weekly Nurture", records: 144 },
+    1144: { name: "Hot Leads", records: 19 },
+  },
+};
 
 export const observedLists = [
   {
@@ -47,7 +89,7 @@ export const observedLists = [
     neglected: 7,
     status: "modeled",
     listId: 9001,
-    note: "THE sweep list, and the only one that acts. 866 against Warm Back Up's 10,783 means the combined list sheds ~92% of its members — in our model, the lead-bucket exclusion plus the protected-source check.",
+    note: "THE sweep list, and the only one that acts. Its six members are CONFIRMED and are exactly the six we model. They pool 12,064 records; the combined list audits 866, shedding 92.8%. See SOURCE_COUNTS.",
   },
   {
     name: "🌤️ Warm Back Up",
@@ -58,7 +100,7 @@ export const observedLists = [
     neglected: 555,
     status: "modeled",
     listId: 1104,
-    note: "Member of Team Leads. The 94% at-risk / 5% neglected split is the warn-first interlock at work: a lead cannot be counted neglected until an earlier run stamped it.",
+    note: "Member of Team Leads, and 89.4% of the pooled 12,064 — this is the list the exclusions have to cut down. The 94% at-risk / 5% neglected split is the warn-first interlock at work: a lead cannot be counted neglected until an earlier run stamped it.",
   },
   {
     name: "🗓️ CLEAN UP: Nurtures No Timeframe",
@@ -126,10 +168,28 @@ export const observedLists = [
     listId: 1148,
     note: "Reported, never swept. Population modeled from the Zillow sources; thresholds inferred.",
   },
+  // ─── The six rows below the fold, captured 3 Sep ──────────────────────────
+  // Five are member lists audited in their own right; only one was new.
+  { name: "🔥 Weekly Nurture", type: "contact", total: 144, status: "modeled", listId: 1106, note: "Member of Team Leads. Count from the source-counts dropdown." },
+  { name: "😎 Bi-Weekly Nurture", type: "contact", total: 226, status: "modeled", listId: 1107, note: "Member of Team Leads." },
+  { name: "🌱 Monthly Nurture", type: "contact", total: 355, status: "modeled", listId: 1108, note: "Member of Team Leads." },
+  { name: "👀 Quarterly Nurture", type: "contact", total: 537, status: "modeled", listId: 1109, note: "Member of Team Leads." },
+  { name: "🌶️ Hot Leads", type: "contact", total: 19, status: "modeled", listId: 1144, note: "Member of Team Leads. Nineteen records — the tightest list, and the one carrying the 2/4 day thresholds." },
+  {
+    name: "Current & Upcoming Clients",
+    type: "contact",
+    status: "modeled",
+    listId: 1149,
+    note: "The only genuinely new list on the screen. Not a member of Team Leads, so it cannot sweep. Modelled as the live-business stages, every one of which is already on protectedStages — so its leads are doubly protected. Record count and thresholds not yet captured.",
+  },
 ];
 
-/** Lists we know ran but have not captured — the six below the fold. */
-export const unseenCount = () => OBSERVED_AUDIT_COUNT - observedLists.length;
+/**
+ * Lists known to exist but never captured. Now zero: all 15 scheduled audits
+ * are accounted for. Two still need their RULES (status "needs-rules"), which
+ * is a different thing from not knowing they exist.
+ */
+export const unseenCount = () => Math.max(0, OBSERVED_AUDIT_COUNT - observedLists.length);
 
 export const observedFor = (listId) => observedLists.find((l) => l.listId === listId) ?? null;
 

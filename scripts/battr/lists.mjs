@@ -314,6 +314,34 @@ export const lists = [
     neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 8)]] },
   },
 
+  {
+    id: 1149,
+    name: "Current & Upcoming Clients",
+    audit_type: "contact_list",
+    is_active: true,
+    report_only: true,
+    thresholds_inferred: true,
+    // The one list on Battr's audits screen we had never seen. It is not a
+    // member of Team Leads, so it cannot sweep — and its population is live and
+    // closed business, every stage of which is already on rules.protectedStages.
+    // Those two facts are independent, which is the point: a lead here is
+    // protected by the list not acting AND by the stage exclusion, so no single
+    // change can put a client under contract into a pond.
+    //
+    // Thresholds are a placeholder. A client relationship going quiet is worth
+    // reporting on, but we have no rule screen for it and no basis for a number.
+    list_filters: {
+      groups: [
+        [
+          contact("stage_name", "IS ANY OF", ["Active Client", "Under Contract", "Pending", "Current Client", "Upcoming Client"], { value_data_type: "text" }),
+          notInAPond,
+        ],
+      ],
+    },
+    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 14)]] },
+    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 30)]] },
+  },
+
   // ─── NOT a member of Team Leads ────────────────────────────────────────────
   // ❗Active Leads is a real list with its own 6/9 thresholds, but it is NOT one
   // of the six that feed the sweep — it belongs to the Database Health Score

@@ -530,6 +530,7 @@ check("NO LIST IS SILENTLY EMPTY — every list matches a contact it should", ()
     [1147, build({ stage: "Lead", source: "Ylopo Seller" }, 20), "YLOPO IMPORTANT"],
     [1148, build({ stage: "Lead", source: "Zillow Flex" }, 20), "Zillow Important"],
     [1105, build({ stage: "Nurture", lastVisit: daysAgo(2) }, 20), "Active Leads"],
+    [1149, build({ stage: "Under Contract" }, 40), "Current & Upcoming Clients"],
   ];
 
   for (const [id, contact, label] of cases) {
@@ -558,8 +559,26 @@ check("every operator used by a real list is one the evaluator implements", () =
   }
 });
 
+check("a client under contract is protected twice over", () => {
+  // Current & Upcoming Clients is the list it would be worst to get wrong. Two
+  // independent guarantees, so no single change can put a live client in a pond.
+  const list = listById(1149);
+  assert.equal(list.report_only, true, "guarantee 1: the list cannot act");
+
+  const { ids } = memberListsOf(lists.find((l) => l.audit_type === "combined_contact_lists"));
+  assert.ok(!ids.includes(1149), "guarantee 1b: and it does not feed the list that can");
+
+  for (const stage of ["Active Client", "Under Contract", "Pending"]) {
+    assert.ok(
+      rules.protectedStages.some((s) => s.toLowerCase() === stage.toLowerCase()),
+      `guarantee 2: "${stage}" must also be excluded by stage, independently of any list`
+    );
+  }
+});
+
 check("every modelled list carries Battr's observed numbers to check itself against", () => {
   for (const list of reportOnlyLists()) {
+    if (list.id === 1149) continue; // count not captured yet — recorded as such in observed.mjs
     assert.ok(list.observed?.total > 0, `${list.name} needs an observed baseline`);
   }
   const combined = lists.find((l) => l.audit_type === "combined_contact_lists");
