@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { createHmac } from "crypto";
 import { homeownerStore, type Homeowner } from "@/lib/homeowners/store";
+import { FUB_BASE, fubAuthHeader, personToHomeowner } from "@/lib/homeowners/fubMap";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const FUB_BASE = "https://api.followupboss.com";
 const FIRST_PAGE = `${FUB_BASE}/v1/people?limit=100&fields=allFields`;
 
 /**
@@ -34,27 +33,13 @@ function authorized(req: Request): boolean {
   return false;
 }
 
-function tokenForFub(id: string): string {
-  const salt = process.env.HOMEOWNER_TOKEN_SALT || process.env.CRON_SECRET || "roland-fallback-salt";
-  return createHmac("sha256", salt).update(`fub:${id}`).digest("hex").slice(0, 24);
-}
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-function pickAddress(person: any): { street: string; city: string; state: string; zip: string } | null {
-  const addrs: any[] = Array.isArray(person.addresses) ? person.addresses : [];
-  const a = addrs.find((x) => x && (x.street || x.streetAddress));
-  if (!a) return null;
-  const street = (a.street || a.streetAddress || "").trim();
-  if (!street) return null;
-  return { street, city: (a.city || "").trim(), state: (a.state || "NV").trim(), zip: (a.code || a.zip || "").trim() };
-}
-
 // Only ever follow FUB's own pagination URLs (SSRF guard on the cursor param).
 function safeFubUrl(u: string | null): string | null {
   if (!u) return null;
   return u.startsWith(`${FUB_BASE}/`) ? u : null;
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export async function GET(req: Request) {
   if (!authorized(req)) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   const key = process.env.FUB_API_KEY;
@@ -66,7 +51,7 @@ export async function GET(req: Request) {
   const timeBudgetMs = 45_000;
   const startedAt = Date.now();
   const store = homeownerStore();
-  const auth = `Basic ${Buffer.from(`${key}:`).toString("base64")}`;
+  const auth = fubAuthHeader(key);
 
   let imported = 0;
   let skipped = 0;
@@ -101,31 +86,12 @@ export async function GET(req: Request) {
 
       const batch: Homeowner[] = [];
       for (const person of people) {
-        const addr = pickAddress(person);
-        const email = person.emails?.[0]?.value ?? "";
-        if (!addr || !email) {
+        const record = personToHomeowner(person);
+        if (!record) {
           skipped++;
           continue;
         }
-        batch.push({
-          id: `fub-${person.id}`,
-          token: tokenForFub(String(person.id)),
-          firstName: person.firstName ?? "",
-          lastName: person.lastName ?? "",
-          email,
-          phone: person.phones?.[0]?.value ?? undefined,
-          address: addr.street,
-          city: addr.city,
-          state: addr.state,
-          zip: addr.zip,
-          subscribed: true,
-          source: "fub",
-          fubPersonId: String(person.id),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          estimates: [],
-          views: [],
-        });
+        batch.push(record);
       }
       if (batch.length) {
         await store.upsertContacts(batch);
