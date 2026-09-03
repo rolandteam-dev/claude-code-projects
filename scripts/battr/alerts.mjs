@@ -20,26 +20,34 @@ export const ADMIN_MESSAGE = "At risk leads need to be worked ASAP or they will 
  */
 export function buildAgentDigests(
   results,
-  { sendWhen = "any_non_compliant", excludeGroupIds = [], sweepDays, sweptIds = new Set() } = {}
+  { sendWhen = "any_non_compliant", excludeGroupIds = [], sweepDays, sweptIds = new Set(), unanswered = [] } = {}
 ) {
   const byAgent = new Map();
   const excluded = new Set(excludeGroupIds.map(Number));
   const gone = sweptIds instanceof Set ? sweptIds : new Set(sweptIds ?? []);
 
+  const blank = (record) => ({
+    agentId: record.ownerId,
+    agent: record.owner || `User ${record.ownerId}`,
+    atRisk: [],
+    neglected: [],
+    swept: [],
+    unanswered: [],
+  });
+
+  const admit = (record) => {
+    if (!record.ownerId) return null;
+    const groups = record.contact?.owner_group_ids ?? [];
+    if (groups.some((g) => excluded.has(Number(g)))) return null;
+    const row = byAgent.get(record.ownerId) ?? blank(record);
+    byAgent.set(record.ownerId, row);
+    return row;
+  };
+
   for (const record of results) {
     if (record.status !== "at_risk" && record.status !== "neglected") continue;
-    if (!record.ownerId) continue;
-
-    const groups = record.contact?.owner_group_ids ?? [];
-    if (groups.some((g) => excluded.has(Number(g)))) continue;
-
-    const row = byAgent.get(record.ownerId) ?? {
-      agentId: record.ownerId,
-      agent: record.owner || `User ${record.ownerId}`,
-      atRisk: [],
-      neglected: [],
-      swept: [],
-    };
+    const row = admit(record);
+    if (!row) continue;
 
     // Three buckets, not two. A lead already moved tonight must never be listed
     // as "reach out today to keep this" — the agent would call a lead they no
@@ -47,12 +55,18 @@ export function buildAgentDigests(
     if (record.status === "at_risk") row.atRisk.push(record);
     else if (gone.has(record.id)) row.swept.push(record);
     else row.neglected.push(record);
+  }
 
-    byAgent.set(record.ownerId, row);
+  // A lead who called and got no call back is compliant on the clock and still
+  // the most urgent thing on the agent's board. It goes at the top of their
+  // email, and it is enough on its own to earn them one.
+  for (const record of unanswered) {
+    const row = admit(record);
+    if (row) row.unanswered.push(record);
   }
 
   const digests = [...byAgent.values()];
-  const total = (d) => d.atRisk.length + d.neglected.length + d.swept.length;
+  const total = (d) => d.atRisk.length + d.neglected.length + d.swept.length + d.unanswered.length;
   if (sendWhen === "any_non_compliant") {
     return digests.filter((d) => total(d) > 0).map((d) => ({ ...d, sweepDays }));
   }
@@ -63,11 +77,19 @@ const line = (r) =>
   `  • ${r.name}${r.daysSinceTouch !== undefined ? ` — ${r.daysSinceTouch} days quiet` : ""}${r.source ? ` (${r.source})` : ""}`;
 
 /** Plain-text digest. Short on purpose — agents read this on a phone. */
+const waitLine = (r) =>
+  `  • ${r.name} — waiting ${r.waitingDays ?? "?"} days for a call back${r.source ? ` (${r.source})` : ""}`;
+
 export function renderDigestText(digest) {
   const parts = [ADMIN_MESSAGE, ""];
 
-  // Ordered by what the agent can still do something about: the ones about to
-  // go, then the ones on the clock, then — last, as a record — the ones gone.
+  // Ordered by urgency: someone who reached out and heard nothing, then the
+  // ones about to go, then the ones on the clock, then — last, as a record —
+  // the ones already gone.
+  if (digest.unanswered?.length) {
+    parts.push(`THEY CONTACTED YOU, NOBODY CAME BACK (${digest.unanswered.length}) — call these first:`);
+    parts.push(...digest.unanswered.map(waitLine), "");
+  }
   if (digest.neglected.length) {
     parts.push(`SWEEPING NEXT RUN (${digest.neglected.length}) — reach out today to keep these:`);
     parts.push(...digest.neglected.map(line), "");
@@ -93,8 +115,16 @@ export function renderDigestHtml(digest) {
       .map((r) => `<li><strong>${esc(r.name)}</strong>${r.daysSinceTouch !== undefined ? ` — ${r.daysSinceTouch} days quiet` : ""}${r.source ? ` <em>(${esc(r.source)})</em>` : ""}</li>`)
       .join("")}</ul>`;
 
+  const waitList = (rows) =>
+    `<ul>${rows
+      .map((r) => `<li><strong>${esc(r.name)}</strong> — waiting ${r.waitingDays ?? "?"} days for a call back${r.source ? ` <em>(${esc(r.source)})</em>` : ""}</li>`)
+      .join("")}</ul>`;
+
   return [
     `<p><strong>${esc(ADMIN_MESSAGE)}</strong></p>`,
+    digest.unanswered?.length
+      ? `<h3>They contacted you, nobody came back (${digest.unanswered.length})</h3><p style="color:#666">Call these first.</p>${waitList(digest.unanswered)}</p>`
+      : "",
     digest.neglected.length ? `<h3>Sweeping next run (${digest.neglected.length})</h3>${list(digest.neglected)}` : "",
     digest.atRisk.length ? `<h3>At risk (${digest.atRisk.length})</h3>${list(digest.atRisk)}` : "",
     digest.swept?.length
@@ -145,12 +175,12 @@ export async function deliverDigests(digests, { channel = "report_only", fub, us
       } else if (channel === "fub_task") {
         // Anchor on a lead the agent still owns. A task hung on a lead that was
         // swept tonight opens in a pond the agent may not even be able to see.
-        const anchor = [...digest.neglected, ...digest.atRisk].sort(
-          (a, b) => (b.daysSinceTouch ?? 0) - (a.daysSinceTouch ?? 0)
-        )[0];
+        const anchor =
+          digest.unanswered?.[0] ??
+          [...digest.neglected, ...digest.atRisk].sort((a, b) => (b.daysSinceTouch ?? 0) - (a.daysSinceTouch ?? 0))[0];
         if (!anchor) continue;
 
-        const total = digest.atRisk.length + digest.neglected.length;
+        const total = digest.atRisk.length + digest.neglected.length + (digest.unanswered?.length ?? 0);
         const name =
           `Battr: ${total} of your leads need outreach` +
           (digest.neglected.length ? ` (${digest.neglected.length} sweeping next run)` : "");

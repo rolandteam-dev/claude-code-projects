@@ -28,6 +28,7 @@ on:
           - "audit"
           - "discover-lead-sources"
           - "inspect-fub-fields"
+          - "census"
       mode:
         description: "Run mode (audit only)"
         type: choice
@@ -100,6 +101,23 @@ jobs:
             echo '## FUB person fields'
             echo '```'
             cat fields.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # How many leads fall outside the audit, and why. The number Battr never
+      # reported: nurture contacts with no timeframe, which matched none of its
+      # four nurture lists and were therefore never audited at all.
+      - name: Stage and timeframe census
+        if: inputs.task == 'census'
+        env:
+          FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
+        run: |
+          set -o pipefail
+          node scripts/battr/census.mjs | tee census.txt
+          {
+            echo '## Stage and timeframe census'
+            echo '```'
+            cat census.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 

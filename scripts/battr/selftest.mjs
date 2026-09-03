@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 import { rmSync, readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 
-import { classify, buildTouchIndex, classifyForList, runCombinedList, isExemptAgent, readInboundEmails, DAY_MS } from "./classify.mjs";
+import { classify, buildTouchIndex, classifyForList, runCombinedList, isExemptAgent, readInboundEmails, findUnansweredInbound, DAY_MS } from "./classify.mjs";
 import { evaluateCondition, evaluateSet } from "./filters.mjs";
 import { normalizeContact } from "./contact.mjs";
 import { isDayAllowed } from "./schedule.mjs";
@@ -943,6 +943,55 @@ check("the fub_task anchors on a lead the agent still owns", async () => {
   );
   const { delivered } = await deliverDigests(digests, { channel: "fub_task", dry: true, log: () => {} });
   assert.equal(delivered[0].via, "fub_task:8", "never anchor a task on a lead sitting in a pond");
+});
+
+check("a lead who reached out and heard nothing back is found", () => {
+  const withTouch = (over) => ({ ...record({}), contact: { owner_group_ids: [], _touch: over } });
+  const found = findUnansweredInbound(
+    [
+      withTouch({ lastInbound: NOW - 6 * DAY_MS, lastOutbound: NOW - 20 * DAY_MS }), // waiting 6 days
+      withTouch({ lastInbound: NOW - 30 * DAY_MS, lastOutbound: NOW - 20 * DAY_MS }), // answered since
+      withTouch({ lastInbound: 0, lastOutbound: NOW - 20 * DAY_MS }), // never reached out
+      withTouch({ lastInbound: NOW - 1 * DAY_MS, lastOutbound: 0 }), // called an hour ago, give them a day
+    ],
+    2,
+    NOW
+  );
+  assert.equal(found.length, 1);
+  assert.equal(found[0].waitingDays, 6);
+});
+
+check("the longest wait is listed first", () => {
+  const withTouch = (days) => ({ ...record({}), contact: { owner_group_ids: [], _touch: { lastInbound: NOW - days * DAY_MS, lastOutbound: 0 } } });
+  const found = findUnansweredInbound([withTouch(4), withTouch(19), withTouch(9)], 2, NOW);
+  assert.deepEqual(found.map((f) => f.waitingDays), [19, 9, 4]);
+});
+
+check("an unanswered lead earns an agent an email on its own", () => {
+  // They are compliant on the clock — inbound reset it — so without this they
+  // would generate no alert at all, which is the opposite of what we want.
+  const waiting = { ...record({ id: 60, status: "compliant" }), waitingDays: 5 };
+  const [digest] = buildAgentDigests([], { unanswered: [waiting] });
+  assert.equal(digest.unanswered.length, 1);
+  assert.equal(digest.atRisk.length, 0);
+
+  const text = renderDigestText(digest);
+  assert.match(text, /THEY CONTACTED YOU, NOBODY CAME BACK \(1\)/);
+  assert.match(text, /waiting 5 days for a call back/);
+});
+
+check("the unanswered come first — before what is about to be swept", () => {
+  const waiting = { ...record({ id: 61, name: "Called Us", status: "compliant" }), waitingDays: 3 };
+  const [digest] = buildAgentDigests([record({ id: 62, name: "Going Soon", status: "neglected" })], {
+    unanswered: [waiting],
+  });
+  const text = renderDigestText(digest);
+  assert.ok(text.indexOf("Called Us") < text.indexOf("Going Soon"), "someone waiting on us outranks everything else");
+});
+
+check("an exempt agent's unanswered leads still generate no alert", () => {
+  const waiting = { ...record({ id: 63 }), contact: { owner_group_ids: [52555] }, waitingDays: 5 };
+  assert.equal(buildAgentDigests([], { unanswered: [waiting], excludeGroupIds: [52555] }).length, 0);
 });
 
 check("a dry delivery sends nothing but still reports what it would send", async () => {

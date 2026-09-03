@@ -24,7 +24,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { FubClient } from "./battr/fub.mjs";
 import { rules } from "./battr/rules.mjs";
-import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, isExemptAgent, lower, hasAny, daysBetween, readInboundEmails } from "./battr/classify.mjs";
+import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, isExemptAgent, lower, hasAny, daysBetween, readInboundEmails, findUnansweredInbound } from "./battr/classify.mjs";
 import { normalizeContact } from "./battr/contact.mjs";
 import { isDayAllowed } from "./battr/schedule.mjs";
 import { lists } from "./battr/lists.mjs";
@@ -128,7 +128,7 @@ async function replyReprieve(fub, personId, sinceIso, diag) {
 
 // ---------------------------------------------------------------------- report
 
-function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null }) {
+function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [] }) {
   const byAgent = new Map();
   for (const r of results) {
     if (r.status === "excluded" || !r.owner) continue;
@@ -219,20 +219,10 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     lines.push("");
   }
 
-  // Inbound now resets the clock, so a lead who called in and was never called
-  // back reads as compliant everywhere else in this report. That case is the
-  // most expensive kind of neglect there is, so it gets its own section rather
-  // than disappearing into the rule that spared it.
-  const unanswered = results
-    .filter((r) => {
-      const t = r.contact?._touch;
-      if (!t?.lastInbound) return false;
-      if (t.lastInbound <= (t.lastOutbound ?? 0)) return false;
-      return Date.now() - t.lastInbound > rules.unansweredInboundDays * DAY_MS;
-    })
-    .map((r) => ({ ...r, quietDays: Math.floor((Date.now() - r.contact._touch.lastInbound) / DAY_MS) }))
-    .sort((a, b) => b.quietDays - a.quietDays);
-
+  // Inbound resets the clock, so a lead who called in and was never called back
+  // reads as compliant everywhere else in this report. That case is the most
+  // expensive kind of neglect there is, so it gets its own section rather than
+  // disappearing into the rule that spared it.
   if (unanswered.length) {
     lines.push(`## Inbound, never answered (${unanswered.length})`);
     lines.push("");
@@ -242,7 +232,7 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     lines.push("| Lead | Owner | Days since they reached out | Source |");
     lines.push("| --- | --- | ---: | --- |");
     for (const u of unanswered.slice(0, 50)) {
-      lines.push(`| ${u.name} | ${u.owner || "unassigned"} | ${u.quietDays} | ${u.source || "—"} |`);
+      lines.push(`| ${u.name} | ${u.owner || "unassigned"} | ${u.waitingDays} | ${u.source || "—"} |`);
     }
     if (unanswered.length > 50) lines.push(`| …and ${unanswered.length - 50} more | | | |`);
     lines.push("");
@@ -283,7 +273,8 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     lines.push(`## Agent alerts (${alerts.delivered.length} ${verb}, ${alerts.failed.length} failed)`);
     lines.push("");
     for (const d of alerts.delivered) {
-      lines.push(`- ${d.agent}: ${d.atRisk.length} at risk, ${d.neglected.length} sweeping — ${d.via}`);
+      const waiting = d.unanswered?.length ? `, ${d.unanswered.length} waiting on a call back` : "";
+      lines.push(`- ${d.agent}: ${d.atRisk.length} at risk, ${d.neglected.length} sweeping${waiting} — ${d.via}`);
     }
     for (const f of alerts.failed) lines.push(`- ${f.agent}: FAILED — ${f.reason}`);
     lines.push("");
@@ -637,9 +628,13 @@ async function main() {
   // Email, matching what Battr did: each agent gets their own list. Override
   // with the BATTR_ALERT_CHANNEL repository variable (report_only | fub_task).
   const channel = process.env.BATTR_ALERT_CHANNEL || "email";
+  const unanswered = findUnansweredInbound(results, rules.unansweredInboundDays);
+  if (unanswered.length) log(`  ${unanswered.length} leads reached out with no call or text back`);
+
   const digests = buildAgentDigests(results, {
     excludeGroupIds: rules.excludeOwnerGroupIds,
     sweepDays: rules.neglectedDays,
+    unanswered,
     // Built AFTER the sweep loop, so the digest can tell an agent which leads
     // they can still save from the ones already gone.
     sweptIds,
@@ -651,7 +646,7 @@ async function main() {
   mkdirSync(LOG_DIR, { recursive: true });
   if (sweepLog.sweeps.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
 
-  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag });
+  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered });
   const reportPath = await deliverReport(markdown, { runId, dry });
 
   console.log(markdown);

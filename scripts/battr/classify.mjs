@@ -105,6 +105,29 @@ export function readInboundEmails(emails = []) {
   return { latest, undirected };
 }
 
+/**
+ * Leads who reached out and got no call or text back.
+ *
+ * Counting inbound as a touch (Mike's rule) makes these leads read as compliant
+ * everywhere else — correct, since there IS a live conversation, but it would
+ * also make the worst case in the database invisible: a lead who called in and
+ * was never called back. This finds them so they can be reported by name.
+ *
+ * Sorted longest-waiting first, because that is the order to work them in.
+ */
+export function findUnansweredInbound(results, days, now = Date.now()) {
+  const cutoff = days * DAY_MS;
+  return results
+    .filter((r) => {
+      const t = r.contact?._touch;
+      if (!t?.lastInbound) return false;
+      if (t.lastInbound <= (t.lastOutbound ?? 0)) return false;
+      return now - t.lastInbound > cutoff;
+    })
+    .map((r) => ({ ...r, waitingDays: Math.floor((now - r.contact._touch.lastInbound) / DAY_MS) }))
+    .sort((a, b) => b.waitingDays - a.waitingDays);
+}
+
 // ------------------------------------------------------------ agent exemption
 
 /**
