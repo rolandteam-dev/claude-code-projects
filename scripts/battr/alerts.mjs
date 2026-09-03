@@ -18,9 +18,13 @@ export const ADMIN_MESSAGE = "At risk leads need to be worked ASAP or they will 
  * `sendWhen: 'any_non_compliant'` (the live setting) skips agents with a clean
  * board — an empty digest is noise that trains people to ignore the real ones.
  */
-export function buildAgentDigests(results, { sendWhen = "any_non_compliant", excludeGroupIds = [], sweepDays } = {}) {
+export function buildAgentDigests(
+  results,
+  { sendWhen = "any_non_compliant", excludeGroupIds = [], sweepDays, sweptIds = new Set() } = {}
+) {
   const byAgent = new Map();
   const excluded = new Set(excludeGroupIds.map(Number));
+  const gone = sweptIds instanceof Set ? sweptIds : new Set(sweptIds ?? []);
 
   for (const record of results) {
     if (record.status !== "at_risk" && record.status !== "neglected") continue;
@@ -34,14 +38,23 @@ export function buildAgentDigests(results, { sendWhen = "any_non_compliant", exc
       agent: record.owner || `User ${record.ownerId}`,
       atRisk: [],
       neglected: [],
+      swept: [],
     };
-    (record.status === "at_risk" ? row.atRisk : row.neglected).push(record);
+
+    // Three buckets, not two. A lead already moved tonight must never be listed
+    // as "reach out today to keep this" — the agent would call a lead they no
+    // longer own, and the next alert they get is one they don't read.
+    if (record.status === "at_risk") row.atRisk.push(record);
+    else if (gone.has(record.id)) row.swept.push(record);
+    else row.neglected.push(record);
+
     byAgent.set(record.ownerId, row);
   }
 
   const digests = [...byAgent.values()];
+  const total = (d) => d.atRisk.length + d.neglected.length + d.swept.length;
   if (sendWhen === "any_non_compliant") {
-    return digests.filter((d) => d.atRisk.length + d.neglected.length > 0).map((d) => ({ ...d, sweepDays }));
+    return digests.filter((d) => total(d) > 0).map((d) => ({ ...d, sweepDays }));
   }
   return digests.map((d) => ({ ...d, sweepDays }));
 }
@@ -53,6 +66,8 @@ const line = (r) =>
 export function renderDigestText(digest) {
   const parts = [ADMIN_MESSAGE, ""];
 
+  // Ordered by what the agent can still do something about: the ones about to
+  // go, then the ones on the clock, then — last, as a record — the ones gone.
   if (digest.neglected.length) {
     parts.push(`SWEEPING NEXT RUN (${digest.neglected.length}) — reach out today to keep these:`);
     parts.push(...digest.neglected.map(line), "");
@@ -60,6 +75,10 @@ export function renderDigestText(digest) {
   if (digest.atRisk.length) {
     parts.push(`AT RISK (${digest.atRisk.length}):`);
     parts.push(...digest.atRisk.map(line), "");
+  }
+  if (digest.swept?.length) {
+    parts.push(`MOVED TO THE POND TONIGHT (${digest.swept.length}) — no longer assigned to you:`);
+    parts.push(...digest.swept.map(line), "");
   }
 
   parts.push("A lead is only swept after it has been flagged at risk first. Working it clears the flag.");
@@ -78,12 +97,19 @@ export function renderDigestHtml(digest) {
     `<p><strong>${esc(ADMIN_MESSAGE)}</strong></p>`,
     digest.neglected.length ? `<h3>Sweeping next run (${digest.neglected.length})</h3>${list(digest.neglected)}` : "",
     digest.atRisk.length ? `<h3>At risk (${digest.atRisk.length})</h3>${list(digest.atRisk)}` : "",
+    digest.swept?.length
+      ? `<h3>Moved to the pond tonight (${digest.swept.length})</h3><p style="color:#666">No longer assigned to you.</p>${list(digest.swept)}`
+      : "",
     `<p style="color:#666">A lead is only swept after it has been flagged at risk first. Working it clears the flag.</p>`,
   ].join("");
 }
 
 /**
  * Deliver the digests.
+ *
+ * An agent whose only non-compliant leads were all swept tonight gets no task:
+ * there is nothing left for them to act on, and the sweep note on each lead
+ * already says what happened.
  *
  * channel:
  *   "email"       one email per agent. Needs RESEND_API_KEY and agent emails.
@@ -107,7 +133,8 @@ export async function deliverDigests(digests, { channel = "report_only", fub, us
         if (!dry) await sendEmail(email, digest);
         delivered.push({ ...digest, via: `email:${email}` });
       } else if (channel === "fub_task") {
-        // Attach to the most overdue lead so the task opens somewhere useful.
+        // Anchor on a lead the agent still owns. A task hung on a lead that was
+        // swept tonight opens in a pond the agent may not even be able to see.
         const anchor = [...digest.neglected, ...digest.atRisk].sort(
           (a, b) => (b.daysSinceTouch ?? 0) - (a.daysSinceTouch ?? 0)
         )[0];

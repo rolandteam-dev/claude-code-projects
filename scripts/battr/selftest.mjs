@@ -825,6 +825,43 @@ check("the digest leads with the admin message and flags what is sweeping", () =
   assert.match(text, /only swept after it has been flagged at risk first/);
 });
 
+check("a lead already swept tonight is never listed as still savable", () => {
+  // The digest is built after the sweep loop, so a neglected record may be a
+  // lead the agent still holds or one that just left. Telling them to "reach
+  // out today to keep" a lead that is already in the pond is how an alert
+  // stops being read.
+  const [digest] = buildAgentDigests(
+    [record({ id: 7, status: "neglected", name: "Already Gone" }), record({ id: 8, status: "neglected", name: "Still Yours" })],
+    { sweptIds: new Set([7]) }
+  );
+  assert.equal(digest.swept.length, 1);
+  assert.equal(digest.neglected.length, 1);
+
+  const text = renderDigestText(digest);
+  assert.match(text, /SWEEPING NEXT RUN \(1\)[\s\S]*Still Yours/);
+  assert.match(text, /MOVED TO THE POND TONIGHT \(1\)[\s\S]*Already Gone/);
+  assert.ok(
+    text.indexOf("Still Yours") < text.indexOf("Already Gone"),
+    "what the agent can still act on comes first"
+  );
+});
+
+check("an agent whose leads were all swept gets no task to work", async () => {
+  const digests = buildAgentDigests([record({ id: 7, status: "neglected" })], { sweptIds: new Set([7]) });
+  assert.equal(digests.length, 1, "they still get a record of what left");
+  const { delivered } = await deliverDigests(digests, { channel: "fub_task", dry: true, log: () => {} });
+  assert.equal(delivered.length, 0, "there is nothing left for them to do");
+});
+
+check("the fub_task anchors on a lead the agent still owns", async () => {
+  const digests = buildAgentDigests(
+    [record({ id: 7, status: "neglected", daysSinceTouch: 40 }), record({ id: 8, status: "at_risk", daysSinceTouch: 9 })],
+    { sweptIds: new Set([7]) }
+  );
+  const { delivered } = await deliverDigests(digests, { channel: "fub_task", dry: true, log: () => {} });
+  assert.equal(delivered[0].via, "fub_task:8", "never anchor a task on a lead sitting in a pond");
+});
+
 check("a dry delivery sends nothing but still reports what it would send", async () => {
   const digests = buildAgentDigests([record({})]);
   const { delivered, failed } = await deliverDigests(digests, { channel: "fub_task", dry: true, log: () => {} });

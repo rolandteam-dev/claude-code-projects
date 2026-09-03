@@ -606,6 +606,9 @@ async function main() {
   const digests = buildAgentDigests(results, {
     excludeGroupIds: rules.excludeOwnerGroupIds,
     sweepDays: rules.neglectedDays,
+    // Built AFTER the sweep loop, so the digest can tell an agent which leads
+    // they can still save from the ones already gone.
+    sweptIds,
   });
   const alerts = await deliverDigests(digests, { channel, fub, usersById, dry, log });
   if (digests.length) log(`  ${digests.length} agent digests (${channel}${dry ? ", dry" : ""})`);
