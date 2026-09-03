@@ -11,6 +11,7 @@
  */
 
 import { bucketForSource } from "./sources.mjs";
+import { rules } from "./rules.mjs";
 
 const first = (...values) => values.find((v) => v !== undefined && v !== null && v !== "");
 
@@ -19,10 +20,10 @@ const first = (...values) => values.find((v) => v !== undefined && v !== null &&
  * @param touch    { lastOutbound, lastInbound } epoch ms from the activity index
  * @param stamps   custom-field API names we resolved, e.g. { atRiskSince: 'customBattrAtRiskSince' }
  */
-export function normalizeContact(person, touch, stamps = {}) {
+export function normalizeContact(person, touch, stamps = {}, { inboundCountsAsTouch = rules.inboundCountsAsTouch } = {}) {
   const tags = Array.isArray(person.tags) ? person.tags : [];
 
-  // "Last communication" is a CALL or a TEXT, agent-initiated. Nothing else.
+  // "Last communication" is a CALL or a TEXT, in either direction.
   //
   // Email is deliberately excluded, per Mike: Follow Up Boss makes mass email
   // trivial, so one blast to five hundred leads would mark every one of them as
@@ -30,11 +31,17 @@ export function normalizeContact(person, touch, stamps = {}) {
   // measures nothing.
   //
   // FUB's own `lastCommunication` field is NOT used as a fallback for the same
-  // reason — it counts email, and it counts inbound messages from the lead.
+  // reason — it counts email, and there is no way to tell from it which channel
+  // it came from.
   //
-  // The cost is real and intended: an agent who only ever emails a lead will
-  // show as neglected here. Under this rule, that is the correct answer.
-  const lastCommunication = touch?.lastOutbound ? new Date(touch.lastOutbound).toISOString() : null;
+  // Inbound calls and texts DO count (`inboundCountsAsTouch`). A lead phoning
+  // in is a live conversation whichever side dialled, and sweeping it away from
+  // the agent holding it would be worse than doing nothing. The lead who calls
+  // and is never called back is caught by the report's unanswered-inbound
+  // section instead — visible, rather than swept or hidden.
+  const inbound = inboundCountsAsTouch ? (touch?.lastInbound ?? 0) : 0;
+  const lastTouchMs = Math.max(touch?.lastOutbound ?? 0, inbound);
+  const lastCommunication = lastTouchMs ? new Date(lastTouchMs).toISOString() : null;
 
   const atRiskSinceKey = stamps.atRiskSince || "customBattrAtRiskSince";
 

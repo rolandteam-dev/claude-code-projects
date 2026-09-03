@@ -180,18 +180,58 @@ check("an email-only lead reads as neglected — intended, not a bug", () => {
   assert.equal(classifyForList(c, listById(1104), NOW), "neglected");
 });
 
-check("inbound activity alone is not an agent touch", () => {
-  const index = buildTouchIndex({ texts: [{ personId: 1, created: daysAgo(1), isIncoming: true }] });
-  const r = classify(lead({ created: daysAgo(40) }), index, rules, NOW);
-  assert.equal(r.status, "neglected", "a lead texting us is not the agent working the lead");
+check("a lead calling or texting us counts as a touch", () => {
+  // Mike's rule. A live two-way conversation is not a neglected lead, whichever
+  // side started it — the same reasoning that spares a lead who replies by email.
+  const called = normalizeContact(
+    { id: 90, stage: "Lead", created: daysAgo(60), assignedUserId: 5, assignedTo: "Some Agent", tags: [] },
+    { lastOutbound: 0, lastInbound: new Date(daysAgo(1)).getTime() }
+  );
+  assert.equal(called.custom_fields.fub.system_lastCommunication, daysAgo(1));
+  assert.equal(classifyForList(called, listById(1104), NOW), "compliant");
 });
 
-check("the most recent touch across channels wins", () => {
+check("inbound can be switched back off without touching the engine", () => {
+  const ignored = normalizeContact(
+    { id: 91, stage: "Lead", created: daysAgo(60), assignedUserId: 5, tags: [] },
+    { lastOutbound: 0, lastInbound: new Date(daysAgo(1)).getTime() },
+    {},
+    { inboundCountsAsTouch: false }
+  );
+  assert.equal(ignored.custom_fields.fub.system_lastCommunication, null);
+});
+
+check("the most recent contact wins, whichever direction it came from", () => {
+  const c = normalizeContact(
+    { id: 92, stage: "Lead", created: daysAgo(60), assignedUserId: 5, tags: [] },
+    { lastOutbound: new Date(daysAgo(9)).getTime(), lastInbound: new Date(daysAgo(2)).getTime() }
+  );
+  assert.equal(c.custom_fields.fub.system_lastCommunication, daysAgo(2));
+});
+
+check("a lead who called in and was never called back is still findable", () => {
+  // This is what inboundCountsAsTouch costs: the lead reads as compliant. It
+  // must not therefore be invisible — the report's unanswered-inbound section
+  // is keyed on exactly this shape, so assert the shape holds.
+  const c = normalizeContact(
+    { id: 93, stage: "Lead", created: daysAgo(60), assignedUserId: 5, tags: [] },
+    { lastOutbound: new Date(daysAgo(20)).getTime(), lastInbound: new Date(daysAgo(5)).getTime() }
+  );
+  assert.equal(classifyForList(c, listById(1104), NOW), "compliant", "not swept — that is the point");
+  assert.ok(
+    c._touch.lastInbound > c._touch.lastOutbound,
+    "and this is what puts it in 'Inbound, never answered'"
+  );
+  assert.ok(rules.unansweredInboundDays > 0, "the section has a threshold to fire on");
+});
+
+check("calls and texts fold into one touch index, in both directions", () => {
   const index = buildTouchIndex({
     calls: [{ personId: 1, created: daysAgo(30), isIncoming: false }],
-    emails: [{ personId: 1, created: daysAgo(1), isIncoming: false }],
+    texts: [{ personId: 1, created: daysAgo(3), isIncoming: true }],
   });
-  assert.equal(classify(lead(), index, rules, NOW).daysSinceTouch, 1);
+  assert.equal(index.get(1).lastOutbound, new Date(daysAgo(30)).getTime());
+  assert.equal(index.get(1).lastInbound, new Date(daysAgo(3)).getTime());
 });
 
 check("a reply from the lead is found, a blast to the lead is not", () => {
@@ -371,14 +411,57 @@ check("Active Leads uses its own 6/9 thresholds, not Hot Leads' 2/4", () => {
   assert.equal(classifyForList(neg, activeLeads, NOW), "neglected");
 });
 
-check("Active Leads is NOT one of the six that feed the sweep", () => {
+check("Active Leads is NOT one of the lists that feed the sweep", () => {
   const { ids, resolved } = memberListsOf(lists.find((l) => l.audit_type === "combined_contact_lists"));
-  assert.equal(ids.length, 6);
+  assert.equal(ids.length, 7, "Battr's six, plus our no-timeframe catch-all");
   assert.ok(!resolved.some((l) => l.name.includes("Active Leads")), "sweeping it would touch leads the live system never does");
   assert.deepEqual(
     resolved.map((l) => l.name).sort(),
-    ["😎 Bi-Weekly Nurture", "🌤️ Warm Back Up", "🌱 Monthly Nurture", "🌶️ Hot Leads", "🔥 Weekly Nurture", "👀 Quarterly Nurture"].sort()
+    [
+      "😎 Bi-Weekly Nurture",
+      "🌤️ Warm Back Up",
+      "🌱 Monthly Nurture",
+      "🌶️ Hot Leads",
+      "🔥 Weekly Nurture",
+      "👀 Quarterly Nurture",
+      "🕳️ Nurture — no timeframe",
+    ].sort()
   );
+});
+
+check("a nurture lead with no timeframe is audited instead of invisible", () => {
+  // It used to match none of the four timeframe lists and drop out of the audit
+  // entirely, which reads as compliant and is not.
+  const blank = normalizeContact(
+    { id: 500, stage: "Nurture", created: daysAgo(200), assignedUserId: 5, assignedTo: "Some Agent", tags: [] },
+    { lastOutbound: new Date(daysAgo(45)).getTime(), lastInbound: 0 }
+  );
+  assert.equal(classifyForList(blank, listById(1145), NOW), "at_risk");
+
+  // …and it is a member of the combined list, so it reaches the report.
+  const { ids } = memberListsOf(lists.find((l) => l.audit_type === "combined_contact_lists"));
+  assert.ok(ids.includes(1145));
+});
+
+check("a no-timeframe nurture lead is warned but never swept", () => {
+  const ancient = normalizeContact(
+    { id: 501, stage: "Spoke with Customer", created: daysAgo(900), assignedUserId: 5, assignedTo: "Some Agent", tags: [] },
+    { lastOutbound: new Date(daysAgo(800)).getTime(), lastInbound: 0 }
+  );
+  assert.equal(
+    classifyForList(ancient, listById(1145), NOW),
+    "at_risk",
+    "800 days quiet and it still only warns — we do not know this lead's cadence, so we do not guess"
+  );
+});
+
+check("a lead with a real timeframe does not fall into the catch-all", () => {
+  const known = normalizeContact(
+    { id: 502, stage: "Nurture", timeframe: "0-3 months", created: daysAgo(200), assignedUserId: 5, tags: [] },
+    { lastOutbound: new Date(daysAgo(45)).getTime(), lastInbound: 0 }
+  );
+  assert.equal(classifyForList(known, listById(1145), NOW), null);
+  assert.equal(classifyForList(known, listById(1106), NOW), "neglected");
 });
 
 // Every member list's graduated thresholds, checked at each boundary.

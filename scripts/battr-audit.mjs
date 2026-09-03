@@ -219,6 +219,35 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     lines.push("");
   }
 
+  // Inbound now resets the clock, so a lead who called in and was never called
+  // back reads as compliant everywhere else in this report. That case is the
+  // most expensive kind of neglect there is, so it gets its own section rather
+  // than disappearing into the rule that spared it.
+  const unanswered = results
+    .filter((r) => {
+      const t = r.contact?._touch;
+      if (!t?.lastInbound) return false;
+      if (t.lastInbound <= (t.lastOutbound ?? 0)) return false;
+      return Date.now() - t.lastInbound > rules.unansweredInboundDays * DAY_MS;
+    })
+    .map((r) => ({ ...r, quietDays: Math.floor((Date.now() - r.contact._touch.lastInbound) / DAY_MS) }))
+    .sort((a, b) => b.quietDays - a.quietDays);
+
+  if (unanswered.length) {
+    lines.push(`## Inbound, never answered (${unanswered.length})`);
+    lines.push("");
+    lines.push("These leads called or texted us and nobody has called or texted back since.");
+    lines.push("They are not swept for it — an inbound contact counts as a touch — but this is the list to work.");
+    lines.push("");
+    lines.push("| Lead | Owner | Days since they reached out | Source |");
+    lines.push("| --- | --- | ---: | --- |");
+    for (const u of unanswered.slice(0, 50)) {
+      lines.push(`| ${u.name} | ${u.owner || "unassigned"} | ${u.quietDays} | ${u.source || "—"} |`);
+    }
+    if (unanswered.length > 50) lines.push(`| …and ${unanswered.length - 50} more | | | |`);
+    lines.push("");
+  }
+
   // Which sources drive the sweeps — this is what tells you whether a source
   // belongs in the audit at all, or in the excluded bucket.
   const bySource = new Map();

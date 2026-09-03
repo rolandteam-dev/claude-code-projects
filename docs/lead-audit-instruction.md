@@ -1,7 +1,7 @@
 # The Nightly Sweep — Complete Instruction
 
 **The Roland Team · Database Operations**
-Rev. 3 — September 3, 2026
+Rev. 4 — September 3, 2026
 
 Readable version: https://claude.ai/code/artifact/6dc505f0-c2bd-4b87-b1b9-186e9e30a2d8
 This file is the same document in plain text. If the two ever disagree, this
@@ -84,14 +84,14 @@ is still running — it means our system wrote it.
 
 ## 4. What counts as working a lead
 
-The clock on a lead resets only when the agent **calls** or **texts**.
+The clock on a lead resets on a **call** or a **text**, in either direction.
 
 | Resets the clock | Does not reset the clock |
 |---|---|
 | An outgoing call from the agent | An email the agent sent |
 | An outgoing text from the agent | An automated or drip email |
-| | The lead calling or texting *us* |
-| | A note, a tag, or opening the record |
+| A call *from* the lead | A note, a tag, or opening the record |
+| A text *from* the lead | |
 
 The reason is Follow Up Boss's batch email: thirty leads, one click. If a sent
 email counted as working the lead, a single blast would mark the whole database
@@ -100,6 +100,14 @@ measures nothing.
 
 The trade-off is real and intended. An agent who *only* emails will show as
 neglected. Under this rule that is the correct answer, not a bug.
+
+**Why inbound counts.** A lead phoning or texting in is a live conversation
+whichever side started it, and pulling it away from the agent holding it would
+be worse than doing nothing. The cost is that a lead who calls in and is never
+called back now reads as compliant. That case does not disappear — the report
+carries an **"Inbound, never answered"** section listing exactly those leads by
+name, sorted by how long they have been waiting, every night. They are never
+swept for it. That list is the one to work.
 
 **The one exception — the lead writes back.** If the lead **replies**, that lead
 is not swept. Nobody can batch-produce replies, so an incoming email is real
@@ -121,10 +129,19 @@ until someone handles it. It is a reprieve, not a hiding place.
 | 😎 Bi-Weekly | timeframe 3–6 months | 16 d | 19 d |
 | 🌱 Monthly | timeframe 6–12 months | 33 d | 36 d |
 | 👀 Quarterly | timeframe 12+ months | 93 d | 96 d |
+| 🕳️ Nurture — no timeframe | Nurture / Spoke with Customer, timeframe blank | 30 d | **never** |
 
-The four nurture lists are chosen by the **timeframe** field. A lead in Nurture
-with no timeframe falls into none of them and is never audited — the single
-biggest reason database hygiene matters here.
+The four nurture lists are chosen by the **timeframe** field, so a lead in
+Nurture with the field blank used to match none of them and drop out of the
+audit entirely — invisible rather than compliant. The seventh list closes that:
+those leads are now counted, reported, and warned at 30 days, but **never
+swept**. We don't know that lead's real cadence, so reassigning it would be
+guessing; getting the timeframe filled in is the actual fix, and that is the
+database manager's queue.
+
+It also works as a canary. If the timeframe field name ever changes on Follow Up
+Boss's end, every nurture lead lands in this one list at once — loudly — instead
+of four lists quietly emptying.
 
 **Not in the audit:** the ❗Active Leads list. It has its own 6/9 day thresholds
 and feeds the Database Health Score, but Battr never used it to sweep and
@@ -259,20 +276,28 @@ the rules to read it correctly. In order of impact:
 2. **Keep `stage` honest.** Stage decides which list a lead lands in, and Under
    Contract / Pending / Closed are what protect live business from being
    touched.
-3. **Flag new lead sources to Mike.** The report lists unmapped sources at the
+3. **Work the "🕳️ Nurture — no timeframe" list.** Every lead on it is a lead
+   nobody can hold to a cadence. Setting the timeframe moves it into the right
+   nurture list automatically.
+4. **Flag new lead sources to Mike.** The report lists unmapped sources at the
    bottom. Each needs a decision: audited, or permanently protected. Until
    someone decides, it is protected — safe, but unaudited.
-4. **Work the `BAD_PHONE` list.** Those leads are never swept, but they stay in
+5. **Work the `BAD_PHONE` list.** Those leads are never swept, but they stay in
    the report until the number is fixed or the record is retired.
-5. **Say something if a list looks wrong.** If a list that should hold hundreds
+6. **Say something if a list looks wrong.** If a list that should hold hundreds
    suddenly reports a handful, a field name has probably changed on Follow Up
    Boss's end. Fast fix — but only if someone notices.
 
 ## 10. Questions you'll get asked
 
 **"I emailed that lead last week. Why did it get taken?"**
-Email doesn't reset the clock — section 4. A call or a text does. If the lead
-emailed *back*, it would not have been swept.
+Email doesn't reset the clock — section 4. A call or a text does, in either
+direction. If the lead emailed *back*, it would not have been swept.
+
+**"They called me, doesn't that count?"**
+Yes. A call or text from the lead resets the clock the same as one from the
+agent. If a lead was swept anyway, there was no call or text either way inside
+the window.
 
 **"I never got a warning."**
 Not possible under the rules: a sweep requires the warning note and the At Risk
@@ -325,7 +350,9 @@ To run it by hand: repository → **Actions** → *Battr audit* → **Run workfl
 | `exemptAgents` | rules.mjs | Currently **Mike Roland**. Matched on the FUB "Assigned to" name. |
 | `requireWarningBeforeSweep` | rules.mjs | The warn-first interlock. Leave on. |
 | `inboundEmailSparesSweep` | rules.mjs | A reply from the lead stops the sweep, within a 14-day window. |
-| Six lists' thresholds | lists.mjs | The day counts in section 5, edited per list. |
+| `inboundCountsAsTouch` | rules.mjs | A call or text from the lead resets the clock. On. |
+| `unansweredInboundDays` | rules.mjs | How long an unanswered inbound waits before the report names it. 2 days. |
+| Seven lists' thresholds | lists.mjs | The day counts in section 5, edited per list. |
 | Source classification | sources.mjs | Which of the 138 sources are audited and which are protected. |
 
 `rules.mjs` is the whole policy surface. Nothing about behavior requires
@@ -385,6 +412,8 @@ agent: assigned, at risk, neglected, swept.
 4. **Neglected but not swept** — every held-back lead and the exact reason: cap
    reached, never warned, protected source, exempt agent, bad phone, or the lead
    replied. **Read this section.**
+4b. **Inbound, never answered** — leads who called or texted us with no call or
+   text back since. Not swept, by design. The highest-value list in the report.
 5. **By lead source** — at risk and neglected per source, unmapped sources
    called out.
 6. **At Bats and agent alerts** — ownership changes and conversion rates, then

@@ -8,9 +8,10 @@
  *
  * The six member lists form a graduated sequence: the hotter the lead, the less
  * silence it tolerates. Hot Leads warn after 2 quiet days, Quarterly Nurture
- * after 93. None of the six carries actions of its own — every note, sweep, and
- * alert lives on the combined `⭐️ Team Leads (Nudges & Sweeps)` list, which
- * pools all six and applies its own compliance actions on top.
+ * after 93. A seventh, ours rather than Battr's, catches nurture leads with no
+ * timeframe at all — see 1145. None of them carries actions of its own — every
+ * note, sweep, and alert lives on the combined `⭐️ Team Leads (Nudges & Sweeps)`
+ * list, which pools them and applies its own compliance actions on top.
  *
  * ── Two deliberate departures from the live config, both documented below ─────
  *
@@ -21,7 +22,8 @@
  *    returns on the contact is verifiable at a glance and survives a re-import.
  *
  * 2. LIST IDS ARE POSITIONAL. `source_list_ids` is confirmed as
- *    [1104, 1106, 1107, 1108, 1109, 1144], and the six member lists are
+ *    [1104, 1106, 1107, 1108, 1109, 1144] (1145 is ours), and the six member
+ *    lists are
  *    confirmed by name — but which id belongs to which name was never stated.
  *    Since all six are members, a mismatched pairing cannot change any
  *    classification; it would only mislabel a source chip in the report.
@@ -120,6 +122,38 @@ export const lists = [
   nurtureList({ id: 1108, name: "🌱 Monthly Nurture", timeframe: TIMEFRAMES.months6to12, atRiskDays: 33, neglectedDays: 36 }),
   nurtureList({ id: 1109, name: "👀 Quarterly Nurture", timeframe: TIMEFRAMES.months12plus, atRiskDays: 93, neglectedDays: 96 }),
 
+  // ─── Ours, not Battr's ─────────────────────────────────────────────────────
+  // The four nurture lists above are selected BY timeframe, so a lead sitting in
+  // Nurture with the field blank matched none of them and was never audited at
+  // all — invisible rather than compliant. That is the gap this closes.
+  //
+  // It warns and never sweeps: `neglected_filters` is empty, and classifyForList
+  // treats an empty rule set as "never fires". We do not know this lead's real
+  // cadence, so taking it off an agent would be guessing; asking someone to fill
+  // the field in is the actual fix.
+  //
+  // It doubles as a canary. If the timeframe field name is ever wrong, every
+  // nurture lead lands here at once — loudly, in one list, instead of four lists
+  // quietly emptying.
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    id: 1145,
+    name: "🕳️ Nurture — no timeframe",
+    audit_type: "contact_list",
+    is_active: true,
+    list_filters: {
+      groups: [
+        [
+          contact("stage_name", "IS ANY OF", STAGES.nurture, { value_data_type: "text" }),
+          contact(TIMEFRAME, "=", null, { value_data_type: "text" }),
+          notInAPond,
+        ],
+      ],
+    },
+    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 30)]] },
+    neglected_filters: { groups: [] },
+  },
+
   {
     id: 9001,
     name: "⭐️ Team Leads (Nudges & Sweeps)",
@@ -130,7 +164,7 @@ export const lists = [
     list_filters: {
       groups: [
         [
-          { object: "battr.aida_lists", field: "source_list_ids", operator: "IS ANY OF", value: [1104, 1106, 1107, 1108, 1109, 1144], value_data_type: "integer" },
+          { object: "battr.aida_lists", field: "source_list_ids", operator: "IS ANY OF", value: [1104, 1106, 1107, 1108, 1109, 1144, 1145], value_data_type: "integer" },
           contact("lead_bucket_id", "!=", 82, { object: "battr.lead_buckets", value_data_type: "integer" }),
           contact("owner_group_ids", "DOES NOT CONTAIN ANY", [52555], { value_data_type: "integer" }),
         ],

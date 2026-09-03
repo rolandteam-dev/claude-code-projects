@@ -136,6 +136,29 @@ export const rules = {
    */
   requireWarningBeforeSweep: true,
 
+  // ------------------------------------------------------ inbound contact
+  /**
+   * A call or text FROM the lead counts as a touch and resets the clock.
+   *
+   * Per Mike. The reasoning is the same one that spares a lead who replies by
+   * email: a live two-way conversation is not a neglected lead, whichever side
+   * started it, and taking it away mid-thread is the one mistake this engine
+   * must not make. Outbound email is still excluded — that one is a single
+   * click for thirty people.
+   *
+   * The cost: a lead who calls in and is never called back now reads as
+   * compliant. That case does not disappear — `unansweredInboundDays` below
+   * puts it in its own section of the report, by name, every night.
+   */
+  inboundCountsAsTouch: true,
+
+  /**
+   * Days after an inbound call or text with no outbound reply before the lead
+   * is listed under "Inbound, never answered" in the report. Reporting only —
+   * these leads are never swept for it.
+   */
+  unansweredInboundDays: 2,
+
   // ------------------------------------------------- the lead wrote back
   /**
    * A REPLY from the lead spares it from the sweep.
@@ -167,9 +190,10 @@ export const rules = {
 
   // ------------------------------------------------------------------ behavior
   /**
-   * OFF mirrors Battr exactly. ON is our improvement: when a lead has spoken
-   * last and nobody answered, the at-risk clock runs at half speed — an ignored
-   * inbound message is worse neglect than silence, not the same.
+   * Superseded by `inboundCountsAsTouch`. It used to run the at-risk clock at
+   * half speed for a lead whose last word was inbound; now inbound resets the
+   * clock outright, so this would fight it. Left at false, and the unanswered
+   * case is reported instead of acted on.
    */
   escalateUnanswered: false,
 

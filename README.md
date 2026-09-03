@@ -106,7 +106,7 @@ policy surface; the engine is not meant to be edited to change behavior.
 
 | How a lead is judged | |
 | --- | --- |
-| Last touch | The most recent **agent-initiated call or text**. Email is not a touch — see below. A lead contacting *us* is not a touch either. Never-contacted leads run the clock from their creation date. |
+| Last touch | The most recent **call or text, either direction**. Email is not a touch — see below. A lead phoning or texting *us* counts (`inboundCountsAsTouch`). Never-contacted leads run the clock from their creation date. |
 | At Risk | Past the warn threshold with no touch → a note lands on the lead and `Battr At Risk Since` is stamped. Re-flagging is skipped on later runs. |
 | Neglected | Past the sweep threshold **and already warned** → reassigned to the sweep pond, with a note recording who had it. |
 | Excluded | Protected stages (under contract, closed), DNC-family tags, exempt agents, leads newer than `minLeadAgeDays`, and leads already sitting in a pond. |
@@ -117,6 +117,13 @@ policy surface; the engine is not meant to be edited to change behavior.
 never swept unless an earlier run already warned the agent and stamped
 `Battr At Risk Since`. Without it, a lead that has simply been quiet for a long
 time gets taken away with no warning ever issued. Leave it on.
+
+**Inbound counts, outbound email does not.** A call or text *from* the lead
+resets the clock: a live two-way conversation is not a neglected lead, whichever
+side started it. The cost is that a lead who calls in and is never called back
+reads as compliant — so the report carries an **Inbound, never answered**
+section listing exactly those leads by name, sorted by how long they have been
+waiting. They are never swept for it; that list is the one to work.
 
 **Email is not outreach, but a reply is.** Follow Up Boss batch-emails thirty
 leads in a single click, so counting a sent email as working a lead would let one
@@ -149,6 +156,15 @@ form a graduated sequence: the hotter the lead, the less silence it tolerates.
 | 😎 Bi-Weekly Nurture | …timeframe 3–6 months | 16 d | 19 d |
 | 🌱 Monthly Nurture | …timeframe 6–12 months | 33 d | 36 d |
 | 👀 Quarterly Nurture | …timeframe 12+ months | 93 d | 96 d |
+| 🕳️ Nurture — no timeframe | Nurture / Spoke with Customer, timeframe blank | 30 d | never |
+
+The last one is ours, not Battr's. The four nurture lists select *by* timeframe,
+so a lead in Nurture with the field blank matched none of them and dropped out of
+the audit entirely — invisible rather than compliant. It warns and never sweeps:
+we don't know that lead's real cadence, so asking someone to fill the field in is
+the fix, not reassigning it. It doubles as a canary — if the timeframe field name
+is ever wrong, every nurture lead lands here at once instead of four lists quietly
+emptying.
 
 All six also require the lead to not already be sitting in a pond. A contact can
 match several lists at once; it keeps its **worst** status across them.
