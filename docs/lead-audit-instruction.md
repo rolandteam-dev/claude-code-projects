@@ -1,7 +1,7 @@
 # The Nightly Sweep — Complete Instruction
 
 **The Roland Team · Database Operations**
-Rev. 5 — September 3, 2026
+Rev. 6 — September 3, 2026
 
 Readable version: https://claude.ai/code/artifact/6dc505f0-c2bd-4b87-b1b9-186e9e30a2d8
 This file is the same document in plain text. If the two ever disagree, this
@@ -366,7 +366,7 @@ To run it by hand: repository → **Actions** → *Battr audit* → **Run workfl
 |---|---|---|
 | `BATTR_LIVE` | Actions variable | **The master switch.** Unset or anything but `true` = test mode, writes nothing. Set to `true` and the scheduled run starts acting. |
 | `BATTR_ALERT_CHANNEL` | Actions variable | How agents are told: **`email`** (default — one digest per agent, matching Battr), `fub_task` (a task per agent in FUB), or `report_only` (nothing direct). |
-| `BATTR_REPORT_FROM` | Actions variable | From address on the agent emails. Must be on a domain verified in Resend. |
+| `BATTR_REPORT_FROM` | Actions variable | From address on both the agent emails and your report. Must be on a domain verified in Resend. |
 | `BATTR_REPORT_TO` | Actions variable | Where *your* nightly report is emailed. Needs `RESEND_API_KEY` too; without both, the report still lands in the run log. |
 | `maxSweepsPerRun` | rules.mjs | Hard ceiling per night. Currently **30**. |
 | `sweepDayFilter` | rules.mjs | Currently Tuesday–Friday. |
@@ -404,14 +404,33 @@ Both systems run. Every night you get a report; nothing is written to FUB.
 Compare our counts to Battr's email: roughly 10 at risk and 8 sweeps a day. If
 the two track for a week, the mirror is faithful.
 
-**B2. Set up Resend, before going live.**
-The agent emails need it. Create a free Resend account, verify
-`therolandteam.com` as a sending domain (a few DNS records — same kind of setup
-as any mail tool), then add `RESEND_API_KEY` as a repository *secret* and
-`BATTR_REPORT_FROM` as a repository *variable*. Until the domain is verified
-Resend will only deliver to your own address, so verify before flipping the
-switch. If the key is missing on a live run, the report says so in one line
-rather than failing thirty times.
+**B2. Set up Resend, before going live.** One account covers everything — the
+agent emails and the nightly report both go through it. The website already
+sends through Resend, so the domain is very likely verified already.
+
+1. **Resend → Domains.** Confirm `therolandteam.com` shows *Verified*. If it
+   does, the hard part is done. If not, add it and publish the DNS records it
+   gives you.
+2. **Resend → API Keys → Create API Key.** Name it something like
+   `Battr audit`, permission *Sending access*. Copy the key — Resend shows it
+   once.
+3. **GitHub → the repo → Settings → Secrets and variables → Actions.**
+   On the **Secrets** tab: *New repository secret*, named exactly
+   `RESEND_API_KEY`, paste the key.
+4. **Same page, Variables tab.** Add two:
+   - `BATTR_REPORT_TO` → `mike@therolandteam.com` (comma-separate for more)
+   - `BATTR_REPORT_FROM` → e.g. `The Roland Team <battr@therolandteam.com>`.
+     It must be on the verified domain. Set this explicitly: the site's own
+     sender lives in Vercel, not GitHub, so nothing here can inherit it.
+5. **Actions → Battr audit → Run workflow → task `test-email`**, and put your
+   address in the *email_to* box. It sends two messages — a sample agent digest
+   and a sample report — through the exact code the audit uses, built from
+   invented leads. No FUB key, nothing read from the database.
+6. **Check your inbox.** Two emails means it is done. If not, the run log names
+   the reason in a sentence: an unverified domain and a bad key each say so
+   directly rather than showing a status code.
+
+Nothing is emailed to anyone during the shadow period — dry runs never send.
 
 **B3. Check every agent has an email on their FUB user record.**
 The address comes from the FUB user, not the lead. Any agent without one is
@@ -490,8 +509,9 @@ fail, the audit does not run at all.
 1. **Run the `census` task, then `inspect-fub-fields`, and send me both.** The
    census sizes the no-timeframe nurture gap; inspect settles the field names
    behind it.
-2. **Set up Resend** so the agent emails can actually send — step B2 above.
-   The channel is decided: email, one digest per agent, matching Battr.
+2. **Set up Resend** so the agent emails can actually send — the six steps in
+   B2 above, then run the `test-email` task to confirm. The channel is decided:
+   email, one digest per agent, matching Battr.
 3. **Export the Battr At Bats CSV before cancelling.** Unrecoverable afterwards.
 4. **Confirm the exempt list is Mike alone.** Battr's own config named nobody
    else.
