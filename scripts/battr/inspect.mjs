@@ -148,6 +148,49 @@ async function main() {
     console.log("    Until this works the engine holds every sweep rather than sweeping blind.");
   }
   console.log("");
+
+  // ------------------------------------------------------------- At Bats
+  //
+  // Battr's UI has no CSV export — searched and confirmed absent, not just not
+  // found. So the At Bats history it holds is unrecoverable through Battr.
+  //
+  // But the history is not only in Battr. Every sweep it performed left a note
+  // on the lead in Follow Up Boss, and those notes are ours. If /v1/notes can be
+  // read in bulk, that trail can be replayed into the ledger.
+  //
+  // This probes whether that is possible before anyone writes a parser for it.
+  //
+  // PRIVACY: only note SUBJECTS are printed, and only those seen five or more
+  // times. A subject repeated five times is a template, not a person.
+  console.log("\nAT BATS RECONSTRUCTION — can we replay Battr's sweeps out of FUB's notes?");
+  console.log("-".repeat(70));
+  try {
+    const notes = await fub.paginate("/notes", {}, { max: 500 });
+    console.log(`/notes returned ${notes.length} rows (asked for up to 500). Bulk read: WORKS.`);
+
+    const subjects = new Map();
+    for (const note of notes) {
+      const subject = String(note.subject ?? "(none)").slice(0, 80);
+      subjects.set(subject, (subjects.get(subject) ?? 0) + 1);
+    }
+    const templates = [...subjects.entries()].filter(([, n]) => n >= 5).sort((a, b) => b[1] - a[1]);
+
+    console.log(`\n${templates.length} repeated subjects (5+ occurrences) — these are automation templates:`);
+    for (const [subject, n] of templates.slice(0, 25)) {
+      console.log(`  ${String(n).padStart(5)}  ${subject}`);
+    }
+    if (!templates.length) console.log("  none — every subject is unique, so no automation trail to mine.");
+
+    const fields = new Set();
+    for (const note of notes.slice(0, 50)) for (const k of Object.keys(note)) fields.add(k);
+    console.log(`\nnote fields: ${[...fields].sort().join(", ")}`);
+    console.log("\nIf a Battr sweep subject appears above, its history is recoverable and cancelling loses nothing.");
+  } catch (err) {
+    console.log(`/notes bulk read FAILED: ${err.message}`);
+    console.log("Then Battr's At Bats history is not recoverable, and the ledger starts from today.");
+    console.log("That costs scoreboard depth, nothing operational.");
+  }
+  console.log("");
 }
 
 main().catch((err) => {

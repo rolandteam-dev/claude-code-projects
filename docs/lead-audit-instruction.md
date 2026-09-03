@@ -448,9 +448,19 @@ Nothing is emailed to anyone during the shadow period — dry runs never send.
 The address comes from the FUB user, not the lead. Any agent without one is
 listed as a failure in the report — nobody is silently skipped.
 
-**C. Before you cancel Battr — export the At Bats CSV.**
-That history is not recoverable once the subscription ends. An importer is
-waiting for it, so the scoreboard starts with real history instead of zero.
+**C. Before you cancel Battr — try to recover the At Bats history.**
+Battr's UI has **no CSV export** — that was searched for and confirmed absent,
+not merely not found. So the history it holds cannot be taken out through Battr.
+
+It may not need to be. Every sweep Battr performed left a note on the lead in
+Follow Up Boss, and those notes are ours. The `inspect-fub-fields` task now
+probes whether `/v1/notes` can be read in bulk and lists the repeated note
+subjects — if Battr's sweep note is among them, the history can be replayed into
+the ledger from FUB and cancelling loses nothing.
+
+If it can't be, the ledger starts from the day we go live. That costs depth in
+the scoreboard's conversion and retention rates for the first few months. It
+costs nothing operational — no rule depends on it.
 
 **D. Go live — set `BATTR_LIVE` to `true`.**
 Settings → Secrets and variables → Actions → Variables. The next 7 PM run starts
