@@ -10,7 +10,8 @@
     "battr:test": "node scripts/battr/selftest.mjs",
     "battr:dry": "node scripts/battr-audit.mjs --dry",
     "battr:sources": "node scripts/battr/sources.mjs --discover",
-    "battr:census": "node scripts/battr/census.mjs"
+    "battr:census": "node scripts/battr/census.mjs",
+    "battr:test-email": "node scripts/battr/test-email.mjs"
   },
   "dependencies": {
     "next": "16.2.12",

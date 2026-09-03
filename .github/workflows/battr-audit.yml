@@ -29,6 +29,7 @@ on:
           - "discover-lead-sources"
           - "inspect-fub-fields"
           - "census"
+          - "test-email"
       mode:
         description: "Run mode (audit only)"
         type: choice
@@ -44,6 +45,10 @@ on:
           - "both"
           - "at-risk"
           - "neglected"
+      email_to:
+        description: "Where to send the test email (task: test-email)"
+        required: false
+        type: string
       max_sweeps:
         description: "Override the per-run sweep cap (optional)"
         required: false
@@ -118,6 +123,26 @@ jobs:
             echo '## Stage and timeframe census'
             echo '```'
             cat census.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Proves the Resend setup end to end without waiting for 7 PM. Sends a
+      # sample agent digest and a sample report, both built from invented leads
+      # — no FUB key, nothing read from the database.
+      - name: Send a test email
+        if: inputs.task == 'test-email'
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          BATTR_REPORT_FROM: ${{ vars.BATTR_REPORT_FROM }}
+          BATTR_REPORT_TO: ${{ vars.BATTR_REPORT_TO }}
+          BATTR_TEST_EMAIL_TO: ${{ inputs.email_to }}
+        run: |
+          set -o pipefail
+          node scripts/battr/test-email.mjs | tee mail.txt
+          {
+            echo '## Test email'
+            echo '```'
+            cat mail.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 

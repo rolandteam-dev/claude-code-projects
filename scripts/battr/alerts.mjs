@@ -9,6 +9,7 @@
  * non-compliant, addressed to the agent, led by the admin message.
  */
 import { formatRate } from "./atbats.mjs";
+import { sendMail, mailConfigured } from "./email.mjs";
 
 export const ADMIN_MESSAGE = "At risk leads need to be worked ASAP or they will be swept to the pond.";
 
@@ -154,7 +155,7 @@ export async function deliverDigests(digests, { channel = "report_only", fub, us
 
   // One clear failure beats thirty identical 401s. A missing key is a setup
   // problem, not thirty agent problems, and it should read that way.
-  if (channel === "email" && !dry && !process.env.RESEND_API_KEY && digests.length) {
+  if (channel === "email" && !dry && !mailConfigured() && digests.length) {
     log("  RESEND_API_KEY is not set — no agent emails can be sent");
     return {
       delivered: [],
@@ -204,19 +205,20 @@ export async function deliverDigests(digests, { channel = "report_only", fub, us
   return { delivered, failed };
 }
 
+export function digestSubject(digest) {
+  const waiting = digest.unanswered?.length ?? 0;
+  const total = digest.atRisk.length + digest.neglected.length + waiting;
+  if (waiting) return `${waiting} lead${waiting === 1 ? "" : "s"} waiting on a call back, ${total} need outreach`;
+  return `${total} of your leads need outreach`;
+}
+
 async function sendEmail(to, digest) {
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from: process.env.BATTR_REPORT_FROM || "battr@therolandteam.com",
-      to: [to],
-      subject: `${digest.atRisk.length + digest.neglected.length} of your leads need outreach`,
-      html: renderDigestHtml(digest),
-      text: renderDigestText(digest),
-    }),
+  await sendMail({
+    to,
+    subject: digestSubject(digest),
+    html: renderDigestHtml(digest),
+    text: renderDigestText(digest),
   });
-  if (!res.ok) throw new Error(`Resend ${res.status}: ${(await res.text()).slice(0, 160)}`);
 }
 
 /** Agent scoreboard section for the daily report, including At Bats metrics. */

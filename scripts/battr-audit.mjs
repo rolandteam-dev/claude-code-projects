@@ -39,6 +39,7 @@ import {
   DEFAULT_CONVERTED_STAGES,
 } from "./battr/atbats.mjs";
 import { buildAgentDigests, deliverDigests, renderAtBatsSection } from "./battr/alerts.mjs";
+import { sendMail, mailConfigured } from "./battr/email.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const LOG_DIR = join(ROOT, "battr-logs");
@@ -304,25 +305,16 @@ async function deliverReport(markdown, { runId, dry }) {
 
   const subject = `Battr audit — ${ptDate()}${dry ? " (dry run)" : ""}`;
 
-  if (process.env.RESEND_API_KEY && process.env.BATTR_REPORT_TO) {
+  if (mailConfigured() && process.env.BATTR_REPORT_TO) {
     try {
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: process.env.BATTR_REPORT_FROM || "battr@therolandteam.com",
-          to: process.env.BATTR_REPORT_TO.split(","),
-          subject,
-          text: markdown,
-        }),
-      });
-      if (!res.ok) console.error(`  email delivery failed: ${res.status} ${(await res.text()).slice(0, 200)}`);
+      await sendMail({ to: process.env.BATTR_REPORT_TO, subject, text: markdown });
     } catch (err) {
-      console.error(`  email delivery failed: ${err.message}`);
+      // Never fatal: the report is already on disk and in the job summary, and
+      // failing the run over a mail problem would hide a clean audit.
+      console.error(`  report email failed: ${err.message}`);
     }
+  } else if (process.env.BATTR_REPORT_TO && !mailConfigured()) {
+    console.error("  report email skipped: BATTR_REPORT_TO is set but RESEND_API_KEY is not");
   }
 
   if (process.env.BATTR_WEBHOOK_URL) {

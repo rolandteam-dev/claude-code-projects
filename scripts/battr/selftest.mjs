@@ -23,7 +23,8 @@ import { normalizeContact } from "./contact.mjs";
 import { isDayAllowed } from "./schedule.mjs";
 import { lists, listById, memberListsOf } from "./lists.mjs";
 import { detectAtBats, summarizeAgents, formatRate } from "./atbats.mjs";
-import { buildAgentDigests, deliverDigests, renderDigestText } from "./alerts.mjs";
+import { buildAgentDigests, deliverDigests, renderDigestText, digestSubject } from "./alerts.mjs";
+import { describeError, fromAddress, mailConfigured } from "./email.mjs";
 import { parseCsv, findColumn, mapRows } from "./import-atbats.mjs";
 import { bucketForSource, bucketName, isSourceAudited, leadBuckets, unmappedPolicy } from "./sources.mjs";
 import { rules } from "./rules.mjs";
@@ -1042,6 +1043,64 @@ check("email delivery fails loudly when an agent has no address on file", async 
   const { delivered, failed } = await deliverDigests(digests, { channel: "email", usersById: new Map(), dry: true, log: () => {} });
   assert.equal(delivered.length, 0);
   assert.match(failed[0].reason, /no email address/);
+});
+
+// --------------------------------------------------------------- email setup
+
+console.log("\nUnit — email setup");
+
+check("an unverified sending domain is named in words, not a status code", () => {
+  // The most likely first-run failure, and the least self-explanatory one.
+  const msg = describeError(403, '{"message":"The domain is not verified. Please verify a domain"}');
+  assert.match(msg, /not verified/);
+  assert.match(msg, /Verify it under Domains/);
+  assert.ok(msg.includes(fromAddress()), "it has to say which address was refused");
+});
+
+check("a bad key reads as a key problem", () => {
+  assert.match(describeError(401, '{"message":"Invalid API key"}'), /RESEND_API_KEY repository secret/);
+});
+
+check("an unrecognized failure still carries the status and body", () => {
+  assert.match(describeError(500, "upstream exploded"), /Resend 500: upstream exploded/);
+});
+
+check("the from address falls back to the site's verified sender", () => {
+  const before = { from: process.env.BATTR_REPORT_FROM, home: process.env.HOMEOWNER_FROM_EMAIL };
+  try {
+    delete process.env.BATTR_REPORT_FROM;
+    process.env.HOMEOWNER_FROM_EMAIL = "The Roland Team <home@therolandteam.com>";
+    assert.equal(fromAddress(), "The Roland Team <home@therolandteam.com>");
+
+    process.env.BATTR_REPORT_FROM = "Battr <battr@therolandteam.com>";
+    assert.equal(fromAddress(), "Battr <battr@therolandteam.com>", "an explicit setting wins");
+  } finally {
+    if (before.from === undefined) delete process.env.BATTR_REPORT_FROM;
+    else process.env.BATTR_REPORT_FROM = before.from;
+    if (before.home === undefined) delete process.env.HOMEOWNER_FROM_EMAIL;
+    else process.env.HOMEOWNER_FROM_EMAIL = before.home;
+  }
+});
+
+check("mailConfigured is what gates every send", () => {
+  const before = process.env.RESEND_API_KEY;
+  try {
+    delete process.env.RESEND_API_KEY;
+    assert.equal(mailConfigured(), false);
+    process.env.RESEND_API_KEY = "re_test";
+    assert.equal(mailConfigured(), true);
+  } finally {
+    if (before === undefined) delete process.env.RESEND_API_KEY;
+    else process.env.RESEND_API_KEY = before;
+  }
+});
+
+check("the subject leads with whoever is waiting on a call back", () => {
+  const waiting = digestSubject({ atRisk: [1], neglected: [1], unanswered: [1] });
+  assert.match(waiting, /^1 lead waiting on a call back, 3 need outreach$/);
+
+  const plain = digestSubject({ atRisk: [1, 2], neglected: [1], unanswered: [] });
+  assert.equal(plain, "3 of your leads need outreach");
 });
 
 // ------------------------------------------------------------- CSV importer

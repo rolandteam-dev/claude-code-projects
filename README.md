@@ -98,6 +98,7 @@ the in-house replacement for the paid Battr subscription.
 npm run battr:test              # rule engine self-test, no API key needed
 npm run battr:dry               # full audit against live FUB, writes nothing
 npm run battr:census            # stage/timeframe census — how much falls outside the audit
+npm run battr:test-email        # prove the Resend setup, sends two sample messages
 FUB_API_KEY=... BATTR_LIVE=true node scripts/battr-audit.mjs
 ```
 
@@ -273,7 +274,7 @@ node scripts/battr/import-atbats.mjs ~/Downloads/at-bats.csv         # import
 | `BATTR_LIVE` | Actions variable | Set to `true` to let the schedule write. Unset = shadow mode. |
 | `BATTR_SMART_LIST_ID` | Actions variable | Optional. Audit one FUB smart list instead of the whole database. |
 | `BATTR_REPORT_TO` | Actions variable | Optional. Where the daily report is emailed. |
-| `RESEND_API_KEY` | Actions secret | Optional. Enables emailing the report. |
+| `RESEND_API_KEY` | Actions secret | Required for the agent emails and the nightly report. Same Resend account the site uses. |
 | `BATTR_WEBHOOK_URL` | Actions secret | Optional. Posts the report to a Slack incoming webhook. |
 
 > The report is always written to `battr-logs/` and to the GitHub Actions job
