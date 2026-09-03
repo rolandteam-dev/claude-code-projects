@@ -405,12 +405,24 @@ Compare our counts to Battr's email: roughly 10 at risk and 8 sweeps a day. If
 the two track for a week, the mirror is faithful.
 
 **B2. Set up Resend, before going live.** One account covers everything — the
-agent emails and the nightly report both go through it. The website already
-sends through Resend, so the domain is very likely verified already.
+agent emails and the nightly report both go through it.
 
-1. **Resend → Domains.** Confirm `therolandteam.com` shows *Verified*. If it
-   does, the hard part is done. If not, add it and publish the DNS records it
-   gives you.
+1. **Resend → Domains** (https://resend.com/domains). This is the *only* place
+   that says whether `therolandteam.com` is verified. Do not go looking in a DNS
+   provider first — if Resend already says Verified there is no DNS work at all.
+
+   If it is **not** verified, Resend shows you the records to add, and they go
+   wherever DNS for the domain actually lives. That is **not Cloudflare** — that
+   account has no zone for this domain. Check Vercel → project → Settings →
+   Domains, or the registrar, to find the real host. **Never add the zone to
+   Cloudflare and repoint nameservers** to fix this: an empty zone would take
+   the website and the email down with it.
+
+   **Interim, needing no DNS at all:** set `BATTR_REPORT_FROM` to
+   `onboarding@resend.dev`. Resend will deliver to the account owner's own
+   address, so the nightly report reaches Mike immediately. Agent emails still
+   need the verified domain — Resend refuses to send to anyone else until then,
+   and the run reports that per agent rather than failing silently.
 2. **Resend → API Keys → Create API Key.** Name it something like
    `Battr audit`, permission *Sending access*. Copy the key — Resend shows it
    once.
