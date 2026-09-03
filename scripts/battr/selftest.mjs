@@ -17,11 +17,11 @@ import { fileURLToPath } from "node:url";
 import { rmSync, readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 
-import { classify, buildTouchIndex, classifyForList, runCombinedList, isExemptAgent, readInboundEmails, findUnansweredInbound, DAY_MS } from "./classify.mjs";
+import { classify, buildTouchIndex, classifyForList, runCombinedList, isExemptAgent, readInboundEmails, findUnansweredInbound, runReportOnlyLists, DAY_MS } from "./classify.mjs";
 import { evaluateCondition, evaluateSet } from "./filters.mjs";
 import { normalizeContact } from "./contact.mjs";
 import { isDayAllowed } from "./schedule.mjs";
-import { lists, listById, memberListsOf } from "./lists.mjs";
+import { lists, listById, memberListsOf, reportOnlyLists } from "./lists.mjs";
 import { detectAtBats, summarizeAgents, formatRate } from "./atbats.mjs";
 import { buildAgentDigests, deliverDigests, renderDigestText, digestSubject } from "./alerts.mjs";
 import { describeError, fromAddress, mailConfigured } from "./email.mjs";
@@ -412,51 +412,56 @@ check("Active Leads uses its own 6/9 thresholds, not Hot Leads' 2/4", () => {
   assert.equal(classifyForList(neg, activeLeads, NOW), "neglected");
 });
 
-check("Active Leads is NOT one of the lists that feed the sweep", () => {
+check("only Battr's six lists feed the sweep", () => {
   const { ids, resolved } = memberListsOf(lists.find((l) => l.audit_type === "combined_contact_lists"));
-  assert.equal(ids.length, 7, "Battr's six, plus our no-timeframe catch-all");
-  assert.ok(!resolved.some((l) => l.name.includes("Active Leads")), "sweeping it would touch leads the live system never does");
+  assert.equal(ids.length, 6);
   assert.deepEqual(
     resolved.map((l) => l.name).sort(),
-    [
-      "😎 Bi-Weekly Nurture",
-      "🌤️ Warm Back Up",
-      "🌱 Monthly Nurture",
-      "🌶️ Hot Leads",
-      "🔥 Weekly Nurture",
-      "👀 Quarterly Nurture",
-      "🕳️ Nurture — no timeframe",
-    ].sort()
+    ["😎 Bi-Weekly Nurture", "🌤️ Warm Back Up", "🌱 Monthly Nurture", "🌶️ Hot Leads", "🔥 Weekly Nurture", "👀 Quarterly Nurture"].sort()
   );
 });
 
-check("a nurture lead with no timeframe is audited instead of invisible", () => {
-  // It used to match none of the four timeframe lists and drop out of the audit
-  // entirely, which reads as compliant and is not.
-  const blank = normalizeContact(
-    { id: 500, stage: "Nurture", created: daysAgo(200), assignedUserId: 5, assignedTo: "Some Agent", tags: [] },
-    { lastOutbound: new Date(daysAgo(45)).getTime(), lastInbound: 0 }
-  );
-  assert.equal(classifyForList(blank, listById(1145), NOW), "at_risk");
-
-  // …and it is a member of the combined list, so it reaches the report.
+check("no report-only list can ever reach the sweep", () => {
+  // The guarantee, stated once: Team Leads is the only list that acts, and none
+  // of the monitoring lists is a member of it. Battr's CLEAN UP list holds 4,200
+  // records against Team Leads' 866 — adding it would sweep 3,860 leads Battr
+  // has never touched.
   const { ids } = memberListsOf(lists.find((l) => l.audit_type === "combined_contact_lists"));
-  assert.ok(ids.includes(1145));
+  for (const list of reportOnlyLists()) {
+    assert.ok(!ids.includes(list.id), `${list.name} must never feed the sweep list`);
+  }
+  assert.ok(reportOnlyLists().length >= 5, "all of Battr's monitoring lists are modelled");
 });
 
-check("a no-timeframe nurture lead is warned but never swept", () => {
-  const ancient = normalizeContact(
-    { id: 501, stage: "Spoke with Customer", created: daysAgo(900), assignedUserId: 5, assignedTo: "Some Agent", tags: [] },
-    { lastOutbound: new Date(daysAgo(800)).getTime(), lastInbound: 0 }
-  );
-  assert.equal(
-    classifyForList(ancient, listById(1145), NOW),
-    "at_risk",
-    "800 days quiet and it still only warns — we do not know this lead's cadence, so we do not guess"
-  );
+check("the CLEAN UP list matches Battr's rule: at risk >15 days, neglected >30", () => {
+  // Read off Battr's rule screen, not inferred.
+  const at = (days) =>
+    classifyForList(
+      normalizeContact(
+        { id: 500, stage: "Nurture", created: daysAgo(400), assignedUserId: 5, assignedTo: "Some Agent", tags: [] },
+        { lastOutbound: new Date(daysAgo(days)).getTime(), lastInbound: 0 }
+      ),
+      listById(1145),
+      NOW
+    );
+  assert.equal(at(14), "compliant");
+  assert.equal(at(16), "at_risk");
+  assert.equal(at(29), "at_risk");
+  assert.equal(at(31), "neglected");
 });
 
-check("a lead with a real timeframe does not fall into the catch-all", () => {
+check("a neglected CLEAN UP lead is reported and nothing else happens to it", () => {
+  // Every action bucket on Battr's rule is empty — no note, no sweep, no alert.
+  // Ours is the same: the list is not a member of the combined list, so nothing
+  // in the action path ever sees it.
+  const list = listById(1145);
+  assert.equal(list.report_only, true);
+  assert.equal(list.at_risk_actions, undefined);
+  assert.equal(list.neglected_actions, undefined);
+  assert.equal(list.list_level_actions, undefined);
+});
+
+check("a lead with a real timeframe is not in the CLEAN UP list", () => {
   const known = normalizeContact(
     { id: 502, stage: "Nurture", timeframe: "0-3 months", created: daysAgo(200), assignedUserId: 5, tags: [] },
     { lastOutbound: new Date(daysAgo(45)).getTime(), lastInbound: 0 }
@@ -464,6 +469,27 @@ check("a lead with a real timeframe does not fall into the catch-all", () => {
   assert.equal(classifyForList(known, listById(1145), NOW), null);
   assert.equal(classifyForList(known, listById(1106), NOW), "neglected");
 });
+
+check("every modelled list carries Battr's observed numbers to check itself against", () => {
+  for (const list of reportOnlyLists()) {
+    assert.ok(list.observed?.total > 0, `${list.name} needs an observed baseline`);
+  }
+  const combined = lists.find((l) => l.audit_type === "combined_contact_lists");
+  assert.equal(combined.observed.total, 866, "the reconciliation number");
+});
+
+check("the report-only lists are counted, not actioned", () => {
+  const blank = normalizeContact(
+    { id: 503, stage: "Nurture", created: daysAgo(400), assignedUserId: 5, assignedTo: "Some Agent", tags: [] },
+    { lastOutbound: new Date(daysAgo(60)).getTime(), lastInbound: 0 }
+  );
+  const rows = runReportOnlyLists([blank], reportOnlyLists(), NOW);
+  const cleanup = rows.find((r) => r.id === 1145);
+  assert.equal(cleanup.neglected, 1);
+  assert.equal(cleanup.observed.total, 4200, "Battr's number rides along for comparison");
+});
+
+
 
 // Every member list's graduated thresholds, checked at each boundary.
 const NURTURE_CADENCE = [

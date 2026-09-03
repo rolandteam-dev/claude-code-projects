@@ -128,6 +128,32 @@ export function findUnansweredInbound(results, days, now = Date.now()) {
     .sort((a, b) => b.waitingDays - a.waitingDays);
 }
 
+/**
+ * Run the lists that are audited but never actioned, and count them.
+ *
+ * These mirror lists Battr runs alongside the sweep list. They exist so the
+ * nightly report covers what Battr's screen covers — and so a rule we have
+ * modelled wrongly shows up as a count that disagrees with Battr's, rather than
+ * as silence. Nothing here can move a lead.
+ */
+export function runReportOnlyLists(contacts, reportLists, now = Date.now()) {
+  return reportLists.map((list) => {
+    const tally = { compliant: 0, at_risk: 0, neglected: 0 };
+    for (const contact of contacts) {
+      const status = classifyForList(contact, list, now);
+      if (status) tally[status]++;
+    }
+    return {
+      id: list.id,
+      name: list.name,
+      total: tally.compliant + tally.at_risk + tally.neglected,
+      ...tally,
+      observed: list.observed ?? null,
+      thresholdsInferred: Boolean(list.thresholds_inferred),
+    };
+  });
+}
+
 // ------------------------------------------------------------ agent exemption
 
 /**

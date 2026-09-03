@@ -24,11 +24,12 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { FubClient } from "./battr/fub.mjs";
 import { rules } from "./battr/rules.mjs";
-import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, isExemptAgent, lower, hasAny, daysBetween, readInboundEmails, findUnansweredInbound } from "./battr/classify.mjs";
+import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, isExemptAgent, lower, hasAny, daysBetween, readInboundEmails, findUnansweredInbound, runReportOnlyLists } from "./battr/classify.mjs";
 import { normalizeContact } from "./battr/contact.mjs";
 import { isDayAllowed } from "./battr/schedule.mjs";
-import { lists } from "./battr/lists.mjs";
+import { lists, reportOnlyLists } from "./battr/lists.mjs";
 import { bucketName, isSourceAudited } from "./battr/sources.mjs";
+import { needsRules, unseenCount, OBSERVED_DATE } from "./battr/observed.mjs";
 import {
   loadOwnership,
   saveOwnership,
@@ -129,7 +130,7 @@ async function replyReprieve(fub, personId, sinceIso, diag) {
 
 // ---------------------------------------------------------------------- report
 
-function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [] }) {
+function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [] }) {
   const byAgent = new Map();
   for (const r of results) {
     if (r.status === "excluded" || !r.owner) continue;
@@ -263,6 +264,36 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
       lines.push(`> ${unmapped.length} of these sources are unmapped. Map them in \`scripts/battr/sources.mjs\` — run \`npm run battr:sources\` to list every source in the database.`);
     }
     lines.push("");
+  }
+
+  // Every list Battr runs, ours beside theirs. None of these act — they are here
+  // so a rule we have modelled wrongly shows up as a number that disagrees,
+  // rather than as silence.
+  if (reportLists.length) {
+    lines.push("## Reconciliation — other lists Battr runs (reported, never actioned)");
+    lines.push("");
+    lines.push(`| List | Ours | Battr ${OBSERVED_DATE} | Ours: C / AR / N | Battr: C / AR / N |`);
+    lines.push("| --- | ---: | ---: | --- | --- |");
+    for (const r of reportLists) {
+      const o = r.observed;
+      const mine = `${r.compliant} / ${r.at_risk} / ${r.neglected}`;
+      const theirs = o ? `${o.compliant} / ${o.at_risk} / ${o.neglected}` : "—";
+      const flag = r.thresholdsInferred ? " ⚠︎" : "";
+      lines.push(`| ${r.name}${flag} | ${r.total} | ${o?.total ?? "—"} | ${mine} | ${theirs} |`);
+    }
+    lines.push("");
+    lines.push("⚠︎ = thresholds inferred from Battr's compliance split, not read off its rule screen. A wide miss on that row means the threshold is wrong, not the data.");
+    lines.push("");
+
+    const gaps = needsRules();
+    if (gaps.length || unseenCount() > 0) {
+      lines.push("**Still unmodelled:**");
+      for (const g of gaps) lines.push(`- ${g.name} — ${g.total.toLocaleString()} records on ${OBSERVED_DATE}. ${g.note}`);
+      if (unseenCount() > 0) {
+        lines.push(`- ${unseenCount()} further scheduled audits ran that day and have not been captured.`);
+      }
+      lines.push("");
+    }
   }
 
   lines.push(renderAtBatsSection(agentStats));
@@ -620,6 +651,16 @@ async function main() {
   // Email, matching what Battr did: each agent gets their own list. Override
   // with the BATTR_ALERT_CHANNEL repository variable (report_only | fub_task).
   const channel = process.env.BATTR_ALERT_CHANNEL || "email";
+  // The lists Battr runs that never act. Counted every night so a wrong rule
+  // surfaces as a number, not as silence.
+  const reportLists = rules.mode === "lists" ? runReportOnlyLists(contacts, reportOnlyLists(), Date.now()) : [];
+  for (const r of reportLists) {
+    const drift = r.observed && r.observed.total ? Math.abs(r.total - r.observed.total) / r.observed.total : 0;
+    if (drift > 0.25) {
+      log(`  ${r.name}: ${r.total} vs Battr's ${r.observed.total} on ${OBSERVED_DATE} — off by ${Math.round(drift * 100)}%`);
+    }
+  }
+
   const unanswered = findUnansweredInbound(results, rules.unansweredInboundDays);
   if (unanswered.length) log(`  ${unanswered.length} leads reached out with no call or text back`);
 
@@ -638,7 +679,7 @@ async function main() {
   mkdirSync(LOG_DIR, { recursive: true });
   if (sweepLog.sweeps.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
 
-  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered });
+  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists });
   const reportPath = await deliverReport(markdown, { runId, dry });
 
   console.log(markdown);

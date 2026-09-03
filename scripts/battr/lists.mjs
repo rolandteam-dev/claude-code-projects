@@ -8,10 +8,14 @@
  *
  * The six member lists form a graduated sequence: the hotter the lead, the less
  * silence it tolerates. Hot Leads warn after 2 quiet days, Quarterly Nurture
- * after 93. A seventh, ours rather than Battr's, catches nurture leads with no
- * timeframe at all — see 1145. None of them carries actions of its own — every
- * note, sweep, and alert lives on the combined `⭐️ Team Leads (Nudges & Sweeps)`
- * list, which pools them and applies its own compliance actions on top.
+ * after 93. None of the six carries actions of its own — every note, sweep, and
+ * alert lives on the combined `⭐️ Team Leads (Nudges & Sweeps)` list, which
+ * pools them and applies its own compliance actions on top.
+ *
+ * Two further lists are audited and REPORTED but never actioned, mirroring how
+ * Battr runs them: 1145 (nurtures with no timeframe) and 1105 (Active Leads).
+ * Both are marked `report_only`. See docs/battr-observed-config.md for the live
+ * numbers each one showed on 2 Sep 2026.
  *
  * ── Two deliberate departures from the live config, both documented below ─────
  *
@@ -122,25 +126,38 @@ export const lists = [
   nurtureList({ id: 1108, name: "🌱 Monthly Nurture", timeframe: TIMEFRAMES.months6to12, atRiskDays: 33, neglectedDays: 36 }),
   nurtureList({ id: 1109, name: "👀 Quarterly Nurture", timeframe: TIMEFRAMES.months12plus, atRiskDays: 93, neglectedDays: 96 }),
 
-  // ─── Ours, not Battr's ─────────────────────────────────────────────────────
-  // The four nurture lists above are selected BY timeframe, so a lead sitting in
-  // Nurture with the field blank matched none of them and was never audited at
-  // all — invisible rather than compliant. That is the gap this closes.
+  // ─── Battr runs this one; we mirror it ─────────────────────────────────────
+  // Observed on the Aida Audits screen for 2 Sep 2026:
   //
-  // It warns and never sweeps: `neglected_filters` is empty, and classifyForList
-  // treats an empty rule set as "never fires". We do not know this lead's real
-  // cadence, so taking it off an agent would be guessing; asking someone to fill
-  // the field in is the actual fix.
+  //   🗓️ CLEAN UP: Nurtures No Timeframe — 4,200 records
+  //   211 compliant (5%) · 129 at risk (3%) · 3,860 neglected (92%)
   //
-  // It doubles as a canary. If the timeframe field name is ever wrong, every
-  // nurture lead lands here at once — loudly, in one list, instead of four lists
-  // quietly emptying.
+  // The four nurture lists above select BY timeframe, so a lead sitting in
+  // Nurture with the field blank matches none of them. Battr catches that
+  // population in this separate list, and so do we.
+  //
+  // NOT A MEMBER OF TEAM LEADS, and that is load-bearing. Team Leads holds 866
+  // records; this list alone holds 4,200. It cannot be feeding it, so in Battr
+  // this list carries no sweep — it computes a compliance state for reporting
+  // and someone works the result by hand. Ours does the same: it is audited and
+  // reported every night and never sweeps a thing. Adding 1145 to
+  // `source_list_ids` would sweep 3,860 leads Battr has never touched.
+  //
+  // THRESHOLDS ARE INFERRED, not read off the rule screen. Every other list
+  // Battr runs uses a 2–3 day gap between warn and sweep, and the narrow 3%
+  // at-risk band here fits that shape. 10/13 mirrors Warm Back Up, the list
+  // closest to this population. `observed` below turns the guess into a test:
+  // the nightly report compares our split against Battr's, and a wide miss
+  // means the thresholds are wrong rather than the data.
   // ───────────────────────────────────────────────────────────────────────────
   {
     id: 1145,
-    name: "🕳️ Nurture — no timeframe",
+    name: "🗓️ CLEAN UP: Nurtures No Timeframe",
     audit_type: "contact_list",
     is_active: true,
+    /** Audited and reported, never actioned. Mirrors Battr, where it feeds no combined list. */
+    report_only: true,
+    observed: { date: "2026-09-02", total: 4200, compliant: 211, at_risk: 129, neglected: 3860 },
     list_filters: {
       groups: [
         [
@@ -150,8 +167,8 @@ export const lists = [
         ],
       ],
     },
-    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 30)]] },
-    neglected_filters: { groups: [] },
+    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 15)]] },
+    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 30)]] },
   },
 
   {
@@ -159,12 +176,18 @@ export const lists = [
     name: "⭐️ Team Leads (Nudges & Sweeps)",
     audit_type: "combined_contact_lists",
     is_active: true,
+    // Observed 2 Sep 2026: 866 records — 842 compliant (97%), 17 at risk (2%),
+    // 7 neglected (1%). This is THE reconciliation number. Warm Back Up alone
+    // shows 10,783 on the same screen, so the combined list sheds roughly 92%
+    // of its members; in our model that is the lead-bucket exclusion plus the
+    // protected-source check. If a dry run lands near 866, the model is right.
+    observed: { date: "2026-09-02", total: 866, compliant: 842, at_risk: 17, neglected: 7 },
     // Pool the six, then apply two exclusions: one lead bucket, and the paused
     // owner group whose leads are never swept.
     list_filters: {
       groups: [
         [
-          { object: "battr.aida_lists", field: "source_list_ids", operator: "IS ANY OF", value: [1104, 1106, 1107, 1108, 1109, 1144, 1145], value_data_type: "integer" },
+          { object: "battr.aida_lists", field: "source_list_ids", operator: "IS ANY OF", value: [1104, 1106, 1107, 1108, 1109, 1144], value_data_type: "integer" },
           contact("lead_bucket_id", "!=", 82, { object: "battr.lead_buckets", value_data_type: "integer" }),
           contact("owner_group_ids", "DOES NOT CONTAIN ANY", [52555], { value_data_type: "integer" }),
         ],
@@ -218,6 +241,75 @@ export const lists = [
     ],
   },
 
+  // ─── Reported, never actioned. All mirror lists Battr runs. ────────────────
+  //
+  // None of these is a member of Team Leads, so none of them can sweep anything.
+  // They exist so the nightly report covers what Battr's screen covers, and so a
+  // list we are modelling wrongly shows up as a number that disagrees with
+  // Battr's rather than as silence.
+  //
+  // POPULATIONS are inferred from each list's name plus our source map, which is
+  // solid. THRESHOLDS are inferred from the compliance split Battr showed on
+  // 2 Sep 2026, which is not. Every one is marked, and `observed` makes each
+  // guess testable: the report prints ours beside Battr's every night.
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    id: 1146,
+    name: "💛 Sphere & Past Clients",
+    audit_type: "contact_list",
+    is_active: true,
+    report_only: true,
+    thresholds_inferred: true,
+    observed: { date: "2026-09-02", total: 3333, compliant: 356, at_risk: 2, neglected: 2975 },
+    // 11% compliant / 0% at risk / 89% neglected. A 3-record at-risk band across
+    // 3,333 leads means a long threshold with the usual narrow gap — a quarterly
+    // touch, not a weekly one.
+    list_filters: {
+      groups: [
+        [
+          contact("source_normalized", "IS ANY OF", ["SOI", "Sphere", "Past Client", "Referral", "Barrett Financial Referral"], { value_data_type: "text" }),
+          notInAPond,
+        ],
+        [contact("stage_name", "IS ANY OF", ["Past Client"], { value_data_type: "text" }), notInAPond],
+      ],
+    },
+    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 90)]] },
+    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 93)]] },
+  },
+
+  {
+    id: 1147,
+    name: "‼️ YLOPO IMPORTANT",
+    audit_type: "contact_list",
+    is_active: true,
+    report_only: true,
+    thresholds_inferred: true,
+    observed: { date: "2026-09-02", total: 127, compliant: 74, at_risk: 7, neglected: 46 },
+    // 58% compliant says this population is actively worked, so the threshold is
+    // short. Matched on the source prefix rather than a fixed list, so a new
+    // Ylopo source is covered without an edit.
+    list_filters: {
+      groups: [[contact("source_normalized", "CONTAINS ANY", ["Ylopo"], { value_data_type: "text" }), notInAPond]],
+    },
+    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 7)]] },
+    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 10)]] },
+  },
+
+  {
+    id: 1148,
+    name: "🏹 Zillow Important",
+    audit_type: "contact_list",
+    is_active: true,
+    report_only: true,
+    thresholds_inferred: true,
+    observed: { date: "2026-09-02", total: 43, compliant: 14, at_risk: 5, neglected: 24 },
+    list_filters: {
+      groups: [[contact("source_normalized", "CONTAINS ANY", ["Zillow"], { value_data_type: "text" }), notInAPond]],
+    },
+    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 5)]] },
+    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 8)]] },
+  },
+
   // ─── NOT a member of Team Leads ────────────────────────────────────────────
   // ❗Active Leads is a real list with its own 6/9 thresholds, but it is NOT one
   // of the six that feed the sweep — it belongs to the Database Health Score
@@ -228,7 +320,12 @@ export const lists = [
     id: 1105,
     name: "❗Active Leads",
     audit_type: "contact_list",
-    is_active: false,
+    // Audited and reported, never actioned — the same shape as 1145. Observed
+    // on 2 Sep 2026 at 135 records: 65 compliant (48%), 21 at risk (16%),
+    // 49 neglected (36%).
+    is_active: true,
+    report_only: true,
+    observed: { date: "2026-09-02", total: 135, compliant: 65, at_risk: 21, neglected: 49 },
     list_filters: {
       groups: [
         [
@@ -244,6 +341,9 @@ export const lists = [
 ];
 
 export const listById = (id) => lists.find((l) => l.id === id);
+
+/** Lists that are audited and reported every night but never trigger an action. */
+export const reportOnlyLists = () => lists.filter((l) => l.report_only && l.is_active);
 
 export const memberListsOf = (combined) => {
   const condition = combined.list_filters?.groups
