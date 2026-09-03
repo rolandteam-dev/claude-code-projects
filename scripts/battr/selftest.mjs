@@ -27,6 +27,7 @@ import { buildAgentDigests, deliverDigests, renderDigestText, digestSubject } fr
 import { describeError, fromAddress, mailConfigured } from "./email.mjs";
 import { parseCsv, findColumn, mapRows } from "./import-atbats.mjs";
 import { bucketForSource, bucketName, isSourceAudited, leadBuckets, unmappedPolicy } from "./sources.mjs";
+import { FubClient } from "./fub.mjs";
 import { rules } from "./rules.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -468,6 +469,93 @@ check("a lead with a real timeframe is not in the CLEAN UP list", () => {
   );
   assert.equal(classifyForList(known, listById(1145), NOW), null);
   assert.equal(classifyForList(known, listById(1106), NOW), "neglected");
+});
+
+check("a sample read stops at the sample size", async () => {
+  // people() used to ignore its options argument, so inspect.mjs asking for 40
+  // contacts pulled all fifty-odd thousand — hundreds of API calls for a
+  // three-record printout, and slow enough to look like a hang.
+  const rows = Array.from({ length: 250 }, (_, i) => ({ id: i }));
+  let pages = 0;
+  const fake = {
+    paginate: FubClient.prototype.paginate,
+    request: async () => {
+      pages++;
+      return { people: rows.slice(0, 100), _metadata: { nextLink: "https://x/next", total: 250 } };
+    },
+    log: () => {},
+  };
+  const out = await fake.paginate.call(fake, "/people", {}, { max: 40 });
+  assert.equal(out.length, 40);
+  assert.equal(pages, 1, "one page was enough for 40 rows");
+});
+
+check("a substring match is a substring match, and array membership is not", () => {
+  // The bug this replaced: CONTAINS ANY compares WHOLE values, so
+  // CONTAINS ANY ["Ylopo"] against a source named "Ylopo Seller" is false, and
+  // the list reports zero without erroring. MATCHES ANY is the substring test.
+  const c = { source_normalized: "Ylopo Seller" };
+  const cond = (operator, value) => ({ field: "source_normalized", operator, value, value_data_type: "text" });
+
+  assert.equal(evaluateCondition(cond("CONTAINS ANY", ["Ylopo"]), c), false, "array membership, by design");
+  assert.equal(evaluateCondition(cond("MATCHES ANY", ["Ylopo"]), c), true);
+  assert.equal(evaluateCondition(cond("MATCHES ANY", ["ylopo"]), c), true, "case-insensitive");
+  assert.equal(evaluateCondition(cond("MATCHES ANY", ["Zillow"]), c), false);
+  assert.equal(evaluateCondition(cond("DOES NOT MATCH ANY", ["Zillow"]), c), true);
+  assert.equal(evaluateCondition(cond("MATCHES ANY", ["Ylopo"]), { source_normalized: "" }), false, "a missing source matches nothing");
+  assert.equal(evaluateCondition(cond("DOES NOT MATCH ANY", ["Ylopo"]), { source_normalized: "" }), true);
+});
+
+check("NO LIST IS SILENTLY EMPTY — every list matches a contact it should", () => {
+  // The failure this project keeps hitting is a rule that returns nothing while
+  // looking healthy: a mis-guessed field name, a wrong operator, an id that
+  // matches nobody. Each list gets one contact built to fall inside it. If a
+  // rule stops selecting anyone, this fails instead of the list quietly
+  // reporting zero forever.
+  const build = (over, quietDays) =>
+    normalizeContact(
+      { id: 900, assignedUserId: 5, assignedTo: "Some Agent", tags: [], created: daysAgo(400), ...over },
+      { lastOutbound: new Date(daysAgo(quietDays)).getTime(), lastInbound: 0 }
+    );
+
+  const cases = [
+    [1144, build({ stage: "Lead", created: daysAgo(3), source: "Zillow Flex" }, 5), "Hot Leads"],
+    [1104, build({ stage: "Attempted Contact", source: "Realtor.com" }, 20), "Warm Back Up"],
+    [1106, build({ stage: "Nurture", timeframe: "0-3 months" }, 20), "Weekly Nurture"],
+    [1107, build({ stage: "Nurture", timeframe: "3-6 months" }, 25), "Bi-Weekly"],
+    [1108, build({ stage: "Nurture", timeframe: "6-12 months" }, 40), "Monthly"],
+    [1109, build({ stage: "Nurture", timeframe: "12+ months" }, 100), "Quarterly"],
+    [1145, build({ stage: "Nurture" }, 40), "CLEAN UP: Nurtures No Timeframe"],
+    [1146, build({ stage: "Lead", source: "SOI" }, 200), "Sphere & Past Clients"],
+    [1147, build({ stage: "Lead", source: "Ylopo Seller" }, 20), "YLOPO IMPORTANT"],
+    [1148, build({ stage: "Lead", source: "Zillow Flex" }, 20), "Zillow Important"],
+    [1105, build({ stage: "Nurture", lastVisit: daysAgo(2) }, 20), "Active Leads"],
+  ];
+
+  for (const [id, contact, label] of cases) {
+    const status = classifyForList(contact, listById(id), NOW);
+    assert.ok(status !== null, `${label} (${id}) selected nobody — its rule matches no contact`);
+    assert.notEqual(status, "compliant", `${label} (${id}) never flags — check its thresholds`);
+  }
+});
+
+check("every operator used by a real list is one the evaluator implements", () => {
+  // A typo'd operator throws at evaluation time, deep inside a run. Catch it here.
+  const operators = new Set();
+  for (const list of lists) {
+    for (const key of ["list_filters", "at_risk_filters", "neglected_filters"]) {
+      for (const group of list[key]?.groups ?? []) {
+        for (const condition of group) operators.add(condition.operator);
+      }
+    }
+  }
+  assert.ok(operators.size > 0);
+  for (const operator of operators) {
+    assert.doesNotThrow(
+      () => evaluateCondition({ field: "stage_name", operator, value: ["x"], value_data_type: "text" }, { stage_name: "y" }),
+      `operator "${operator}" is used by a list but the evaluator rejects it`
+    );
+  }
 });
 
 check("every modelled list carries Battr's observed numbers to check itself against", () => {

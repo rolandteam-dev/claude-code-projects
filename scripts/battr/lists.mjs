@@ -286,10 +286,12 @@ export const lists = [
     thresholds_inferred: true,
     observed: { date: "2026-09-02", total: 127, compliant: 74, at_risk: 7, neglected: 46 },
     // 58% compliant says this population is actively worked, so the threshold is
-    // short. Matched on the source prefix rather than a fixed list, so a new
-    // Ylopo source is covered without an edit.
+    // short. MATCHES ANY is a substring test, so every current Ylopo source
+    // (Ylopo, Ylopo Seller, Ylopo LSA, Ylopo Adwords, Open House (Ylopo)) is
+    // covered and a new one needs no edit. CONTAINS ANY would compare whole
+    // values and match none of them.
     list_filters: {
-      groups: [[contact("source_normalized", "CONTAINS ANY", ["Ylopo"], { value_data_type: "text" }), notInAPond]],
+      groups: [[contact("source_normalized", "MATCHES ANY", ["Ylopo"], { value_data_type: "text" }), notInAPond]],
     },
     at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 7)]] },
     neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 10)]] },
@@ -303,8 +305,10 @@ export const lists = [
     report_only: true,
     thresholds_inferred: true,
     observed: { date: "2026-09-02", total: 43, compliant: 14, at_risk: 5, neglected: 24 },
+    // Substring again: Zillow, Zillow.com, Zillow Flex, Zillow Preferred,
+    // Zillow Home Loans, Zillow-Long Form, Zillowlongform and the rest.
     list_filters: {
-      groups: [[contact("source_normalized", "CONTAINS ANY", ["Zillow"], { value_data_type: "text" }), notInAPond]],
+      groups: [[contact("source_normalized", "MATCHES ANY", ["Zillow"], { value_data_type: "text" }), notInAPond]],
     },
     at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 5)]] },
     neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 8)]] },

@@ -170,12 +170,12 @@ export class FubClient {
    * when available; without it we fall back to every non-trashed person and let
    * the exclusion rules do the filtering.
    */
-  people({ smartListId } = {}) {
-    return this.paginate("/people", {
-      smartListId,
-      includeTrash: false,
-      sort: "id",
-    });
+  people({ smartListId } = {}, { max = Infinity } = {}) {
+    return this.paginate(
+      "/people",
+      { smartListId, includeTrash: false, sort: "id" },
+      { max }
+    );
   }
 
   /**
