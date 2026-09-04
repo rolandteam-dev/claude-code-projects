@@ -492,6 +492,40 @@ check("a channel FUB refuses in bulk is reported, not thrown and not skipped", a
   assert.match(activity.unavailable[0].reason, /must be specified/);
 });
 
+check("an unusable touch signal holds the NUDGE, not just the sweep", () => {
+  // Run 2026-09-04-e1vs held all 55 sweeps for this reason and still wrote 8
+  // nudges. Wrong half. A nudge stamps `Battr At Risk Since`, and that stamp is
+  // the whole of the warn-first interlock — a wrong nudge tonight arms a wrong
+  // sweep tomorrow. Asserted on the engine source because the gate is a single
+  // expression there and nothing else can prove it stayed correct.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /const touchUsable = touchIncomplete\.length === 0;/);
+  assert.match(
+    src,
+    /const nudgesAllowedToday = isDayAllowed\(rules\.nudgeDayFilter[^)]*\)[^;]*&& touchUsable;/,
+    "the nudge gate must carry the same touchUsable condition as the sweep gate"
+  );
+  assert.match(src, /const sweepsAllowedToday = isDayAllowed\(rules\.sweepDayFilter[^)]*\)[^;]*&& touchUsable;/);
+});
+
+check("an unusable touch signal WITHHOLDS the agent digests", () => {
+  // The same run would have emailed thirteen agents that their leads were
+  // "sweeping" — one of them that eighteen of hers were going — on a night it
+  // swept nothing and had already printed that it could not trust the counts.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /const digests = touchUsable\s*\?\s*buildAgentDigests\(/);
+  assert.match(src, /agent digests WITHHELD/);
+  assert.match(src, /what: "agent alerts"/, "and the withholding is recorded as a skip, not silent");
+});
+
+check("the report header separates the audited population from the raw pull", () => {
+  // The committed report said "53786 leads audited". That was the database, not
+  // the audit list — Battr's equivalent number is 866.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /const audited = results\.filter\(\(r\) => r\.status !== "excluded"\)\.length;/);
+  assert.match(src, /leads audited\*\* of \$\{population\} pulled/);
+});
+
 check("a real error still fails the run", async () => {
   // Only a 400 means "this endpoint needs a filter". Anything else is a genuine
   // failure and must not be swallowed as a missing channel.
@@ -955,16 +989,39 @@ console.log("\nUnit — At Bats detection");
 const owned = (id, ownerUserId, pondId = null) =>
   normalizeContact({ id, name: `Lead ${id}`, created: daysAgo(30), assignedUserId: ownerUserId, assignedPondId: pondId }, {});
 
+/** An established database: one contact already known, so this is not a cold start. */
+const baseline = (id = 99, ownerUserId = 11) => new Map([[id, { ownerUserId, pondId: null }]]);
+
 check("a newly seen owned lead is a brand new lead", () => {
-  const events = detectAtBats(new Map(), [owned(1, 11)], { now: NOW });
+  // Against an EXISTING baseline. Passing an empty map here used to pass too,
+  // which is precisely what let the first run mint 53,786 of these.
+  const events = detectAtBats(baseline(), [owned(99, 11), owned(1, 11)], { now: NOW });
   assert.equal(events.length, 1);
   assert.equal(events[0].at_bat_type, "brand_new_lead");
   assert.equal(events[0].new_owner_id, 11);
+  assert.equal(events[0].contact_id, 1, "only the lead that is actually new");
 });
 
 check("a newly seen lead sitting in a pond is not an at bat yet", () => {
-  const events = detectAtBats(new Map(), [owned(1, null, 900)], { now: NOW });
+  const events = detectAtBats(baseline(), [owned(99, 11), owned(1, null, 900)], { now: NOW });
   assert.equal(events.length, 0, "nobody has been given a chance yet");
+});
+
+check("A COLD START MINTS NOTHING — a database is a baseline, not a stampede", () => {
+  // The first real run wrote 53,786 brand_new_lead rows stamped the same
+  // instant, and credited one agent with 29,195 at bats at 100% retention.
+  // A database that already exists is not a stream of leads arriving at once.
+  const wholeDatabase = Array.from({ length: 500 }, (_, i) => owned(i + 1, 11 + (i % 3)));
+  assert.equal(detectAtBats(new Map(), wholeDatabase, { now: NOW }).length, 0);
+  assert.equal(detectAtBats(null, wholeDatabase, { now: NOW }).length, 0, "a missing file reads the same as an empty one");
+});
+
+check("and the guard stands down once a baseline exists", () => {
+  // It must not suppress real history forever — one known contact is enough for
+  // the next run to detect genuine changes normally.
+  const events = detectAtBats(baseline(99, 11), [owned(99, 12)], { now: NOW });
+  assert.equal(events.length, 1, "a real owner change is still an at bat");
+  assert.equal(events[0].at_bat_type, "other_transfer");
 });
 
 check("pond to owner is a pond claim", () => {

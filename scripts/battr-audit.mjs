@@ -154,8 +154,14 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
   const lines = [];
   lines.push(`# Battr audit — ${ptDate()}${dry ? " (DRY RUN — nothing was written)" : ""}`);
   lines.push("");
+  // "53786 leads audited" was the raw database pull, not the audit list. The
+  // audited population is what the combined list actually holds — Battr's
+  // equivalent number is 866 — and conflating the two makes every rate in this
+  // report look sixty times better than it is.
+  const audited = results.filter((r) => r.status !== "excluded").length;
   lines.push(
-    `Run \`${runId}\` · ${population} leads audited · thresholds: at risk ${rules.atRiskDays}d, neglected ${rules.neglectedDays}d`
+    `Run \`${runId}\` · **${audited} leads audited** of ${population} pulled from Follow Up Boss · ` +
+      `thresholds: at risk ${rules.atRiskDays}d, neglected ${rules.neglectedDays}d`
   );
   if (touchIncomplete.length) {
     lines.push("");
@@ -515,11 +521,18 @@ async function main() {
 
   // Day filters gate each action independently. A blocked day is logged as a
   // skip with its reason — never silently dropped.
-  const nudgesAllowedToday = isDayAllowed(rules.nudgeDayFilter, new Date(), rules.timezone);
-  const sweepsAllowedToday =
-    isDayAllowed(rules.sweepDayFilter, new Date(), rules.timezone) && touchIncomplete.length === 0;
-  if (!nudgesAllowedToday) log(`  nudges skipped: day filter "${rules.nudgeDayFilter}"`);
-  if (!sweepsAllowedToday) log(`  sweeps skipped: day filter "${rules.sweepDayFilter}"`);
+  // An incomplete touch signal blocks BOTH tiers, not just the sweep.
+  //
+  // Run 2026-09-04-e1vs held all 55 sweeps for exactly this reason and still
+  // wrote 8 nudges. That is the wrong half to hold. A nudge stamps
+  // `Battr At Risk Since`, and that stamp is the whole of the warn-first
+  // interlock: a wrong nudge tonight is what arms a wrong sweep tomorrow, on a
+  // night when the run has already decided it cannot trust its own evidence.
+  const touchUsable = touchIncomplete.length === 0;
+  const nudgesAllowedToday = isDayAllowed(rules.nudgeDayFilter, new Date(), rules.timezone) && touchUsable;
+  const sweepsAllowedToday = isDayAllowed(rules.sweepDayFilter, new Date(), rules.timezone) && touchUsable;
+  if (!nudgesAllowedToday) log(`  nudges skipped: ${touchUsable ? `day filter "${rules.nudgeDayFilter}"` : "last-touch incomplete"}`);
+  if (!sweepsAllowedToday) log(`  sweeps skipped: ${touchUsable ? `day filter "${rules.sweepDayFilter}"` : "last-touch incomplete"}`);
 
   // 5a. nudge
   if ((args.stage === "both" || args.stage === "at-risk") && nudgesAllowedToday) {
@@ -643,14 +656,21 @@ async function main() {
   }
 
   // A blocked day is a recorded skip, not a silent no-op.
+  const incompleteReason = () =>
+    `last-touch incomplete — ${touchIncomplete.map((g) => g.channel).join(", ")} could not be read in bulk`;
   if (!nudgesAllowedToday && atRisk.length) {
-    actions.skipped.push({ what: "nudges", count: atRisk.length, reason: `day filter "${rules.nudgeDayFilter}"` });
+    actions.skipped.push({
+      what: "nudges",
+      count: atRisk.length,
+      reason: touchUsable ? `day filter "${rules.nudgeDayFilter}"` : incompleteReason(),
+    });
   }
   if (!sweepsAllowedToday && neglected.length) {
-    const reason = touchIncomplete.length
-      ? `last-touch incomplete — ${touchIncomplete.map((g) => g.channel).join(", ")} could not be read in bulk`
-      : `day filter "${rules.sweepDayFilter}"`;
-    actions.skipped.push({ what: "sweeps", count: neglected.length, reason });
+    actions.skipped.push({
+      what: "sweeps",
+      count: neglected.length,
+      reason: touchUsable ? `day filter "${rules.sweepDayFilter}"` : incompleteReason(),
+    });
   }
 
   // 6. At Bats — ownership-change tracking.
@@ -662,10 +682,15 @@ async function main() {
   const ledgerPath = join(LOG_DIR, "at-bats.jsonl");
 
   const sweptIds = new Set(actions.swept.map((s) => s.personId));
-  const newAtBats = detectAtBats(loadOwnership(statePath), contacts, { sweptIds });
+  const priorOwnership = loadOwnership(statePath);
+  const newAtBats = detectAtBats(priorOwnership, contacts, { sweptIds });
   appendAtBats(ledgerPath, newAtBats);
   saveOwnership(statePath, contacts);
-  if (newAtBats.length) log(`  ${newAtBats.length} new at bats recorded`);
+  if (!priorOwnership || priorOwnership.size === 0) {
+    log(`  ownership baseline recorded for ${contacts.length} contacts — no at bats from a cold start`);
+  } else if (newAtBats.length) {
+    log(`  ${newAtBats.length} new at bats recorded`);
+  }
 
   const stageList = await fub.stages().catch(() => []);
   const convertedStageExids = stageList
@@ -696,14 +721,29 @@ async function main() {
   const unanswered = findUnansweredInbound(results, rules.unansweredInboundDays);
   if (unanswered.length) log(`  ${unanswered.length} leads reached out with no call or text back`);
 
-  const digests = buildAgentDigests(results, {
-    excludeGroupIds: rules.excludeOwnerGroupIds,
-    sweepDays: rules.neglectedDays,
-    unanswered,
-    // Built AFTER the sweep loop, so the digest can tell an agent which leads
-    // they can still save from the ones already gone.
-    sweptIds,
-  });
+  // Digests are withheld on an unusable touch signal, for the same reason the
+  // actions are. Run 2026-09-04-e1vs would have emailed thirteen agents that
+  // their leads were "sweeping" — Quetza Adame that eighteen of hers were going
+  // — on a night the engine swept nothing and had already said in its own report
+  // that it could not trust the counts. Telling thirty agents their book is
+  // being taken, wrongly, is not a smaller mistake than taking it.
+  const digests = touchUsable
+    ? buildAgentDigests(results, {
+        excludeGroupIds: rules.excludeOwnerGroupIds,
+        sweepDays: rules.neglectedDays,
+        unanswered,
+        // Built AFTER the sweep loop, so the digest can tell an agent which
+        // leads they can still save from the ones already gone.
+        sweptIds,
+      })
+    : [];
+
+  if (!touchUsable) {
+    const wouldHave = buildAgentDigests(results, { excludeGroupIds: rules.excludeOwnerGroupIds, unanswered, sweptIds }).length;
+    log(`  ${wouldHave} agent digests WITHHELD — ${incompleteReason()}`);
+    actions.skipped.push({ what: "agent alerts", count: wouldHave, reason: incompleteReason() });
+  }
+
   const alerts = await deliverDigests(digests, { channel, fub, usersById, dry, log });
   if (digests.length) log(`  ${digests.length} agent digests (${channel}${dry ? ", dry" : ""})`);
 
