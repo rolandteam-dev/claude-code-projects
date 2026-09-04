@@ -184,15 +184,35 @@ export class FubClient {
    * audit inside a few dozen API calls instead of a few thousand.
    */
   async activity(sinceIso) {
-    // Calls and texts only. Email is excluded by policy, not by limitation:
-    // mass email in FUB is a single click, so counting it would let one blast
-    // mark an entire database as worked. (FUB also refuses to serve /v1/emails
-    // in bulk, so the two reasons happen to agree.)
-    const [calls, texts] = await Promise.all([
-      this.paginate("/calls", { createdAfter: sinceIso }),
-      this.paginate("/textMessages", { createdAfter: sinceIso }),
-    ]);
-    return { calls, texts, emails: [] };
+    // Calls and texts. Email is excluded by policy, not by limitation: mass
+    // email in FUB is a single click, so counting it would let one blast mark
+    // an entire database as worked.
+    //
+    // A channel FUB will not serve in bulk is reported as UNAVAILABLE rather
+    // than thrown or quietly skipped. Skipping is the dangerous option: without
+    // texts, every lead an agent has only ever texted reads as never contacted,
+    // and the sweep would take those leads off the agent who actually worked
+    // them. The caller refuses to sweep on an incomplete touch index.
+    const unavailable = [];
+
+    const channel = async (name, path) => {
+      try {
+        return await this.paginate(path, { createdAfter: sinceIso });
+      } catch (err) {
+        // A 400 here means FUB requires a per-record filter — it is a shape
+        // problem with the endpoint, not a transient failure, so retrying or
+        // failing the run both waste the read we already paid for.
+        if (/→ 400:/.test(err.message)) {
+          unavailable.push({ channel: name, reason: err.message.split("→ 400:")[1]?.trim() ?? err.message });
+          this.log(`  ${name}: NOT available in bulk — ${err.message}`);
+          return [];
+        }
+        throw err;
+      }
+    };
+
+    const [calls, texts] = await Promise.all([channel("calls", "/calls"), channel("texts", "/textMessages")]);
+    return { calls, texts, emails: [], unavailable };
   }
 
   /**

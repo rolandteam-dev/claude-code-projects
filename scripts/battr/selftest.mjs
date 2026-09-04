@@ -471,6 +471,37 @@ check("a lead with a real timeframe is not in the CLEAN UP list", () => {
   assert.equal(classifyForList(known, listById(1106), NOW), "neglected");
 });
 
+check("a channel FUB refuses in bulk is reported, not thrown and not skipped", async () => {
+  // Confirmed live: FUB answers GET /v1/textMessages with 400 unless a person,
+  // thread or number is named. Throwing loses the whole audit; skipping is
+  // worse — every lead an agent has only ever texted then reads as never
+  // contacted, and the sweep takes it off the agent who worked it.
+  const client = new FubClient("k", { dry: true, log: () => {} });
+  client.paginate = async (path) => {
+    if (path === "/textMessages") {
+      throw new Error('FUB GET /textMessages → 400: {"errorMessage":"personId, threadId, phone ... must be specified"}');
+    }
+    return [{ personId: 1, created: new Date().toISOString(), isIncoming: false }];
+  };
+
+  const activity = await client.activity(new Date().toISOString());
+  assert.equal(activity.calls.length, 1, "the channel that works still comes back");
+  assert.equal(activity.texts.length, 0);
+  assert.equal(activity.unavailable.length, 1);
+  assert.equal(activity.unavailable[0].channel, "texts");
+  assert.match(activity.unavailable[0].reason, /must be specified/);
+});
+
+check("a real error still fails the run", async () => {
+  // Only a 400 means "this endpoint needs a filter". Anything else is a genuine
+  // failure and must not be swallowed as a missing channel.
+  const client = new FubClient("k", { dry: true, log: () => {} });
+  client.paginate = async () => {
+    throw new Error("FUB GET /calls failed after 5 retries (503)");
+  };
+  await assert.rejects(() => client.activity(new Date().toISOString()), /503/);
+});
+
 check("a sample read stops at the sample size", async () => {
   // people() used to ignore its options argument, so inspect.mjs asking for 40
   // contacts pulled all fifty-odd thousand — hundreds of API calls for a
@@ -1271,9 +1302,16 @@ check("rows without a usable id or date are dropped, not guessed at", () => {
 
 /** A stand-in FUB API serving fixtures, so the real client code is exercised. */
 function fixtureServer() {
+  // Dates here are relative to the REAL clock, not the frozen NOW the unit tests
+  // use. The end-to-end run is a subprocess with its own Date.now(), so fixtures
+  // built from a fixed date drift a day further from their intended tier every
+  // day — this suite passed on the 3rd and failed on the 4th for no other
+  // reason. A test that rots on the calendar is worse than no test.
+  const ago = (n) => new Date(Date.now() - n * DAY_MS).toISOString();
+
   // Early-stage leads older than 10 days land in Warm Back Up (at risk >10d,
   // neglected >13d), which is what these fixtures exercise.
-  const warm = (over) => lead({ stage: "Lead", created: daysAgo(60), ...over });
+  const warm = (over) => lead({ stage: "Lead", created: ago(60), ...over });
   const people = [
     // compliant
     warm({ id: 101, name: "Fresh Contact", assignedTo: "Nicole Miller", assignedUserId: 11 }),
@@ -1287,11 +1325,14 @@ function fixtureServer() {
     warm({ id: 105, name: "In Escrow", assignedTo: "Brett Smith", assignedUserId: 12, stage: "Under Contract" }),
   ];
 
+  // Each one sits in the middle of its tier, not on a boundary, so a run at any
+  // hour of any day lands in the same place: compliant <10d, at risk 10-13d,
+  // neglected >13d.
   const calls = [
-    { personId: 101, created: daysAgo(1), isIncoming: false },
-    { personId: 102, created: daysAgo(11), isIncoming: false },
-    { personId: 103, created: daysAgo(40), isIncoming: false },
-    { personId: 104, created: daysAgo(40), isIncoming: false },
+    { personId: 101, created: ago(2), isIncoming: false },
+    { personId: 102, created: ago(12), isIncoming: false },
+    { personId: 103, created: ago(40), isIncoming: false },
+    { personId: 104, created: ago(40), isIncoming: false },
   ];
 
   const routes = {

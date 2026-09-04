@@ -130,7 +130,7 @@ async function replyReprieve(fub, personId, sinceIso, diag) {
 
 // ---------------------------------------------------------------------- report
 
-function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [] }) {
+function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], touchIncomplete = [] }) {
   const byAgent = new Map();
   for (const r of results) {
     if (r.status === "excluded" || !r.owner) continue;
@@ -157,6 +157,22 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
   lines.push(
     `Run \`${runId}\` · ${population} leads audited · thresholds: at risk ${rules.atRiskDays}d, neglected ${rules.neglectedDays}d`
   );
+  if (touchIncomplete.length) {
+    lines.push("");
+    lines.push("> ## ⚠ THIS AUDIT IS NOT COMPLETE — DO NOT ACT ON THE NEGLECTED COUNTS");
+    lines.push(">");
+    for (const gap of touchIncomplete) {
+      lines.push(`> Follow Up Boss would not serve **${gap.channel}** in bulk: \`${gap.reason}\``);
+    }
+    lines.push(">");
+    lines.push(
+      "> Every lead below is judged on the channels that *could* be read. A lead an agent has only " +
+        "ever texted therefore reads as never contacted. **Sweeps are disabled for this run** — the " +
+        "engine will not take a lead off an agent on evidence it knows is partial."
+    );
+    lines.push("");
+  }
+
   lines.push("");
   lines.push("## Summary");
   lines.push("");
@@ -423,6 +439,18 @@ async function main() {
     `  ${activity.calls.length} calls, ${activity.texts.length} texts, ${activity.emails.length} emails since ${since.slice(0, 10)}`
   );
 
+  // A channel FUB will not serve in bulk leaves the touch index incomplete, and
+  // an incomplete touch index is the one state in which sweeping does real
+  // damage: a lead an agent has only ever texted reads as never contacted, and
+  // gets taken off the agent who actually worked it. Report, never sweep.
+  const touchIncomplete = activity.unavailable ?? [];
+  if (touchIncomplete.length) {
+    for (const gap of touchIncomplete) {
+      log(`  WARNING: ${gap.channel} could not be read — last-touch is incomplete`);
+    }
+    log("  SWEEPS DISABLED for this run: an incomplete touch index would sweep leads that were worked.");
+  }
+
   // 4. classify
   //
   // Custom fields are resolved BEFORE classification, not after: list mode reads
@@ -488,7 +516,8 @@ async function main() {
   // Day filters gate each action independently. A blocked day is logged as a
   // skip with its reason — never silently dropped.
   const nudgesAllowedToday = isDayAllowed(rules.nudgeDayFilter, new Date(), rules.timezone);
-  const sweepsAllowedToday = isDayAllowed(rules.sweepDayFilter, new Date(), rules.timezone);
+  const sweepsAllowedToday =
+    isDayAllowed(rules.sweepDayFilter, new Date(), rules.timezone) && touchIncomplete.length === 0;
   if (!nudgesAllowedToday) log(`  nudges skipped: day filter "${rules.nudgeDayFilter}"`);
   if (!sweepsAllowedToday) log(`  sweeps skipped: day filter "${rules.sweepDayFilter}"`);
 
@@ -618,7 +647,10 @@ async function main() {
     actions.skipped.push({ what: "nudges", count: atRisk.length, reason: `day filter "${rules.nudgeDayFilter}"` });
   }
   if (!sweepsAllowedToday && neglected.length) {
-    actions.skipped.push({ what: "sweeps", count: neglected.length, reason: `day filter "${rules.sweepDayFilter}"` });
+    const reason = touchIncomplete.length
+      ? `last-touch incomplete — ${touchIncomplete.map((g) => g.channel).join(", ")} could not be read in bulk`
+      : `day filter "${rules.sweepDayFilter}"`;
+    actions.skipped.push({ what: "sweeps", count: neglected.length, reason });
   }
 
   // 6. At Bats — ownership-change tracking.
@@ -679,7 +711,7 @@ async function main() {
   mkdirSync(LOG_DIR, { recursive: true });
   if (sweepLog.sweeps.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
 
-  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists });
+  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete });
   const reportPath = await deliverReport(markdown, { runId, dry });
 
   console.log(markdown);

@@ -50,6 +50,20 @@ const SAFE_VALUES = new Set([
   "delayed",
 ]);
 
+/**
+ * Every person field that might carry a last-contact timestamp.
+ *
+ * Live finding: FUB refuses GET /v1/textMessages in bulk (400, "personId,
+ * threadId, phone ... must be specified"), the same way it refuses /v1/emails.
+ * Calls come back fine. So the touch index cannot be built from the messages
+ * endpoints alone, and the fallback — if there is one — has to be a field FUB
+ * already returns on the person record.
+ *
+ * This lists every candidate with a sample value so we can see which exist and
+ * whether any of them separates a call or text from an email.
+ */
+const TOUCH_CANDIDATES = /^(last|recent).*(comm|contact|call|text|message|activity|reach|touch)/i;
+
 /** The mappings the rules depend on, and where each one lands if it is wrong. */
 const CRITICAL = [
   ["timeframe", "four of the six audit lists branch on it — wrong means they return empty"],
@@ -95,6 +109,20 @@ async function main() {
     if (present.length) console.log(`${" ".repeat(24)} e.g. ${show(sample)}`);
     else console.log(`${" ".repeat(24)} ${why}`);
   }
+
+  console.log("\n\nLAST-CONTACT CANDIDATES — the fallback for texts, which FUB will not serve in bulk");
+  console.log("-".repeat(70));
+  const touchFields = [...keys].filter((k) => TOUCH_CANDIDATES.test(k)).sort();
+  if (!touchFields.length) {
+    console.log("*** NONE. There is no person-level last-contact field, so a text-only lead");
+    console.log("    cannot be distinguished from a never-contacted one, and sweeping is unsafe.");
+  }
+  for (const field of touchFields) {
+    const present = people.filter((p) => p[field] !== undefined && p[field] !== null);
+    console.log(`${field.padEnd(28)} present on ${String(present.length).padStart(3)}/${people.length}   e.g. ${show(present[0]?.[field])}`);
+  }
+  console.log("\nWhat we need is one that counts calls and texts but NOT email. If none does,");
+  console.log("the honest options are: sweep on calls alone, or do not sweep at all.");
 
   console.log("\n\nCUSTOM FIELDS ON THE PERSON (custom*)");
   console.log("-".repeat(70));
