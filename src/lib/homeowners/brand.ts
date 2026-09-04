@@ -1,6 +1,6 @@
 /**
  * Branding for the homeowner experience (dashboards + value emails). This is
- * the main Roland Team brand, distinct from the Roland Luxury marketing site —
+ * the Roland Team brand, shared with the marketing site —
  * the homeowner engine is aimed at the full database, not just luxury buyers.
  * Contact details are shared with the marketing site config; the name,
  * positioning, and public base URL differ.

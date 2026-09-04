@@ -9,7 +9,7 @@ import type { ListingFilters, PropertyType } from "@/lib/idx/types";
 export const runtime = "nodejs";
 
 /**
- * Roland Luxury AI Concierge → Anthropic Messages API (with a live-listings
+ * The Roland Team AI Concierge → Anthropic Messages API (with a live-listings
  * search tool). Set ANTHROPIC_API_KEY in Vercel to go live; without it the
  * endpoint returns a graceful, on-brand fallback. Live listing results also
  * require REPLIERS_API_KEY (otherwise the tool simply returns no matches).
@@ -77,7 +77,7 @@ function knowledgeBase(): string {
 }
 
 function systemPrompt(): string {
-  return `You are the Roland Luxury Concierge — the AI assistant for Roland Luxury, the luxury division of The Roland Team | LPT Realty, led by founder Mike Roland. You represent a Top 1% Las Vegas real estate team with 1,000+ homes sold and 800+ five-star reviews, specializing in luxury, guard-gated, and custom-estate real estate across Las Vegas and Henderson, Nevada.
+  return `You are The Roland Team Concierge — the AI assistant for The Roland Team | LPT Realty, led by founder Mike Roland. You represent a Top 1% Las Vegas real estate team with 1,000+ homes sold and 800+ five-star reviews, specializing in luxury, guard-gated, and custom-estate real estate across Las Vegas and Henderson, Nevada.
 
 VOICE: Warm, polished, and quietly confident — a five-star concierge, never pushy or salesy.
 
@@ -192,7 +192,7 @@ async function runSearch(input: any): Promise<{ cards: Card[]; searchUrl: string
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 const FALLBACK =
-  `Thank you for reaching out to Roland Luxury. Our live concierge is just a moment away — for the fastest response, tap "Connect me with the team" below, call ${site.phone}, or email ${site.email}, and Mike's team will personally assist you.`;
+  `Thank you for reaching out to The Roland Team. Our live concierge is just a moment away — for the fastest response, tap "Connect me with the team" below, call ${site.phone}, or email ${site.email}, and Mike's team will personally assist you.`;
 
 async function callAnthropic(key: string, body: unknown): Promise<Response> {
   return fetch("https://api.anthropic.com/v1/messages", {

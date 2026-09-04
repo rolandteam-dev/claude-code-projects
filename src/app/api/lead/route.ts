@@ -72,7 +72,7 @@ export async function POST(req: Request) {
 
   const body = {
     source: data.source || "Luxury Website",
-    system: "Roland Luxury Website",
+    system: "The Roland Team Website",
     type: data.type || "General Inquiry",
     message: [address ? `Property address: ${address}` : "", data.message || ""].filter(Boolean).join("\n"),
     person: {

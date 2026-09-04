@@ -12,7 +12,7 @@ import { site, absoluteUrl } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Las Vegas Luxury Real Estate | Guard-Gated Homes & Estates",
   description:
-    "The complete guide to Las Vegas luxury real estate — the valley's most exclusive guard-gated communities, custom estates, price tiers, and how to buy or sell luxury with Roland Luxury.",
+    "The complete guide to Las Vegas luxury real estate — the valley's most exclusive guard-gated communities, custom estates, price tiers, and how to buy or sell luxury with The Roland Team.",
   alternates: { canonical: "/las-vegas-luxury-real-estate" },
 };
 
@@ -46,7 +46,7 @@ const faqs = [
   },
   {
     q: "Who specializes in Las Vegas luxury real estate?",
-    a: `Roland Luxury, led by ${site.founder} with ${site.brokerage}, specializes in luxury and guard-gated communities across Las Vegas and Henderson — representing buyers and sellers of custom estates, homesites, and luxury residences throughout Southern Nevada.`,
+    a: `The Roland Team, led by ${site.founder} with ${site.brokerage}, specializes in luxury and guard-gated communities across Las Vegas and Henderson — representing buyers and sellers of custom estates, homesites, and luxury residences throughout Southern Nevada.`,
   },
 ];
 
@@ -166,7 +166,7 @@ export default function LuxuryPillar() {
 
         <h2 className="mt-11 text-[1.6rem]">Why work with a Las Vegas luxury specialist</h2>
         <p>
-          Roland Luxury, led by {site.founder} with {site.brokerage}, focuses on Las Vegas and Henderson&apos;s
+          The Roland Team, led by {site.founder} with {site.brokerage}, focuses on Las Vegas and Henderson&apos;s
           luxury and guard-gated communities — from Ascaya and MacDonald Highlands to The Ridges and The Summit
           Club. We pair deep, gate-by-gate local knowledge with a client-first, discreet approach to help you
           buy or sell at the highest level.
@@ -187,7 +187,7 @@ export default function LuxuryPillar() {
         <div className="mt-12 rounded-[14px] bg-[var(--color-graphite)] px-7 py-12 text-center text-white">
           <h2 className="text-[1.7rem] text-white">Explore Las Vegas luxury real estate</h2>
           <p className="mx-auto mt-2 max-w-[520px] text-[#cfd3da]">
-            Ready to buy or sell at the top of the market? Roland Luxury specializes in the valley&apos;s finest
+            Ready to buy or sell at the top of the market? The Roland Team specializes in the valley&apos;s finest
             communities.
           </p>
           <Link href={site.cta.href} className="btn mt-6">{site.cta.label}</Link>

@@ -186,7 +186,7 @@ export function HomeEstimator() {
                   {trackStatus === "sending" ? "Setting up…" : "Track my home value"}
                 </button>
                 <p className="text-center font-sans text-[0.62rem] text-[var(--color-muted)]">
-                  Periodic value updates from {site.parentBrand}. Unsubscribe anytime.
+                  Periodic value updates from {site.name}. Unsubscribe anytime.
                 </p>
               </div>
             </form>

@@ -28,8 +28,8 @@ export async function sendFubLead(lead: FubLead): Promise<{ sent: boolean; reaso
 
   const street = lead.address?.trim();
   const body = {
-    source: lead.source || "Roland Luxury Website",
-    system: "Roland Luxury Website",
+    source: lead.source || "The Roland Team Website",
+    system: "The Roland Team Website",
     type: lead.type || "General Inquiry",
     message: lead.message || "",
     person: {

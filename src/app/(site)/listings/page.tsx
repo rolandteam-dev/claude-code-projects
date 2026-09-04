@@ -14,7 +14,7 @@ import type { ListingFilters, PropertyType } from "@/lib/idx/types";
 export const metadata: Metadata = {
   title: "Homes for Sale in Las Vegas & Henderson",
   description:
-    "Search live MLS homes for sale in Las Vegas, Henderson, North Las Vegas, and Summerlin — luxury estates, guard-gated communities, condos, and more with Roland Luxury.",
+    "Search live MLS homes for sale in Las Vegas, Henderson, North Las Vegas, and Summerlin — luxury estates, guard-gated communities, condos, and more with The Roland Team.",
   alternates: { canonical: "/listings" },
 };
 

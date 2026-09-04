@@ -78,7 +78,7 @@ function RichText({ text }: { text: string }) {
 const GREETING: Msg = {
   role: "assistant",
   content:
-    "Welcome to Roland Luxury. I'm your private concierge — ask me about our communities, the Las Vegas luxury market, or tell me what you're looking for and I'll pull live listings. How may I help?",
+    "Welcome to The Roland Team. I'm your private concierge — ask me about our communities, the Las Vegas luxury market, or tell me what you're looking for and I'll pull live listings. How may I help?",
 };
 
 const SUGGESTIONS = [
@@ -219,7 +219,7 @@ export function Concierge() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          aria-label="Open the Roland Luxury concierge"
+          aria-label="Open the Roland Team concierge"
           className="fixed bottom-5 right-5 z-[60] flex items-center gap-3 rounded-full bg-[var(--color-graphite)] py-3 pl-3 pr-5 text-white shadow-[0_10px_30px_rgba(20,22,27,0.35)] transition-transform hover:-translate-y-0.5"
         >
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-gold)] font-serif text-[1.1rem] font-medium">
@@ -237,7 +237,7 @@ export function Concierge() {
             <div className="flex items-center gap-2.5">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-gold)] font-serif text-[1rem]">✦</span>
               <div>
-                <div className="font-sans text-[0.86rem] font-semibold leading-tight">Roland Luxury Concierge</div>
+                <div className="font-sans text-[0.86rem] font-semibold leading-tight">The Roland Team Concierge</div>
                 <div className="font-sans text-[0.68rem] text-[#9aa0aa]">Typically replies instantly</div>
               </div>
             </div>
