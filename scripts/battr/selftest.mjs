@@ -15,6 +15,7 @@ import { execFile } from "node:child_process";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { rmSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import assert from "node:assert/strict";
 
 import { classify, buildTouchIndex, classifyForList, runCombinedList, isExemptAgent, readInboundEmails, findUnansweredInbound, runReportOnlyLists, DAY_MS } from "./classify.mjs";
@@ -32,6 +33,9 @@ import { rules } from "./rules.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
+
+/** Where the end-to-end run writes. Never the repository's own battr-logs. */
+const SCRATCH_LOGS = join(tmpdir(), `battr-selftest-${process.pid}`);
 
 const NOW = Date.UTC(2026, 8, 1, 12, 0, 0); // 2026-09-01, fixed so tests don't drift
 const daysAgo = (n) => new Date(NOW - n * DAY_MS).toISOString();
@@ -1426,7 +1430,11 @@ const run = (env) =>
       // GITHUB_STEP_SUMMARY is blanked deliberately: the engine appends its
       // report there when set, and a fixture run must never write test data
       // into the real job summary where it reads as live output.
-      { cwd: ROOT, env: { ...process.env, GITHUB_STEP_SUMMARY: "", ...env } },
+      // BATTR_LOG_DIR sends the run's reports, undo logs, at-bats ledger and
+      // ownership snapshot to a scratch directory. Without it a test run writes
+      // into the real battr-logs and the cleanup below deletes it — audit trail,
+      // ownership baseline and all.
+      { cwd: ROOT, env: { ...process.env, GITHUB_STEP_SUMMARY: "", BATTR_LOG_DIR: SCRATCH_LOGS, ...env } },
       (err, stdout, stderr) => (err ? reject(new Error(`${err.message}\n${stderr}`)) : resolve({ stdout, stderr }))
     );
   });
@@ -1472,7 +1480,22 @@ try {
   });
 } finally {
   server.close();
-  rmSync(join(ROOT, "battr-logs"), { recursive: true, force: true });
+  // Only ever the scratch directory. Removing ROOT/battr-logs here destroyed the
+  // committed audit trail and state/ownership.csv every time the suite ran.
+  rmSync(SCRATCH_LOGS, { recursive: true, force: true });
 }
+
+check("the suite cannot delete the real audit trail", () => {
+  // The guard for the bug above: if the e2e run is ever pointed back at the
+  // repository's own battr-logs, the cleanup takes the ownership baseline with
+  // it, and a run with no baseline used to mint an at bat for every contact in
+  // the database.
+  const src = readFileSync(join(HERE, "selftest.mjs"), "utf8");
+  assert.ok(!/rmSync\(join\(ROOT, "battr-logs"\)/.test(src), "cleanup must never target the repo's battr-logs");
+  assert.match(src, /BATTR_LOG_DIR: SCRATCH_LOGS/, "the e2e run must write to scratch");
+
+  const engine = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(engine, /process\.env\.BATTR_LOG_DIR \|\| join\(ROOT, "battr-logs"\)/, "and the engine must honour it");
+});
 
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);

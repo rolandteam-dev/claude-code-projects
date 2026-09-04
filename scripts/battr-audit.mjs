@@ -43,7 +43,17 @@ import { buildAgentDigests, deliverDigests, renderAtBatsSection } from "./battr/
 import { sendMail, mailConfigured } from "./battr/email.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const LOG_DIR = join(ROOT, "battr-logs");
+/**
+ * Overridable so the self-test can point a run at a scratch directory.
+ *
+ * It used to be a constant, and the e2e test cleaned up afterwards by removing
+ * `battr-logs` wholesale — which deletes the committed audit trail and, worse,
+ * `state/ownership.csv`. Losing that snapshot is not a tidy-up: the next run
+ * then sees no baseline, and before the cold-start guard that meant minting a
+ * brand_new_lead for all fifty-odd thousand contacts. Running the tests must
+ * not be able to do that.
+ */
+const LOG_DIR = process.env.BATTR_LOG_DIR || join(ROOT, "battr-logs");
 
 // ---------------------------------------------------------------------- args
 
