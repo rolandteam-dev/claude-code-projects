@@ -87,7 +87,7 @@ export default async function AreaPage({ params }: { params: Promise<{ slug: str
         <div className="rounded-[14px] bg-[var(--color-graphite)] px-7 py-12 text-center text-white">
           <h2 className="text-[1.7rem] text-white">Thinking about {a.name}?</h2>
           <p className="mx-auto mt-2 max-w-[520px] text-[#cfd3da]">
-            Roland Luxury knows every community in {a.name}. Let&apos;s find the right fit for you.
+            The Roland Team knows every community in {a.name}. Let&apos;s find the right fit for you.
           </p>
           <Link href={site.cta.href} className="btn mt-6">{site.cta.label}</Link>
         </div>

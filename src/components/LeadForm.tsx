@@ -46,7 +46,7 @@ export function LeadForm({
       <div className="rounded-[10px] border border-[var(--color-line)] bg-[var(--color-sand)] p-6 text-center">
         <div className="font-sans text-[1.1rem] font-semibold text-[var(--color-ink)]">Thank you!</div>
         <p className="mt-2 font-sans text-[0.9rem] text-[var(--color-ink-soft)]">
-          Your message is on its way to Roland Luxury. We&apos;ll be in touch shortly. Prefer to talk now? Call{" "}
+          Your message is on its way to The Roland Team. We&apos;ll be in touch shortly. Prefer to talk now? Call{" "}
           <a href={`tel:${site.phone}`} className="font-semibold text-[var(--color-gold)] no-underline">{site.phone}</a>.
         </p>
       </div>

@@ -13,7 +13,7 @@ import { site } from "@/lib/site";
 export const metadata: Metadata = {
   title: "New Construction Homes in Las Vegas & Henderson",
   description:
-    "New construction homes in Las Vegas and Henderson — explore builder communities like Skye Canyon, Cadence, Inspirada, and Summerlin with Roland Luxury.",
+    "New construction homes in Las Vegas and Henderson — explore builder communities like Skye Canyon, Cadence, Inspirada, and Summerlin with The Roland Team.",
   alternates: { canonical: "/new-construction" },
 };
 
@@ -81,7 +81,7 @@ export default function NewConstructionHub() {
         <div className="mt-14 rounded-[14px] border border-[var(--color-line)] bg-[var(--color-sand)] p-8">
           <h2 className="text-[1.4rem]">Bring your own agent to the builder</h2>
           <p className="mt-2 max-w-[680px] text-[var(--color-ink-soft)]">
-            The on-site sales rep works for the builder. Register with Roland Luxury on your first visit and we
+            The on-site sales rep works for the builder. Register with The Roland Team on your first visit and we
             represent <em>you</em> — comparing incentives, reviewing the contract, and guiding your upgrade
             choices, typically at no cost to you.
           </p>

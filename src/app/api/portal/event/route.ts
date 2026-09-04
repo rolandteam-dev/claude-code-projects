@@ -87,8 +87,8 @@ export async function POST(req: Request) {
     .join("\n");
 
   const body = {
-    source: "Roland Luxury Client Portal",
-    system: "Roland Luxury Website",
+    source: "The Roland Team Client Portal",
+    system: "The Roland Team Website",
     type: fubType(data.action, data.journey),
     message: context,
     person: {

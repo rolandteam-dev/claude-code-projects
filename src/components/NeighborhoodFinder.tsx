@@ -372,7 +372,7 @@ function LeadCapture({
           </p>
         )}
         <p className="text-center font-sans text-[0.66rem] text-[var(--color-muted)]">
-          Your info goes only to {site.parentBrand}.
+          Your info goes only to {site.name}.
         </p>
       </form>
     </div>

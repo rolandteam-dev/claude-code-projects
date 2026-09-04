@@ -6,9 +6,9 @@ import { LeadForm } from "@/components/LeadForm";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Contact Roland Luxury",
+  title: "Contact The Roland Team",
   description:
-    "Get in touch with Roland Luxury for luxury Las Vegas and Henderson real estate — buying, selling, or exploring guard-gated communities.",
+    "Get in touch with The Roland Team for luxury Las Vegas and Henderson real estate — buying, selling, or exploring guard-gated communities.",
   alternates: { canonical: "/contact" },
 };
 
@@ -28,7 +28,7 @@ export default function ContactPage() {
           <h1 className="mt-2 font-serif text-[2.6rem] font-semibold">Let&apos;s find your place in Las Vegas</h1>
           <p className="mt-4 text-[1.1rem] text-[var(--color-ink-soft)]">
             Whether you&apos;re buying, selling, or just exploring, we&apos;d love to help. Send a note and a
-            member of Roland Luxury will get back to you personally.
+            member of The Roland Team will get back to you personally.
           </p>
 
           <div className="mt-8 space-y-4">
