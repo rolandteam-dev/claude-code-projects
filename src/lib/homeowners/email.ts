@@ -109,6 +109,18 @@ function sendingEnabled(): boolean {
   return process.env.HOMEOWNER_EMAIL_ENABLED === "true";
 }
 
+/**
+ * From address for homeowner email. Defaults to the main brand domain
+ * (therolandteam.com, verified in Resend) so mail comes from the org's own
+ * domain — sending from a different domain (e.g. rolandluxury.com) trips Gmail's
+ * "may be impersonating" warning. Override with HOMEOWNER_FROM_EMAIL only to a
+ * verified sender.
+ */
+const DEFAULT_FROM = "The Roland Team <home@therolandteam.com>";
+function fromAddress(): string {
+  return process.env.HOMEOWNER_FROM_EMAIL || DEFAULT_FROM;
+}
+
 const DISABLED = {
   sent: false,
   reason: "sending disabled (HOMEOWNER_EMAIL_ENABLED is not \"true\")",
@@ -117,7 +129,7 @@ const DISABLED = {
 export async function sendWelcomeEmail(h: Homeowner): Promise<{ sent: boolean; reason?: string }> {
   if (!sendingEnabled()) return DISABLED;
   const key = process.env.RESEND_API_KEY;
-  const from = process.env.HOMEOWNER_FROM_EMAIL;
+  const from = fromAddress();
   if (!key || !from) return { sent: false, reason: "email not configured" };
   if (!h.email) return { sent: false, reason: "missing email" };
   try {
@@ -143,7 +155,7 @@ export async function sendCashOfferEmail(to: {
 }): Promise<{ sent: boolean; reason?: string }> {
   if (!sendingEnabled()) return DISABLED;
   const key = process.env.RESEND_API_KEY;
-  const from = process.env.HOMEOWNER_FROM_EMAIL;
+  const from = fromAddress();
   if (!key || !from) return { sent: false, reason: "email not configured" };
   if (!to.email) return { sent: false, reason: "missing email" };
   const html = `
@@ -154,8 +166,8 @@ export async function sendCashOfferEmail(to: {
     <div style="background:#fff;border:1px solid #e7e3db;border-radius:14px;padding:28px;">
       <p style="margin:0 0 10px;font-size:19px;font-weight:600;">We got your cash-offer request${to.firstName ? `, ${to.firstName}` : ""}</p>
       <p style="margin:0 0 12px;font-size:15px;color:#3a3a3a;">
-        Thanks for reaching out${to.address ? ` about <strong>${to.address}</strong>` : ""}. ${homeownerBrand.founder}&apos;s
-        team will review your home and get back to you shortly with your cash-offer options — and a side-by-side of
+        Thanks for reaching out${to.address ? ` about <strong>${to.address}</strong>` : ""}. ${homeownerBrand.name}
+        will review your home and get back to you shortly with your cash-offer options — and a side-by-side of
         what the same home could bring on the open market, so you can compare with no pressure.
       </p>
       <a href="tel:${homeownerBrand.phone}" style="display:inline-block;margin-top:8px;background:#8a6d2b;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:600;font-size:15px;">
@@ -185,7 +197,7 @@ export async function sendCashOfferEmail(to: {
 export async function sendValueEmail(h: Homeowner): Promise<{ sent: boolean; reason?: string }> {
   if (!sendingEnabled()) return DISABLED;
   const key = process.env.RESEND_API_KEY;
-  const from = process.env.HOMEOWNER_FROM_EMAIL; // e.g. "The Roland Team <home@therolandteam.com>"
+  const from = fromAddress(); // e.g. "The Roland Team <home@therolandteam.com>"
   if (!key || !from) return { sent: false, reason: "email not configured" };
   if (!h.email || !latestEstimate(h)) return { sent: false, reason: "missing email or estimate" };
   try {

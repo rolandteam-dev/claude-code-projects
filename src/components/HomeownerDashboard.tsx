@@ -222,7 +222,7 @@ export function HomeownerDashboard(p: DashboardProps) {
           <>
             <div className="font-serif text-[1.5rem]">You&apos;re all set, {p.firstName} ✦</div>
             <p className="mt-2 max-w-[520px] font-sans text-[0.95rem] text-[#cfd3da]">
-              {homeownerBrand.founder}&apos;s team will prepare a precise, human home valuation for {p.address} and
+              {homeownerBrand.name} will prepare a precise, human home valuation for {p.address} and
               reach out shortly. Prefer to talk now?{" "}
               <a href={`tel:${homeownerBrand.phone}`} className="font-semibold text-[var(--color-gold-2)] no-underline">
                 {homeownerBrand.phone}
@@ -233,7 +233,7 @@ export function HomeownerDashboard(p: DashboardProps) {
           <>
             <div className="font-serif text-[1.6rem]">Want a precise, human valuation?</div>
             <p className="mt-2 max-w-[540px] font-sans text-[0.95rem] text-[#cfd3da]">
-              This is an automated estimate. {homeownerBrand.founder}&apos;s team can prepare a full comparative
+              This is an automated estimate. {homeownerBrand.name} can prepare a full comparative
               market analysis based on your home&apos;s condition, upgrades, and current demand — free and with no
               obligation.
             </p>

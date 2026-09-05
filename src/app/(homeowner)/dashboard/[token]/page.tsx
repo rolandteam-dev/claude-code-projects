@@ -62,11 +62,11 @@ export default async function DashboardPage({
             <>
               We&apos;re preparing a current-market valuation for{" "}
               <span className="font-semibold text-[var(--color-ink)]">{h.address}</span>. A few details about the
-              home let {homeownerBrand.founder} tailor it precisely — reach out and we&apos;ll send your full report.
+              home let {homeownerBrand.name} tailor it precisely — reach out and we&apos;ll send your full report.
             </>
           ) : (
             <>
-              {homeownerBrand.founder}&apos;s team prepares a current-market valuation by hand for homes like yours.
+              {homeownerBrand.name} prepares a current-market valuation by hand for homes like yours.
               Reach out and we&apos;ll send your full report.
             </>
           )}
