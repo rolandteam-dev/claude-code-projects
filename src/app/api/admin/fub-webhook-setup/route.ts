@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { site } from "@/lib/site";
-import { FUB_BASE, fubAuthHeader } from "@/lib/homeowners/fubMap";
+import { FUB_BASE, fubHeaders } from "@/lib/homeowners/fubMap";
 
 export const runtime = "nodejs";
 
@@ -39,8 +39,7 @@ export async function GET(req: Request) {
     });
   }
 
-  const auth = fubAuthHeader(key);
-  const headers = { Authorization: auth, "Content-Type": "application/json", "X-System": "TheRolandTeamWebsite" };
+  const headers = fubHeaders(key, { "Content-Type": "application/json" });
   const targetUrl = `${site.url.replace(/\/$/, "")}/api/webhooks/fub?secret=${encodeURIComponent(secret)}`;
   const action = (params.get("action") || "list").toLowerCase();
 
@@ -107,7 +106,7 @@ export async function GET(req: Request) {
       results,
       note: allOk
         ? "Real-time sync is on. New/updated FUB contacts with an address are now tracked instantly."
-        : "Some webhooks failed — see the response field. FUB may require a registered system key; send me the output.",
+        : "Some webhooks failed. A 403 'X-System-Key header missing' means FUB needs a registered system key — set FUB_X_SYSTEM and FUB_X_SYSTEM_KEY in the environment (request them from FUB), then run this again.",
     });
   }
 

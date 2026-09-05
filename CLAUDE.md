@@ -41,6 +41,7 @@ organically for community/neighborhood and buyer/seller search terms.
 
 ## Environment variables
 - `FUB_API_KEY` — Follow Up Boss; stores leads and portal engagement. Without it forms/portal still work, nothing is stored.
+- `FUB_X_SYSTEM` / `FUB_X_SYSTEM_KEY` — FUB registered-system identity. Optional for most calls, **required** to register webhooks (`/api/admin/fub-webhook-setup`) — FUB 403s webhook registration with "X-System-Key header missing" otherwise. Request a system name + key from Follow Up Boss and set both; every FUB call then sends them.
 - `ADMIN_TOKEN` — required for `/admin/sellers` and `/admin/clients`; gates all client data served to them.
 - `HOMEOWNER_EMAIL_ENABLED` — must be exactly `"true"` or **no homeowner email sends at all** (welcome, cash offer, weekly digest). Off by default; see `docs/homeowner-engine-setup.md`.
 - `HOMEOWNER_BASE_URL` — the Roland Team host. Homeowner dashboards, portal invite links and email links are all absolute against it.
