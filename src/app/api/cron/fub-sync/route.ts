@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { homeownerStore, type Homeowner } from "@/lib/homeowners/store";
-import { FUB_BASE, fubAuthHeader, personToHomeowner } from "@/lib/homeowners/fubMap";
+import { FUB_BASE, fubHeaders, personToHomeowner } from "@/lib/homeowners/fubMap";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -51,7 +51,7 @@ export async function GET(req: Request) {
   const timeBudgetMs = 45_000;
   const startedAt = Date.now();
   const store = homeownerStore();
-  const auth = fubAuthHeader(key);
+  const headers = fubHeaders(key);
 
   let imported = 0;
   let skipped = 0;
@@ -65,9 +65,7 @@ export async function GET(req: Request) {
         nextCursor = pageUrl; // resume from this page next call
         break;
       }
-      const res = await fetch(pageUrl, {
-        headers: { Authorization: auth, "X-System": "TheRolandTeamWebsite" },
-      });
+      const res = await fetch(pageUrl, { headers });
       if (!res.ok) {
         // Past the end / transient: a clean finish if we already made progress.
         if (imported + skipped > 0) {

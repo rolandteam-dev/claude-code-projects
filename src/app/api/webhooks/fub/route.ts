@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { homeownerStore, type Homeowner } from "@/lib/homeowners/store";
-import { FUB_BASE, fubAuthHeader, personToHomeowner } from "@/lib/homeowners/fubMap";
+import { FUB_BASE, fubHeaders, personToHomeowner } from "@/lib/homeowners/fubMap";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -71,7 +71,7 @@ async function handle(req: Request) {
     return NextResponse.json({ ok: true, processed: 0, added: 0 });
   }
 
-  const auth = fubAuthHeader(key);
+  const headers = fubHeaders(key);
   const store = homeownerStore();
   const batch: Homeowner[] = [];
   let missing = 0;
@@ -79,7 +79,7 @@ async function handle(req: Request) {
   for (const id of ids) {
     try {
       const res = await fetch(`${FUB_BASE}/v1/people/${encodeURIComponent(id)}?fields=allFields`, {
-        headers: { Authorization: auth, "X-System": "TheRolandTeamWebsite" },
+        headers,
       });
       if (!res.ok) {
         missing++;

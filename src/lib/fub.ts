@@ -6,6 +6,8 @@
  *
  * FUB Events API: https://docs.followupboss.com/reference/events-post
  */
+import { fubHeaders } from "@/lib/homeowners/fubMap";
+
 export type FubLead = {
   firstName?: string;
   lastName?: string;
@@ -47,11 +49,7 @@ export async function sendFubLead(lead: FubLead): Promise<{ sent: boolean; reaso
   try {
     const res = await fetch("https://api.followupboss.com/v1/events", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Basic ${Buffer.from(`${key}:`).toString("base64")}`,
-        "X-System": "TheRolandTeamWebsite",
-      },
+      headers: fubHeaders(key, { "Content-Type": "application/json" }),
       body: JSON.stringify(body),
     });
     if (!res.ok) return { sent: false, reason: `fub_${res.status}` };

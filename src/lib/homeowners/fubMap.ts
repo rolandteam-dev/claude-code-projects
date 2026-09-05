@@ -16,6 +16,24 @@ export function fubAuthHeader(key: string): string {
   return `Basic ${Buffer.from(`${key}:`).toString("base64")}`;
 }
 
+/**
+ * Standard headers for a Follow Up Boss API call. Always sends Authorization +
+ * X-System; adds X-System-Key when FUB_X_SYSTEM_KEY is set. FUB requires the
+ * system key specifically on webhook-registration calls (it 403s without it),
+ * and sending it on every call is harmless, so this is used everywhere. Request
+ * a registered system name + key from FUB and store them as FUB_X_SYSTEM /
+ * FUB_X_SYSTEM_KEY.
+ */
+export function fubHeaders(key: string, extra?: Record<string, string>): Record<string, string> {
+  const headers: Record<string, string> = {
+    Authorization: fubAuthHeader(key),
+    "X-System": process.env.FUB_X_SYSTEM || "TheRolandTeamWebsite",
+  };
+  const systemKey = process.env.FUB_X_SYSTEM_KEY;
+  if (systemKey) headers["X-System-Key"] = systemKey;
+  return { ...headers, ...(extra ?? {}) };
+}
+
 export function tokenForFub(id: string): string {
   const salt = process.env.HOMEOWNER_TOKEN_SALT || process.env.CRON_SECRET || "roland-fallback-salt";
   return createHmac("sha256", salt).update(`fub:${id}`).digest("hex").slice(0, 24);
