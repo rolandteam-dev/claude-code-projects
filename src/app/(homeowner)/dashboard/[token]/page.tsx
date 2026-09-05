@@ -34,7 +34,7 @@ export default async function DashboardPage({
       <div className="mx-auto max-w-[560px] px-6 py-20 text-center">
         <div className="font-serif text-[1.7rem] text-[var(--color-ink)]">This link isn&apos;t active</div>
         <p className="mt-3 font-sans text-[0.95rem] text-[var(--color-ink-soft)]">
-          Your home value link may have expired or moved. {homeownerBrand.founder}&apos;s team is happy to send a
+          Your home value link may have expired or moved. {homeownerBrand.name} is happy to send a
           fresh report — just reach out.
         </p>
         <a
