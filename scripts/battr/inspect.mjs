@@ -124,6 +124,43 @@ async function main() {
   console.log("\nWhat we need is one that counts calls and texts but NOT email. If none does,");
   console.log("the honest options are: sweep on calls alone, or do not sweep at all.");
 
+  // Is there an id -> name lookup for timeframe? If the person payload carries
+  // ids rather than names, this endpoint is what turns them into the bands the
+  // nurture lists match on — and its absence is what would force the CSV export
+  // fallback.
+  console.log("\n\nTIMEFRAME LOOKUP — is there an id -> name map to be had?");
+  console.log("-".repeat(70));
+  for (const path of ["/timeframes", "/leadTimeframes"]) {
+    try {
+      const rows = await fub.paginate(path, {}, { max: 100 });
+      console.log(`${path.padEnd(18)} OK — ${rows.length} rows`);
+      for (const row of rows.slice(0, 25)) {
+        console.log(`  ${String(row.id ?? "?").padStart(6)}  ${JSON.stringify(row.name ?? row.label ?? row)}`);
+      }
+    } catch (err) {
+      console.log(`${path.padEnd(18)} ${err.message.split("→")[1]?.trim() ?? err.message}`);
+    }
+  }
+
+  // The other place a timeframe can live: an account custom field rather than
+  // the built-in. If both exist, the People screen column and Battr's mirror
+  // may simply be bound to different ones — which is one explanation for
+  // 514 on the screen against 1,262 in Battr's lists.
+  try {
+    const fields = await fub.customFields();
+    const tf = fields.filter((f) => /timeframe|time.?frame|timeline|when.*(buy|move)/i.test(`${f.label} ${f.name}`));
+    console.log(`\ncustom fields matching "timeframe": ${tf.length}`);
+    for (const f of tf) {
+      console.log(`  name=${f.name}  label=${JSON.stringify(f.label)}  type=${f.type}${f.choices ? `  choices=${JSON.stringify(f.choices).slice(0, 200)}` : ""}`);
+    }
+    if (tf.length) {
+      console.log("\n>>> A custom timeframe field EXISTS as well as the built-in. Confirm which");
+      console.log("    one the People screen column is bound to before trusting either count.");
+    }
+  } catch (err) {
+    console.log(`\ncustom fields unreadable: ${err.message}`);
+  }
+
   console.log("\n\nCUSTOM FIELDS ON THE PERSON (custom*)");
   console.log("-".repeat(70));
   const custom = [...keys].filter((k) => k.startsWith("custom")).sort();

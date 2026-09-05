@@ -15,6 +15,7 @@ import { execFile } from "node:child_process";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { rmSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import assert from "node:assert/strict";
 
 import { classify, buildTouchIndex, classifyForList, runCombinedList, isExemptAgent, readInboundEmails, findUnansweredInbound, runReportOnlyLists, DAY_MS } from "./classify.mjs";
@@ -32,6 +33,9 @@ import { rules } from "./rules.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
+
+/** Where the end-to-end run writes. Never the repository's own battr-logs. */
+const SCRATCH_LOGS = join(tmpdir(), `battr-selftest-${process.pid}`);
 
 const NOW = Date.UTC(2026, 8, 1, 12, 0, 0); // 2026-09-01, fixed so tests don't drift
 const daysAgo = (n) => new Date(NOW - n * DAY_MS).toISOString();
@@ -490,6 +494,40 @@ check("a channel FUB refuses in bulk is reported, not thrown and not skipped", a
   assert.equal(activity.unavailable.length, 1);
   assert.equal(activity.unavailable[0].channel, "texts");
   assert.match(activity.unavailable[0].reason, /must be specified/);
+});
+
+check("an unusable touch signal holds the NUDGE, not just the sweep", () => {
+  // Run 2026-09-04-e1vs held all 55 sweeps for this reason and still wrote 8
+  // nudges. Wrong half. A nudge stamps `Battr At Risk Since`, and that stamp is
+  // the whole of the warn-first interlock — a wrong nudge tonight arms a wrong
+  // sweep tomorrow. Asserted on the engine source because the gate is a single
+  // expression there and nothing else can prove it stayed correct.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /const touchUsable = touchIncomplete\.length === 0;/);
+  assert.match(
+    src,
+    /const nudgesAllowedToday = isDayAllowed\(rules\.nudgeDayFilter[^)]*\)[^;]*&& touchUsable;/,
+    "the nudge gate must carry the same touchUsable condition as the sweep gate"
+  );
+  assert.match(src, /const sweepsAllowedToday = isDayAllowed\(rules\.sweepDayFilter[^)]*\)[^;]*&& touchUsable;/);
+});
+
+check("an unusable touch signal WITHHOLDS the agent digests", () => {
+  // The same run would have emailed thirteen agents that their leads were
+  // "sweeping" — one of them that eighteen of hers were going — on a night it
+  // swept nothing and had already printed that it could not trust the counts.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /const digests = touchUsable\s*\?\s*buildAgentDigests\(/);
+  assert.match(src, /agent digests WITHHELD/);
+  assert.match(src, /what: "agent alerts"/, "and the withholding is recorded as a skip, not silent");
+});
+
+check("the report header separates the audited population from the raw pull", () => {
+  // The committed report said "53786 leads audited". That was the database, not
+  // the audit list — Battr's equivalent number is 866.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /const audited = results\.filter\(\(r\) => r\.status !== "excluded"\)\.length;/);
+  assert.match(src, /leads audited\*\* of \$\{population\} pulled/);
 });
 
 check("a real error still fails the run", async () => {
@@ -955,16 +993,39 @@ console.log("\nUnit — At Bats detection");
 const owned = (id, ownerUserId, pondId = null) =>
   normalizeContact({ id, name: `Lead ${id}`, created: daysAgo(30), assignedUserId: ownerUserId, assignedPondId: pondId }, {});
 
+/** An established database: one contact already known, so this is not a cold start. */
+const baseline = (id = 99, ownerUserId = 11) => new Map([[id, { ownerUserId, pondId: null }]]);
+
 check("a newly seen owned lead is a brand new lead", () => {
-  const events = detectAtBats(new Map(), [owned(1, 11)], { now: NOW });
+  // Against an EXISTING baseline. Passing an empty map here used to pass too,
+  // which is precisely what let the first run mint 53,786 of these.
+  const events = detectAtBats(baseline(), [owned(99, 11), owned(1, 11)], { now: NOW });
   assert.equal(events.length, 1);
   assert.equal(events[0].at_bat_type, "brand_new_lead");
   assert.equal(events[0].new_owner_id, 11);
+  assert.equal(events[0].contact_id, 1, "only the lead that is actually new");
 });
 
 check("a newly seen lead sitting in a pond is not an at bat yet", () => {
-  const events = detectAtBats(new Map(), [owned(1, null, 900)], { now: NOW });
+  const events = detectAtBats(baseline(), [owned(99, 11), owned(1, null, 900)], { now: NOW });
   assert.equal(events.length, 0, "nobody has been given a chance yet");
+});
+
+check("A COLD START MINTS NOTHING — a database is a baseline, not a stampede", () => {
+  // The first real run wrote 53,786 brand_new_lead rows stamped the same
+  // instant, and credited one agent with 29,195 at bats at 100% retention.
+  // A database that already exists is not a stream of leads arriving at once.
+  const wholeDatabase = Array.from({ length: 500 }, (_, i) => owned(i + 1, 11 + (i % 3)));
+  assert.equal(detectAtBats(new Map(), wholeDatabase, { now: NOW }).length, 0);
+  assert.equal(detectAtBats(null, wholeDatabase, { now: NOW }).length, 0, "a missing file reads the same as an empty one");
+});
+
+check("and the guard stands down once a baseline exists", () => {
+  // It must not suppress real history forever — one known contact is enough for
+  // the next run to detect genuine changes normally.
+  const events = detectAtBats(baseline(99, 11), [owned(99, 12)], { now: NOW });
+  assert.equal(events.length, 1, "a real owner change is still an at bat");
+  assert.equal(events[0].at_bat_type, "other_transfer");
 });
 
 check("pond to owner is a pond claim", () => {
@@ -1369,7 +1430,11 @@ const run = (env) =>
       // GITHUB_STEP_SUMMARY is blanked deliberately: the engine appends its
       // report there when set, and a fixture run must never write test data
       // into the real job summary where it reads as live output.
-      { cwd: ROOT, env: { ...process.env, GITHUB_STEP_SUMMARY: "", ...env } },
+      // BATTR_LOG_DIR sends the run's reports, undo logs, at-bats ledger and
+      // ownership snapshot to a scratch directory. Without it a test run writes
+      // into the real battr-logs and the cleanup below deletes it — audit trail,
+      // ownership baseline and all.
+      { cwd: ROOT, env: { ...process.env, GITHUB_STEP_SUMMARY: "", BATTR_LOG_DIR: SCRATCH_LOGS, ...env } },
       (err, stdout, stderr) => (err ? reject(new Error(`${err.message}\n${stderr}`)) : resolve({ stdout, stderr }))
     );
   });
@@ -1415,7 +1480,22 @@ try {
   });
 } finally {
   server.close();
-  rmSync(join(ROOT, "battr-logs"), { recursive: true, force: true });
+  // Only ever the scratch directory. Removing ROOT/battr-logs here destroyed the
+  // committed audit trail and state/ownership.csv every time the suite ran.
+  rmSync(SCRATCH_LOGS, { recursive: true, force: true });
 }
+
+check("the suite cannot delete the real audit trail", () => {
+  // The guard for the bug above: if the e2e run is ever pointed back at the
+  // repository's own battr-logs, the cleanup takes the ownership baseline with
+  // it, and a run with no baseline used to mint an at bat for every contact in
+  // the database.
+  const src = readFileSync(join(HERE, "selftest.mjs"), "utf8");
+  assert.ok(!/rmSync\(join\(ROOT, "battr-logs"\)/.test(src), "cleanup must never target the repo's battr-logs");
+  assert.match(src, /BATTR_LOG_DIR: SCRATCH_LOGS/, "the e2e run must write to scratch");
+
+  const engine = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(engine, /process\.env\.BATTR_LOG_DIR \|\| join\(ROOT, "battr-logs"\)/, "and the engine must honour it");
+});
 
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);
