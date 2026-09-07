@@ -4,6 +4,7 @@ import { HomeownerDashboard } from "@/components/HomeownerDashboard";
 import { recentComps, zipMarketStats } from "@/lib/idx/market";
 import { valueHome } from "@/lib/homeowners/nvValue";
 import { mortgageRates } from "@/lib/homeowners/rates";
+import { staticMapUrl, googleReviews } from "@/lib/homeowners/maps";
 
 // Token-addressed, per-recipient page — always rendered on demand.
 export const dynamic = "force-dynamic";
@@ -100,11 +101,13 @@ export default async function DashboardPage({
   }
 
   // Neighborhood context (graceful: empty/null when the feed isn't configured).
-  const [comps, market, rates] = await Promise.all([
+  const [comps, market, rates, reviews] = await Promise.all([
     recentComps({ zip: h.zip, beds: h.beds, sqft: h.sqft }),
     zipMarketStats({ zip: h.zip }),
     mortgageRates(),
+    googleReviews(),
   ]);
+  const mapUrl = staticMapUrl({ subject: { address: h.address, city: h.city, state: h.state, zip: h.zip }, comps });
 
   return (
     <HomeownerDashboard
@@ -130,6 +133,8 @@ export default async function DashboardPage({
       market={market}
       comps={comps}
       rates={rates}
+      mapUrl={mapUrl}
+      reviews={reviews}
     />
   );
 }
