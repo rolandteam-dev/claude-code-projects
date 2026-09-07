@@ -46,6 +46,7 @@ organically for community/neighborhood and buyer/seller search terms.
 - `HOMEOWNER_EMAIL_ENABLED` — must be exactly `"true"` or **no homeowner email sends at all** (welcome, cash offer, weekly digest). Off by default; see `docs/homeowner-engine-setup.md`.
 - `HOMEOWNER_BASE_URL` — the Roland Team host. Homeowner dashboards, portal invite links and email links are all absolute against it.
 - `REPLIERS_API_KEY` / `IDX_PROVIDER` — MLS feed selection (see `src/lib/idx/provider.ts`).
+- `FRED_API_KEY` — free St. Louis Fed key powering the homeowner dashboard's Mortgage Rate Trends module (30/15-yr fixed, weekly). Without it the module is simply hidden. Get one at https://fred.stlouisfed.org/docs/api/api_key.html.
 
 ## Roadmap (next)
 - Client Portal on real auth + a database (hubs that follow a client across devices; per-agent dashboard access)

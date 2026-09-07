@@ -84,11 +84,18 @@ async function resolveProperty(h: Homeowner): Promise<{ beds: number; baths: num
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-/** Value a Nevada home from its address; null if out-of-state or not resolvable. */
-export async function valueHome(h: Homeowner): Promise<EstimatePoint | null> {
-  if (!isNevada(h)) return null;
+export type PropertyFacts = { beds: number; baths: number; sqft: number };
+
+/**
+ * Value a Nevada home from its address. Returns the estimate (null if
+ * out-of-state or unresolvable) and the property facts resolved from the MLS
+ * (so callers can persist beds/baths/sqft for the dashboard facts row + comp
+ * comparisons). `facts` is null when the property couldn't be resolved.
+ */
+export async function valueHome(h: Homeowner): Promise<{ estimate: EstimatePoint | null; facts: PropertyFacts | null }> {
+  if (!isNevada(h)) return { estimate: null, facts: null };
   const prop = await resolveProperty(h);
-  if (!prop || prop.sqft <= 0) return null;
+  if (!prop || prop.sqft <= 0) return { estimate: null, facts: null };
   const r = await estimateHomeValue({
     zip: h.zip,
     city: h.city,
@@ -96,6 +103,8 @@ export async function valueHome(h: Homeowner): Promise<EstimatePoint | null> {
     beds: prop.beds || 3,
     sqft: prop.sqft,
   });
-  if (!r.ok) return null;
-  return { date: new Date().toISOString().slice(0, 10), value: r.estimate.mid, low: r.estimate.low, high: r.estimate.high };
+  const estimate: EstimatePoint | null = r.ok
+    ? { date: new Date().toISOString().slice(0, 10), value: r.estimate.mid, low: r.estimate.low, high: r.estimate.high }
+    : null;
+  return { estimate, facts: prop };
 }

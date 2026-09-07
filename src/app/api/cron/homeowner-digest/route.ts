@@ -41,7 +41,8 @@ async function run(req: Request) {
 
   for (const h of due) {
     try {
-      const est = await valueHome(h);
+      const { estimate: est, facts } = await valueHome(h);
+      if (facts && !dryRun) await store.updateFacts(h.token, facts);
       if (est) {
         if (!dryRun) await store.addEstimate(h.token, est);
         // reflect the new estimate locally so the email shows it

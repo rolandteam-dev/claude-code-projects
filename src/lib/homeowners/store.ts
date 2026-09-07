@@ -66,6 +66,8 @@ export interface HomeownerStore {
   upsertContacts(records: Homeowner[]): Promise<void>;
   recordView(token: string, at?: string): Promise<void>;
   addEstimate(token: string, point: EstimatePoint): Promise<void>;
+  /** Persist resolved property facts (beds/baths/sqft) — only provided values. */
+  updateFacts(token: string, facts: { beds?: number; baths?: number; sqft?: number }): Promise<void>;
   markEmailed(token: string, at?: string): Promise<void>;
   unsubscribe(token: string): Promise<void>;
 }
@@ -157,6 +159,15 @@ const memoryStore: HomeownerStore = {
     const h = mem.get(token);
     if (h) {
       h.estimates.push(point);
+      h.updatedAt = now();
+    }
+  },
+  async updateFacts(token, facts) {
+    const h = mem.get(token);
+    if (h) {
+      if (facts.beds != null && facts.beds > 0) h.beds = facts.beds;
+      if (facts.baths != null && facts.baths > 0) h.baths = facts.baths;
+      if (facts.sqft != null && facts.sqft > 0) h.sqft = facts.sqft;
       h.updatedAt = now();
     }
   },

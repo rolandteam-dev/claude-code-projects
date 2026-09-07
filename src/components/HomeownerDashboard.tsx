@@ -11,6 +11,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { homeownerBrand } from "@/lib/homeowners/brand";
 import type { Comp, ZipMarketStats } from "@/lib/idx/market";
+import type { MortgageRates } from "@/lib/homeowners/rates";
 
 export type DashboardProps = {
   token: string;
@@ -35,6 +36,8 @@ export type DashboardProps = {
   comps?: Comp[];
   /** Buying-a-home educational video (YouTube id). */
   buyingVideoId?: string;
+  /** Live mortgage-rate trends (null when FRED isn't configured). */
+  rates?: MortgageRates;
 };
 
 const money = (n: number) =>
@@ -54,16 +57,6 @@ const fmtShortDate = (iso: string) =>
     : "";
 
 /* ---------- shared bits ---------- */
-
-const NAV: { id: string; label: string }[] = [
-  { id: "selling", label: "Selling Options" },
-  { id: "value", label: "Market Value" },
-  { id: "buying", label: "Buying a Home" },
-  { id: "equity", label: "Home Equity Calculator" },
-  { id: "financing", label: "Learn About Financing" },
-  { id: "sales", label: "Recent Home Sales" },
-  { id: "details", label: "Home Details" },
-];
 
 function Module({
   id,
@@ -112,6 +105,31 @@ function TrendChart({ series }: { series: { date: string; value: number }[] }) {
       <polygon points={area} fill="url(#spark)" />
       <polyline points={pts} fill="none" stroke="var(--color-gold)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
       <circle cx={x(series.length - 1)} cy={y(series[series.length - 1].value)} r="4.5" fill="var(--color-gold)" />
+    </svg>
+  );
+}
+
+function RateChart({ rates }: { rates: NonNullable<MortgageRates> }) {
+  const s = rates.series.filter((p) => p.r30 != null || p.r15 != null);
+  if (s.length < 2) return null;
+  const w = 640;
+  const h = 170;
+  const pad = 10;
+  const all = s.flatMap((p) => [p.r30, p.r15].filter((v): v is number => v != null));
+  const min = Math.min(...all) - 0.2;
+  const max = Math.max(...all) + 0.2;
+  const span = max - min || 1;
+  const x = (i: number) => pad + (i * (w - 2 * pad)) / (s.length - 1);
+  const y = (v: number) => h - pad - ((v - min) / span) * (h - 2 * pad);
+  const line = (key: "r30" | "r15") =>
+    s
+      .map((p, i) => (p[key] != null ? `${x(i)},${y(p[key] as number)}` : null))
+      .filter(Boolean)
+      .join(" ");
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="mt-2 w-full" role="img" aria-label="Mortgage rate trends" preserveAspectRatio="none">
+      <polyline points={line("r30")} fill="none" stroke="var(--color-gold)" strokeWidth="2.5" strokeLinejoin="round" />
+      <polyline points={line("r15")} fill="none" stroke="var(--color-graphite)" strokeWidth="2.5" strokeLinejoin="round" strokeDasharray="5 4" />
     </svg>
   );
 }
@@ -304,6 +322,18 @@ export function HomeownerDashboard(p: DashboardProps) {
   const up = p.appreciation && p.appreciation.abs >= 0;
   const rangeLabel = p.low && p.high ? `${money(p.low)} – ${money(p.high)}` : money(p.currentValue);
   const videoId = p.buyingVideoId;
+  const hasRates = !!(p.rates && p.rates.series.length > 1);
+
+  const navItems: { id: string; label: string }[] = [
+    { id: "selling", label: "Selling Options" },
+    { id: "value", label: "Market Value" },
+    ...(videoId ? [{ id: "buying", label: "Buying a Home" }] : []),
+    { id: "equity", label: "Home Equity Calculator" },
+    { id: "financing", label: "Learn About Financing" },
+    ...(hasRates ? [{ id: "rates", label: "Mortgage Rate Trends" }] : []),
+    ...(p.comps && p.comps.length > 0 ? [{ id: "sales", label: "Recent Home Sales" }] : []),
+    { id: "details", label: "Home Details" },
+  ];
 
   const facts = useMemo(
     () =>
@@ -333,7 +363,7 @@ export function HomeownerDashboard(p: DashboardProps) {
           <div className="sticky top-6">
             <div className="font-serif text-[1.3rem] text-[var(--color-ink)]">Welcome home!</div>
             <nav className="mt-5 flex flex-col gap-3">
-              {NAV.map((n) => (
+              {navItems.map((n) => (
                 <a
                   key={n.id}
                   href={`#${n.id}`}
@@ -491,6 +521,52 @@ export function HomeownerDashboard(p: DashboardProps) {
               )}
             </div>
           </Module>
+
+          {/* Mortgage rate trends (live from FRED when configured) */}
+          {hasRates && p.rates && (
+            <Module id="rates" title="Mortgage rate trends" subtitle="Average U.S. mortgage rates, updated weekly.">
+              <div className="flex flex-wrap gap-8">
+                {p.rates.current.r30 != null && (
+                  <div>
+                    <div className="font-serif text-[2.2rem] leading-none text-[var(--color-ink)]">
+                      {p.rates.current.r30.toFixed(2)}
+                      <span className="text-[1.1rem]">%</span>
+                    </div>
+                    <div className="mt-1 font-sans text-[0.78rem] text-[var(--color-muted)]">30-year fixed</div>
+                  </div>
+                )}
+                {p.rates.current.r15 != null && (
+                  <div>
+                    <div className="font-serif text-[2.2rem] leading-none text-[var(--color-ink)]">
+                      {p.rates.current.r15.toFixed(2)}
+                      <span className="text-[1.1rem]">%</span>
+                    </div>
+                    <div className="mt-1 font-sans text-[0.78rem] text-[var(--color-muted)]">15-year fixed</div>
+                  </div>
+                )}
+              </div>
+              <div className="mt-4 flex items-center gap-5 font-sans text-[0.75rem] text-[var(--color-muted)]">
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block h-[3px] w-5 rounded bg-[var(--color-gold)]" /> 30-year fixed
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block h-[3px] w-5 rounded bg-[var(--color-graphite)]" /> 15-year fixed
+                </span>
+              </div>
+              <RateChart rates={p.rates} />
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-line)] pt-4">
+                <span className="font-sans text-[0.9rem] text-[var(--color-ink-soft)]">
+                  Ready to explore refinancing, a cash-out, or your next home?
+                </span>
+                {cta("financing", "Contact Us", () =>
+                  submitLead("financing", "Financing Inquiry", ["Homeowner Dashboard", "Financing", "Rate Trends"], `Interested in financing options (rate trends) — ${fullAddress}.`)
+                )}
+              </div>
+              <p className="mt-3 font-sans text-[0.7rem] text-[var(--color-muted)]">
+                Source: Freddie Mac via FRED. Rates are national averages, not a quote.
+              </p>
+            </Module>
+          )}
 
           {/* Recent home sales */}
           {p.comps && p.comps.length > 0 && (
