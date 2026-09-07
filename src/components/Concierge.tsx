@@ -190,8 +190,8 @@ export function Concierge() {
           phone: lead.phone,
           message: lead.message,
           type: "Buyer Inquiry",
-          tags: ["Luxury Buyer", "AI Concierge"],
-          source: "Luxury Website Chatbot",
+          tags: ["Buyer", "AI Concierge"],
+          source: "Website Chatbot",
         }),
       });
       const data = await res.json();
