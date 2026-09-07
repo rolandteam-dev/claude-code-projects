@@ -47,6 +47,8 @@ organically for community/neighborhood and buyer/seller search terms.
 - `HOMEOWNER_BASE_URL` — the Roland Team host. Homeowner dashboards, portal invite links and email links are all absolute against it.
 - `REPLIERS_API_KEY` / `IDX_PROVIDER` — MLS feed selection (see `src/lib/idx/provider.ts`).
 - `FRED_API_KEY` — free St. Louis Fed key powering the homeowner dashboard's Mortgage Rate Trends module (30/15-yr fixed, weekly). Without it the module is simply hidden. Get one at https://fred.stlouisfed.org/docs/api/api_key.html.
+- `GOOGLE_MAPS_API_KEY` — powers the homeowner dashboard's Recent Sales map (Static Maps) and the Google reviews module (Places Details). Restrict it by HTTP referrer — it appears in the map image URL. Both features hide when unset.
+- `GOOGLE_PLACE_ID` — the team's Google Business place id; with `GOOGLE_MAPS_API_KEY`, drives the Contact Agent / Google reviews module (rating + recent reviews). Find it via Google's Place ID finder.
 
 ## Roadmap (next)
 - Client Portal on real auth + a database (hubs that follow a client across devices; per-agent dashboard access)

@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from "react";
 import { homeownerBrand } from "@/lib/homeowners/brand";
 import type { Comp, ZipMarketStats } from "@/lib/idx/market";
 import type { MortgageRates } from "@/lib/homeowners/rates";
+import type { GoogleReviews } from "@/lib/homeowners/maps";
 
 export type DashboardProps = {
   token: string;
@@ -38,6 +39,10 @@ export type DashboardProps = {
   buyingVideoId?: string;
   /** Live mortgage-rate trends (null when FRED isn't configured). */
   rates?: MortgageRates;
+  /** Static Maps image URL of the home + comps (null when Maps isn't configured). */
+  mapUrl?: string | null;
+  /** Google Business rating + reviews (null when Places isn't configured). */
+  reviews?: GoogleReviews;
 };
 
 const money = (n: number) =>
@@ -131,6 +136,16 @@ function RateChart({ rates }: { rates: NonNullable<MortgageRates> }) {
       <polyline points={line("r30")} fill="none" stroke="var(--color-gold)" strokeWidth="2.5" strokeLinejoin="round" />
       <polyline points={line("r15")} fill="none" stroke="var(--color-graphite)" strokeWidth="2.5" strokeLinejoin="round" strokeDasharray="5 4" />
     </svg>
+  );
+}
+
+function Stars({ rating }: { rating: number }) {
+  const full = Math.round(rating);
+  return (
+    <span aria-label={`${rating} out of 5`} className="text-[var(--color-gold)]">
+      {"★★★★★".slice(0, full)}
+      <span className="text-[var(--color-line)]">{"★★★★★".slice(full)}</span>
+    </span>
   );
 }
 
@@ -323,11 +338,13 @@ export function HomeownerDashboard(p: DashboardProps) {
   const rangeLabel = p.low && p.high ? `${money(p.low)} – ${money(p.high)}` : money(p.currentValue);
   const videoId = p.buyingVideoId;
   const hasRates = !!(p.rates && p.rates.series.length > 1);
+  const hasReviews = !!(p.reviews && (p.reviews.reviews.length > 0 || p.reviews.total > 0));
 
   const navItems: { id: string; label: string }[] = [
     { id: "selling", label: "Selling Options" },
     { id: "value", label: "Market Value" },
     ...(videoId ? [{ id: "buying", label: "Buying a Home" }] : []),
+    ...(hasReviews ? [{ id: "reviews", label: "Contact Agent / Reviews" }] : []),
     { id: "equity", label: "Home Equity Calculator" },
     { id: "financing", label: "Learn About Financing" },
     ...(hasRates ? [{ id: "rates", label: "Mortgage Rate Trends" }] : []),
@@ -493,6 +510,51 @@ export function HomeownerDashboard(p: DashboardProps) {
             </Module>
           )}
 
+          {/* Contact agent / Google reviews */}
+          {hasReviews && p.reviews && (
+            <Module id="reviews" title="Contact your agent" subtitle="Backed by real reviews from clients across the valley.">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="font-serif text-[2rem] leading-none text-[var(--color-ink)]">
+                  {p.reviews.rating.toFixed(1)}
+                </div>
+                <div>
+                  <Stars rating={p.reviews.rating} />
+                  <div className="font-sans text-[0.78rem] text-[var(--color-muted)]">
+                    {p.reviews.total.toLocaleString()} Google review{p.reviews.total === 1 ? "" : "s"}
+                  </div>
+                </div>
+              </div>
+              {p.reviews.reviews.length > 0 && (
+                <div className="mt-5 space-y-4">
+                  {p.reviews.reviews.map((r, i) => (
+                    <div key={i} className="border-t border-[var(--color-line)] pt-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-sans text-[0.88rem] font-semibold text-[var(--color-ink)]">{r.author}</span>
+                        <span className="font-sans text-[0.72rem] text-[var(--color-muted)]">{r.when}</span>
+                      </div>
+                      <div className="mt-0.5 text-[0.82rem]">
+                        <Stars rating={r.rating} />
+                      </div>
+                      <p className="mt-1.5 font-sans text-[0.85rem] leading-relaxed text-[var(--color-ink-soft)]">
+                        “{r.text}”
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-[var(--color-line)] pt-4">
+                <a href={`tel:${homeownerBrand.phone}`} className="btn">
+                  Call {homeownerBrand.phone}
+                </a>
+                {p.reviews.url && (
+                  <a href={p.reviews.url} target="_blank" rel="noopener noreferrer" className="btn btn-ghost">
+                    See all reviews on Google
+                  </a>
+                )}
+              </div>
+            </Module>
+          )}
+
           {/* Home equity calculator */}
           <Module id="equity" title="Home equity calculator" subtitle="See your estimated equity — adjust the numbers to fit your situation.">
             <EquityCalculator estimate={p.currentValue} />
@@ -571,6 +633,15 @@ export function HomeownerDashboard(p: DashboardProps) {
           {/* Recent home sales */}
           {p.comps && p.comps.length > 0 && (
             <Module id="sales" title="Recent home sales" subtitle="See how your home measures up to nearby sales.">
+              {p.mapUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={p.mapUrl}
+                  alt="Map of your home (H) and recent nearby sales"
+                  className="mb-4 w-full rounded-[12px] border border-[var(--color-line)]"
+                  loading="lazy"
+                />
+              )}
               <div className="grid gap-4 sm:grid-cols-2">
                 {p.comps.map((c, i) => (
                   <CompCard key={i} c={c} subjectBeds={p.beds} subjectSqft={p.sqft} />
