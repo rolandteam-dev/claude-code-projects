@@ -43,9 +43,9 @@ export function ScheduleTour({ address, mlsNumber }: { address: string; mlsNumbe
     setActive(intent);
     setStatus("sending");
     const cfg: Record<Intent, { type: string; tags: string[]; note?: string }> = {
-      email: { type: "Property Inquiry", tags: ["Luxury Buyer", "Email Agent"] },
-      tour: { type: "Showing Request", tags: ["Luxury Buyer", "Showing Request"] },
-      offer: { type: "Property Inquiry", tags: ["Luxury Buyer", "Make an Offer"], note: "Interested in making an offer." },
+      email: { type: "Property Inquiry", tags: ["Buyer", "Email Agent"] },
+      tour: { type: "Showing Request", tags: ["Buyer", "Showing Request"] },
+      offer: { type: "Property Inquiry", tags: ["Buyer", "Make an Offer"], note: "Interested in making an offer." },
     };
     const c = cfg[intent];
     const tags = [...c.tags];
@@ -71,7 +71,7 @@ export function ScheduleTour({ address, mlsNumber }: { address: string; mlsNumbe
           message,
           type: c.type,
           tags,
-          source: "Luxury Listing Page",
+          source: "Listing Page",
         }),
       });
       const j = await res.json().catch(() => ({ ok: false }));

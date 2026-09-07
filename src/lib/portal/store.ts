@@ -19,7 +19,14 @@
 import { useCallback, useSyncExternalStore } from "react";
 import type { JourneyKind } from "@/content/portal";
 
-const KEY = "rl.portal.v1";
+const KEY = "rt.portal.v1";
+/**
+ * Previous key, from when this shipped on the Roland Luxury site. Read once on
+ * first access and copied forward so an existing client keeps their saved
+ * homes, notes and progress; the old key is then left alone rather than
+ * deleted, so rolling back doesn't strand anyone.
+ */
+const LEGACY_KEY = "rl.portal.v1";
 
 export type PortalProfile = {
   firstName: string;
@@ -102,6 +109,13 @@ function read(): PortalState {
   let raw: string | null = null;
   try {
     raw = window.localStorage.getItem(KEY);
+    if (raw === null) {
+      const legacy = window.localStorage.getItem(LEGACY_KEY);
+      if (legacy !== null) {
+        window.localStorage.setItem(KEY, legacy);
+        raw = legacy;
+      }
+    }
   } catch {
     // Private mode / storage disabled — the portal still works for this visit.
     return cache;

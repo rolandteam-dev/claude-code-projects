@@ -3,36 +3,27 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Save + Share bar for a listing. "Save" favorites the home to the browser
+ * Share bar for a listing. Saving is handled by SaveHomeButton (the client
+ * hub's store) — this component deliberately has no save of its own, so a
+ * listing never offers two hearts writing to two different places.
+ *
+ * Previously this favorited the home to the browser
  * (localStorage) so it persists without an account; "Share" opens a menu with
  * Facebook, X, LinkedIn, WhatsApp, Email, Text message, and Copy link, plus the
  * native share sheet on mobile.
  */
-export function ListingShareBar({
-  url,
-  title,
-  listingId,
-}: {
-  url: string;
-  title: string;
-  listingId: string;
-}) {
+export function ListingShareBar({ url, title }: { url: string; title: string }) {
   const [open, setOpen] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
   const [canNativeShare, setCanNativeShare] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Read client-only state on mount (avoids SSR hydration mismatch).
+    // Read client-only capability on mount (avoids an SSR hydration mismatch).
     /* eslint-disable react-hooks/set-state-in-effect */
-    try {
-      const list = JSON.parse(localStorage.getItem("rl_saved_listings") || "[]");
-      setSaved(Array.isArray(list) && list.includes(listingId));
-    } catch {}
     setCanNativeShare(typeof navigator !== "undefined" && !!navigator.share);
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [listingId]);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -43,15 +34,6 @@ export function ListingShareBar({
     return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
 
-  function toggleSave() {
-    try {
-      const raw = JSON.parse(localStorage.getItem("rl_saved_listings") || "[]");
-      const arr: string[] = Array.isArray(raw) ? raw : [];
-      const next = arr.includes(listingId) ? arr.filter((x) => x !== listingId) : [...arr, listingId];
-      localStorage.setItem("rl_saved_listings", JSON.stringify(next));
-      setSaved(next.includes(listingId));
-    } catch {}
-  }
 
   async function copyLink() {
     try {
@@ -76,12 +58,6 @@ export function ListingShareBar({
 
   return (
     <div ref={wrapRef} className="relative flex items-center gap-2">
-      <button type="button" onClick={toggleSave} className={btn} aria-pressed={saved}>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill={saved ? "var(--color-gold)" : "none"} stroke="var(--color-gold)" strokeWidth="2" aria-hidden="true">
-          <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z" />
-        </svg>
-        {saved ? "Saved" : "Save"}
-      </button>
 
       <button type="button" onClick={() => setOpen((o) => !o)} className={btn} aria-expanded={open} aria-haspopup="menu">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">

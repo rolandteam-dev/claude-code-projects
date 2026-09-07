@@ -91,7 +91,7 @@ export const guides: Guide[] = [
     featured: true,
     seoTitle: "Selling Your Home in Las Vegas: Step-by-Step Seller Guide",
     seoDescription:
-      "How to sell your Las Vegas or Henderson home for top dollar — pricing, prep, marketing, negotiation, and closing, explained step by step by Roland Luxury.",
+      "How to sell your Las Vegas or Henderson home for top dollar — pricing, prep, marketing, negotiation, and closing, explained step by step by The Roland Team.",
     h1: "Selling Your Home in Las Vegas",
     eyebrow: "Seller Guide",
     intro:

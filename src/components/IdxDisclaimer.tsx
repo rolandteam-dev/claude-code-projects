@@ -47,12 +47,12 @@ export function IdxDisclaimer({
         Listing data courtesy of Las Vegas REALTORS® (GLVAR). The data relating to real estate for sale on this
         website comes in part from the Internet Data Exchange (IDX) program of the Las Vegas REALTORS® MLS.
         Information is deemed reliable but not guaranteed. All properties are subject to prior sale, change, or
-        withdrawal. {site.parentBrand}, brokered by {site.brokerage}, is not responsible for any typographical
+        withdrawal. {site.name}, brokered by {site.brokerage}, is not responsible for any typographical
         errors, misinformation, or misprints.
         {updated ? ` Data last updated ${updated}.` : ""}
       </p>
       <p className="m-0 mt-1">
-        © {year} Las Vegas REALTORS®. All rights reserved. Equal Housing Opportunity. {site.parentBrand} —
+        © {year} Las Vegas REALTORS®. All rights reserved. Equal Housing Opportunity. {site.name} —
         brokered by {site.brokerage}.
       </p>
     </div>

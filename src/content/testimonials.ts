@@ -1,5 +1,5 @@
 /**
- * Client testimonials. These are real review excerpts from Roland Luxury's
+ * Client testimonials. These are real review excerpts from The Roland Team's
  * public profiles. Full reviews (800+ across all sites) live on Zillow, Yelp,
  * and Google — linked from the testimonials page.
  */

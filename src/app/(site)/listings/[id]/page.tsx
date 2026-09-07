@@ -163,7 +163,6 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
             <ListingShareBar
               url={absoluteUrl(`/listings/${l.id}`)}
               title={`${l.address.line1}, ${l.address.city} — ${formatPrice(l.listPrice)}`}
-              listingId={l.id}
             />
           </div>
         </div>
@@ -416,7 +415,7 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
               {site.phone}
             </a>
             <p className="mt-3 border-t border-[var(--color-line)] pt-3 font-sans text-[0.7rem] text-[var(--color-muted)]">
-              {site.parentBrand} · brokered by {site.brokerage}
+              {site.name} · brokered by {site.brokerage}
             </p>
           </div>
         </aside>

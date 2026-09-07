@@ -8,9 +8,9 @@ import { breadcrumbSchema } from "@/lib/schema";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "About Roland Luxury",
+  title: "About The Roland Team",
   description:
-    "Meet Roland Luxury — a Las Vegas & Henderson luxury real estate group specializing in guard-gated communities, custom estates, and expert local representation.",
+    "Meet The Roland Team — a Las Vegas & Henderson luxury real estate group specializing in guard-gated communities, custom estates, and expert local representation.",
   alternates: { canonical: "/about" },
 };
 
@@ -35,7 +35,7 @@ export default function AboutPage() {
               Local expertise, luxury standards
             </h1>
             <p className="mt-5 max-w-[560px] text-[1.12rem] text-[#d9dbe0]">
-              Roland Luxury is the luxury division of The Roland Team | LPT Realty — helping buyers and sellers
+              The Roland Team | LPT Realty helps buyers and sellers
               navigate Las Vegas and Henderson&apos;s most desirable communities with honest guidance and a
               genuine understanding of what makes each neighborhood distinct.
             </p>
@@ -47,7 +47,7 @@ export default function AboutPage() {
         <p className="text-[1.2rem] leading-relaxed text-[var(--color-ink-soft)]">
           We&apos;re a Las Vegas and Henderson real estate group focused on the communities that define Southern
           Nevada living — from ultra-luxury, guard-gated enclaves like Ascaya and The Ridges to established
-          family master plans across the valley. Roland Luxury is the luxury division of The Roland Team, one of
+          family master plans across the valley. The Roland Team is one of
           the valley&apos;s top-producing brokerage teams.
         </p>
         <p>
@@ -75,7 +75,7 @@ export default function AboutPage() {
       {/* Meet the team — brand-first (no per-agent profiles by design) */}
       <Container size="wide" className="pb-8">
         <div className="eyebrow">Our Team</div>
-        <h2 className="mt-2 text-[1.7rem]">Meet Roland Luxury</h2>
+        <h2 className="mt-2 text-[1.7rem]">Meet The Roland Team</h2>
         <p className="mt-3 max-w-[660px] text-[var(--color-ink-soft)]">
           A 22-agent team of dedicated buyer and seller specialists, led by founder Mike Roland — so you always
           work with someone focused on exactly what you need.
@@ -83,7 +83,7 @@ export default function AboutPage() {
 
         {/* Team group photo (swap the graphite block for the real photo) */}
         <div className="mt-8 flex aspect-[2/1] w-full items-end overflow-hidden rounded-[14px] bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)] p-6 md:aspect-[2.4/1]">
-          <span className="font-sans text-[0.72rem] uppercase tracking-[0.16em] text-white/55">Roland Luxury</span>
+          <span className="font-sans text-[0.72rem] uppercase tracking-[0.16em] text-white/55">The Roland Team</span>
         </div>
 
         {/* Founder feature */}
@@ -91,14 +91,14 @@ export default function AboutPage() {
           <div className="aspect-[3/4] w-full overflow-hidden rounded-[14px] bg-gradient-to-br from-[var(--color-graphite)] to-[var(--color-graphite-2)]" />
           <div>
             <div className="font-sans text-[1.35rem] font-semibold text-[var(--color-ink)]">Mike Roland</div>
-            <div className="font-sans text-[0.85rem] text-[var(--color-gold)]">Founder &amp; Team Lead · Roland Luxury | LPT Realty</div>
+            <div className="font-sans text-[0.85rem] text-[var(--color-gold)]">Founder &amp; Team Lead · The Roland Team | LPT Realty</div>
             <p className="mt-3 text-[var(--color-ink-soft)]">
               Mike Roland earned his real estate license in 2015 and quickly discovered a talent for the business
               of selling homes. He built The Roland Team into one of the Las Vegas Valley&apos;s top-producing
-              groups — a Top 1% team with 1,000+ homes sold and 800+ five-star reviews — and launched Roland
-              Luxury as its dedicated luxury division for the valley&apos;s guard-gated communities and custom
-              estates. Mike has been featured in the Las Vegas Review-Journal on the forces shaping the local
-              housing market.
+              groups — a Top 1% team with 1,000+ homes sold and 800+ five-star reviews — serving buyers and
+              sellers at every price point, from first homes to the valley&apos;s guard-gated communities and
+              custom estates. Mike has been featured in the Las Vegas Review-Journal on the forces shaping the
+              local housing market.
             </p>
           </div>
         </div>

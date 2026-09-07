@@ -18,7 +18,7 @@
 
 import { peekPortal } from "./store";
 
-const SEEN_KEY = "rl.portal.sent.v1";
+const SEEN_KEY = "rt.portal.sent.v1";
 
 export type PortalAction =
   | "portal.start"

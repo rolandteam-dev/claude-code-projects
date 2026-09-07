@@ -12,28 +12,28 @@ import { site } from "@/lib/site";
 
 const homeFaqs = [
   {
-    q: "Who is Roland Luxury?",
-    a: "Roland Luxury is the luxury division of The Roland Team | LPT Realty, led by Mike Roland — a Top 1% Las Vegas real estate team with 1,000+ homes sold. Roland Luxury specializes in luxury and guard-gated communities across Southern Nevada — including Ascaya, MacDonald Highlands, The Ridges, and Summerlin — and helps buyers and sellers across every price point in the Las Vegas Valley.",
+    q: "Who is The Roland Team?",
+    a: "The Roland Team | LPT Realty is a Top 1% Las Vegas real estate team led by Mike Roland, with 1,000+ homes sold. We serve buyers and sellers at every price point, including luxury and guard-gated communities across Southern Nevada — including Ascaya, MacDonald Highlands, The Ridges, and Summerlin — and helps buyers and sellers across every price point in the Las Vegas Valley.",
   },
   {
-    q: "What areas does Roland Luxury serve?",
-    a: "Roland Luxury serves the entire Las Vegas Valley, including Las Vegas, Henderson, Summerlin, North Las Vegas, and Boulder City, with deep expertise in the region's luxury, guard-gated, and master-planned communities.",
+    q: "What areas does The Roland Team serve?",
+    a: "The Roland Team serves the entire Las Vegas Valley, including Las Vegas, Henderson, Summerlin, North Las Vegas, and Boulder City, with deep expertise in the region's luxury, guard-gated, and master-planned communities.",
   },
   {
-    q: "Does Roland Luxury specialize in luxury and guard-gated communities?",
+    q: "Does The Roland Team specialize in luxury and guard-gated communities?",
     a: "Yes. The team focuses on Southern Nevada's most sought-after luxury and guard-gated communities — such as Ascaya and MacDonald Highlands in Henderson and The Ridges and The Summit Club in Summerlin — while also representing buyers and sellers of family homes and new construction throughout the valley.",
   },
   {
     q: "How do I choose the right real estate team in Las Vegas or Henderson?",
-    a: "Look for genuine local expertise in the specific communities you care about, a clear marketing and negotiation strategy, responsiveness, and verifiable client reviews. Roland Luxury pairs deep neighborhood knowledge across Las Vegas and Henderson with a client-first, no-pressure approach.",
+    a: "Look for genuine local expertise in the specific communities you care about, a clear marketing and negotiation strategy, responsiveness, and verifiable client reviews. The Roland Team pairs deep neighborhood knowledge across Las Vegas and Henderson with a client-first, no-pressure approach.",
   },
   {
-    q: "Can Roland Luxury help with both buying and selling?",
-    a: "Yes. Roland Luxury represents buyers, sellers, new-construction clients, and relocating households, and offers free, no-obligation home valuations for sellers considering a move.",
+    q: "Can The Roland Team help with both buying and selling?",
+    a: "Yes. The Roland Team represents buyers, sellers, new-construction clients, and relocating households, and offers free, no-obligation home valuations for sellers considering a move.",
   },
   {
-    q: "How do I contact Roland Luxury?",
-    a: `You can reach Roland Luxury by phone at ${site.phone} or by email at ${site.email}, or through the contact form on this website.`,
+    q: "How do I contact The Roland Team?",
+    a: `You can reach The Roland Team by phone at ${site.phone} or by email at ${site.email}, or through the contact form on this website.`,
   },
 ];
 
@@ -48,11 +48,11 @@ export default function Home() {
             <span className="hairline" /> Las Vegas · Henderson · Summerlin <span className="hairline" />
           </div>
           <h1 className="mx-auto mt-7 max-w-[960px] font-serif text-[3rem] font-medium leading-[1.04] md:text-[4.6rem]">
-            The valley&apos;s most extraordinary residences, represented with discretion.
+            Las Vegas real estate, handled right.
           </h1>
           <p className="mx-auto mt-7 max-w-[640px] text-[1.2rem] leading-relaxed text-[#d6d8de]">
-            Roland Luxury is the luxury division of The Roland Team — specialists in Southern Nevada&apos;s
-            guard-gated communities, custom estates, and landmark properties, for buyers and sellers who expect more.
+            A Top 1% Las Vegas team with 1,000+ homes sold and 800+ five-star reviews — helping buyers and
+            sellers across the valley, from first homes to guard-gated estates.
           </p>
           {/* Property search — the fastest path into live MLS inventory */}
           <form
@@ -70,11 +70,11 @@ export default function Home() {
             <button type="submit" className="btn shrink-0 !rounded-full !px-6 !py-2.5">Search</button>
           </form>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
-            <Link href="/listings" className="btn btn-outline">Explore Residences</Link>
-            <Link href="/home-value" className="btn btn-outline">Request a Private Valuation</Link>
+            <Link href="/listings" className="btn btn-outline">Search Homes</Link>
+            <Link href="/home-value" className="btn btn-outline">What&apos;s My Home Worth?</Link>
           </div>
           <div className="mt-8 font-sans text-[0.82rem] tracking-[0.05em] text-[#aeb2ba]">
-            Private representation ·{" "}
+            Talk to a local agent ·{" "}
             <a href={`tel:${site.phone}`} className="text-[var(--color-gold-3)] no-underline hover:underline">
               {site.phone}
             </a>
@@ -98,10 +98,11 @@ export default function Home() {
 
       {/* ============ POSITIONING STATEMENT ============ */}
       <Container size="narrow" className="py-24 text-center">
-        <div className="eyebrow">The Roland Luxury Standard</div>
+        <div className="eyebrow">The Roland Team Standard</div>
         <p className="mx-auto mt-6 max-w-[760px] font-serif text-[1.7rem] font-medium leading-[1.4] text-[var(--color-ink)] md:text-[2.1rem]">
-          A residence at this level is never just a transaction. It is a threshold — into a community, a lifestyle,
-          and a life well lived. We represent it with the discretion, market command, and quiet resolve it deserves.
+          Buying or selling a home is one of the largest financial decisions most people make. We bring the market
+          knowledge, straight answers, and steady hands that decision deserves — whether it is your first home or
+          your last.
         </p>
         <div className="mt-8">
           <span className="hairline !w-16" />
@@ -112,8 +113,8 @@ export default function Home() {
       <Container size="wide" className="pb-24">
         <div className="flex items-end justify-between gap-6">
           <div>
-            <div className="eyebrow">The Collection</div>
-            <h2 className="mt-3 text-[2.4rem]">Signature communities</h2>
+            <div className="eyebrow">Where we work</div>
+            <h2 className="mt-3 text-[2.4rem]">Communities across the valley</h2>
           </div>
           <Link href="/communities" className="link-gold hidden sm:inline">
             View all communities →
@@ -142,12 +143,12 @@ export default function Home() {
               </div>
               <div className="absolute inset-x-0 bottom-0 p-8">
                 <div className="font-sans text-[0.7rem] uppercase tracking-[0.24em] text-[var(--color-gold-3)]">For Buyers</div>
-                <h3 className="mt-2 font-serif text-[2rem] font-medium text-white">Acquire a landmark residence</h3>
+                <h3 className="mt-2 font-serif text-[2rem] font-medium text-white">Find the right home</h3>
                 <p className="mt-3 max-w-[440px] text-[1.02rem] leading-relaxed text-[#cbcfd6]">
-                  Private access to guard-gated estates, off-market opportunities, and the counsel to move decisively
-                  when the right home appears.
+                  Live MLS search, honest guidance on every neighborhood, and an agent who tells you when a home is
+                  wrong for you — not just when it is available.
                 </p>
-                <Link href="/listings" className="btn btn-outline mt-6">Browse Residences</Link>
+                <Link href="/listings" className="btn btn-outline mt-6">Search Homes</Link>
               </div>
             </div>
             {/* Sellers */}
@@ -158,10 +159,10 @@ export default function Home() {
               </div>
               <div className="absolute inset-x-0 bottom-0 p-8">
                 <div className="font-sans text-[0.7rem] uppercase tracking-[0.24em] text-[var(--color-gold-3)]">For Sellers</div>
-                <h3 className="mt-2 font-serif text-[2rem] font-medium text-white">Sell with reach and discretion</h3>
+                <h3 className="mt-2 font-serif text-[2rem] font-medium text-white">Sell for what it is worth</h3>
                 <p className="mt-3 max-w-[440px] text-[1.02rem] leading-relaxed text-[#cbcfd6]">
-                  Cinematic marketing, a qualified buyer network, and the negotiation of a Top 1% team — with the
-                  privacy a signature sale requires.
+                  Professional marketing, a buyer network built over 1,000+ sales, and the negotiation of a Top 1%
+                  team — so your home sells for the right number, on your timeline.
                 </p>
                 <Link href="/home-value" className="btn btn-outline mt-6">What&apos;s My Home Worth?</Link>
               </div>
@@ -194,7 +195,7 @@ export default function Home() {
             <div className="rounded-[8px] border border-[var(--color-line)] bg-white p-5 shadow-[var(--shadow-lift)]">
               <div className="flex items-center gap-2 border-b border-[var(--color-line)] pb-3">
                 <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-gold)]" />
-                <span className="font-sans text-[0.82rem] font-semibold text-[var(--color-ink)]">Roland Luxury Concierge</span>
+                <span className="font-sans text-[0.82rem] font-semibold text-[var(--color-ink)]">The Roland Team Concierge</span>
               </div>
               <div className="mt-4 space-y-3 text-[0.95rem]">
                 <div className="ml-auto max-w-[80%] rounded-[10px] rounded-br-sm bg-[var(--color-graphite)] px-4 py-2.5 font-sans text-[0.9rem] text-white">
@@ -236,7 +237,7 @@ export default function Home() {
       {/* ============ FAQ (entity / SEO / AI-quotable) ============ */}
       <Container size="narrow" className="py-24">
         <JsonLd data={faqSchema(homeFaqs)} />
-        <div className="eyebrow">About Roland Luxury</div>
+        <div className="eyebrow">About The Roland Team</div>
         <h2 className="mt-3 text-[2.2rem]">Las Vegas &amp; Henderson luxury, answered</h2>
         <div className="mt-8">
           {homeFaqs.map((f) => (
@@ -260,8 +261,8 @@ export default function Home() {
               A conversation is where every great move begins
             </h2>
             <p className="mx-auto mt-4 max-w-[540px] text-[1.08rem] text-[#cfd3da]">
-              Whether you&apos;re acquiring your forever estate or preparing a signature sale, Mike Roland and the
-              Roland Luxury team are ready when you are.
+              Whether you are buying your first home, moving up, or getting ready to sell, Mike Roland and the team
+              are ready when you are.
             </p>
             <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
               <Link href={site.cta.href} className="btn">{site.cta.label}</Link>

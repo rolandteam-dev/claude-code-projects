@@ -7,7 +7,7 @@ import { BlogSearch } from "@/components/BlogSearch";
 export const metadata: Metadata = {
   title: "Las Vegas Real Estate Blog",
   description:
-    "Market updates, new construction, and buyer & seller guides for Las Vegas and Henderson real estate from Roland Luxury.",
+    "Market updates, new construction, and buyer & seller guides for Las Vegas and Henderson real estate from The Roland Team.",
   alternates: { canonical: "/blog" },
 };
 

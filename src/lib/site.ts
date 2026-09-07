@@ -4,11 +4,19 @@
  */
 
 export const site = {
-  name: "Roland Luxury",
-  legalName: "Roland Luxury | LPT Realty",
-  // Positioning line: the luxury division of the established Roland Team brand.
-  parentBrand: "The Roland Team",
-  tagline: "The Luxury Division of The Roland Team",
+  name: "The Roland Team",
+  legalName: "The Roland Team | LPT Realty",
+  tagline: "Las Vegas & Henderson Real Estate",
+  /**
+   * Canonical origin. Every canonical tag, sitemap entry, JSON-LD id and email
+   * link derives from this one value.
+   *
+   * NOTE: this still points at rolandluxury.com deliberately. It flips to
+   * https://www.therolandteam.com in the same change that points that domain's
+   * DNS at this app — not before. Pointing canonicals at a domain that serves
+   * different content tells Google this content lives somewhere it does not,
+   * which is worse than leaving it alone.
+   */
   url: "https://www.rolandluxury.com",
   locale: "en_US",
   // Contact
@@ -119,7 +127,7 @@ export const site = {
       href: "/about",
       children: [
         { label: "About The Team", href: "/about" },
-        { label: "Why Roland Luxury", href: "/why-the-roland-team" },
+        { label: "Why The Roland Team", href: "/why-the-roland-team" },
         { label: "Reviews", href: "/testimonials" },
         { label: "Contact", href: "/contact" },
       ],

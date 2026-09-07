@@ -9,7 +9,7 @@ import { site } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Client Reviews & Testimonials",
   description:
-    "See what clients say about working with Roland Luxury for luxury Las Vegas and Henderson real estate.",
+    "See what clients say about working with The Roland Team for luxury Las Vegas and Henderson real estate.",
   alternates: { canonical: "/testimonials" },
   // Keep out of the index until real reviews replace the placeholders.
   robots: testimonialsAreSample ? { index: false, follow: true } : undefined,

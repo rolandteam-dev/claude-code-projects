@@ -60,7 +60,7 @@ const faqs = [
   },
   {
     q: "Is getting pre-approved free?",
-    a: "Yes. Requesting a pre-approval through Roland Luxury is free and comes with no obligation to use a particular lender or to buy a home. We simply connect you with a trusted local lender so you can shop with clarity.",
+    a: "Yes. Requesting a pre-approval through The Roland Team is free and comes with no obligation to use a particular lender or to buy a home. We simply connect you with a trusted local lender so you can shop with clarity.",
   },
   {
     q: "How long does pre-approval take?",

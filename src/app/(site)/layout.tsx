@@ -8,7 +8,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { realEstateAgentSchema, webSiteSchema } from "@/lib/schema";
 
 /**
- * Marketing site chrome (Roland Luxury). Wraps every public marketing route;
+ * Marketing site chrome (The Roland Team). Wraps every public marketing route;
  * the homeowner dashboard experience lives in its own route group with its own
  * chrome, so it does not inherit this header/footer.
  */
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     default: `${site.name} | ${site.tagline}`,
     template: `%s | ${site.name}`,
   },
-  description: `${site.name} — ${site.tagline}. Explore luxury homes, guard-gated communities, and expert buyer & seller guidance across Las Vegas and Henderson, Nevada.`,
+  description: `${site.name} — a Top 1% Las Vegas real estate team with 1,000+ homes sold. Search homes, explore communities, and get expert buyer & seller guidance across Las Vegas and Henderson, Nevada.`,
   applicationName: site.name,
   keywords: [
     "Las Vegas real estate",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     "luxury homes Las Vegas",
     "guard-gated communities Henderson",
     "Summerlin homes for sale",
-    "Roland Luxury",
+    "The Roland Team",
   ],
   authors: [{ name: site.name, url: site.url }],
   alternates: { canonical: "/" },
@@ -36,12 +36,12 @@ export const metadata: Metadata = {
     url: site.url,
     siteName: site.name,
     title: `${site.name} | ${site.tagline}`,
-    description: `Luxury Las Vegas & Henderson real estate — community guides, buyer resources, and expert local representation.`,
+    description: `Las Vegas & Henderson real estate — home search, community guides, buyer and seller resources, and expert local representation.`,
   },
   twitter: {
     card: "summary_large_image",
     title: `${site.name} | ${site.tagline}`,
-    description: `Luxury Las Vegas & Henderson real estate with Roland Luxury.`,
+    description: `Las Vegas & Henderson real estate with The Roland Team.`,
   },
   robots: {
     index: true,

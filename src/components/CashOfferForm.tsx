@@ -109,7 +109,7 @@ export function CashOfferForm() {
           {status === "sending" ? "Sending…" : "Get My Cash Offer"}
         </button>
         <p className="text-center font-sans text-[0.64rem] text-[var(--color-muted)]">
-          Your info goes only to {site.parentBrand}. No obligation to accept.
+          Your info goes only to {site.name}. No obligation to accept.
         </p>
       </div>
     </form>

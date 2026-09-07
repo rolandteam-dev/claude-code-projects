@@ -43,13 +43,13 @@ export const blogPosts: BlogPost[] = [
     category: "Market Updates",
     excerpt: "Rather than guess the future, watch the factors that actually move the Las Vegas market. Here's what matters for buyers and sellers now.",
     date: "2026-08-11",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 19,
     seoTitle: "Las Vegas Real Estate Market: What to Watch",
     seoDescription: "The factors that actually move the Las Vegas housing market — inventory, rates, demand, and new construction — and what they mean for you.",
     coverImage: "/blog/las-vegas-real-estate-market-what-buyers-and-sellers-should-watch.svg",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_3e54cfdd-c30d-4a97-b2de-cbaee0d26195.png",
-    coverAlt: "Market Updates — Roland Luxury Las Vegas real estate",
+    coverAlt: "Market Updates — The Roland Team Las Vegas real estate",
     sections: [
       {
         heading: "Stop Predicting the Market — Start Watching It",
@@ -217,13 +217,13 @@ export const blogPosts: BlogPost[] = [
     category: "New Construction",
     excerpt: "Buy new or buy resale? Both have real advantages in Las Vegas. Here's an honest comparison to help you decide.",
     date: "2026-08-11",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 16,
     seoTitle: "New Construction vs. Resale in Las Vegas",
     seoDescription: "New construction or resale in Las Vegas? Compare price, timeline, incentives, upgrades, and location to decide which is right for you.",
     coverImage: "/blog/new-construction-vs-resale-in-las-vegas-which-is-right-for-you.svg",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_64e2e296-7b01-4d39-8c34-7b1a6db20b24.png",
-    coverAlt: "New Construction — Roland Luxury Las Vegas real estate",
+    coverAlt: "New Construction — The Roland Team Las Vegas real estate",
     sections: [
       {
         heading: "The Real Question Behind New vs. Resale",
@@ -389,13 +389,13 @@ export const blogPosts: BlogPost[] = [
     category: "Selling Guides",
     excerpt: "Smart staging can add real dollars and cut days on market. Here are the highest-impact moves for Las Vegas sellers.",
     date: "2026-08-11",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 18,
     seoTitle: "Home Staging Tips That Sell Las Vegas Homes Faster",
     seoDescription: "Staging tips that help Las Vegas homes sell faster and for more — from decluttering and lighting to desert curb appeal and photo-ready prep.",
     coverImage: "/blog/staging-tips-that-sell-las-vegas-homes-faster.svg",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_caa737a2-acfa-4c6d-b226-8330a35434f2.png",
-    coverAlt: "Selling Guides — Roland Luxury Las Vegas real estate",
+    coverAlt: "Selling Guides — The Roland Team Las Vegas real estate",
     sections: [
       {
         heading: "Why Staging Moves the Needle in Las Vegas",
@@ -569,13 +569,13 @@ export const blogPosts: BlogPost[] = [
     category: "Selling Guides",
     excerpt: "Luxury homes play by different rules. Here's how to price, market, and sell a high-end Las Vegas property for its full value.",
     date: "2026-08-11",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 17,
     seoTitle: "How to Sell a Luxury Home in Las Vegas",
     seoDescription: "Selling a luxury home in Las Vegas? How pricing, marketing, and negotiation differ at the high end — and how to get top dollar.",
     coverImage: "/blog/how-to-sell-a-luxury-home-in-las-vegas.svg",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_4aff30dc-84c6-4b2d-95bd-0ed51314f7f9.png",
-    coverAlt: "Selling Guides — Roland Luxury Las Vegas real estate",
+    coverAlt: "Selling Guides — The Roland Team Las Vegas real estate",
     sections: [
       {
         heading: "Why Selling Luxury Is a Different Game",
@@ -733,20 +733,20 @@ export const blogPosts: BlogPost[] = [
     category: "Buying Guides",
     excerpt: "Las Vegas is a top pick for a second home. Here's what to consider — from location and lock-and-leave living to costs and rental rules.",
     date: "2026-08-11",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 19,
     seoTitle: "Buying a Second Home in Las Vegas: What to Know",
     seoDescription: "Thinking about a Las Vegas second home or vacation property? Location, lock-and-leave options, costs, and rental considerations to plan for.",
     coverImage: "/blog/buying-a-second-home-or-vacation-property-in-las-vegas.svg",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163757_c7a6b662-0998-4825-a4b3-cc10520c079e.png",
-    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    coverAlt: "Buying Guides — The Roland Team Las Vegas real estate",
     sections: [
       {
         heading: "Why Las Vegas Keeps Topping the Second-Home Wish List",
         body: [
           "If you have spent a long weekend in Las Vegas and found yourself checking listings on the flight home, you are not alone. The valley has quietly become one of the country's most popular places to own a second home, and the reasons go well beyond the Strip. Roughly 300 days of sunshine a year, direct flights from most major cities, no state income tax, and a deep supply of low-maintenance homes make it unusually practical to own a place you only visit part of the year.",
           "The real question most part-time buyers are asking is not whether Las Vegas is fun to visit. It is whether a second property here makes sense for how they actually live: how often they will use it, what it will cost to hold when they are not here, and whether they want it to sit empty or earn income between visits. Those are different questions with different answers, and the right home for a snowbird who winters in Henderson looks nothing like the right home for someone who wants a turnkey rental near the airport.",
-          "This guide walks through the decisions that matter most: where to buy, how a second home is financed and taxed differently from a primary residence, what \"lock-and-leave\" living really requires, the honest cost of ownership, and the rules around renting the property out. The goal is to help you buy something you will genuinely enjoy and comfortably afford, not just something that looked good on vacation. When you are ready to talk specifics, the team at [Roland Luxury](/contact) works with second-home buyers across the valley every month."
+          "This guide walks through the decisions that matter most: where to buy, how a second home is financed and taxed differently from a primary residence, what \"lock-and-leave\" living really requires, the honest cost of ownership, and the rules around renting the property out. The goal is to help you buy something you will genuinely enjoy and comfortably afford, not just something that looked good on vacation. When you are ready to talk specifics, the team at [The Roland Team](/contact) works with second-home buyers across the valley every month."
         ]
       },
       {
@@ -869,7 +869,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Your Next Step Toward a Las Vegas Second Home",
         body: [
           "A second home in Las Vegas can be one of the most enjoyable and practical purchases you make, but the best outcomes come from planning, not impulse. Decide how you will use it, choose a location and property type that fit that use, verify the tax and rental rules for the specific address, and budget honestly for the cost of holding a home you visit part of the year. Do those things and you end up with a getaway you love and can comfortably keep.",
-          "This is exactly the kind of purchase where a knowledgeable local team earns its keep. As the luxury division of a Top 1% Las Vegas team, [Roland Luxury](/las-vegas-luxury-real-estate) helps second-home and vacation-property buyers across Las Vegas and Henderson navigate financing, community rules, and carrying costs, and we handle the details that out-of-area buyers cannot manage from a distance. We will tell you honestly when a home fits your plan and when it does not.",
+          "This is exactly the kind of purchase where a knowledgeable local team earns its keep. As a Top 1% Las Vegas team, [The Roland Team](/las-vegas-luxury-real-estate) helps second-home and vacation-property buyers across Las Vegas and Henderson navigate financing, community rules, and carrying costs, and we handle the details that out-of-area buyers cannot manage from a distance. We will tell you honestly when a home fits your plan and when it does not.",
           "When you are ready, reach out through the [contact](/contact) page to start a conversation, browse current [listings](/listings) to see what is available, or review the latest [market report](/market-report) to understand where prices stand today. Whether you want a lock-and-leave villa near the Strip or a private estate in the foothills, we will help you buy the right one."
         ]
       }
@@ -915,13 +915,13 @@ export const blogPosts: BlogPost[] = [
     category: "Buying Guides",
     excerpt: "Age-qualified living with resort amenities and low-maintenance homes — here's how Las Vegas 55+ communities work and how to choose.",
     date: "2026-08-11",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 17,
     seoTitle: "55+ Active Adult Communities in Las Vegas Guide",
     seoDescription: "A guide to 55+ active adult communities in Las Vegas and Henderson — amenities, home styles, HOA considerations, and how to pick the right one.",
     coverImage: "/blog/55-active-adult-communities-in-las-vegas-a-buyers-guide.svg",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_4a6c0e2a-7e78-4b17-8478-f0b8bd8881f0.png",
-    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    coverAlt: "Buying Guides — The Roland Team Las Vegas real estate",
     sections: [
       {
         heading: "What a 55+ Active Adult Community Actually Is",
@@ -1089,13 +1089,13 @@ export const blogPosts: BlogPost[] = [
     category: "Buying Guides",
     excerpt: "From championship courses to guard-gated clubs, here are the Las Vegas golf communities worth knowing — and how to choose.",
     date: "2026-08-11",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 17,
     seoTitle: "The Best Golf Communities in Las Vegas",
     seoDescription: "Explore the best golf communities in Las Vegas and Henderson — private clubs, championship courses, and guard-gated living for golf lovers.",
     coverImage: "/blog/the-best-golf-communities-in-las-vegas.svg",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_ee7e2ab1-cf78-4f22-82d4-c30bfc6e817e.png",
-    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    coverAlt: "Buying Guides — The Roland Team Las Vegas real estate",
     sections: [
       {
         heading: "Why Golf and Las Vegas Real Estate Go Together",
@@ -1262,13 +1262,13 @@ export const blogPosts: BlogPost[] = [
     category: "Buying Guides",
     excerpt: "Inside one of Summerlin's most prestigious guard-gated communities — architecture, amenities, golf, and what buyers should know.",
     date: "2026-08-11",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 17,
     seoTitle: "The Ridges Summerlin: A Complete Buyer's Guide",
     seoDescription: "A complete guide to The Ridges in Summerlin — guard-gated luxury, Bear's Best golf, contemporary custom estates, and what to know before you buy.",
     coverImage: "/blog/the-ridges-in-summerlin-a-complete-guide.svg",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_19002596-0496-4803-bde2-d4430c7dec99.png",
-    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    coverAlt: "Buying Guides — The Roland Team Las Vegas real estate",
     sections: [
       {
         heading: "The Ridges at a Glance: Why This Corner of Summerlin Stands Apart",
@@ -1429,13 +1429,13 @@ export const blogPosts: BlogPost[] = [
     category: "Buying Guides",
     excerpt: "Guard-gated living isn't only for ultra-luxury budgets. Here's where to find gated communities in the valley with homes attainable under $1M.",
     date: "2026-08-11",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 16,
     seoTitle: "Guard-Gated Communities in Las Vegas Under $1M",
     seoDescription: "You don't need millions for gated living. Explore guard-gated communities in Las Vegas and Henderson where homes can be attainable under $1M.",
     coverImage: "/blog/guard-gated-communities-in-las-vegas-under-1m.svg",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_959212a6-fa30-4805-babb-e54ad1754ae2.png",
-    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    coverAlt: "Buying Guides — The Roland Team Las Vegas real estate",
     sections: [
       {
         heading: "Gated Living Without a Seven-Figure Budget",
@@ -1590,13 +1590,13 @@ export const blogPosts: BlogPost[] = [
     category: "Buying Guides",
     excerpt: "Waterfront living about 30 minutes from the Strip — here's an honest look at what it's like to live in Lake Las Vegas.",
     date: "2026-08-11",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 16,
     seoTitle: "Is Lake Las Vegas a Good Place to Live?",
     seoDescription: "Is Lake Las Vegas worth it? A look at waterfront living in Henderson — lifestyle, home options, amenities, and HOA costs, and who it's best for.",
     coverImage: "/blog/is-lake-las-vegas-a-good-place-to-live.svg",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_f5155862-6c35-4be1-a1c8-41af2c4359d2.png",
-    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    coverAlt: "Buying Guides — The Roland Team Las Vegas real estate",
     sections: [
       {
         heading: "The Real Question Behind \"Is Lake Las Vegas a Good Place to Live?\"",
@@ -1749,13 +1749,13 @@ export const blogPosts: BlogPost[] = [
     category: "Buying Guides",
     excerpt: "Californians are relocating to Las Vegas in big numbers. Here's an honest guide to the move — costs, taxes, neighborhoods, and how to do it right.",
     date: "2026-08-11",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 16,
     seoTitle: "Moving to Las Vegas from California: 2026 Guide",
     seoDescription: "Moving from California to Las Vegas? What to know about cost savings, taxes, neighborhoods, and how to plan your relocation the smart way.",
     coverImage: "/blog/moving-to-las-vegas-from-california-the-complete-2026-guide.svg",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_a66ffa8e-96ae-4bf0-bffe-0148dfc830ad.png",
-    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    coverAlt: "Buying Guides — The Roland Team Las Vegas real estate",
     sections: [
       {
         heading: "Why So Many Californians Are Trading the Coast for the Desert",
@@ -1887,13 +1887,13 @@ export const blogPosts: BlogPost[] = [
     category: "Buying Guides",
     excerpt: "Henderson's two crown-jewel guard-gated communities, compared — from architecture and views to amenities and price.",
     date: "2026-08-11",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 16,
     seoTitle: "MacDonald Highlands vs. Ascaya: Which to Choose?",
     seoDescription: "MacDonald Highlands or Ascaya? Compare Henderson's two premier guard-gated luxury communities — setting, homes, amenities, and price — to find your fit.",
     coverImage: "/blog/macdonald-highlands-vs-ascaya-which-luxury-community-fits-you.svg",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_f2c86e9d-3c4a-4cb6-a3e2-e4796b89710f.png",
-    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    coverAlt: "Buying Guides — The Roland Team Las Vegas real estate",
     sections: [
       {
         heading: "Two Crown Jewels on the Same Ridge",
@@ -1999,7 +1999,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Your Next Step: Tour Both Before You Decide",
         body: [
           "Reading about these communities can only take you so far. The difference between a golf-anchored, socially vibrant neighborhood and a private, architecture-driven mountain enclave is something you feel the moment you drive through each gate. The best decision comes from standing on the actual homesites, watching the valley light change at dusk, and picturing your real life in each setting.",
-          "As a Top 1% Las Vegas and Henderson team, Roland Luxury works in both MacDonald Highlands and Ascaya regularly, including quiet, off-market opportunities that never reach the public listings. We can arrange private tours of both, walk specific view corridors with you, connect you with the right architects and builders if you plan to build, and give you a candid, side-by-side read on which fits your goals — whether you are relocating, buying a second home, or upgrading within the valley.",
+          "As a Top 1% Las Vegas and Henderson team, The Roland Team works in both MacDonald Highlands and Ascaya regularly, including quiet, off-market opportunities that never reach the public listings. We can arrange private tours of both, walk specific view corridors with you, connect you with the right architects and builders if you plan to build, and give you a candid, side-by-side read on which fits your goals — whether you are relocating, buying a second home, or upgrading within the valley.",
           "When you are ready, reach out through our [contact page](/contact) to schedule a private tour of both communities. If a sale is part of your move, start your [home value](/home-value) estimate and request a current [market report](/market-report) so we can build the full picture together. The mountain is not going anywhere — but the right homesite in either community rarely stays available for long."
         ]
       }
@@ -2045,13 +2045,13 @@ export const blogPosts: BlogPost[] = [
     category: "Buying Guides",
     excerpt: "Thinking about a move to Henderson? Here's a clear, honest look at what it really costs to live in one of Nevada's most popular cities.",
     date: "2026-08-11",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 16,
     seoTitle: "Cost of Living in Henderson, NV: 2026 Guide",
     seoDescription: "What does it cost to live in Henderson, NV? Home prices, taxes, utilities, and lifestyle costs — and why relocating buyers keep choosing Henderson.",
     coverImage: "/blog/cost-of-living-in-henderson-nv-what-to-expect-in-2026.svg",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163757_32fa2d6a-42cd-489d-95cb-0c7863d1db01.png",
-    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    coverAlt: "Buying Guides — The Roland Team Las Vegas real estate",
     sections: [
       {
         heading: "Why Henderson Keeps Landing on \"Best Places to Live\" Lists",
@@ -2205,13 +2205,13 @@ export const blogPosts: BlogPost[] = [
     category: "Buying Guides",
     excerpt: "Two of Southern Nevada's most sought-after places to live — but they offer very different lifestyles. Here's an honest comparison to help you decide.",
     date: "2026-08-11",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 17,
     seoTitle: "Summerlin vs. Henderson: Where Should You Buy?",
     seoDescription: "Summerlin or Henderson? Compare Las Vegas's two premier areas — lifestyle, luxury communities, commute, and value — to decide where to buy your next home.",
     coverImage: "/blog/summerlin-vs-henderson-where-should-you-buy-in-las-vegas.svg",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163757_3cd3b041-ca7e-425b-b400-4b009f81fe5c.png",
-    coverAlt: "Buying Guides — Roland Luxury Las Vegas real estate",
+    coverAlt: "Buying Guides — The Roland Team Las Vegas real estate",
     sections: [
       {
         heading: "Two Very Different Answers to the Same Question",
@@ -2379,7 +2379,7 @@ export const blogPosts: BlogPost[] = [
     category: "New Construction",
     excerpt: "Southern Nevada is one of the nation's most active new-home markets. Here are the growing communities where builders are most active right now — and what to know before you buy new.",
     date: "2026-08-01",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 15,
     seoTitle: "New Construction Las Vegas 2026: Builder Communities to Watch",
     seoDescription: "The Las Vegas communities with the most new construction in 2026 — Skye Canyon, Cadence, Inspirada, Summerlin — plus tips for buying a new-build home.",
@@ -2535,7 +2535,7 @@ export const blogPosts: BlogPost[] = [
     category: "Market Updates",
     excerpt: "A quick read on where the Las Vegas Valley market stands — prices, pace, and inventory — and what it means whether you're buying or selling.",
     date: "2026-07-30",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 17,
     seoTitle: "Las Vegas Housing Market Update — Summer 2026",
     seoDescription: "The latest Las Vegas market update: median prices, days on market, and inventory trends, plus what they mean for buyers and sellers.",
@@ -2691,7 +2691,7 @@ export const blogPosts: BlogPost[] = [
     category: "Buying Guides",
     excerpt: "Before you shop, know your number. Here's how lenders think about affordability in Las Vegas — including the local costs buyers often forget.",
     date: "2026-07-27",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 16,
     seoTitle: "How Much Home Can You Afford in Las Vegas? A Buyer's Guide",
     seoDescription: "Understand home affordability in Las Vegas — income, debt, down payment, and the HOA and tax costs that shape your real budget.",
@@ -2849,7 +2849,7 @@ export const blogPosts: BlogPost[] = [
     category: "Selling Guides",
     excerpt: "The work you do before listing has an outsized effect on your final price. Here's where to focus when preparing a Las Vegas home to sell.",
     date: "2026-07-24",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 17,
     seoTitle: "Preparing Your Las Vegas Home to Sell for Top Dollar",
     seoDescription: "How to prepare your Las Vegas home to sell — pricing, decluttering, repairs, staging, and professional marketing that drives stronger offers.",
@@ -3033,7 +3033,7 @@ export const blogPosts: BlogPost[] = [
     category: "Selling Guides",
     excerpt: "Your list price isn't your take-home. Here's how to think about net proceeds when selling a home in Las Vegas.",
     date: "2026-07-20",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 16,
     seoTitle: "Seller Net Proceeds on a Las Vegas Home: What to Expect",
     seoDescription: "Understand seller net proceeds in Las Vegas — the costs between list price and your check, and how to estimate your take-home before you list.",
@@ -3197,7 +3197,7 @@ export const blogPosts: BlogPost[] = [
     category: "Market Updates",
     excerpt: "The honest answer to the question every buyer asks — and the factors that actually matter more than trying to time the market.",
     date: "2026-07-18",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 15,
     seoTitle: "Is Now a Good Time to Buy a Home in Las Vegas?",
     seoDescription: "Should you buy a home in Las Vegas now? An honest look at timing, rates, inventory, and the factors that matter more than trying to time the market.",
@@ -3354,7 +3354,7 @@ export const blogPosts: BlogPost[] = [
     category: "Buying Guides",
     excerpt: "Two terms you'll hear constantly in Las Vegas real estate — here's what they actually mean and how to choose.",
     date: "2026-07-15",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 19,
     seoTitle: "Guard-Gated vs. Master-Planned Communities in Las Vegas",
     seoDescription: "Understand the difference between guard-gated and master-planned communities in Las Vegas — security, amenities, privacy, and how to choose the right fit.",
@@ -3477,7 +3477,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Your Next Step",
         body: [
           "Understanding the difference between guard-gated and master-planned is the groundwork; the real value comes from applying it to actual homes on actual streets. That means touring a guard-gated enclave and an open master plan back to back, reading two sets of HOA documents side by side, and feeling the difference between a manned gate and a village trailhead. The distinction that looks abstract on paper becomes obvious the moment you experience both.",
-          "As the luxury division of a Top 1% Las Vegas real estate team, we tour these communities every week and know their dues, their finances, and their nuances first-hand — from Summerlin's villages to Henderson's guarded golf enclaves. We can help you compare specific addresses, pull the documents that actually matter, and separate the marketing language from the lived reality of each community. Browse current [listings](/listings) to get a feel for what is available, or explore the valley's neighborhoods through our [communities overview](/communities).",
+          "As a Top 1% Las Vegas real estate team, we tour these communities every week and know their dues, their finances, and their nuances first-hand — from Summerlin's villages to Henderson's guarded golf enclaves. We can help you compare specific addresses, pull the documents that actually matter, and separate the marketing language from the lived reality of each community. Browse current [listings](/listings) to get a feel for what is available, or explore the valley's neighborhoods through our [communities overview](/communities).",
           "When you are ready to make it concrete, [reach out and start a conversation](/contact). Tell us what you are optimizing for — privacy, amenities, budget, lifestyle — and we will point you toward the communities that genuinely fit, then walk the best of them with you. The right home in the right community is out there; the fastest way to find it is with someone who knows exactly what those two labels mean on the ground."
         ]
       }
@@ -3523,7 +3523,7 @@ export const blogPosts: BlogPost[] = [
     category: "New Construction",
     excerpt: "New builds are a big part of the Las Vegas market. Here's how the process differs from buying resale — and how to protect yourself.",
     date: "2026-07-12",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 20,
     seoTitle: "Buying New Construction in Las Vegas: What Buyers Should Know",
     seoDescription: "A guide to buying new construction in Las Vegas — builder incentives, timelines, upgrades, and why you should bring your own agent to the builder.",
@@ -3701,7 +3701,7 @@ export const blogPosts: BlogPost[] = [
     category: "Market Updates",
     excerpt: "Southern Nevada's luxury tier plays by its own rules. Here's what sets the Las Vegas high-end market apart from the rest of the valley.",
     date: "2026-07-10",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 15,
     seoTitle: "The Las Vegas Luxury Real Estate Market: What Makes It Unique",
     seoDescription: "What makes the Las Vegas luxury real estate market unique — guard-gated exclusivity, custom estates, no state income tax, and its own pricing dynamics.",
@@ -3819,7 +3819,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Your Next Step: A Private Consultation",
         body: [
           "The Las Vegas luxury market rewards those who understand its quirks and quietly frustrates those who treat it like everywhere else. Whether you are relocating to take advantage of Nevada's tax climate, searching for a hillside estate with a view worth building a home around, or preparing to sell a property that deserves its full value, the path forward is the same: work with a team that lives in this segment every day.",
-          "Roland Luxury, the luxury division of The Roland Team with LPT Realty, works exclusively at this level across Las Vegas and Henderson. We know the guard-gated communities from the inside, we have genuine reach into off-market inventory, and we handle every engagement with the discretion the top of this market demands.",
+          "The Roland Team with LPT Realty works at this level across Las Vegas and Henderson. We know the guard-gated communities from the inside, we have genuine reach into off-market inventory, and we handle every engagement with the discretion the top of this market demands.",
           "If you are considering a move at the high end, the best first step is a private, no-pressure conversation about your goals. Reach out through our [contact](/contact) page and we will map out what makes sense for your situation."
         ]
       }
@@ -3865,7 +3865,7 @@ export const blogPosts: BlogPost[] = [
     category: "Buying Guides",
     excerpt: "Some of the best luxury homes never hit the public market. Here's how off-market and coming-soon opportunities work — and how to access them.",
     date: "2026-07-08",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 17,
     seoTitle: "Off-Market Luxury Homes in Las Vegas: How to Find Them",
     seoDescription: "How off-market and coming-soon luxury homes work in Las Vegas — why sellers use them, and how buyers access these private opportunities.",
@@ -4030,7 +4030,7 @@ export const blogPosts: BlogPost[] = [
     category: "Buying Guides",
     excerpt: "Guard-gated living comes with real perks and real costs. Here's an honest look at whether it's worth it in Las Vegas and Henderson.",
     date: "2026-07-05",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 17,
     seoTitle: "Are Guard-Gated Communities Worth It in Las Vegas?",
     seoDescription: "Are guard-gated communities worth it in Las Vegas? An honest look at the privacy, security, amenities, and HOA costs of gated living in Southern Nevada.",
@@ -4194,7 +4194,7 @@ export const blogPosts: BlogPost[] = [
     category: "Buying Guides",
     excerpt: "Nevada's property taxes are a pleasant surprise for many buyers. Here's how they work in Las Vegas and Henderson.",
     date: "2026-07-03",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 16,
     seoTitle: "Las Vegas Property Taxes Explained: A Buyer's Guide",
     seoDescription: "How property taxes work in Las Vegas and Henderson — Nevada's moderate rates, how assessments work, and why the tax picture attracts relocating buyers.",
@@ -4350,7 +4350,7 @@ export const blogPosts: BlogPost[] = [
     category: "Market Updates",
     excerpt: "Is there a best season to buy or sell in Las Vegas? Here's how seasonality really works in the valley — and why your situation matters more.",
     date: "2026-07-01",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 15,
     seoTitle: "The Best Time to Buy or Sell a Home in Las Vegas",
     seoDescription: "When is the best time to buy or sell a home in Las Vegas? How seasonality affects the market — and why your personal timeline usually matters more.",
@@ -4498,7 +4498,7 @@ export const blogPosts: BlogPost[] = [
     category: "Buying Guides",
     excerpt: "Nevada uses escrow and title companies to close real estate deals. Here's what happens between accepted offer and keys in hand.",
     date: "2026-06-28",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 17,
     seoTitle: "Understanding Escrow and Closing in Nevada",
     seoDescription: "How escrow and closing work in Nevada real estate — the role of escrow and title companies, timelines, and what buyers and sellers can expect.",
@@ -4656,7 +4656,7 @@ export const blogPosts: BlogPost[] = [
     category: "Buying Guides",
     excerpt: "In the desert, a backyard pool is a lifestyle. Here's what to consider when buying a pool home in Las Vegas.",
     date: "2026-06-25",
-    author: "Roland Luxury",
+    author: "The Roland Team",
     readMinutes: 16,
     seoTitle: "Buying a Pool Home in Las Vegas: What to Know",
     seoDescription: "What to know before buying a pool home in Las Vegas — desert lifestyle appeal, maintenance and cost considerations, and inspection tips.",

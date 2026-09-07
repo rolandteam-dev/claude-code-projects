@@ -108,7 +108,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Ascaya cost?",
-        a: "Ascaya homes and homesites for sale generally range from about $5 million to more than $12 million, depending on lot size, elevation, square footage, and custom finishes. Contact Roland Luxury for current availability and pricing.",
+        a: "Ascaya homes and homesites for sale generally range from about $5 million to more than $12 million, depending on lot size, elevation, square footage, and custom finishes. Contact The Roland Team for current availability and pricing.",
       },
       {
         q: "Is Ascaya a guard-gated community?",
@@ -174,7 +174,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in MacDonald Highlands cost?",
-        a: "Prices generally range from approximately $1.5 million to more than $10 million depending on home size, elevation, and custom finishes. Contact Roland Luxury for current listings and pricing.",
+        a: "Prices generally range from approximately $1.5 million to more than $10 million depending on home size, elevation, and custom finishes. Contact The Roland Team for current listings and pricing.",
       },
     ],
   },
@@ -227,7 +227,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Seven Hills cost?",
-        a: "Prices generally range from around $600,000 to more than $4 million depending on the enclave, home size, and finishes. Contact Roland Luxury for current availability.",
+        a: "Prices generally range from around $600,000 to more than $4 million depending on the enclave, home size, and finishes. Contact The Roland Team for current availability.",
       },
     ],
   },
@@ -280,7 +280,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in The Ridges cost?",
-        a: "Prices generally range from approximately $2 million to more than $15 million depending on size, enclave, and finish level. Contact Roland Luxury for current listings.",
+        a: "Prices generally range from approximately $2 million to more than $15 million depending on size, enclave, and finish level. Contact The Roland Team for current listings.",
       },
     ],
   },
@@ -335,7 +335,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Lake Las Vegas cost?",
-        a: "Prices generally range from about $400,000 for condominiums to more than $10 million for waterfront custom estates. Contact Roland Luxury for current availability.",
+        a: "Prices generally range from about $400,000 for condominiums to more than $10 million for waterfront custom estates. Contact The Roland Team for current availability.",
       },
     ],
   },
@@ -390,7 +390,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Summerlin cost?",
-        a: "Prices range from around $400,000 for condos and townhomes to more than $10 million for luxury estates in enclaves like The Ridges and The Summit. Contact Roland Luxury for current listings.",
+        a: "Prices range from around $400,000 for condos and townhomes to more than $10 million for luxury estates in enclaves like The Ridges and The Summit. Contact The Roland Team for current listings.",
       },
     ],
   },
@@ -442,7 +442,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Anthem cost?",
-        a: "Prices generally range from around $400,000 to more than $3 million depending on the neighborhood, elevation, and whether the home is in the guard-gated country club. Contact Roland Luxury for current availability.",
+        a: "Prices generally range from around $400,000 to more than $3 million depending on the neighborhood, elevation, and whether the home is in the guard-gated country club. Contact The Roland Team for current availability.",
       },
     ],
   },
@@ -494,7 +494,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Southern Highlands cost?",
-        a: "Prices generally range from around $450,000 to more than $8 million depending on the neighborhood and whether the home is in a guard-gated enclave. Contact Roland Luxury for current listings.",
+        a: "Prices generally range from around $450,000 to more than $8 million depending on the neighborhood and whether the home is in a guard-gated enclave. Contact The Roland Team for current listings.",
       },
     ],
   },
@@ -546,7 +546,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Inspirada cost?",
-        a: "Prices generally range from around $400,000 to about $1.2 million depending on the home size, builder, and location. Contact Roland Luxury for current availability.",
+        a: "Prices generally range from around $400,000 to about $1.2 million depending on the home size, builder, and location. Contact The Roland Team for current availability.",
       },
     ],
   },
@@ -599,7 +599,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Green Valley cost?",
-        a: "Prices generally range from around $400,000 to more than $3 million depending on the neighborhood and whether the home is in a guard-gated enclave. Contact Roland Luxury for current listings.",
+        a: "Prices generally range from around $400,000 to more than $3 million depending on the neighborhood and whether the home is in a guard-gated enclave. Contact The Roland Team for current listings.",
       },
     ],
   },
@@ -653,7 +653,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Boulder City cost?",
-        a: "Prices generally range from around $400,000 to more than $2 million depending on location, age, and size. Because growth is limited, inventory can be scarce. Contact Roland Luxury for current availability.",
+        a: "Prices generally range from around $400,000 to more than $2 million depending on location, age, and size. Because growth is limited, inventory can be scarce. Contact The Roland Team for current availability.",
       },
     ],
   },
@@ -706,7 +706,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in The Summit Club cost?",
-        a: "Prices generally range from approximately $4 million to more than $20 million for custom estates. Contact Roland Luxury for current availability and membership details.",
+        a: "Prices generally range from approximately $4 million to more than $20 million for custom estates. Contact The Roland Team for current availability and membership details.",
       },
     ],
   },
@@ -758,7 +758,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Red Rock Country Club cost?",
-        a: "Prices generally range from around $600,000 to more than $6 million depending on the home and its views. Contact Roland Luxury for current listings.",
+        a: "Prices generally range from around $600,000 to more than $6 million depending on the home and its views. Contact The Roland Team for current listings.",
       },
     ],
   },
@@ -810,7 +810,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Sun City Summerlin cost?",
-        a: "Prices generally range from around $350,000 to more than $1.2 million depending on floor plan, location, and condition. Contact Roland Luxury for current availability.",
+        a: "Prices generally range from around $350,000 to more than $1.2 million depending on floor plan, location, and condition. Contact The Roland Team for current availability.",
       },
     ],
   },
@@ -862,7 +862,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Mountain's Edge cost?",
-        a: "Prices generally range from around $400,000 to about $900,000 depending on size, location, and updates. Contact Roland Luxury for current listings.",
+        a: "Prices generally range from around $400,000 to about $900,000 depending on size, location, and updates. Contact The Roland Team for current listings.",
       },
     ],
   },
@@ -914,7 +914,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Skye Canyon cost?",
-        a: "Prices generally range from around $400,000 to more than $1 million depending on the builder, floor plan, and location. Contact Roland Luxury for current availability.",
+        a: "Prices generally range from around $400,000 to more than $1 million depending on the builder, floor plan, and location. Contact The Roland Team for current availability.",
       },
     ],
   },
@@ -966,7 +966,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Cadence cost?",
-        a: "Prices generally range from around $400,000 to about $900,000 depending on the builder, floor plan, and location. Contact Roland Luxury for current availability.",
+        a: "Prices generally range from around $400,000 to about $900,000 depending on the builder, floor plan, and location. Contact The Roland Team for current availability.",
       },
     ],
   },
@@ -1018,7 +1018,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Rhodes Ranch cost?",
-        a: "Prices generally range from around $400,000 to more than $1 million depending on size, lot, and golf-course frontage. Contact Roland Luxury for current listings.",
+        a: "Prices generally range from around $400,000 to more than $1 million depending on size, lot, and golf-course frontage. Contact The Roland Team for current listings.",
       },
     ],
   },
@@ -1070,7 +1070,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Providence cost?",
-        a: "Prices generally range from around $400,000 to about $900,000 depending on the home's size and location. Contact Roland Luxury for current availability.",
+        a: "Prices generally range from around $400,000 to about $900,000 depending on the home's size and location. Contact The Roland Team for current availability.",
       },
     ],
   },
@@ -1118,7 +1118,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Centennial Hills cost?",
-        a: "Prices generally range from around $400,000 to more than $1 million depending on size, lot, and location. Contact Roland Luxury for current listings.",
+        a: "Prices generally range from around $400,000 to more than $1 million depending on size, lot, and location. Contact The Roland Team for current listings.",
       },
     ],
   },
@@ -1170,7 +1170,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Aliante cost?",
-        a: "Prices generally range from around $350,000 to about $800,000 depending on size and location. Contact Roland Luxury for current availability.",
+        a: "Prices generally range from around $350,000 to about $800,000 depending on size and location. Contact The Roland Team for current availability.",
       },
     ],
   },
@@ -1222,7 +1222,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Tuscany cost?",
-        a: "Prices generally range from around $350,000 to about $900,000 depending on size and location. Contact Roland Luxury for current listings.",
+        a: "Prices generally range from around $350,000 to about $900,000 depending on size and location. Contact The Roland Team for current listings.",
       },
     ],
   },
@@ -1270,7 +1270,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Silverado Ranch cost?",
-        a: "Prices generally range from around $400,000 to about $800,000 depending on size and location. Contact Roland Luxury for current availability.",
+        a: "Prices generally range from around $400,000 to about $800,000 depending on size and location. Contact The Roland Team for current availability.",
       },
     ],
   },
@@ -1318,7 +1318,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Spring Valley cost?",
-        a: "Prices range widely — from around $350,000 for condos and townhomes to more than $1 million for larger or gated homes. Contact Roland Luxury for current listings.",
+        a: "Prices range widely — from around $350,000 for condos and townhomes to more than $1 million for larger or gated homes. Contact The Roland Team for current listings.",
       },
     ],
   },
@@ -1370,7 +1370,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Solera at Anthem cost?",
-        a: "Prices generally range from around $400,000 to about $900,000 depending on floor plan and location. Contact Roland Luxury for current availability.",
+        a: "Prices generally range from around $400,000 to about $900,000 depending on floor plan and location. Contact The Roland Team for current availability.",
       },
     ],
   },
@@ -1418,7 +1418,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Sun City Aliante cost?",
-        a: "Prices generally range from around $350,000 to about $700,000 depending on floor plan and location. Contact Roland Luxury for current availability.",
+        a: "Prices generally range from around $350,000 to about $700,000 depending on floor plan and location. Contact The Roland Team for current availability.",
       },
     ],
   },
@@ -1471,7 +1471,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Queensridge cost?",
-        a: "Prices generally range from around $700,000 to more than $5 million depending on whether it's an estate or a luxury condominium, plus size and views. Contact Roland Luxury for current listings.",
+        a: "Prices generally range from around $700,000 to more than $5 million depending on whether it's an estate or a luxury condominium, plus size and views. Contact The Roland Team for current listings.",
       },
     ],
   },
@@ -1523,7 +1523,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in The Lakes cost?",
-        a: "Prices generally range from around $450,000 to more than $2 million depending on the home and whether it has lake frontage. Contact Roland Luxury for current availability.",
+        a: "Prices generally range from around $450,000 to more than $2 million depending on the home and whether it has lake frontage. Contact The Roland Team for current availability.",
       },
     ],
   },
@@ -1574,7 +1574,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Roma Hills cost?",
-        a: "Prices generally range from around $700,000 to more than $3 million depending on size and finish. Because the community is small, inventory can be limited. Contact Roland Luxury for current listings.",
+        a: "Prices generally range from around $700,000 to more than $3 million depending on size and finish. Because the community is small, inventory can be limited. Contact The Roland Team for current listings.",
       },
     ],
   },
@@ -1622,7 +1622,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Peccole Ranch cost?",
-        a: "Prices generally range from around $450,000 to more than $1 million depending on size, location, and whether the home is in a gated pocket. Contact Roland Luxury for current availability.",
+        a: "Prices generally range from around $450,000 to more than $1 million depending on size, location, and whether the home is in a gated pocket. Contact The Roland Team for current availability.",
       },
     ],
   },
@@ -1676,7 +1676,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Spanish Trail cost?",
-        a: "Prices generally range from around $500,000 for condominiums and townhomes to more than $4 million for custom golf-course estates. Contact Roland Luxury for current availability.",
+        a: "Prices generally range from around $500,000 for condominiums and townhomes to more than $4 million for custom golf-course estates. Contact The Roland Team for current availability.",
       },
     ],
   },
@@ -1729,7 +1729,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Spanish Hills cost?",
-        a: "Prices generally range from approximately $1.5 million to more than $10 million depending on lot size, square footage, and custom finishes. Contact Roland Luxury for current availability.",
+        a: "Prices generally range from approximately $1.5 million to more than $10 million depending on lot size, square footage, and custom finishes. Contact The Roland Team for current availability.",
       },
     ],
   },
@@ -1782,7 +1782,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Reverence cost?",
-        a: "Prices generally range from around $900,000 to more than $4 million depending on the collection, homesite, and views. Contact Roland Luxury for current availability.",
+        a: "Prices generally range from around $900,000 to more than $4 million depending on the collection, homesite, and views. Contact The Roland Team for current availability.",
       },
     ],
   },
@@ -1835,7 +1835,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Tournament Hills cost?",
-        a: "Prices generally range from approximately $1.2 million to more than $6 million depending on lot size, square footage, and finishes. Contact Roland Luxury for current availability.",
+        a: "Prices generally range from approximately $1.2 million to more than $6 million depending on lot size, square footage, and finishes. Contact The Roland Team for current availability.",
       },
     ],
   },
@@ -1850,7 +1850,7 @@ export const communities: Community[] = [
     h1: "Sun City Anthem Homes for Sale in Henderson, NV",
     eyebrow: "Henderson, Nevada · 55+ Active Adult",
     intro: "A landmark Del Webb active-adult community set in the Anthem foothills of south Henderson, offering resort-style recreation and single-story living.",
-    lead: "Sun City Anthem is one of the Las Vegas Valley's largest and most established age-restricted 55+ communities, occupying an elevated pocket of Anthem in south Henderson with sweeping mountain and valley views. Built by Del Webb, the community is known for its multiple resident recreation centers, resort-style and indoor pools, fitness facilities, and a packed calendar of clubs and social activities. Homes are predominantly single-story, ranging from cozy attached villas to spacious detached floor plans on larger homesites. For buyers comparing options among [active-adult communities in Las Vegas](/active-adult-communities-las-vegas), Sun City Anthem stands out for its scale, amenity depth, and convenient access to shopping, dining, and the M Resort. Contact Roland Luxury to tour available homes and discuss current pricing and availability.",
+    lead: "Sun City Anthem is one of the Las Vegas Valley's largest and most established age-restricted 55+ communities, occupying an elevated pocket of Anthem in south Henderson with sweeping mountain and valley views. Built by Del Webb, the community is known for its multiple resident recreation centers, resort-style and indoor pools, fitness facilities, and a packed calendar of clubs and social activities. Homes are predominantly single-story, ranging from cozy attached villas to spacious detached floor plans on larger homesites. For buyers comparing options among [active-adult communities in Las Vegas](/active-adult-communities-las-vegas), Sun City Anthem stands out for its scale, amenity depth, and convenient access to shopping, dining, and the M Resort. Contact The Roland Team to tour available homes and discuss current pricing and availability.",
     quickFacts: [
       { label: "Location", value: "Anthem, Henderson, NV 89052" },
       { label: "Community Type", value: "Age-restricted 55+ active adult" },
@@ -1872,7 +1872,7 @@ export const communities: Community[] = [
         heading: "Homes & Real Estate",
         body: [
           "Sun City Anthem's housing stock spans a wide range of single-story floor plans, from efficient attached villas to larger detached homes with three-car garages and expansive great rooms. Because the community was built out over several phases, floor plans, lot sizes, and finish levels vary meaningfully from one neighborhood to the next.",
-          "Pricing is approximate and shifts with inventory, lot premiums, and level of updating — Approx. $350,000 to $700,000 or more for larger, view-oriented homes. Buyers weighing budget against space and finishes may find it useful to run numbers through an [affordability calculator](/calculators/home-affordability) before touring, and to check [current listings](/listings) for up-to-date availability. Contact Roland Luxury for current availability and pricing.",
+          "Pricing is approximate and shifts with inventory, lot premiums, and level of updating — Approx. $350,000 to $700,000 or more for larger, view-oriented homes. Buyers weighing budget against space and finishes may find it useful to run numbers through an [affordability calculator](/calculators/home-affordability) before touring, and to check [current listings](/listings) for up-to-date availability. Contact The Roland Team for current availability and pricing.",
         ],
       },
       {
@@ -1911,7 +1911,7 @@ export const communities: Community[] = [
       },
       {
         q: "What is the price range for homes in Sun City Anthem?",
-        a: "Homes in Sun City Anthem generally range from approximately $350,000 to $700,000 or more, depending on floor plan, lot, view, and updates. Contact Roland Luxury for current availability and pricing.",
+        a: "Homes in Sun City Anthem generally range from approximately $350,000 to $700,000 or more, depending on floor plan, lot, view, and updates. Contact The Roland Team for current availability and pricing.",
       },
       {
         q: "Is Sun City Anthem age-restricted?",
@@ -1919,7 +1919,7 @@ export const communities: Community[] = [
       },
       {
         q: "What types of homes are available in Sun City Anthem?",
-        a: "Sun City Anthem offers predominantly single-story homes, including attached villas and larger detached floor plans with two- and three-car garages. Contact Roland Luxury for current availability and pricing.",
+        a: "Sun City Anthem offers predominantly single-story homes, including attached villas and larger detached floor plans with two- and three-car garages. Contact The Roland Team for current availability and pricing.",
       },
       {
         q: "What amenities does Sun City Anthem offer?",
@@ -1934,7 +1934,7 @@ export const communities: Community[] = [
     city: "Henderson",
     zip: "89052",
     seoTitle: "Anthem Country Club Homes for Sale in Henderson, NV",
-    seoDescription: "Explore Anthem Country Club homes for sale in Henderson, NV — a guard-gated private golf community with mountain and Strip views. Contact Roland Luxury.",
+    seoDescription: "Explore Anthem Country Club homes for sale in Henderson, NV — a guard-gated private golf community with mountain and Strip views. Contact The Roland Team.",
     h1: "Anthem Country Club Homes for Sale in Henderson, NV",
     eyebrow: "Henderson, Nevada · Guard-Gated Golf",
     intro: "Custom and semi-custom luxury homes wrapped around a private championship golf course in the guard-gated hills of Anthem.",
@@ -1960,7 +1960,7 @@ export const communities: Community[] = [
       {
         heading: "Homes & Real Estate in Anthem Country Club",
         body: [
-          "Home sizes and finishes vary widely across Anthem Country Club's guard-gated neighborhoods, from semi-custom production estates to one-off custom builds on larger lots. Pricing is approximate and shifts with inventory and finish level, so buyers should [contact Roland Luxury for current availability and pricing](/contact) or explore [current listings](/listings) for up-to-date options.",
+          "Home sizes and finishes vary widely across Anthem Country Club's guard-gated neighborhoods, from semi-custom production estates to one-off custom builds on larger lots. Pricing is approximate and shifts with inventory and finish level, so buyers should [contact The Roland Team for current availability and pricing](/contact) or explore [current listings](/listings) for up-to-date options.",
         ],
         bullets: [
           "Semi-custom and fully custom single-story and two-story floor plans",
@@ -1998,7 +1998,7 @@ export const communities: Community[] = [
       },
       {
         q: "What is the price range for homes in Anthem Country Club?",
-        a: "Home prices in Anthem Country Club vary by size, lot, and finish level, generally ranging from the high $900,000s to $3 million or more. Contact Roland Luxury for current availability and pricing.",
+        a: "Home prices in Anthem Country Club vary by size, lot, and finish level, generally ranging from the high $900,000s to $3 million or more. Contact The Roland Team for current availability and pricing.",
       },
       {
         q: "Is Anthem Country Club guard-gated?",
@@ -2010,7 +2010,7 @@ export const communities: Community[] = [
       },
       {
         q: "What types of homes are available in Anthem Country Club?",
-        a: "Anthem Country Club offers both semi-custom and fully custom single- and two-story luxury homes, including options with golf course, mountain, or city-light views. Contact Roland Luxury for current availability and pricing.",
+        a: "Anthem Country Club offers both semi-custom and fully custom single- and two-story luxury homes, including options with golf course, mountain, or city-light views. Contact The Roland Team for current availability and pricing.",
       },
     ],
   },
@@ -2097,7 +2097,7 @@ export const communities: Community[] = [
       },
       {
         q: "What is the price range for homes in Green Valley Ranch?",
-        a: "Home prices in Green Valley Ranch generally range from the mid $400,000s to well over $1.5 million depending on size, lot, and location within the community. Contact Roland Luxury for current availability and pricing.",
+        a: "Home prices in Green Valley Ranch generally range from the mid $400,000s to well over $1.5 million depending on size, lot, and location within the community. Contact The Roland Team for current availability and pricing.",
       },
     ],
   },
@@ -2184,7 +2184,7 @@ export const communities: Community[] = [
       },
       {
         q: "What is the price range for homes in Whitney Ranch?",
-        a: "Home prices in Whitney Ranch generally run lower than many newer Henderson communities, offering strong relative value. Contact Roland Luxury for current availability and pricing.",
+        a: "Home prices in Whitney Ranch generally run lower than many newer Henderson communities, offering strong relative value. Contact The Roland Team for current availability and pricing.",
       },
     ],
   },
@@ -2271,7 +2271,7 @@ export const communities: Community[] = [
       },
       {
         q: "What does it cost to buy a home in The Cliffs?",
-        a: "Home prices in The Cliffs vary by size, lot, and view, and shift with market conditions. You can also check your own home's estimated value using our [home value tool](/home-value) or browse current [listings](/listings). Contact Roland Luxury for current availability and pricing.",
+        a: "Home prices in The Cliffs vary by size, lot, and view, and shift with market conditions. You can also check your own home's estimated value using our [home value tool](/home-value) or browse current [listings](/listings). Contact The Roland Team for current availability and pricing.",
       },
     ],
   },
@@ -2349,7 +2349,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Stonebridge cost?",
-        a: "Prices vary based on lot size, view, and how recently a section was built, and the market shifts over time. Contact Roland Luxury for current availability and pricing.",
+        a: "Prices vary based on lot size, view, and how recently a section was built, and the market shifts over time. Contact The Roland Team for current availability and pricing.",
       },
       {
         q: "Is Stonebridge close to Red Rock Canyon?",
@@ -2357,7 +2357,7 @@ export const communities: Community[] = [
       },
       {
         q: "Are there gated sections within Stonebridge?",
-        a: "Some pockets of Stonebridge are gated, offering added privacy within the larger village. Availability of gated versus non-gated homes changes often, so contact Roland Luxury for current availability and pricing.",
+        a: "Some pockets of Stonebridge are gated, offering added privacy within the larger village. Availability of gated versus non-gated homes changes often, so contact The Roland Team for current availability and pricing.",
       },
     ],
   },
@@ -2431,7 +2431,7 @@ export const communities: Community[] = [
       },
       {
         q: "Are there horse properties in Lone Mountain?",
-        a: "Yes, pockets of Lone Mountain include horse-friendly or equestrian-zoned properties, though availability varies by street and section. Contact Roland Luxury for current availability and pricing.",
+        a: "Yes, pockets of Lone Mountain include horse-friendly or equestrian-zoned properties, though availability varies by street and section. Contact The Roland Team for current availability and pricing.",
       },
       {
         q: "How far is Lone Mountain from the Las Vegas Strip?",
@@ -2439,11 +2439,11 @@ export const communities: Community[] = [
       },
       {
         q: "What is the price range for homes in Lone Mountain?",
-        a: "Home prices in Lone Mountain vary widely based on lot size, custom features, and whether a property includes equestrian amenities. Contact Roland Luxury for current availability and pricing.",
+        a: "Home prices in Lone Mountain vary widely based on lot size, custom features, and whether a property includes equestrian amenities. Contact The Roland Team for current availability and pricing.",
       },
       {
         q: "How do I find current Lone Mountain listings?",
-        a: "You can browse current [listings](/listings), explore other [communities](/communities), or get a free [home value estimate](/home-value). Contact Roland Luxury for current availability and pricing.",
+        a: "You can browse current [listings](/listings), explore other [communities](/communities), or get a free [home value estimate](/home-value). Contact The Roland Team for current availability and pricing.",
       },
     ],
   },
@@ -2454,7 +2454,7 @@ export const communities: Community[] = [
     city: "Las Vegas",
     zip: "89135",
     seoTitle: "The Willows at Summerlin | Las Vegas Homes for Sale",
-    seoDescription: "Discover The Willows, an established Summerlin village with parks, trails, and single-family homes near Downtown Summerlin. Contact Roland Luxury.",
+    seoDescription: "Discover The Willows, an established Summerlin village with parks, trails, and single-family homes near Downtown Summerlin. Contact The Roland Team.",
     h1: "The Willows at Summerlin Homes for Sale",
     eyebrow: "Summerlin, Las Vegas · Established Village",
     intro: "The Willows is an established, family-oriented village within the Summerlin master plan, known for its tree-lined streets, neighborhood parks, and walking trails.",
@@ -2506,7 +2506,7 @@ export const communities: Community[] = [
         heading: "Who The Willows Suits",
         body: [
           "The Willows tends to appeal to buyers who want an established, tree-lined neighborhood rather than new construction, along with easy access to parks, trails, and nearby Downtown Summerlin amenities.",
-          "To see what's currently on the market or to start a conversation about the area, [contact Roland Luxury](/contact) directly.",
+          "To see what's currently on the market or to start a conversation about the area, [contact The Roland Team](/contact) directly.",
         ],
       },
     ],
@@ -2521,7 +2521,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in The Willows cost?",
-        a: "Home prices in The Willows vary by lot, size, and condition, and shift with market conditions. Contact Roland Luxury for current availability and pricing.",
+        a: "Home prices in The Willows vary by lot, size, and condition, and shift with market conditions. Contact The Roland Team for current availability and pricing.",
       },
       {
         q: "Is The Willows close to Downtown Summerlin?",
@@ -2529,7 +2529,7 @@ export const communities: Community[] = [
       },
       {
         q: "How do I find current listings in The Willows?",
-        a: "Availability in The Willows changes regularly. Contact Roland Luxury for current availability and pricing.",
+        a: "Availability in The Willows changes regularly. Contact The Roland Team for current availability and pricing.",
       },
     ],
   },

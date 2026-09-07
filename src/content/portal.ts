@@ -82,9 +82,7 @@ export const buyerJourney: PortalStage[] = [
         id: "buy.search.areas",
         label: "Narrow down your areas",
         detail:
-          "Commute, schools, HOA, lot size and price all move together. Two or three target areas beats a valley-wide search.",
-        href: "/communities",
-        hrefLabel: "Browse communities",
+          "Commute, schools, HOA, lot size and price all move together. Two or three target areas beats a valley-wide search. Your agent can send a short list of areas that fit your budget and commute — ask for it before you tour anything.",
       },
       {
         id: "buy.search.saved",
@@ -104,9 +102,7 @@ export const buyerJourney: PortalStage[] = [
         id: "buy.search.hoa",
         label: "Understand the HOA where you're shopping",
         detail:
-          "Fees, transfer costs and rules vary widely across Las Vegas communities. Know them before you write an offer.",
-        href: "/guides/understanding-hoas-las-vegas",
-        hrefLabel: "Read the HOA guide",
+          "Fees, transfer costs and rules vary widely across Las Vegas communities — some run under $50 a month, some several hundred, and a few restrict rentals, parking or exterior changes. Ask your agent for the HOA documents on any home you are serious about, before you write an offer.",
       },
     ],
   },
@@ -245,9 +241,10 @@ export const sellerJourney: PortalStage[] = [
       {
         id: "sell.value.net",
         label: "Review your estimated net proceeds",
-        detail: "Sale price minus payoff, commissions, title, taxes and concessions — this is the number that matters.",
-        href: "/blog/las-vegas-luxury-seller-net-proceeds",
-        hrefLabel: "See how net is calculated",
+        detail:
+          "Sale price minus payoff, commissions, title, escrow, prorated taxes and any concessions — this is the number that actually lands in your account, and it is the one to plan around. Your numbers page estimates it; your agent can build the precise version on your actual payoff.",
+        href: "/portal/budget",
+        hrefLabel: "Estimate my net",
       },
       {
         id: "sell.value.timing",
