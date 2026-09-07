@@ -69,7 +69,9 @@ export async function ingestHomeowner(
       high: input.initialEstimate.high,
     };
   } else {
-    seeded = await valueHome(record);
+    const r = await valueHome(record);
+    seeded = r.estimate;
+    if (r.facts) await store.updateFacts(token, r.facts);
   }
   if (seeded) {
     await store.addEstimate(token, seeded);

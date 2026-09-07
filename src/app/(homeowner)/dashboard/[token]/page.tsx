@@ -3,6 +3,7 @@ import { homeownerBrand } from "@/lib/homeowners/brand";
 import { HomeownerDashboard } from "@/components/HomeownerDashboard";
 import { recentComps, zipMarketStats } from "@/lib/idx/market";
 import { valueHome } from "@/lib/homeowners/nvValue";
+import { mortgageRates } from "@/lib/homeowners/rates";
 
 // Token-addressed, per-recipient page — always rendered on demand.
 export const dynamic = "force-dynamic";
@@ -20,11 +21,18 @@ export default async function DashboardPage({
   // value it from its address (Nevada homes, via the MLS) and persist — so
   // imported contacts get a number without pre-valuing all 30k+ up front.
   if (h && !latest) {
-    const est = await valueHome(h);
-    if (est) {
-      await homeownerStore().addEstimate(token, est);
-      h.estimates.push(est);
-      latest = est;
+    const { estimate, facts } = await valueHome(h);
+    if (facts) {
+      await homeownerStore().updateFacts(token, facts);
+      // reflect locally so this render shows the facts row + comp comparisons
+      h.beds = h.beds || facts.beds || undefined;
+      h.baths = h.baths || facts.baths || undefined;
+      h.sqft = h.sqft || facts.sqft || undefined;
+    }
+    if (estimate) {
+      await homeownerStore().addEstimate(token, estimate);
+      h.estimates.push(estimate);
+      latest = estimate;
     }
   }
 
@@ -92,9 +100,10 @@ export default async function DashboardPage({
   }
 
   // Neighborhood context (graceful: empty/null when the feed isn't configured).
-  const [comps, market] = await Promise.all([
+  const [comps, market, rates] = await Promise.all([
     recentComps({ zip: h.zip, beds: h.beds, sqft: h.sqft }),
     zipMarketStats({ zip: h.zip }),
+    mortgageRates(),
   ]);
 
   return (
@@ -120,6 +129,7 @@ export default async function DashboardPage({
       appreciation={appreciation(h)}
       market={market}
       comps={comps}
+      rates={rates}
     />
   );
 }

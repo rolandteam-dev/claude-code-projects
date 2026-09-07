@@ -185,6 +185,19 @@ export const postgresStore: HomeownerStore = {
     `;
   },
 
+  async updateFacts(token, facts) {
+    await ensureSchema();
+    // COALESCE so we only overwrite a column when a real value is provided.
+    await sql()`
+      UPDATE homeowners SET
+        beds = COALESCE(${facts.beds != null && facts.beds > 0 ? facts.beds : null}, beds),
+        baths = COALESCE(${facts.baths != null && facts.baths > 0 ? facts.baths : null}, baths),
+        sqft = COALESCE(${facts.sqft != null && facts.sqft > 0 ? facts.sqft : null}, sqft),
+        updated_at = now()
+      WHERE token = ${token}
+    `;
+  },
+
   async markEmailed(token, at) {
     await ensureSchema();
     await sql()`UPDATE homeowners SET last_emailed_at = ${at ?? new Date().toISOString()} WHERE token = ${token}`;
