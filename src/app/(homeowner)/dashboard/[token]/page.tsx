@@ -108,6 +108,10 @@ export default async function DashboardPage({
       city={h.city}
       state={h.state}
       zip={h.zip}
+      beds={h.beds}
+      baths={h.baths}
+      sqft={h.sqft}
+      buyingVideoId="Ef2qDo5_1Q4"
       currentValue={latest.value}
       low={latest.low}
       high={latest.high}
