@@ -522,6 +522,16 @@ check("an unusable touch signal WITHHOLDS the agent digests", () => {
   assert.match(src, /what: "agent alerts"/, "and the withholding is recorded as a skip, not silent");
 });
 
+check("a bound sweep cap is reported in the summary, not buried", () => {
+  // Battr processed 45 neglected on Tuesday 8 Sep against 7 on Wednesday 2 Sep:
+  // sweeps run Tue-Fri, so Tuesday clears three days of backlog. A cap of 30
+  // therefore binds on Tuesdays, and the day it binds is the day to say so.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /const cappedOut = actions\.heldBack\.filter\(\(h\) => \/sweep cap\/\.test/);
+  assert.match(src, /per-run sweep cap held back/);
+  assert.equal(rules.maxSweepsPerRun, 30, "unchanged — raising it widens what can be swept");
+});
+
 check("the report header separates the audited population from the raw pull", () => {
   // The committed report said "53786 leads audited". That was the database, not
   // the audit list — Battr's equivalent number is 866.

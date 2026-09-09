@@ -66,6 +66,61 @@ export const SOURCE_COUNTS = {
   },
 };
 
+/**
+ * A SECOND observation, six days after the first — from Battr's own audit
+ * emails of Tue 8 Sep 2026, 7:08 PM.
+ *
+ *   Total records in audit          903    (866 on 2 Sep — the list grows ~6/day)
+ *   At Risk records                  23
+ *     already processed previously   10
+ *     new notes created              13
+ *   Neglected records processed      45
+ *   Excluded due to lead bucket       0
+ *   Excluded due to agent group       0
+ *
+ * Two things this pins down that a single observation could not.
+ *
+ * 1. THE EXCLUSION COUNTERS ARE ZERO AGAIN, on a day the combined list held 903
+ *    of a 12,000-strong member pool. They cannot be reporting membership. They
+ *    report records excluded at ACTION time, which is what the 2 Sep numbers
+ *    already implied and this confirms.
+ *
+ * 2. SWEEP VOLUME IS WILDLY DAY-DEPENDENT. 45 neglected on Tuesday 8 Sep
+ *    against 7 on Wednesday 2 Sep. That is the day filter at work: sweeps run
+ *    Tue-Fri, so Tuesday clears three days of backlog while Wednesday clears
+ *    one. Any cap has to survive a Tuesday, not an average day.
+ *
+ * The at-risk rows also confirm the interlock's mechanics directly: the 13 new
+ * ones show `At Risk Since: None` and `Previous Status: compliant`, while the
+ * 10 repeats show a date and "Action already taken in previous audit".
+ *
+ * Names and FUB ids from those emails are deliberately NOT recorded here. The
+ * counts are what reconcile; the people are client PII.
+ */
+export const SEP_8 = {
+  date: "2026-09-08",
+  weekday: "Tuesday",
+  total: 903,
+  at_risk: 23,
+  at_risk_new_notes: 13,
+  at_risk_already_flagged: 10,
+  neglected_processed: 45,
+  excluded_lead_bucket: 0,
+  excluded_agent_group: 0,
+  /** Sources seen across the 23 at-risk rows — all already classified as audited. */
+  sourcesSeen: [
+    "Google PPC",
+    "Zillow Preferred",
+    "zbuyer.com",
+    "Ylopo",
+    "TheRolandTeam.com",
+    "Citywide Long Form",
+    "ISA Transfer",
+    "CallAction > Riders",
+    "YouTube",
+  ],
+};
+
 export const observedLists = [
   {
     name: "📊 Database Health Score",

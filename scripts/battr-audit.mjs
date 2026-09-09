@@ -199,6 +199,22 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     `- Neglected: **${actions.neglected.length}** (${actions.swept.length} swept, ${actions.heldBack.length} held back)`
   );
   lines.push(`- Excluded: ${results.filter((r) => r.status === "excluded").length}`);
+
+  // A bound cap means the run did NOT do what the rules say it should — it did
+  // less, deliberately. That is the brake working, but it has to be visible:
+  // Battr processed 45 neglected on Tuesday 8 Sep against 7 on Wednesday 2 Sep,
+  // because sweeps run Tue–Fri and Tuesday clears three days of backlog. A cap
+  // of 30 clips a Tuesday and nothing else, so the day it binds is exactly the
+  // day someone should be told rather than left to infer it from a long list.
+  const cappedOut = actions.heldBack.filter((h) => /sweep cap/.test(h.holdReason ?? "")).length;
+  if (cappedOut) {
+    lines.push(
+      `- ⚠ **The per-run sweep cap held back ${cappedOut} lead${cappedOut === 1 ? "" : "s"}.** ` +
+        `They are still neglected and will be reconsidered on the next eligible run. ` +
+        `Battr's own Tuesday volume has reached 45, so a cap of ${rules.maxSweepsPerRun} binds on Tuesdays by design — ` +
+        `raise it in rules.mjs only deliberately.`
+    );
+  }
   for (const s of actions.skipped ?? []) {
     lines.push(`- **${s.count} ${s.what} skipped today** — ${s.reason}`);
   }
