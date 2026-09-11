@@ -121,6 +121,83 @@ export const SEP_8 = {
   ],
 };
 
+/**
+ * A THIRD observation, from the raw .eml of Thu 10 Sep 2026, 7:08–7:09 PM PT.
+ * Both halves of the same night, with full headers and complete tables.
+ *
+ *   At Risk email                        Neglected email
+ *   Total records in audit    862        Total records in audit    862
+ *   At Risk records            20        Neglected records          4
+ *     already processed         9        Records moved              4
+ *     new notes created        11        Records not moved          0
+ *   Excluded bucket/group     0/0        Excluded bucket/group    0/0
+ *
+ * THE POPULATION SELF-DRAINS, and the arithmetic closes:
+ *
+ *   903 (8 Sep)  −  45 swept  =  858  +  new arrivals  →  862 observed
+ *
+ * A swept lead lands in a pond, every member list requires `notInAPond`, so it
+ * leaves the audit list the same night. The list is not a backlog that grows;
+ * it is drained by its own sweeps. That is why 8 Sep could carry 45 neglected
+ * and 10 Sep only 4 — Tuesday cleared the weekend, Thursday had two days of
+ * accumulation to work with.
+ *
+ * THE INTERLOCK, OBSERVED ACROSS DAYS. Three of the four leads swept on
+ * Thursday 10 Sep carry `At Risk Since 9/7` — flagged on Monday, taken on
+ * Thursday. Monday is a nudge day and not a sweep day, Thursday is both. The
+ * warn-first rule is not just configured, it is visible in the record.
+ *
+ * THE SWEEP TARGET, AND AN ASSUMPTION IT UNDERMINES. The neglected email
+ * carries two columns the screenshots did not show: `Assignment Target Type`
+ * and `Assignment Target Name`. All four read **Pond / Shark Tank**. Not one
+ * went to Money Time.
+ *
+ * Our rules.mjs sends the first 25 of a run to Shark Tank and overflows the
+ * rest to Money Time. `maxSweepsPerPond: 25` is OUR invention — it was inferred
+ * from Money Time appearing in older audit mail, never read off Battr's rule
+ * screen. If Battr sent all 45 of Tuesday's sweeps to Shark Tank, then on a
+ * Tuesday our engine would route 20 leads to a pond Battr never sends them to.
+ * The 8 Sep neglected email would settle it; until then this is a known,
+ * unconfirmed departure and is recorded as one rather than left as a default
+ * that looks deliberate.
+ *
+ * Names, FUB ids and the per-lead FUB links in these emails are deliberately
+ * not recorded. The counts reconcile; the people are client PII.
+ */
+export const SEP_10 = {
+  date: "2026-09-10",
+  weekday: "Thursday",
+  total: 862,
+  at_risk: 20,
+  at_risk_new_notes: 11,
+  at_risk_already_flagged: 9,
+  neglected: 4,
+  records_moved: 4,
+  records_not_moved: 0,
+  excluded_lead_bucket: 0,
+  excluded_agent_group: 0,
+  /** Every swept lead this night. No Money Time. */
+  assignmentTargets: { Pond: { "Shark Tank": 4 } },
+  /** Sources seen across the 20 at-risk rows. "Redfin", "Company Websites" and "Company" are new. */
+  sourcesSeen: [
+    "Redfin",
+    "Citywide Long Form",
+    "Ylopo",
+    "Zillow Preferred",
+    "TheRolandTeam.com",
+    "Company Websites",
+    "Company",
+    "Google PPC",
+  ],
+};
+
+/** The three observations in order, for anything that wants the trend. */
+export const TIMELINE = [
+  { date: "2026-09-02", weekday: "Wed", total: 866, at_risk: 17, neglected: 7 },
+  { date: "2026-09-08", weekday: "Tue", total: 903, at_risk: 23, neglected: 45 },
+  { date: "2026-09-10", weekday: "Thu", total: 862, at_risk: 20, neglected: 4 },
+];
+
 export const observedLists = [
   {
     name: "📊 Database Health Score",

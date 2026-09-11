@@ -522,6 +522,17 @@ check("an unusable touch signal WITHHOLDS the agent digests", () => {
   assert.match(src, /what: "agent alerts"/, "and the withholding is recorded as a skip, not silent");
 });
 
+check("the pond split is marked as the unconfirmed guess it is", () => {
+  // Battr's 10 Sep neglected email routed all four sweeps to Pond / Shark Tank
+  // and none to Money Time. Our 25-lead split was inferred from older mail, not
+  // read off a rule screen, and on a 45-sweep Tuesday it would send 20 leads
+  // somewhere Battr does not.
+  const src = readFileSync(join(HERE, "rules.mjs"), "utf8");
+  assert.match(src, /UNCONFIRMED/, "the pond split must stay flagged until the 8 Sep email confirms it");
+  assert.equal(rules.maxSweepsPerPond, 25, "unchanged — changing pond routing moves leads to a different agent's queue");
+  assert.equal(rules.sweepPond, "Shark Tank");
+});
+
 check("a bound sweep cap is reported in the summary, not buried", () => {
   // Battr processed 45 neglected on Tuesday 8 Sep against 7 on Wednesday 2 Sep:
   // sweeps run Tue-Fri, so Tuesday clears three days of backlog. A cap of 30

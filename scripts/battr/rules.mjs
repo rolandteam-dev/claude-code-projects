@@ -54,9 +54,23 @@ export const rules = {
 
   // ------------------------------------------------------------- sweep targets
   /**
-   * Where neglected leads land. The first pond that resolves by name is used;
-   * `overflowPond` catches sweeps once `maxSweepsPerPond` is hit in one run.
-   * Battr sweeps mostly to Shark Tank with a minority to Money Time.
+   * Where neglected leads land.
+   *
+   * UNCONFIRMED, and the one departure from Battr most likely to be wrong.
+   *
+   * Battr's neglected email of 10 Sep 2026 carries an `Assignment Target Type`
+   * and `Assignment Target Name` for every lead it moved. All four that night
+   * read **Pond / Shark Tank**. Not one went to Money Time.
+   *
+   * The 25-lead split below was inferred from Money Time appearing in older
+   * audit mail; it was never read off Battr's rule screen, and Battr's own
+   * config resolves the target through an assignment rule set (id 41) rather
+   * than a fixed pond. If Battr sent all 45 of Tuesday 8 Sep's sweeps to Shark
+   * Tank, then on a Tuesday this would route 20 leads to a pond Battr never
+   * sends them to — leads that are then in the wrong agent's queue.
+   *
+   * The 8 Sep neglected email settles it. Until then, treat `maxSweepsPerPond`
+   * as a guess wearing a number, and see SEP_10 in observed.mjs.
    */
   sweepPond: "Shark Tank",
   overflowPond: "Money Time",
