@@ -30,6 +30,7 @@ import { parseCsv, findColumn, mapRows } from "./import-atbats.mjs";
 import { bucketForSource, bucketName, isSourceAudited, leadBuckets, unmappedPolicy } from "./sources.mjs";
 import { FubClient } from "./fub.mjs";
 import { rules } from "./rules.mjs";
+import { TIMELINE, SEP_8, SEP_10, SEP_11 } from "./observed.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
@@ -664,6 +665,116 @@ check("a client under contract is protected twice over", () => {
       `guarantee 2: "${stage}" must also be excluded by stage, independently of any list`
     );
   }
+});
+
+check("the day filter plus the three-day spread explain every observed night", () => {
+  // Measured on 11 Sep: three leads flagged 9/8 swept 9/11, exactly three days
+  // apart. Five of the six member lists carry a +3 gap; Hot Leads carries +2.
+  // If anyone widens a spread, this fails and says which list.
+  // The day counts live in the filter DSL, so read them back out of it rather
+  // than trusting a second copy that could drift.
+  const dayCount = (set, label) => {
+    const conds = (set?.groups ?? []).flat().filter((c) => c.transform?.type === "days_since");
+    const comm = conds.find((c) => c.field.endsWith("system_lastCommunication"));
+    assert.ok(comm, `${label}: no days-since-last-communication condition to read`);
+    return comm.value;
+  };
+  const spreads = memberListsOf(lists.find((l) => l.audit_type === "combined_contact_lists"))
+    .ids.map((id) => {
+      const l = listById(id);
+      return {
+        id,
+        name: l.name,
+        gap: dayCount(l.neglected_filters, `${l.name} neglected`) - dayCount(l.at_risk_filters, `${l.name} at risk`),
+      };
+    });
+  for (const { id, name, gap } of spreads) {
+    const expected = id === 1144 ? 2 : 3;
+    assert.equal(gap, expected, `${name}: Battr's observed spread is ${expected} days, not ${gap}`);
+  }
+
+  // And the spread interacts with the sweep day filter to pile leads onto
+  // Tuesday: flagged Wed/Thu/Fri all come due Sat/Sun/Mon, none a sweep day.
+  const tz = rules.timezone;
+  const dueDates = ["2026-09-12", "2026-09-13", "2026-09-14"]; // Sat, Sun, Mon
+  for (const day of dueDates) {
+    assert.equal(
+      isDayAllowed(rules.sweepDayFilter, new Date(`${day}T19:00:00-07:00`), tz),
+      false,
+      `${day} must not be a sweep day — this is why Tuesday carried 45`
+    );
+  }
+  assert.equal(
+    isDayAllowed(rules.sweepDayFilter, new Date("2026-09-15T19:00:00-07:00"), tz),
+    true,
+    "and Tuesday must be, or the backlog never clears"
+  );
+});
+
+check("four observed nights reconcile with the self-draining population", () => {
+  assert.equal(TIMELINE.length, 4, "every captured night belongs in the timeline");
+  for (const night of TIMELINE) {
+    const full = { "2026-09-08": SEP_8, "2026-09-10": SEP_10, "2026-09-11": SEP_11 }[night.date];
+    if (!full) continue;
+    assert.equal(night.total, full.total, `${night.date}: timeline disagrees with the record`);
+    assert.equal(night.at_risk, full.at_risk, `${night.date}: at-risk disagrees`);
+  }
+
+  // A swept lead enters a pond, every member list requires notInAPond, so it
+  // leaves the audit list the same night. The list shrinks by its own sweeps
+  // and regrows by arrivals — it is never a backlog that only accumulates.
+  for (let i = 1; i < TIMELINE.length; i++) {
+    const prev = TIMELINE[i - 1];
+    const cur = TIMELINE[i];
+    const arrivals = cur.total - (prev.total - prev.neglected);
+    assert.ok(
+      arrivals >= 0,
+      `${cur.date}: ${cur.total} is below ${prev.total} − ${prev.neglected} swept — ` +
+        `the population cannot shrink faster than the sweeps explain`
+    );
+  }
+
+  // The at-risk tier drains on the same three-day clock. Nothing carried into
+  // 11 Sep is older than 9/9, and the 9/8 cohort left as neglected.
+  assert.deepEqual(Object.keys(SEP_11.carriedAtRiskSince).sort(), ["2026-09-09", "2026-09-10"]);
+  assert.deepEqual(Object.keys(SEP_11.sweptAtRiskSince), ["2026-09-08"]);
+  const carried = Object.values(SEP_11.carriedAtRiskSince).reduce((a, b) => a + b, 0);
+  assert.equal(carried, SEP_11.at_risk_already_flagged, "the dated rows must account for the count");
+  assert.equal(
+    SEP_11.at_risk_already_flagged + SEP_11.at_risk_new_notes,
+    SEP_11.at_risk,
+    "new notes plus carry-over is the at-risk total"
+  );
+});
+
+check("Battr's exclusion counters are action-time, on every night observed", () => {
+  // Both read zero even on a night when the combined list held 903 of a 12,000
+  // pool. They cannot be counting selection, which is why we do that work in
+  // the list filters rather than as a post-hoc subtraction.
+  for (const night of [SEP_8, SEP_10, SEP_11]) {
+    assert.equal(night.excluded_lead_bucket, 0, `${night.date}: bucket counter`);
+    assert.equal(night.excluded_agent_group, 0, `${night.date}: agent-group counter`);
+  }
+});
+
+check("every observed sweep went to Shark Tank, and our overflow is marked unconfirmed", () => {
+  let total = 0;
+  for (const night of [SEP_10, SEP_11]) {
+    const targets = night.assignmentTargets.Pond ?? {};
+    assert.deepEqual(Object.keys(targets), ["Shark Tank"], `${night.date}: an unobserved pond`);
+    total += targets["Shark Tank"];
+  }
+  assert.equal(total, 7, "every sweep we have a target column for");
+
+  // No observed night exceeded the cap in a table we can read, so these nights
+  // neither confirm nor refute it. Guard the shape so the departure stays a
+  // known one: the overflow pond must be configured, and the cap must sit
+  // below the per-run cap or it could never fire at all.
+  assert.ok(rules.maxSweepsPerPond > 0, "the overflow threshold must exist to be audited");
+  assert.ok(
+    rules.maxSweepsPerPond < rules.maxSweepsPerRun,
+    "an overflow cap at or above the run cap is dead configuration"
+  );
 });
 
 check("every modelled list carries Battr's observed numbers to check itself against", () => {

@@ -191,11 +191,88 @@ export const SEP_10 = {
   ],
 };
 
-/** The three observations in order, for anything that wants the trend. */
+/**
+ * A FOURTH observation, from the raw .eml of Fri 11 Sep 2026, 7:08–7:09 PM PT.
+ * Both halves again, and this is the night that pins down the tier spacing.
+ *
+ *   At Risk email                        Neglected email
+ *   Total records in audit    861        Total records in audit    861
+ *   At Risk records            24        Neglected records          3
+ *     already processed        12        Records moved              3
+ *     new notes created        12        Records not moved          0
+ *   Excluded bucket/group     0/0        Excluded bucket/group    0/0
+ *
+ * THE THREE-DAY SPREAD, MEASURED. All three leads swept tonight carry
+ * `At Risk Since 9/8/2026` — flagged Tuesday, swept Friday.
+ *
+ * What makes that a measurement rather than a coincidence is the two sweep days
+ * in between. Wednesday 9/9 and Thursday 9/10 were both sweep days, both ran,
+ * and both passed over these three leads. So the neglected threshold was not
+ * reached on 9/9 or 9/10; it was reached on 9/11 — exactly three days after the
+ * at-risk stamp. Five of the six member lists carry a +3 spread in our config
+ * (10/13, 16/19, 33/36, 93/96) and only Hot Leads differs at +2, so whichever
+ * of the five these were, +3 is what our thresholds predict. This is the first
+ * direct measurement of the gap rather than an inference from a rule screen.
+ *
+ * AND THE CARRY-OVER AGREES. The 12 already-flagged at-risk leads are dated
+ * only 9/9 (5) and 9/10 (7). Nothing older survives in the tier: every lead
+ * flagged on 9/8 either got worked or left tonight as neglected. The at-risk
+ * tier has a three-day lifespan, and the record shows it draining on schedule.
+ *
+ * WHICH FORECASTS A LARGE TUESDAY. Sweeps run Tue–Fri, so a lead flagged
+ * Wednesday comes due Saturday and waits until Tuesday; Thursday comes due
+ * Sunday and waits; Friday comes due Monday and waits. The 5 + 7 + 12 leads
+ * flagged 9/9, 9/10 and 9/11 all land on Tue 15 Sep, minus whoever gets worked
+ * over the weekend. That is the mechanism behind Tuesday's 45, and it is the
+ * clearest statement yet that OUR 30-sweep cap binds on Tuesdays by design.
+ *
+ * STILL NO MONEY TIME. Four nights, 59 observed sweeps, every one to
+ * Pond / Shark Tank. `maxSweepsPerPond: 25` remains our invention and remains
+ * unconfirmed — though note no single observed night has exceeded 25 sweeps in
+ * a table we can read, so these nights cannot disprove it either. The 8 Sep
+ * neglected email, with 45 rows, is still the only thing that would settle it.
+ *
+ * Names, FUB ids and per-lead links are deliberately not recorded.
+ */
+export const SEP_11 = {
+  date: "2026-09-11",
+  weekday: "Friday",
+  total: 861,
+  at_risk: 24,
+  at_risk_new_notes: 12,
+  at_risk_already_flagged: 12,
+  neglected: 3,
+  records_moved: 3,
+  records_not_moved: 0,
+  excluded_lead_bucket: 0,
+  excluded_agent_group: 0,
+  /** Every swept lead this night. Still no Money Time. */
+  assignmentTargets: { Pond: { "Shark Tank": 3 } },
+  /**
+   * `At Risk Since` on the three swept leads — all one date, three days back.
+   * This is the tier spacing, measured rather than inferred.
+   */
+  sweptAtRiskSince: { "2026-09-08": 3 },
+  /** `At Risk Since` on the 12 carried-over at-risk leads. Nothing older than 9/9. */
+  carriedAtRiskSince: { "2026-09-09": 5, "2026-09-10": 7 },
+  /** Sources seen across the 24 at-risk rows. All already classified as audited. */
+  sourcesSeen: [
+    "Zillow Preferred",
+    "TheRolandTeam.com",
+    "zbuyer.com",
+    "Citywide Long Form",
+    "Company",
+    "Company Websites",
+    "Google PPC",
+  ],
+};
+
+/** The four observations in order, for anything that wants the trend. */
 export const TIMELINE = [
   { date: "2026-09-02", weekday: "Wed", total: 866, at_risk: 17, neglected: 7 },
   { date: "2026-09-08", weekday: "Tue", total: 903, at_risk: 23, neglected: 45 },
   { date: "2026-09-10", weekday: "Thu", total: 862, at_risk: 20, neglected: 4 },
+  { date: "2026-09-11", weekday: "Fri", total: 861, at_risk: 24, neglected: 3 },
 ];
 
 export const observedLists = [
