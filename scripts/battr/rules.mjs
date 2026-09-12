@@ -52,6 +52,45 @@ export const rules = {
    */
   activityLookbackDays: 45,
 
+  /**
+   * Follow Up Boss refuses `/v1/textMessages` in bulk — the same 400 it gives
+   * for `/v1/emails` — so the daily activity pull carries calls only. Without
+   * texts, a lead an agent has only ever texted reads as never contacted, which
+   * is why the run refuses to sweep at all when a channel is missing.
+   *
+   * FUB does serve one person's thread. So after the first classification pass
+   * the audit fetches texts per person for exactly the leads an action would
+   * touch — the at-risk and neglected ones, a few dozen, not the whole
+   * database — and folds them in. Folding only moves last-touch forward, so a
+   * backfilled text can move a lead from neglected toward compliant and never
+   * the other way.
+   */
+  perPersonTextBackfill: true,
+
+  /**
+   * The most leads to backfill in one run. A bound on the API cost of the pass
+   * above: if more than this many leads look actionable, the backfill is
+   * abandoned rather than half-done, and the run reports the gap as before.
+   * A partial backfill is the dangerous state — it would look complete.
+   */
+  maxTextBackfill: 200,
+
+  /**
+   * MIKE'S CALL, DELIBERATELY LEFT OFF.
+   *
+   * With the backfill above, last-touch is complete for every lead the run
+   * would act on, so the reason sweeps are disabled no longer applies. But
+   * turning that into "sweeps may now proceed" takes the number of leads that
+   * can be swept from zero to non-zero, and that is not a change to make on
+   * anyone's behalf.
+   *
+   * Set this to true to let a run sweep on a backfilled touch index. Until
+   * then the report carries the correct at-risk and neglected counts — which
+   * is what makes it comparable to Battr's nightly emails — and still moves
+   * nothing.
+   */
+  sweepOnBackfilledTexts: false,
+
   // ------------------------------------------------------------- sweep targets
   /**
    * Where neglected leads land.

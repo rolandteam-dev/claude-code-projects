@@ -18,7 +18,7 @@ import { rmSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import assert from "node:assert/strict";
 
-import { classify, buildTouchIndex, classifyForList, runCombinedList, isExemptAgent, readInboundEmails, findUnansweredInbound, runReportOnlyLists, DAY_MS } from "./classify.mjs";
+import { classify, buildTouchIndex, classifyForList, runCombinedList, isExemptAgent, readInboundEmails, findUnansweredInbound, runReportOnlyLists, foldTouches, DAY_MS } from "./classify.mjs";
 import { evaluateCondition, evaluateSet } from "./filters.mjs";
 import { normalizeContact } from "./contact.mjs";
 import { isDayAllowed } from "./schedule.mjs";
@@ -504,13 +504,74 @@ check("an unusable touch signal holds the NUDGE, not just the sweep", () => {
   // sweep tomorrow. Asserted on the engine source because the gate is a single
   // expression there and nothing else can prove it stayed correct.
   const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
-  assert.match(src, /const touchUsable = touchIncomplete\.length === 0;/);
+  assert.match(
+    src,
+    /const touchUsable =\s*touchIncomplete\.length === 0 \|\|\s*\(textBackfill\?\.complete === true && rules\.sweepOnBackfilledTexts === true\);/,
+    "acting is allowed only with no gaps at all, or a COMPLETE backfill plus an explicit opt-in"
+  );
   assert.match(
     src,
     /const nudgesAllowedToday = isDayAllowed\(rules\.nudgeDayFilter[^)]*\)[^;]*&& touchUsable;/,
     "the nudge gate must carry the same touchUsable condition as the sweep gate"
   );
   assert.match(src, /const sweepsAllowedToday = isDayAllowed\(rules\.sweepDayFilter[^)]*\)[^;]*&& touchUsable;/);
+});
+
+check("a per-person backfill cannot switch sweeping on by itself", () => {
+  // The backfill restores a complete touch index, which removes the REASON
+  // sweeps are held. Turning that into permission to sweep takes the number of
+  // leads that can move from zero to non-zero, so it is a human's call. This
+  // asserts the opt-in is off and that a complete backfill alone is not enough.
+  assert.equal(rules.sweepOnBackfilledTexts, false, "the opt-in must ship off");
+
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+
+  // `touchComplete` (diagnostics) and `touchUsable` (permission) must be
+  // different expressions — collapsing them is exactly the mistake this guards.
+  const complete = src.match(/const touchComplete = (.+);/)?.[1];
+  const usable = src.match(/const touchUsable =\s*([\s\S]+?);\n/)?.[1];
+  assert.ok(complete && usable, "both conditions must exist to be compared");
+  assert.notEqual(
+    complete.replace(/\s+/g, " ").trim(),
+    usable.replace(/\s+/g, " ").trim(),
+    "reporting the gap as closed is not the same as permission to act on it"
+  );
+  assert.ok(
+    !complete.includes("sweepOnBackfilledTexts"),
+    "the diagnostic must not depend on the opt-in, or the report goes quiet when it is off"
+  );
+  assert.ok(usable.includes("sweepOnBackfilledTexts"), "permission must depend on the opt-in");
+
+  // A partial backfill must never read as complete. `failed === 0` is the only
+  // thing that sets it, because a lead whose thread could not be read is
+  // indistinguishable from a lead with no texts.
+  assert.match(src, /complete: failed === 0/, "any failed lead makes the whole pass incomplete");
+});
+
+check("folding touches only ever moves last-touch forward", () => {
+  // This is the property that makes the backfill safe to run before the sweep
+  // decision: it can move a lead from neglected toward compliant, never the
+  // reverse, so no lead becomes newly sweepable because of it.
+  const index = new Map();
+  const t2 = new Date("2026-09-10T12:00:00Z").getTime();
+  const t1 = new Date("2026-09-02T12:00:00Z").getTime();
+
+  foldTouches(index, [{ personId: 7, created: new Date(t2).toISOString(), isIncoming: false }]);
+  assert.equal(index.get(7).lastOutbound, t2);
+
+  // An OLDER row must not drag the timestamp back.
+  foldTouches(index, [{ personId: 7, created: new Date(t1).toISOString(), isIncoming: false }]);
+  assert.equal(index.get(7).lastOutbound, t2, "an older message cannot un-touch a lead");
+
+  // Inbound and outbound are tracked apart, and both only advance.
+  foldTouches(index, [{ personId: 7, created: new Date(t1).toISOString(), isIncoming: true }]);
+  assert.equal(index.get(7).lastInbound, t1);
+  assert.equal(index.get(7).lastOutbound, t2, "an inbound row must not disturb the outbound clock");
+
+  // Undated and id-less rows are skipped rather than counted as "now".
+  foldTouches(index, [{ personId: 7 }, { created: new Date().toISOString() }]);
+  assert.equal(index.get(7).lastOutbound, t2);
+  assert.equal(index.size, 1, "a row with no person is not a touch");
 });
 
 check("an unusable touch signal WITHHOLDS the agent digests", () => {
@@ -1516,6 +1577,11 @@ function fixtureServer() {
     warm({ id: 104, name: "Bad Number", assignedTo: "Brett Smith", assignedUserId: 12, tags: ["BAD_PHONE"] }),
     // excluded: no list covers a contract stage
     warm({ id: 105, name: "In Escrow", assignedTo: "Brett Smith", assignedUserId: 12, stage: "Under Contract" }),
+    // NEGLECTED ON CALLS, but texted three days ago. FUB will not serve texts
+    // in bulk, so the first pass cannot see that and reads this lead as
+    // abandoned. The per-person backfill is the only thing that saves it, and
+    // saving it is the whole point: this is a lead an agent actually worked.
+    warm({ id: 106, name: "Texted Recently", assignedTo: "Brett Smith", assignedUserId: 12 }),
   ];
 
   // Each one sits in the middle of its tier, not on a boundary, so a run at any
@@ -1526,14 +1592,19 @@ function fixtureServer() {
     { personId: 102, created: ago(12), isIncoming: false },
     { personId: 103, created: ago(40), isIncoming: false },
     { personId: 104, created: ago(40), isIncoming: false },
+    { personId: 106, created: ago(40), isIncoming: false },
   ];
+
+  // Served ONLY per person, exactly as FUB does it.
+  const textsByPerson = { 106: [{ personId: 106, created: ago(3), isIncoming: false }] };
 
   const routes = {
     "/users": { users: [{ id: 11, name: "Nicole Miller" }, { id: 12, name: "Brett Smith" }] },
     "/ponds": { ponds: [{ id: 900, name: "Shark Tank" }, { id: 901, name: "Money Time" }] },
     "/people": { people },
     "/calls": { calls },
-    "/textMessages": { textmessages: [] },
+    // NOT listed: /textMessages. The handler below answers it the way FUB does
+    // — 400 in bulk, the thread when a personId is given.
     "/emails": { emails: [] },
     "/customFields": { customfields: [] },
   };
@@ -1545,7 +1616,24 @@ function fixtureServer() {
       res.writeHead(200, { "Content-Type": "application/json" });
       return res.end("{}");
     }
-    const path = new URL(req.url, "http://localhost").pathname;
+    const url = new URL(req.url, "http://localhost");
+    const path = url.pathname;
+
+    // Confirmed live: FUB refuses a bulk text read and serves one person's
+    // thread. Reproducing both halves is what makes the backfill path testable;
+    // a fixture that answers the bulk read with [] tests the opposite of
+    // production and reports success.
+    if (path === "/textMessages") {
+      const personId = url.searchParams.get("personId");
+      if (!personId) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ errorMessage: "personId, threadId, phone ... must be specified" }));
+      }
+      const textmessages = textsByPerson[personId] ?? [];
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ textmessages, _metadata: { total: textmessages.length } }));
+    }
+
     const body = routes[path] ?? {};
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ ...body, _metadata: { total: Object.values(body)[0]?.length ?? 0 } }));
@@ -1590,7 +1678,30 @@ try {
   });
 
   check("it audits the full population", () => {
-    assert.match(stderr, /5 leads in the audit population/);
+    assert.match(stderr, /6 leads in the audit population/);
+  });
+
+  check("a lead worked only by text is rescued from the sweep", () => {
+    // The end of the texts problem, proved against a fixture that refuses the
+    // bulk read exactly as FUB does. Lead 106's last call was 40 days ago and
+    // its last text 3 days ago: neglected on the first pass, compliant after
+    // the backfill. Without this the sweep takes it off the agent who worked it.
+    assert.match(stderr, /texts: NOT available in bulk/, "the fixture must reproduce FUB's 400");
+    assert.match(stderr, /backfilling texts for 4 actionable leads/, "only actionable leads are queried");
+    assert.match(
+      stderr,
+      /text backfill: 1 messages over 4 leads — at risk 1 → 1, neglected 3 → 2/,
+      "one text moved one lead out of neglected, and moved nobody in"
+    );
+  });
+
+  check("a complete backfill reports the gap closed and still refuses to act", () => {
+    // Both halves matter. Reporting it closed is what makes the nightly counts
+    // comparable to Battr's; refusing to act on it is what keeps the decision
+    // to start sweeping a human one.
+    assert.match(stderr, /sweeps skipped: last-touch complete via per-person backfill, but rules\.sweepOnBackfilledTexts is off/);
+    assert.match(stderr, /nudges skipped: last-touch complete via per-person backfill/, "the nudge is held on the same terms");
+    assert.doesNotMatch(stdout, /Successfully swept/, "nothing may move");
   });
 
   check("it separates at-risk from neglected", () => {

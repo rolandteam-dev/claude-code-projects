@@ -24,7 +24,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { FubClient } from "./battr/fub.mjs";
 import { rules } from "./battr/rules.mjs";
-import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, isExemptAgent, lower, hasAny, daysBetween, readInboundEmails, findUnansweredInbound, runReportOnlyLists } from "./battr/classify.mjs";
+import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, isExemptAgent, lower, hasAny, daysBetween, readInboundEmails, findUnansweredInbound, runReportOnlyLists, foldTouches } from "./battr/classify.mjs";
 import { normalizeContact } from "./battr/contact.mjs";
 import { isDayAllowed } from "./battr/schedule.mjs";
 import { lists, reportOnlyLists } from "./battr/lists.mjs";
@@ -489,51 +489,110 @@ async function main() {
   // `customBattrAtRiskSince` off each contact to enforce the warn-first
   // interlock, so the field's API name has to be known while normalizing.
   const fields = await resolveCustomFields(fub, log);
-  const contacts = people.map((p) => normalizeContact(p, touchIndex.get(p.id), fields));
+  // Classification is a closure because it reads the touch index, and the
+  // backfill below can move last-touch forward for the leads that matter.
+  // Running it again is cheaper and less error-prone than patching results.
+  let contacts = [];
+  const classifyPopulation = ({ quiet = false } = {}) => {
+    const say = quiet ? () => {} : log;
+    contacts = people.map((p) => normalizeContact(p, touchIndex.get(p.id), fields));
 
-  let results;
-  if (rules.mode === "lists") {
-    const combined = lists.find((l) => l.audit_type === "combined_contact_lists");
-    if (!combined) throw new Error("mode is 'lists' but no combined list is configured.");
+    let results;
+    if (rules.mode === "lists") {
+      const combined = lists.find((l) => l.audit_type === "combined_contact_lists");
+      if (!combined) throw new Error("mode is 'lists' but no combined list is configured.");
 
-    const run = runCombinedList(contacts, combined, Date.now());
-    if (run.missingMemberLists.length) {
-      log(`  WARNING: member lists ${run.missingMemberLists.join(", ")} have no rule JSON — population is narrower than the live audit.`);
-    }
-
-    // Four of the six member lists branch on FUB timeframe. If we can't read it,
-    // those lists silently come back empty rather than erroring — so say so.
-    const unresolved = contacts.filter((c) => c.timeframeUnresolved).length;
-    if (unresolved) {
-      log(`  WARNING: ${unresolved} nurture-stage contacts have no readable timeframe — the four nurture lists will under-report. Check the timeframe field name on a FUB contact.`);
-    }
-
-    // The combined list excludes an owner group, but that condition reads a
-    // field FUB may not return on a person. If nobody has any group ids, the
-    // exclusion cannot fire and the protection it implies does not exist.
-    if (!contacts.some((c) => (c.owner_group_ids ?? []).length)) {
-      log(`  WARNING: no contact carries owner_group_ids — the owner-group exclusion (${rules.excludeOwnerGroupIds.join(", ")}) is NOT being enforced. Exempt those agents by name in rules.exemptAgents instead.`);
-    }
-    log(`  ${run.records.length} in the combined list, ${run.excluded.length} excluded by bucket/group`);
-
-    // Two exclusions applied after the union, both surfaced as "excluded" in the
-    // report rather than quietly vanishing from the counts.
-    //
-    // The source check cannot be left to the combined list's `lead_bucket_id !=
-    // 82` condition: an unmapped source has a null bucket, and `null != 82` is
-    // true, so an unclassified source would sail through regardless of
-    // unmappedPolicy. isSourceAudited is the only thing that honours it.
-    results = run.records.map((r) => {
-      if (isExemptAgent(r.owner, rules)) {
-        return { ...r, status: "excluded", reason: `exempt agent (${r.owner})` };
+      const run = runCombinedList(contacts, combined, Date.now());
+      if (run.missingMemberLists.length) {
+        say(`  WARNING: member lists ${run.missingMemberLists.join(", ")} have no rule JSON — population is narrower than the live audit.`);
       }
-      if (!isSourceAudited(r.source)) {
-        return { ...r, status: "excluded", reason: `protected source (${r.source || "none"})` };
+
+      // Four of the six member lists branch on FUB timeframe. If we can't read it,
+      // those lists silently come back empty rather than erroring — so say so.
+      const unresolved = contacts.filter((c) => c.timeframeUnresolved).length;
+      if (unresolved) {
+        say(`  WARNING: ${unresolved} nurture-stage contacts have no readable timeframe — the four nurture lists will under-report. Check the timeframe field name on a FUB contact.`);
       }
-      return r;
-    });
-  } else {
-    results = contacts.map((c) => classifySimple(c, touchIndex, rules));
+
+      // The combined list excludes an owner group, but that condition reads a
+      // field FUB may not return on a person. If nobody has any group ids, the
+      // exclusion cannot fire and the protection it implies does not exist.
+      if (!contacts.some((c) => (c.owner_group_ids ?? []).length)) {
+        say(`  WARNING: no contact carries owner_group_ids — the owner-group exclusion (${rules.excludeOwnerGroupIds.join(", ")}) is NOT being enforced. Exempt those agents by name in rules.exemptAgents instead.`);
+      }
+      say(`  ${run.records.length} in the combined list, ${run.excluded.length} excluded by bucket/group`);
+
+      // Two exclusions applied after the union, both surfaced as "excluded" in the
+      // report rather than quietly vanishing from the counts.
+      //
+      // The source check cannot be left to the combined list's `lead_bucket_id !=
+      // 82` condition: an unmapped source has a null bucket, and `null != 82` is
+      // true, so an unclassified source would sail through regardless of
+      // unmappedPolicy. isSourceAudited is the only thing that honours it.
+      results = run.records.map((r) => {
+        if (isExemptAgent(r.owner, rules)) {
+          return { ...r, status: "excluded", reason: `exempt agent (${r.owner})` };
+        }
+        if (!isSourceAudited(r.source)) {
+          return { ...r, status: "excluded", reason: `protected source (${r.source || "none"})` };
+        }
+        return r;
+      });
+    } else {
+      results = contacts.map((c) => classifySimple(c, touchIndex, rules));
+    }
+    return results;
+  };
+
+  let results = classifyPopulation();
+
+  // 4b. BACKFILL THE CHANNEL FUB WOULD NOT SERVE IN BULK
+  //
+  // `/v1/textMessages` refuses a whole-database read, so the touch index above
+  // is calls-only and the run will not sweep on it. But FUB serves one person's
+  // thread happily, and only a few dozen leads are ever actionable — so ask
+  // about those, per person, and fold the answers in.
+  //
+  // Folding is monotonic: it moves last-touch forward, never back. So a text
+  // found here can only move a lead from neglected toward compliant. The pass
+  // cannot make anyone newly sweepable, which is why it is safe to run before
+  // the sweep decision rather than after.
+  let textBackfill = null;
+  const missingTexts = touchIncomplete.find((g) => g.channel === "texts");
+  if (missingTexts && rules.perPersonTextBackfill) {
+    const candidates = results.filter((r) => r.status === "at_risk" || r.status === "neglected");
+    if (candidates.length > rules.maxTextBackfill) {
+      // Abandoned, not half-done. A partial backfill is the one genuinely
+      // dangerous outcome here: it looks like a complete touch index.
+      log(`  text backfill SKIPPED: ${candidates.length} actionable leads exceeds maxTextBackfill (${rules.maxTextBackfill}).`);
+      textBackfill = { attempted: candidates.length, complete: false, reason: "over the cap" };
+    } else {
+      log(`  backfilling texts for ${candidates.length} actionable leads (FUB serves these per person)...`);
+      const before = { atRisk: results.filter((r) => r.status === "at_risk").length, neglected: results.filter((r) => r.status === "neglected").length };
+      let rows = 0;
+      let failed = 0;
+      for (const cand of candidates) {
+        try {
+          const texts = await fub.textsForPerson(cand.id, since);
+          rows += texts.length;
+          foldTouches(touchIndex, texts);
+        } catch (err) {
+          // One lead's thread failing leaves the index incomplete for that
+          // lead, and there is no way to tell a "no texts" from a "could not
+          // read". So the whole pass is incomplete, and sweeps stay off.
+          failed++;
+          log(`  text backfill failed for one lead: ${err.message}`);
+        }
+      }
+      results = classifyPopulation({ quiet: true });
+      const after = { atRisk: results.filter((r) => r.status === "at_risk").length, neglected: results.filter((r) => r.status === "neglected").length };
+      textBackfill = { attempted: candidates.length, rows, failed, complete: failed === 0, before, after };
+      log(
+        `  text backfill: ${rows} messages over ${candidates.length} leads` +
+          (failed ? `, ${failed} FAILED — touch index still incomplete` : "") +
+          ` — at risk ${before.atRisk} → ${after.atRisk}, neglected ${before.neglected} → ${after.neglected}`
+      );
+    }
   }
 
   const atRisk = results.filter((r) => r.status === "at_risk");
@@ -554,11 +613,23 @@ async function main() {
   // `Battr At Risk Since`, and that stamp is the whole of the warn-first
   // interlock: a wrong nudge tonight is what arms a wrong sweep tomorrow, on a
   // night when the run has already decided it cannot trust its own evidence.
-  const touchUsable = touchIncomplete.length === 0;
+  //
+  // The backfill above can restore a complete touch index for every lead an
+  // action would touch. That removes the REASON sweeps are disabled, but not
+  // the decision: acting on a backfilled index takes the number of leads that
+  // can be swept from zero to non-zero, so it waits on an explicit opt-in
+  // (`rules.sweepOnBackfilledTexts`) rather than switching itself on. Until
+  // then the counts in the report are correct and nothing moves — which is the
+  // state that makes the report comparable to Battr's nightly emails.
+  const touchComplete = touchIncomplete.length === 0 || textBackfill?.complete === true;
+  const touchUsable = touchIncomplete.length === 0 || (textBackfill?.complete === true && rules.sweepOnBackfilledTexts === true);
+  const touchReason = touchComplete
+    ? "last-touch complete via per-person backfill, but rules.sweepOnBackfilledTexts is off"
+    : "last-touch incomplete";
   const nudgesAllowedToday = isDayAllowed(rules.nudgeDayFilter, new Date(), rules.timezone) && touchUsable;
   const sweepsAllowedToday = isDayAllowed(rules.sweepDayFilter, new Date(), rules.timezone) && touchUsable;
-  if (!nudgesAllowedToday) log(`  nudges skipped: ${touchUsable ? `day filter "${rules.nudgeDayFilter}"` : "last-touch incomplete"}`);
-  if (!sweepsAllowedToday) log(`  sweeps skipped: ${touchUsable ? `day filter "${rules.sweepDayFilter}"` : "last-touch incomplete"}`);
+  if (!nudgesAllowedToday) log(`  nudges skipped: ${touchUsable ? `day filter "${rules.nudgeDayFilter}"` : touchReason}`);
+  if (!sweepsAllowedToday) log(`  sweeps skipped: ${touchUsable ? `day filter "${rules.sweepDayFilter}"` : touchReason}`);
 
   // 5a. nudge
   if ((args.stage === "both" || args.stage === "at-risk") && nudgesAllowedToday) {
@@ -683,7 +754,10 @@ async function main() {
 
   // A blocked day is a recorded skip, not a silent no-op.
   const incompleteReason = () =>
-    `last-touch incomplete — ${touchIncomplete.map((g) => g.channel).join(", ")} could not be read in bulk`;
+    (touchComplete
+      ? `${touchIncomplete.map((g) => g.channel).join(", ")} backfilled per person and complete — ` +
+        `set rules.sweepOnBackfilledTexts to act on it`
+      : `last-touch incomplete — ${touchIncomplete.map((g) => g.channel).join(", ")} could not be read in bulk`);
   if (!nudgesAllowedToday && atRisk.length) {
     actions.skipped.push({
       what: "nudges",
