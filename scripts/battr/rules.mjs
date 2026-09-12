@@ -52,11 +52,64 @@ export const rules = {
    */
   activityLookbackDays: 45,
 
+  /**
+   * Follow Up Boss refuses `/v1/textMessages` in bulk — the same 400 it gives
+   * for `/v1/emails` — so the daily activity pull carries calls only. Without
+   * texts, a lead an agent has only ever texted reads as never contacted, which
+   * is why the run refuses to sweep at all when a channel is missing.
+   *
+   * FUB does serve one person's thread. So after the first classification pass
+   * the audit fetches texts per person for exactly the leads an action would
+   * touch — the at-risk and neglected ones, a few dozen, not the whole
+   * database — and folds them in. Folding only moves last-touch forward, so a
+   * backfilled text can move a lead from neglected toward compliant and never
+   * the other way.
+   */
+  perPersonTextBackfill: true,
+
+  /**
+   * The most leads to backfill in one run. A bound on the API cost of the pass
+   * above: if more than this many leads look actionable, the backfill is
+   * abandoned rather than half-done, and the run reports the gap as before.
+   * A partial backfill is the dangerous state — it would look complete.
+   */
+  maxTextBackfill: 200,
+
+  /**
+   * MIKE'S CALL, DELIBERATELY LEFT OFF.
+   *
+   * With the backfill above, last-touch is complete for every lead the run
+   * would act on, so the reason sweeps are disabled no longer applies. But
+   * turning that into "sweeps may now proceed" takes the number of leads that
+   * can be swept from zero to non-zero, and that is not a change to make on
+   * anyone's behalf.
+   *
+   * Set this to true to let a run sweep on a backfilled touch index. Until
+   * then the report carries the correct at-risk and neglected counts — which
+   * is what makes it comparable to Battr's nightly emails — and still moves
+   * nothing.
+   */
+  sweepOnBackfilledTexts: false,
+
   // ------------------------------------------------------------- sweep targets
   /**
-   * Where neglected leads land. The first pond that resolves by name is used;
-   * `overflowPond` catches sweeps once `maxSweepsPerPond` is hit in one run.
-   * Battr sweeps mostly to Shark Tank with a minority to Money Time.
+   * Where neglected leads land.
+   *
+   * UNCONFIRMED, and the one departure from Battr most likely to be wrong.
+   *
+   * Battr's neglected email of 10 Sep 2026 carries an `Assignment Target Type`
+   * and `Assignment Target Name` for every lead it moved. All four that night
+   * read **Pond / Shark Tank**. Not one went to Money Time.
+   *
+   * The 25-lead split below was inferred from Money Time appearing in older
+   * audit mail; it was never read off Battr's rule screen, and Battr's own
+   * config resolves the target through an assignment rule set (id 41) rather
+   * than a fixed pond. If Battr sent all 45 of Tuesday 8 Sep's sweeps to Shark
+   * Tank, then on a Tuesday this would route 20 leads to a pond Battr never
+   * sends them to — leads that are then in the wrong agent's queue.
+   *
+   * The 8 Sep neglected email settles it. Until then, treat `maxSweepsPerPond`
+   * as a guess wearing a number, and see SEP_10 in observed.mjs.
    */
   sweepPond: "Shark Tank",
   overflowPond: "Money Time",

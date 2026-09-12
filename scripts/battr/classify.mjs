@@ -46,27 +46,37 @@ export const hasAny = (list, values) => {
  */
 export function buildTouchIndex({ calls = [], texts = [], emails = [] }) {
   const index = new Map();
+  foldTouches(index, calls);
+  foldTouches(index, texts);
+  foldTouches(index, emails);
+  return index;
+}
 
-  const fold = (rows) => {
-    for (const row of rows) {
-      const personId = row.personId ?? row.person?.id;
-      const created = row.created ?? row.createdAt;
-      if (!personId || !created) continue;
+/**
+ * Fold communication rows into an existing touch index, in place.
+ *
+ * Separated from `buildTouchIndex` so the audit can backfill a channel FUB
+ * would not serve in bulk, per person, after the first pass. Folding is
+ * monotonic: it only ever moves `lastOutbound` / `lastInbound` forward, so a
+ * backfill can move a lead from neglected toward compliant and never the other
+ * way. That property is what makes the backfill safe to run before the sweep
+ * decision, and a test asserts it.
+ */
+export function foldTouches(index, rows = []) {
+  for (const row of rows) {
+    const personId = row.personId ?? row.person?.id;
+    const created = row.created ?? row.createdAt;
+    if (!personId || !created) continue;
 
-      const inbound = row.isIncoming === true || row.direction === "inbound";
-      const at = new Date(created).getTime();
-      if (!Number.isFinite(at)) continue;
+    const inbound = row.isIncoming === true || row.direction === "inbound";
+    const at = new Date(created).getTime();
+    if (!Number.isFinite(at)) continue;
 
-      const entry = index.get(personId) ?? { lastOutbound: 0, lastInbound: 0 };
-      if (inbound) entry.lastInbound = Math.max(entry.lastInbound, at);
-      else entry.lastOutbound = Math.max(entry.lastOutbound, at);
-      index.set(personId, entry);
-    }
-  };
-
-  fold(calls);
-  fold(texts);
-  fold(emails);
+    const entry = index.get(personId) ?? { lastOutbound: 0, lastInbound: 0 };
+    if (inbound) entry.lastInbound = Math.max(entry.lastInbound, at);
+    else entry.lastOutbound = Math.max(entry.lastOutbound, at);
+    index.set(personId, entry);
+  }
   return index;
 }
 

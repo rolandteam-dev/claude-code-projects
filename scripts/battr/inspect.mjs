@@ -124,6 +124,44 @@ async function main() {
   console.log("\nWhat we need is one that counts calls and texts but NOT email. If none does,");
   console.log("the honest options are: sweep on calls alone, or do not sweep at all.");
 
+  // Is there an id -> name lookup for timeframe? If the person payload carries
+  // ids rather than names, this endpoint is what turns them into the bands the
+  // nurture lists match on — and its absence is what would force the CSV export
+  // fallback.
+  console.log("\n\nTIMEFRAME LOOKUP — is there an id -> name map to be had?");
+  console.log("-".repeat(70));
+  for (const path of ["/timeframes", "/leadTimeframes"]) {
+    try {
+      const rows = await fub.paginate(path, {}, { max: 100 });
+      console.log(`${path.padEnd(18)} OK — ${rows.length} rows`);
+      for (const row of rows.slice(0, 25)) {
+        // This account returns {id, timeframe}; other shapes use name/label.
+        console.log(`  ${String(row.id ?? "?").padStart(6)}  ${JSON.stringify(row.timeframe ?? row.name ?? row.label ?? row)}`);
+      }
+    } catch (err) {
+      console.log(`${path.padEnd(18)} ${err.message.split("→")[1]?.trim() ?? err.message}`);
+    }
+  }
+
+  // The other place a timeframe can live: an account custom field rather than
+  // the built-in. If both exist, the People screen column and Battr's mirror
+  // may simply be bound to different ones — which is one explanation for
+  // 514 on the screen against 1,262 in Battr's lists.
+  try {
+    const fields = await fub.customFields();
+    const tf = fields.filter((f) => /timeframe|time.?frame|timeline|when.*(buy|move)/i.test(`${f.label} ${f.name}`));
+    console.log(`\ncustom fields matching "timeframe": ${tf.length}`);
+    for (const f of tf) {
+      console.log(`  name=${f.name}  label=${JSON.stringify(f.label)}  type=${f.type}${f.choices ? `  choices=${JSON.stringify(f.choices).slice(0, 200)}` : ""}`);
+    }
+    if (tf.length) {
+      console.log("\n>>> A custom timeframe field EXISTS as well as the built-in. Confirm which");
+      console.log("    one the People screen column is bound to before trusting either count.");
+    }
+  } catch (err) {
+    console.log(`\ncustom fields unreadable: ${err.message}`);
+  }
+
   console.log("\n\nCUSTOM FIELDS ON THE PERSON (custom*)");
   console.log("-".repeat(70));
   const custom = [...keys].filter((k) => k.startsWith("custom")).sort();
@@ -171,6 +209,35 @@ async function main() {
         ? "direction: PRESENT on every row — the reprieve can tell a reply from a blast."
         : `direction: present on ${directional}/${sample.length} rows *** the rest count as neither ***`
     );
+
+    // Confirmed 12 Sep 2026: neither `direction` nor `isIncoming` is returned on
+    // ANY row, so the reply reprieve currently spares nobody. It fails in the
+    // wrong direction — a lead who wrote back can still be swept.
+    //
+    // Something on the row must carry it. These are the candidates, and this
+    // prints enough to decide WITHOUT guessing: which are populated, and the
+    // distinct values of the enum-shaped ones. No subject, body, address or
+    // name is printed — those are the lead's own words and the lead's identity.
+    if (directional < sample.length && sample.length) {
+      console.log("\n  which row fields could carry direction?");
+      const CANDIDATES = ["userId", "status", "campaignOrigin", "sharedInboxId", "emailAccountId", "emailTemplateId", "actionPlanId", "bounced", "read", "archived", "unsubscribed", "hasEmailDraft"];
+      for (const key of CANDIDATES) {
+        const present = sample.filter((r) => r[key] !== null && r[key] !== undefined && r[key] !== "");
+        if (!present.length && !(key in (sample[0] ?? {}))) continue;
+        // Values only where the field is an enum or a flag. An id is reported
+        // as present/absent and a count, never as the id itself.
+        const vals = [...new Set(present.map((r) => r[key]))];
+        const enumish = vals.every((v) => typeof v === "boolean" || (typeof v === "string" && v.length < 24));
+        console.log(
+          `  ${key.padEnd(18)} populated ${String(present.length).padStart(3)}/${sample.length}` +
+            (enumish && vals.length <= 8 ? `   values: ${JSON.stringify(vals.sort())}` : `   ${vals.length} distinct`)
+        );
+      }
+      console.log("\n  Read it like this: a field populated on SOME rows and empty on the rest,");
+      console.log("  splitting the sample in two, is the direction flag. `userId` set means an");
+      console.log("  agent sent it; `userId` empty on a row that exists means the lead wrote in.");
+      console.log("  Confirm the split before wiring it — a wrong reading spares the wrong leads.");
+    }
   } catch (err) {
     console.log(`*** /emails per-person FAILED: ${err.message}`);
     console.log("    Until this works the engine holds every sweep rather than sweeping blind.");

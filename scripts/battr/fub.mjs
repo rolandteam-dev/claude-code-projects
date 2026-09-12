@@ -227,6 +227,19 @@ export class FubClient {
     return this.paginate("/emails", { personId, createdAfter: sinceIso });
   }
 
+  /**
+   * The text-message thread for ONE lead since `sinceIso`.
+   *
+   * `/v1/textMessages` refuses a bulk read with the same 400 as `/v1/emails`
+   * ("personId, threadId, phone ... must be specified"), but serves a single
+   * person's thread. The audit uses this to backfill texts for the handful of
+   * leads an action would touch, rather than leaving the whole touch index
+   * incomplete because the bulk endpoint does not exist.
+   */
+  textsForPerson(personId, sinceIso) {
+    return this.paginate("/textMessages", { personId, createdAfter: sinceIso });
+  }
+
   // ------------------------------------------------------------------ writes
 
   note(personId, body, subject = "Battr audit") {

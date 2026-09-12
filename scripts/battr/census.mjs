@@ -87,6 +87,100 @@ async function main() {
     console.log("Every nurture contact has a timeframe. Nothing is falling through.");
   }
 
+  // ------------------------------------------------ TIMEFRAME FORENSICS
+  //
+  // Follow Up Boss's People screen reports 514 contacts with a non-empty
+  // Timeframe. Battr's four nurture lists claim 1,262 between them, and those
+  // lists are a SUBSET of "has a timeframe" — they also require a nurture stage
+  // and no pond. A subset cannot be larger than the set it comes from, so one of
+  // the two numbers is measuring something else.
+  //
+  // Three explanations are testable from here, and this section distinguishes
+  // them:
+  //
+  //   A. TWO FIELDS. FUB carries a built-in timeframe and a custom one; the
+  //      People column shows one and Battr mirrors the other. Then the raw key
+  //      list below shows more than one populated candidate.
+  //   B. IDS, NOT NAMES. The field holds numeric ids, our name matching finds
+  //      nobody, and Battr resolves them through a lookup. Then the distinct
+  //      values below are numbers.
+  //   C. THE UI COUNT IS NARROWER. The People screen filter was scoped — a
+  //      saved view, an owner, trash excluded. Then our whole-database count
+  //      lands near 1,262 and the 514 is the odd one out.
+  //
+  // Everything printed is a count or a field name. Timeframe values themselves
+  // ("0-3 months", or an id) identify nobody.
+  console.log("\n\nTIMEFRAME FORENSICS — why 514 on the People screen vs 1,262 in Battr's lists");
+  console.log("=".repeat(72));
+
+  const TF_KEY = /timeframe|time_frame|timeline|buying.?time|when.*(buy|move)/i;
+  const rawKeys = new Set();
+  for (const person of people) for (const k of Object.keys(person)) rawKeys.add(k);
+  const candidates = [...rawKeys].filter((k) => TF_KEY.test(k)).sort();
+
+  console.log("\nA. CANDIDATE FIELDS ON THE PERSON PAYLOAD");
+  console.log("-".repeat(72));
+  if (!candidates.length) {
+    console.log("*** none. FUB returns no timeframe-like key at all, which would explain");
+    console.log("    the nurture lists matching nobody — but not Battr's 1,262.");
+  }
+  for (const key of candidates) {
+    const filled = people.filter((p) => p[key] !== null && p[key] !== undefined && p[key] !== "");
+    const sample = filled[0]?.[key];
+    console.log(
+      `${key.padEnd(24)} populated on ${String(filled.length).padStart(6)} / ${people.length}   ` +
+        `type=${typeof sample}   e.g. ${JSON.stringify(sample)}`
+    );
+  }
+  if (candidates.length > 1) {
+    console.log("\n>>> MORE THAN ONE candidate. Explanation A is live: confirm which one the");
+    console.log("    People screen column is bound to before trusting either count.");
+  }
+
+  console.log("\n\nB. DISTINCT VALUES OF THE FIELD WE READ (are these names or ids?)");
+  console.log("-".repeat(72));
+  const rawValues = new Map();
+  for (const c of contacts) {
+    const v = c.custom_fields.fub.system_timeframe;
+    if (v === null || v === undefined || v === "") continue;
+    tally(rawValues, `${JSON.stringify(v)}  [${typeof v}]`);
+  }
+  if (!rawValues.size) {
+    console.log("*** NO contact carries a readable timeframe. Our four nurture lists match");
+    console.log("    nobody, which is a silent failure, not an empty database.");
+  }
+  for (const [value, n] of ranked(rawValues).slice(0, 30)) {
+    console.log(`${String(n).padStart(7)}  ${value}`);
+  }
+  const numericLooking = [...rawValues.keys()].filter((k) => /^"?\d+"?\s/.test(k)).length;
+  if (numericLooking && numericLooking === rawValues.size) {
+    console.log("\n>>> Every value is NUMERIC. Explanation B: these are ids and our name");
+    console.log("    matching cannot fire. The id -> name map is what is missing.");
+  }
+
+  console.log("\n\nC. THE FUNNEL — where 'has a timeframe' narrows to the nurture lists");
+  console.log("-".repeat(72));
+  const hasTf = contacts.filter((c) => {
+    const v = c.custom_fields.fub.system_timeframe;
+    return v !== null && v !== undefined && v !== "";
+  });
+  const tfNurture = hasTf.filter((c) => NURTURE.has(lower(c.stage_name)));
+  const tfNurtureNoPond = tfNurture.filter((c) => !c.crm_pond_id);
+
+  const row = (label, n) => console.log(`${label.padEnd(48)} ${String(n).padStart(7)}`);
+  row("contacts in the database", contacts.length);
+  row("…with any timeframe value", hasTf.length);
+  row("…and in a Nurture / Spoke with Customer stage", tfNurture.length);
+  row("…and not already in a pond", tfNurtureNoPond.length);
+  console.log("-".repeat(72));
+  row("Battr's four nurture lists, summed", 1262);
+  row("FUB People screen, 'Timeframe is not empty'", 514);
+
+  console.log("\nRead it like this:");
+  console.log("  last funnel row ≈ 1,262  -> Battr is right and the 514 was a scoped view (C).");
+  console.log("  last funnel row ≈   514  -> the People screen is right and Battr counts something wider.");
+  console.log("  last funnel row ≈     0  -> we cannot read the field at all; neither number is ours yet.");
+
   // ------------------------------------------------- membership per list
   console.log("\n\nWHO LANDS IN EACH LIST (membership only — no day counts applied)");
   console.log("-".repeat(72));

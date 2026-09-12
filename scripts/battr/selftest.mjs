@@ -15,13 +15,14 @@ import { execFile } from "node:child_process";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { rmSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import assert from "node:assert/strict";
 
-import { classify, buildTouchIndex, classifyForList, runCombinedList, isExemptAgent, readInboundEmails, findUnansweredInbound, runReportOnlyLists, DAY_MS } from "./classify.mjs";
+import { classify, buildTouchIndex, classifyForList, runCombinedList, isExemptAgent, readInboundEmails, findUnansweredInbound, runReportOnlyLists, foldTouches, DAY_MS } from "./classify.mjs";
 import { evaluateCondition, evaluateSet } from "./filters.mjs";
 import { normalizeContact } from "./contact.mjs";
 import { isDayAllowed } from "./schedule.mjs";
-import { lists, listById, memberListsOf, reportOnlyLists } from "./lists.mjs";
+import { lists, listById, memberListsOf, reportOnlyLists, TIMEFRAMES, TIMEFRAME_IDS } from "./lists.mjs";
 import { detectAtBats, summarizeAgents, formatRate } from "./atbats.mjs";
 import { buildAgentDigests, deliverDigests, renderDigestText, digestSubject } from "./alerts.mjs";
 import { describeError, fromAddress, mailConfigured } from "./email.mjs";
@@ -29,9 +30,13 @@ import { parseCsv, findColumn, mapRows } from "./import-atbats.mjs";
 import { bucketForSource, bucketName, isSourceAudited, leadBuckets, unmappedPolicy } from "./sources.mjs";
 import { FubClient } from "./fub.mjs";
 import { rules } from "./rules.mjs";
+import { TIMELINE, SEP_8, SEP_10, SEP_11, FUB_FIELDS } from "./observed.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
+
+/** Where the end-to-end run writes. Never the repository's own battr-logs. */
+const SCRATCH_LOGS = join(tmpdir(), `battr-selftest-${process.pid}`);
 
 const NOW = Date.UTC(2026, 8, 1, 12, 0, 0); // 2026-09-01, fixed so tests don't drift
 const daysAgo = (n) => new Date(NOW - n * DAY_MS).toISOString();
@@ -492,6 +497,122 @@ check("a channel FUB refuses in bulk is reported, not thrown and not skipped", a
   assert.match(activity.unavailable[0].reason, /must be specified/);
 });
 
+check("an unusable touch signal holds the NUDGE, not just the sweep", () => {
+  // Run 2026-09-04-e1vs held all 55 sweeps for this reason and still wrote 8
+  // nudges. Wrong half. A nudge stamps `Battr At Risk Since`, and that stamp is
+  // the whole of the warn-first interlock — a wrong nudge tonight arms a wrong
+  // sweep tomorrow. Asserted on the engine source because the gate is a single
+  // expression there and nothing else can prove it stayed correct.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(
+    src,
+    /const touchUsable =\s*touchIncomplete\.length === 0 \|\|\s*\(textBackfill\?\.complete === true && rules\.sweepOnBackfilledTexts === true\);/,
+    "acting is allowed only with no gaps at all, or a COMPLETE backfill plus an explicit opt-in"
+  );
+  assert.match(
+    src,
+    /const nudgesAllowedToday = isDayAllowed\(rules\.nudgeDayFilter[^)]*\)[^;]*&& touchUsable;/,
+    "the nudge gate must carry the same touchUsable condition as the sweep gate"
+  );
+  assert.match(src, /const sweepsAllowedToday = isDayAllowed\(rules\.sweepDayFilter[^)]*\)[^;]*&& touchUsable;/);
+});
+
+check("a per-person backfill cannot switch sweeping on by itself", () => {
+  // The backfill restores a complete touch index, which removes the REASON
+  // sweeps are held. Turning that into permission to sweep takes the number of
+  // leads that can move from zero to non-zero, so it is a human's call. This
+  // asserts the opt-in is off and that a complete backfill alone is not enough.
+  assert.equal(rules.sweepOnBackfilledTexts, false, "the opt-in must ship off");
+
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+
+  // `touchComplete` (diagnostics) and `touchUsable` (permission) must be
+  // different expressions — collapsing them is exactly the mistake this guards.
+  const complete = src.match(/const touchComplete = (.+);/)?.[1];
+  const usable = src.match(/const touchUsable =\s*([\s\S]+?);\n/)?.[1];
+  assert.ok(complete && usable, "both conditions must exist to be compared");
+  assert.notEqual(
+    complete.replace(/\s+/g, " ").trim(),
+    usable.replace(/\s+/g, " ").trim(),
+    "reporting the gap as closed is not the same as permission to act on it"
+  );
+  assert.ok(
+    !complete.includes("sweepOnBackfilledTexts"),
+    "the diagnostic must not depend on the opt-in, or the report goes quiet when it is off"
+  );
+  assert.ok(usable.includes("sweepOnBackfilledTexts"), "permission must depend on the opt-in");
+
+  // A partial backfill must never read as complete. `failed === 0` is the only
+  // thing that sets it, because a lead whose thread could not be read is
+  // indistinguishable from a lead with no texts.
+  assert.match(src, /complete: failed === 0/, "any failed lead makes the whole pass incomplete");
+});
+
+check("folding touches only ever moves last-touch forward", () => {
+  // This is the property that makes the backfill safe to run before the sweep
+  // decision: it can move a lead from neglected toward compliant, never the
+  // reverse, so no lead becomes newly sweepable because of it.
+  const index = new Map();
+  const t2 = new Date("2026-09-10T12:00:00Z").getTime();
+  const t1 = new Date("2026-09-02T12:00:00Z").getTime();
+
+  foldTouches(index, [{ personId: 7, created: new Date(t2).toISOString(), isIncoming: false }]);
+  assert.equal(index.get(7).lastOutbound, t2);
+
+  // An OLDER row must not drag the timestamp back.
+  foldTouches(index, [{ personId: 7, created: new Date(t1).toISOString(), isIncoming: false }]);
+  assert.equal(index.get(7).lastOutbound, t2, "an older message cannot un-touch a lead");
+
+  // Inbound and outbound are tracked apart, and both only advance.
+  foldTouches(index, [{ personId: 7, created: new Date(t1).toISOString(), isIncoming: true }]);
+  assert.equal(index.get(7).lastInbound, t1);
+  assert.equal(index.get(7).lastOutbound, t2, "an inbound row must not disturb the outbound clock");
+
+  // Undated and id-less rows are skipped rather than counted as "now".
+  foldTouches(index, [{ personId: 7 }, { created: new Date().toISOString() }]);
+  assert.equal(index.get(7).lastOutbound, t2);
+  assert.equal(index.size, 1, "a row with no person is not a touch");
+});
+
+check("an unusable touch signal WITHHOLDS the agent digests", () => {
+  // The same run would have emailed thirteen agents that their leads were
+  // "sweeping" — one of them that eighteen of hers were going — on a night it
+  // swept nothing and had already printed that it could not trust the counts.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /const digests = touchUsable\s*\?\s*buildAgentDigests\(/);
+  assert.match(src, /agent digests WITHHELD/);
+  assert.match(src, /what: "agent alerts"/, "and the withholding is recorded as a skip, not silent");
+});
+
+check("the pond split is marked as the unconfirmed guess it is", () => {
+  // Battr's 10 Sep neglected email routed all four sweeps to Pond / Shark Tank
+  // and none to Money Time. Our 25-lead split was inferred from older mail, not
+  // read off a rule screen, and on a 45-sweep Tuesday it would send 20 leads
+  // somewhere Battr does not.
+  const src = readFileSync(join(HERE, "rules.mjs"), "utf8");
+  assert.match(src, /UNCONFIRMED/, "the pond split must stay flagged until the 8 Sep email confirms it");
+  assert.equal(rules.maxSweepsPerPond, 25, "unchanged — changing pond routing moves leads to a different agent's queue");
+  assert.equal(rules.sweepPond, "Shark Tank");
+});
+
+check("a bound sweep cap is reported in the summary, not buried", () => {
+  // Battr processed 45 neglected on Tuesday 8 Sep against 7 on Wednesday 2 Sep:
+  // sweeps run Tue-Fri, so Tuesday clears three days of backlog. A cap of 30
+  // therefore binds on Tuesdays, and the day it binds is the day to say so.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /const cappedOut = actions\.heldBack\.filter\(\(h\) => \/sweep cap\/\.test/);
+  assert.match(src, /per-run sweep cap held back/);
+  assert.equal(rules.maxSweepsPerRun, 30, "unchanged — raising it widens what can be swept");
+});
+
+check("the report header separates the audited population from the raw pull", () => {
+  // The committed report said "53786 leads audited". That was the database, not
+  // the audit list — Battr's equivalent number is 866.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /const audited = results\.filter\(\(r\) => r\.status !== "excluded"\)\.length;/);
+  assert.match(src, /leads audited\*\* of \$\{population\} pulled/);
+});
+
 check("a real error still fails the run", async () => {
   // Only a 400 means "this endpoint needs a filter". Anything else is a genuine
   // failure and must not be swallowed as a missing channel.
@@ -605,6 +726,238 @@ check("a client under contract is protected twice over", () => {
       `guarantee 2: "${stage}" must also be excluded by stage, independently of any list`
     );
   }
+});
+
+// FUB returns timeframeId, not timeframe. These fix the mapping in place so a
+// renumbering or a typo cannot quietly re-empty the four nurture lists.
+const TIMEFRAME_BANDS = [
+  { id: 1, band: "months0to3", list: 1106, name: "Weekly Nurture" },
+  { id: 2, band: "months3to6", list: 1107, name: "Bi-Weekly Nurture" },
+  { id: 3, band: "months6to12", list: 1108, name: "Monthly Nurture" },
+  { id: 4, band: "months12plus", list: 1109, name: "Quarterly Nurture" },
+];
+
+check("the timeframe map matches what FUB actually returned", () => {
+  // Two copies exist on purpose: FUB_FIELDS.timeframes is the transcript of the
+  // run, TIMEFRAME_IDS is what the engine acts on. Editing the second without
+  // the first is how a mapping drifts away from the thing it was read from.
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(TIMEFRAME_IDS).map(([k, v]) => [String(k), v])),
+    Object.fromEntries(Object.entries(FUB_FIELDS.timeframes).map(([k, v]) => [String(k), v])),
+    "TIMEFRAME_IDS must equal GET /v1/timeframes as recorded on 12 Sep 2026"
+  );
+});
+
+check("the fields FUB does not return are the ones we work around", () => {
+  // `timeframe` absent is the whole population gap, and the fix is to resolve
+  // the id instead. If a later run finds the name present, this is the check
+  // that should be revisited rather than the resolution being left as dead code.
+  assert.ok(FUB_FIELDS.absent.includes("timeframe"), "the name is not sent; the id is what we read");
+  assert.ok(FUB_FIELDS.absent.includes("groupIds"), "the owner-group exclusion cannot fire on this account");
+  assert.ok(
+    rules.exemptAgents.length > 0,
+    "with no group ids, exempting agents by name is the only thing standing in for group 52555"
+  );
+
+  // The reply reprieve is inert, and must be recorded as inert rather than
+  // described as working anywhere.
+  assert.equal(FUB_FIELDS.emailDirection.directional, 0);
+  const parity = readFileSync(join(ROOT, "docs", "battr-parity.md"), "utf8");
+  assert.ok(
+    /reprieve|direction/i.test(parity),
+    "a protection that currently spares nobody has to appear in the parity document"
+  );
+});
+
+check("every timeframe id FUB returns maps onto the band its list matches on", () => {
+  for (const { id, band } of TIMEFRAME_BANDS) {
+    const name = TIMEFRAME_IDS[id];
+    assert.ok(name, `id ${id} must resolve to a name`);
+    assert.ok(
+      TIMEFRAMES[band].includes(name),
+      `TIMEFRAME_IDS[${id}] = "${name}" is not in TIMEFRAMES.${band} — the list would match nobody`
+    );
+  }
+  // "No Plans" is in FUB's table and deliberately matches no band.
+  assert.equal(TIMEFRAME_IDS[5], "No Plans");
+  for (const key of Object.keys(TIMEFRAMES)) {
+    assert.ok(!TIMEFRAMES[key].includes("No Plans"), `"No Plans" must not fall into ${key}`);
+  }
+});
+
+for (const { id, list, name } of TIMEFRAME_BANDS) {
+  check(`a nurture lead with timeframeId ${id} lands in ${name}`, () => {
+    const c = normalizeContact(
+      { id: 700 + id, stage: "Nurture", created: daysAgo(400), timeframeId: id, assignedUserId: 5, tags: [] },
+      { lastOutbound: 0, lastInbound: 0 }
+    );
+    assert.equal(c.timeframeUnresolved, false, "the id must resolve");
+    assert.equal(evaluateSet(listById(list).list_filters, c), true, `${name} must select it`);
+
+    // And it must NOT also land in CLEAN UP, which selects on a blank timeframe.
+    assert.equal(
+      evaluateSet(listById(1145).list_filters, c),
+      false,
+      "a lead with a readable timeframe is not a no-timeframe lead"
+    );
+  });
+}
+
+check('timeframeId 5 ("No Plans") is audited by nothing, in ours as in Battr', () => {
+  const c = normalizeContact(
+    { id: 705, stage: "Nurture", created: daysAgo(400), timeframeId: 5, assignedUserId: 5, tags: [] },
+    { lastOutbound: 0, lastInbound: 0 }
+  );
+  for (const { list, name } of TIMEFRAME_BANDS) {
+    assert.equal(evaluateSet(listById(list).list_filters, c), false, `${name} must not claim it`);
+  }
+  assert.equal(evaluateSet(listById(1145).list_filters, c), false, "it has a timeframe, so it is not CLEAN UP either");
+});
+
+check("a blank timeframe still falls to CLEAN UP, which never sweeps", () => {
+  const c = normalizeContact(
+    { id: 706, stage: "Nurture", created: daysAgo(400), assignedUserId: 5, tags: [] },
+    { lastOutbound: 0, lastInbound: 0 }
+  );
+  assert.equal(c.timeframeUnresolved, true);
+  assert.equal(evaluateSet(listById(1145).list_filters, c), true);
+  assert.equal(listById(1145).report_only, true, "and it cannot act");
+});
+
+check("an id FUB adds later is reported, never guessed into a band", () => {
+  // The failure to avoid is a new band silently inheriting some other band's
+  // cadence. An unmapped id resolves to nothing and raises a flag instead.
+  const c = normalizeContact(
+    { id: 707, stage: "Nurture", created: daysAgo(400), timeframeId: 99, assignedUserId: 5, tags: [] },
+    { lastOutbound: 0, lastInbound: 0 }
+  );
+  assert.equal(c.timeframeIdUnknown, true, "an unknown id must be flagged");
+  // Unset, not guessed. (`first()` yields undefined when nothing matches; the
+  // evaluator treats that and null alike, which the CLEAN UP case above proves.)
+  const resolved = c.custom_fields.fub.system_timeframe;
+  assert.ok(resolved === null || resolved === undefined, `must not be invented, got ${JSON.stringify(resolved)}`);
+  for (const band of Object.values(TIMEFRAMES)) {
+    assert.ok(!band.includes(resolved), "an unmapped id must not resolve to any band name");
+  }
+  for (const { list, name } of TIMEFRAME_BANDS) {
+    assert.equal(evaluateSet(listById(list).list_filters, c), false, `${name} must not claim an unmapped id`);
+  }
+
+  // A known id is not flagged, and neither is a lead with no id at all.
+  const known = normalizeContact({ id: 708, stage: "Nurture", timeframeId: 2, tags: [] }, { lastOutbound: 0 });
+  assert.equal(known.timeframeIdUnknown, false);
+  const none = normalizeContact({ id: 709, stage: "Nurture", tags: [] }, { lastOutbound: 0 });
+  assert.equal(none.timeframeIdUnknown, false, "absent is a data gap, not an unknown id");
+});
+
+check("the day filter plus the three-day spread explain every observed night", () => {
+  // Measured on 11 Sep: three leads flagged 9/8 swept 9/11, exactly three days
+  // apart. Five of the six member lists carry a +3 gap; Hot Leads carries +2.
+  // If anyone widens a spread, this fails and says which list.
+  // The day counts live in the filter DSL, so read them back out of it rather
+  // than trusting a second copy that could drift.
+  const dayCount = (set, label) => {
+    const conds = (set?.groups ?? []).flat().filter((c) => c.transform?.type === "days_since");
+    const comm = conds.find((c) => c.field.endsWith("system_lastCommunication"));
+    assert.ok(comm, `${label}: no days-since-last-communication condition to read`);
+    return comm.value;
+  };
+  const spreads = memberListsOf(lists.find((l) => l.audit_type === "combined_contact_lists"))
+    .ids.map((id) => {
+      const l = listById(id);
+      return {
+        id,
+        name: l.name,
+        gap: dayCount(l.neglected_filters, `${l.name} neglected`) - dayCount(l.at_risk_filters, `${l.name} at risk`),
+      };
+    });
+  for (const { id, name, gap } of spreads) {
+    const expected = id === 1144 ? 2 : 3;
+    assert.equal(gap, expected, `${name}: Battr's observed spread is ${expected} days, not ${gap}`);
+  }
+
+  // And the spread interacts with the sweep day filter to pile leads onto
+  // Tuesday: flagged Wed/Thu/Fri all come due Sat/Sun/Mon, none a sweep day.
+  const tz = rules.timezone;
+  const dueDates = ["2026-09-12", "2026-09-13", "2026-09-14"]; // Sat, Sun, Mon
+  for (const day of dueDates) {
+    assert.equal(
+      isDayAllowed(rules.sweepDayFilter, new Date(`${day}T19:00:00-07:00`), tz),
+      false,
+      `${day} must not be a sweep day — this is why Tuesday carried 45`
+    );
+  }
+  assert.equal(
+    isDayAllowed(rules.sweepDayFilter, new Date("2026-09-15T19:00:00-07:00"), tz),
+    true,
+    "and Tuesday must be, or the backlog never clears"
+  );
+});
+
+check("four observed nights reconcile with the self-draining population", () => {
+  assert.equal(TIMELINE.length, 4, "every captured night belongs in the timeline");
+  for (const night of TIMELINE) {
+    const full = { "2026-09-08": SEP_8, "2026-09-10": SEP_10, "2026-09-11": SEP_11 }[night.date];
+    if (!full) continue;
+    assert.equal(night.total, full.total, `${night.date}: timeline disagrees with the record`);
+    assert.equal(night.at_risk, full.at_risk, `${night.date}: at-risk disagrees`);
+  }
+
+  // A swept lead enters a pond, every member list requires notInAPond, so it
+  // leaves the audit list the same night. The list shrinks by its own sweeps
+  // and regrows by arrivals — it is never a backlog that only accumulates.
+  for (let i = 1; i < TIMELINE.length; i++) {
+    const prev = TIMELINE[i - 1];
+    const cur = TIMELINE[i];
+    const arrivals = cur.total - (prev.total - prev.neglected);
+    assert.ok(
+      arrivals >= 0,
+      `${cur.date}: ${cur.total} is below ${prev.total} − ${prev.neglected} swept — ` +
+        `the population cannot shrink faster than the sweeps explain`
+    );
+  }
+
+  // The at-risk tier drains on the same three-day clock. Nothing carried into
+  // 11 Sep is older than 9/9, and the 9/8 cohort left as neglected.
+  assert.deepEqual(Object.keys(SEP_11.carriedAtRiskSince).sort(), ["2026-09-09", "2026-09-10"]);
+  assert.deepEqual(Object.keys(SEP_11.sweptAtRiskSince), ["2026-09-08"]);
+  const carried = Object.values(SEP_11.carriedAtRiskSince).reduce((a, b) => a + b, 0);
+  assert.equal(carried, SEP_11.at_risk_already_flagged, "the dated rows must account for the count");
+  assert.equal(
+    SEP_11.at_risk_already_flagged + SEP_11.at_risk_new_notes,
+    SEP_11.at_risk,
+    "new notes plus carry-over is the at-risk total"
+  );
+});
+
+check("Battr's exclusion counters are action-time, on every night observed", () => {
+  // Both read zero even on a night when the combined list held 903 of a 12,000
+  // pool. They cannot be counting selection, which is why we do that work in
+  // the list filters rather than as a post-hoc subtraction.
+  for (const night of [SEP_8, SEP_10, SEP_11]) {
+    assert.equal(night.excluded_lead_bucket, 0, `${night.date}: bucket counter`);
+    assert.equal(night.excluded_agent_group, 0, `${night.date}: agent-group counter`);
+  }
+});
+
+check("every observed sweep went to Shark Tank, and our overflow is marked unconfirmed", () => {
+  let total = 0;
+  for (const night of [SEP_10, SEP_11]) {
+    const targets = night.assignmentTargets.Pond ?? {};
+    assert.deepEqual(Object.keys(targets), ["Shark Tank"], `${night.date}: an unobserved pond`);
+    total += targets["Shark Tank"];
+  }
+  assert.equal(total, 7, "every sweep we have a target column for");
+
+  // No observed night exceeded the cap in a table we can read, so these nights
+  // neither confirm nor refute it. Guard the shape so the departure stays a
+  // known one: the overflow pond must be configured, and the cap must sit
+  // below the per-run cap or it could never fire at all.
+  assert.ok(rules.maxSweepsPerPond > 0, "the overflow threshold must exist to be audited");
+  assert.ok(
+    rules.maxSweepsPerPond < rules.maxSweepsPerRun,
+    "an overflow cap at or above the run cap is dead configuration"
+  );
 });
 
 check("every modelled list carries Battr's observed numbers to check itself against", () => {
@@ -955,16 +1308,39 @@ console.log("\nUnit — At Bats detection");
 const owned = (id, ownerUserId, pondId = null) =>
   normalizeContact({ id, name: `Lead ${id}`, created: daysAgo(30), assignedUserId: ownerUserId, assignedPondId: pondId }, {});
 
+/** An established database: one contact already known, so this is not a cold start. */
+const baseline = (id = 99, ownerUserId = 11) => new Map([[id, { ownerUserId, pondId: null }]]);
+
 check("a newly seen owned lead is a brand new lead", () => {
-  const events = detectAtBats(new Map(), [owned(1, 11)], { now: NOW });
+  // Against an EXISTING baseline. Passing an empty map here used to pass too,
+  // which is precisely what let the first run mint 53,786 of these.
+  const events = detectAtBats(baseline(), [owned(99, 11), owned(1, 11)], { now: NOW });
   assert.equal(events.length, 1);
   assert.equal(events[0].at_bat_type, "brand_new_lead");
   assert.equal(events[0].new_owner_id, 11);
+  assert.equal(events[0].contact_id, 1, "only the lead that is actually new");
 });
 
 check("a newly seen lead sitting in a pond is not an at bat yet", () => {
-  const events = detectAtBats(new Map(), [owned(1, null, 900)], { now: NOW });
+  const events = detectAtBats(baseline(), [owned(99, 11), owned(1, null, 900)], { now: NOW });
   assert.equal(events.length, 0, "nobody has been given a chance yet");
+});
+
+check("A COLD START MINTS NOTHING — a database is a baseline, not a stampede", () => {
+  // The first real run wrote 53,786 brand_new_lead rows stamped the same
+  // instant, and credited one agent with 29,195 at bats at 100% retention.
+  // A database that already exists is not a stream of leads arriving at once.
+  const wholeDatabase = Array.from({ length: 500 }, (_, i) => owned(i + 1, 11 + (i % 3)));
+  assert.equal(detectAtBats(new Map(), wholeDatabase, { now: NOW }).length, 0);
+  assert.equal(detectAtBats(null, wholeDatabase, { now: NOW }).length, 0, "a missing file reads the same as an empty one");
+});
+
+check("and the guard stands down once a baseline exists", () => {
+  // It must not suppress real history forever — one known contact is enough for
+  // the next run to detect genuine changes normally.
+  const events = detectAtBats(baseline(99, 11), [owned(99, 12)], { now: NOW });
+  assert.equal(events.length, 1, "a real owner change is still an at bat");
+  assert.equal(events[0].at_bat_type, "other_transfer");
 });
 
 check("pond to owner is a pond claim", () => {
@@ -1323,6 +1699,11 @@ function fixtureServer() {
     warm({ id: 104, name: "Bad Number", assignedTo: "Brett Smith", assignedUserId: 12, tags: ["BAD_PHONE"] }),
     // excluded: no list covers a contract stage
     warm({ id: 105, name: "In Escrow", assignedTo: "Brett Smith", assignedUserId: 12, stage: "Under Contract" }),
+    // NEGLECTED ON CALLS, but texted three days ago. FUB will not serve texts
+    // in bulk, so the first pass cannot see that and reads this lead as
+    // abandoned. The per-person backfill is the only thing that saves it, and
+    // saving it is the whole point: this is a lead an agent actually worked.
+    warm({ id: 106, name: "Texted Recently", assignedTo: "Brett Smith", assignedUserId: 12 }),
   ];
 
   // Each one sits in the middle of its tier, not on a boundary, so a run at any
@@ -1333,14 +1714,19 @@ function fixtureServer() {
     { personId: 102, created: ago(12), isIncoming: false },
     { personId: 103, created: ago(40), isIncoming: false },
     { personId: 104, created: ago(40), isIncoming: false },
+    { personId: 106, created: ago(40), isIncoming: false },
   ];
+
+  // Served ONLY per person, exactly as FUB does it.
+  const textsByPerson = { 106: [{ personId: 106, created: ago(3), isIncoming: false }] };
 
   const routes = {
     "/users": { users: [{ id: 11, name: "Nicole Miller" }, { id: 12, name: "Brett Smith" }] },
     "/ponds": { ponds: [{ id: 900, name: "Shark Tank" }, { id: 901, name: "Money Time" }] },
     "/people": { people },
     "/calls": { calls },
-    "/textMessages": { textmessages: [] },
+    // NOT listed: /textMessages. The handler below answers it the way FUB does
+    // — 400 in bulk, the thread when a personId is given.
     "/emails": { emails: [] },
     "/customFields": { customfields: [] },
   };
@@ -1352,7 +1738,24 @@ function fixtureServer() {
       res.writeHead(200, { "Content-Type": "application/json" });
       return res.end("{}");
     }
-    const path = new URL(req.url, "http://localhost").pathname;
+    const url = new URL(req.url, "http://localhost");
+    const path = url.pathname;
+
+    // Confirmed live: FUB refuses a bulk text read and serves one person's
+    // thread. Reproducing both halves is what makes the backfill path testable;
+    // a fixture that answers the bulk read with [] tests the opposite of
+    // production and reports success.
+    if (path === "/textMessages") {
+      const personId = url.searchParams.get("personId");
+      if (!personId) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ errorMessage: "personId, threadId, phone ... must be specified" }));
+      }
+      const textmessages = textsByPerson[personId] ?? [];
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ textmessages, _metadata: { total: textmessages.length } }));
+    }
+
     const body = routes[path] ?? {};
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ ...body, _metadata: { total: Object.values(body)[0]?.length ?? 0 } }));
@@ -1369,7 +1772,11 @@ const run = (env) =>
       // GITHUB_STEP_SUMMARY is blanked deliberately: the engine appends its
       // report there when set, and a fixture run must never write test data
       // into the real job summary where it reads as live output.
-      { cwd: ROOT, env: { ...process.env, GITHUB_STEP_SUMMARY: "", ...env } },
+      // BATTR_LOG_DIR sends the run's reports, undo logs, at-bats ledger and
+      // ownership snapshot to a scratch directory. Without it a test run writes
+      // into the real battr-logs and the cleanup below deletes it — audit trail,
+      // ownership baseline and all.
+      { cwd: ROOT, env: { ...process.env, GITHUB_STEP_SUMMARY: "", BATTR_LOG_DIR: SCRATCH_LOGS, ...env } },
       (err, stdout, stderr) => (err ? reject(new Error(`${err.message}\n${stderr}`)) : resolve({ stdout, stderr }))
     );
   });
@@ -1393,7 +1800,30 @@ try {
   });
 
   check("it audits the full population", () => {
-    assert.match(stderr, /5 leads in the audit population/);
+    assert.match(stderr, /6 leads in the audit population/);
+  });
+
+  check("a lead worked only by text is rescued from the sweep", () => {
+    // The end of the texts problem, proved against a fixture that refuses the
+    // bulk read exactly as FUB does. Lead 106's last call was 40 days ago and
+    // its last text 3 days ago: neglected on the first pass, compliant after
+    // the backfill. Without this the sweep takes it off the agent who worked it.
+    assert.match(stderr, /texts: NOT available in bulk/, "the fixture must reproduce FUB's 400");
+    assert.match(stderr, /backfilling texts for 4 actionable leads/, "only actionable leads are queried");
+    assert.match(
+      stderr,
+      /text backfill: 1 messages over 4 leads — at risk 1 → 1, neglected 3 → 2/,
+      "one text moved one lead out of neglected, and moved nobody in"
+    );
+  });
+
+  check("a complete backfill reports the gap closed and still refuses to act", () => {
+    // Both halves matter. Reporting it closed is what makes the nightly counts
+    // comparable to Battr's; refusing to act on it is what keeps the decision
+    // to start sweeping a human one.
+    assert.match(stderr, /sweeps skipped: last-touch complete via per-person backfill, but rules\.sweepOnBackfilledTexts is off/);
+    assert.match(stderr, /nudges skipped: last-touch complete via per-person backfill/, "the nudge is held on the same terms");
+    assert.doesNotMatch(stdout, /Successfully swept/, "nothing may move");
   });
 
   check("it separates at-risk from neglected", () => {
@@ -1415,7 +1845,22 @@ try {
   });
 } finally {
   server.close();
-  rmSync(join(ROOT, "battr-logs"), { recursive: true, force: true });
+  // Only ever the scratch directory. Removing ROOT/battr-logs here destroyed the
+  // committed audit trail and state/ownership.csv every time the suite ran.
+  rmSync(SCRATCH_LOGS, { recursive: true, force: true });
 }
+
+check("the suite cannot delete the real audit trail", () => {
+  // The guard for the bug above: if the e2e run is ever pointed back at the
+  // repository's own battr-logs, the cleanup takes the ownership baseline with
+  // it, and a run with no baseline used to mint an at bat for every contact in
+  // the database.
+  const src = readFileSync(join(HERE, "selftest.mjs"), "utf8");
+  assert.ok(!/rmSync\(join\(ROOT, "battr-logs"\)/.test(src), "cleanup must never target the repo's battr-logs");
+  assert.match(src, /BATTR_LOG_DIR: SCRATCH_LOGS/, "the e2e run must write to scratch");
+
+  const engine = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(engine, /process\.env\.BATTR_LOG_DIR \|\| join\(ROOT, "battr-logs"\)/, "and the engine must honour it");
+});
 
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);

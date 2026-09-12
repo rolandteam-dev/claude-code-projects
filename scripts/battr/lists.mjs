@@ -48,6 +48,43 @@ export const TIMEFRAMES = {
   months12plus: ["12+ months", "12+ Months", "12 + months", "Over a year"],
 };
 
+/**
+ * Timeframe id → name, READ FROM FUB rather than inferred.
+ *
+ * The person payload carries no `timeframe` field at all — `inspect-fub-fields`
+ * on 12 Sep 2026 confirmed it absent across a 40-person sample, with
+ * `timeframeId` present on 12 of the 40. So the four nurture lists, which match
+ * on the NAME, were matching nobody: 1,262 leads Battr audits nightly and we
+ * did not see. That is the whole of the population gap.
+ *
+ * `GET /v1/timeframes` returns the account's own lookup table, verbatim:
+ *
+ *     {"id":1,"timeframe":"0-3 Months"}
+ *     {"id":2,"timeframe":"3-6 Months"}
+ *     {"id":3,"timeframe":"6-12 Months"}
+ *     {"id":4,"timeframe":"12+ Months"}
+ *     {"id":5,"timeframe":"No Plans"}
+ *
+ * Ids 1–4 land on TIMEFRAMES above by label, one to one. Id 5, "No Plans",
+ * matches no nurture band — and matches none of Battr's four either, since its
+ * lists are the same four bands. Such a lead is also not "no timeframe", so it
+ * does not belong in CLEAN UP. It falls outside the audit in both systems, and
+ * the census counts it as such rather than losing it.
+ *
+ * There is ALSO a `customTimeframe` text field on the account, labelled
+ * "Timeframe". It is not returned on the person payload in the sample and is
+ * not what the nurture bands read. If the People screen column is bound to it,
+ * that explains the 514 the UI reported; it does not change the mapping here,
+ * which is bound to the built-in id.
+ */
+export const TIMEFRAME_IDS = {
+  1: "0-3 Months",
+  2: "3-6 Months",
+  3: "6-12 Months",
+  4: "12+ Months",
+  5: "No Plans",
+};
+
 const contact = (field, operator, value, extra = {}) => ({ object: "battr.contact", field, operator, value, ...extra });
 
 const daysSince = (field, operator, value) =>
