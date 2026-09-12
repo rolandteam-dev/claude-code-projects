@@ -1,6 +1,6 @@
 # Battr Parity Audit
 
-**The Roland Team · Internal Battr · rev 2 · 11 September 2026**
+**The Roland Team · Internal Battr · rev 3 · 12 September 2026**
 
 Readable version: https://claude.ai/code/artifact/9ea11959-2997-4c87-a980-643adb3d8f08
 
@@ -13,8 +13,8 @@ census of the live database. Each row is marked **confirmed**, **inferred**, or
 |---|---|
 | Our funnel | **6.8%** of the member pool survives into the audit list. Battr keeps 7.1%. |
 | Hot Leads | **19 : 19** — ours against Battr's, exactly. Warm Back Up lands within 2.5%. |
-| Field names | **2** stand between this and a faithful mirror. Every numeric gap traces to them. |
-| Automated checks | **144**, run before every audit. If they fail, the audit does not run. |
+| Blocking field names | **0.** Both are fixed. FUB's own `/timeframes` gave up the map; texts are read per person. |
+| Automated checks | **161**, run before every audit. If they fail, the audit does not run. |
 
 ## Verdict — structurally faithful, two field names from finished
 
@@ -31,10 +31,23 @@ And the 1,531 missing from our pool is almost exactly the **1,262** sitting in
 the four nurture lists we currently cannot populate. The shortfall is not spread
 thinly across the model; it is one population, with one cause.
 
-> **Not ready — and the reason is small.** We read `timeframe`; Follow Up Boss
-> returns `timeframeId`. We read text messages in bulk; FUB refuses to serve
-> them. Neither is a design problem, and every numeric disagreement below traces
-> to one or the other.
+> **Both blocking gaps are now closed.** We read `timeframe`; FUB returns
+> `timeframeId`. `GET /v1/timeframes` turned out to serve the account's own
+> lookup table — `1: 0-3 Months, 2: 3-6 Months, 3: 6-12 Months, 4: 12+ Months,
+> 5: No Plans` — which maps one-to-one onto the four nurture bands. That is read
+> from FUB, not inferred. And FUB refuses text messages in bulk but serves one
+> person's thread, so the audit now asks about the few dozen leads an action
+> would touch and folds the answers in.
+>
+> **The numbers below predate both fixes.** A census run will restate them; they
+> are kept here as the last measured state rather than replaced with estimates.
+
+> **What this changes about who can be swept.** Populating the four nurture
+> lists takes them from nobody to roughly 1,262 leads — all of which Battr
+> sweeps today, which is the point. But it is still a widening, so it is stated
+> plainly rather than buried: nothing can actually move, because `BATTR_LIVE` is
+> absent *and* `rules.sweepOnBackfilledTexts` is false. Two independent switches,
+> both off, both Mike's.
 
 ## Evidence — three of Battr's own nights
 
@@ -106,8 +119,9 @@ arrives as neglected. Which is exactly why that run refused to sweep.
 | Sweep target | Pond / Shark Tank | Shark Tank | confirmed |
 | Pond overflow | no Money Time in any observed sweep | first 25 Shark Tank, rest Money Time | **unconfirmed** |
 | Per-run cap | none seen; 45 in one night | 30 — binds on a Tuesday | ours |
-| Timeframe bands | four nurture lists, 1,262 leads | match nobody | **gap** |
-| Last touch | calls and texts | calls only — FUB refuses bulk texts | **gap** |
+| Timeframe bands | four nurture lists, 1,262 leads | resolved from `timeframeId` via FUB's own table | confirmed |
+| Last touch | calls and texts | calls in bulk, texts per person for actionable leads | confirmed |
+| Reply reprieve | not a Battr feature | built, but inert — no row carries direction | **gap (ours)** |
 | 📊 Database Health Score | 13 sources, 20,099 records | not modelled | **gap** |
 | 🎤 AI TEXT REPLIES | 9 records | not modelled | **gap** |
 
@@ -138,12 +152,15 @@ arrives as neglected. Which is exactly why that run refused to sweep.
 
 | Gap | Costs | Closed by |
 |---|---|---|
-| The timeframe id map | Four sweeping lists match nobody — 1,262 leads Battr audits and we do not. | `inspect-fub-fields`. Probes `/timeframes` for id → name. |
-| Last touch from texts | Leads skip the warning tier. Sweeps are disabled whenever it bites. | The same run — it lists every person-level last-contact field. |
+| ~~The timeframe id map~~ | — | **Closed 12 Sep.** `GET /v1/timeframes`, read not guessed. |
+| ~~Last touch from texts~~ | — | **Closed 12 Sep.** Per-person backfill on actionable leads only. |
+| **The email reply reprieve is inert** | A lead who wrote back by email can still be swept. Fails in the wrong direction. | One `inspect-fub-fields` run. It now prints which row fields are populated so `userId` can be confirmed rather than assumed. |
+| **The interlock is unverified live** | Fails safe — a null stamp means no sweep — but the warn-first rule has never been seen working against real data. | Nudge one test lead and confirm `customBattrAtRiskSince` comes back on the person. |
+| The owner-group exclusion cannot fire | Group 52555 is not excluded by group. Confirmed absent: FUB returns neither `assignedUserGroupIds` nor `groupIds`. | Nothing — worked around by exempting those agents by name. Recorded so it is not mistaken for working. |
 | Pond overflow | On a 45-sweep Tuesday, 20 leads into a pond Battr never uses. | The 8 Sep neglected email, as a `.eml`. |
 | Two unmodelled lists | Reporting completeness. Neither can act. | Their rule screens. |
 | Thresholds on three monitoring lists | May report a wrong split. Cannot act. | Their rule screens, or leave them — the nightly table shows the drift. |
-| The engine-fixes patch | Eight commits of corrections not yet applied. | The file, or those commits pushed to a branch. |
+| The nightly audit on `main` is failing | No audit has run since 4 Sep. Seven consecutive nights red. | Landing this branch. The fixture's dates drifted against the real clock; `main` still has 97 checks to this branch's 161. |
 
 ## Proof — how this is known to be true
 
@@ -168,11 +185,13 @@ added the guard rather than only the patch.
 
 | Step | Task | Pass condition |
 |---|---|---|
-| 1 | `inspect-fub-fields` | A timeframe id → name map exists, and some field carries last contact. |
-| 2 | `census`, after the fix | The four nurture lists populate. CLEAN UP falls toward 4,200. Pool approaches 12,000. |
+| 1 | ~~`inspect-fub-fields`~~ | **Done 12 Sep.** Map obtained; two new gaps found and recorded. |
+| 2 | `census` | The four nurture lists populate. CLEAN UP falls from 8,959 toward 4,200. Pool approaches 12,000. |
 | 3 | `audit` / dry | **Audited population near 862–903**, at risk near 20, neglected in single figures on a Wed–Fri. |
-| 4 | Two weeks shadowing | Counts track Battr's nightly, including one Tuesday. |
-| 5 | `BATTR_LIVE=true` | — |
+| 4 | `inspect-fub-fields` again | Identify the email direction field, or accept that the reprieve spares nobody. |
+| 5 | Nudge one test lead | Confirm the At Risk Since stamp comes back on the person — the interlock, verified. |
+| 6 | Two weeks shadowing | Counts track Battr's nightly, including one Tuesday. |
+| 7 | `sweepOnBackfilledTexts: true`, then `BATTR_LIVE=true` | Two switches, deliberately separate. |
 
 **For the reviewer.** The policy surface is `scripts/battr/rules.mjs` and
 `scripts/battr/lists.mjs`. `scripts/battr/observed.mjs` is the ground truth this

@@ -267,6 +267,92 @@ export const SEP_11 = {
   ],
 };
 
+/**
+ * WHAT FOLLOW UP BOSS ACTUALLY RETURNS — inspect-fub-fields, 12 Sep 2026,
+ * run 28 against a 40-person sample plus four lookup endpoints.
+ *
+ * This is the run that closed the population gap. Recorded here because every
+ * number in the parity document now depends on it.
+ */
+export const FUB_FIELDS = {
+  date: "2026-09-12",
+  sample: 40,
+  distinctFields: 44,
+
+  /** The lookup table, verbatim from GET /v1/timeframes. Ids 1-4 are the nurture bands. */
+  timeframes: { 1: "0-3 Months", 2: "3-6 Months", 3: "6-12 Months", 4: "12+ Months", 5: "No Plans" },
+
+  present: {
+    timeframeId: "12/40",
+    stageId: "40/40",
+    assignedPondId: "26/40",
+    lastActivity: "40/40",
+  },
+
+  absent: [
+    // The bug. Four nurture lists match on the NAME and the name is never sent.
+    "timeframe",
+    // Not used by policy anyway — it counts email — so its absence costs nothing.
+    "lastCommunication",
+    // The owner-group exclusion (52555) cannot fire. Known, warned about every
+    // run, and worked around by exempting those agents by name instead.
+    "assignedUserGroupIds",
+    "groupIds",
+  ],
+
+  /**
+   * A SECOND timeframe field exists on the account: `customTimeframe`, label
+   * "Timeframe", type text. It is not returned on the person payload in this
+   * sample. If the People screen column is bound to it, that is the remaining
+   * explanation for the UI's 514 against Battr's 1,262 — explanation A of the
+   * three the census was built to separate. It does not affect the mapping,
+   * which reads the built-in id.
+   */
+  secondTimeframeField: { name: "customTimeframe", label: "Timeframe", type: "text" },
+
+  /**
+   * NO custom fields at all came back on the person payload ("custom*: none").
+   *
+   * Expected rather than alarming: the sample is 40 pond leads that have never
+   * been nudged, and FUB omits a custom field that has no value. But it means
+   * the warn-first interlock — which reads `customBattrAtRiskSince` off the
+   * person — is UNVERIFIED against live data. It fails safe (a null stamp means
+   * no sweep, so nothing moves), but it has to be confirmed on a real nudged
+   * lead before anyone trusts the sweep tier. That is a go-live step, not a
+   * code change.
+   */
+  personCustomFields: "none in sample — interlock unverified against live data",
+
+  /**
+   * THE REPLY REPRIEVE IS CURRENTLY SPARING NOBODY.
+   *
+   * `/emails?personId=` works and returned 51 rows for one person. But neither
+   * `direction` nor `isIncoming` is on ANY of them — 0/51 — so every row counts
+   * as neither and the reprieve never fires.
+   *
+   * This one fails in the WRONG direction: a lead who wrote back can still be
+   * swept. Unlike the texts gap, it does not disable sweeping, because the
+   * reprieve is a bonus protection layered on top of the tiers rather than an
+   * input to them.
+   *
+   * Row fields available: actionPlanId, addresses, archived, attachments,
+   * bodyExcerpt, bodyHtmlHiddenClean, bodyHtmlVisibleClean, bounced,
+   * campaignOrigin, created, date, emailAccountId, emailTemplateId,
+   * hasAttachments, hasEmailDraft, id, read, relatedPeople, sharedInboxId,
+   * showContent, status, subject, threadId, unsubscribed, userId.
+   *
+   * `userId` is the likely direction flag — set when an agent sent it, empty
+   * when the lead wrote in — but that is a guess and a wrong reading spares the
+   * wrong leads. inspect-fub-fields now prints which of those fields are
+   * populated and the distinct values of the enum-shaped ones, so one more run
+   * settles it without anyone having to guess.
+   */
+  emailDirection: { rows: 51, directional: 0, verdict: "reprieve inert until a direction field is identified" },
+
+  /** Bulk /notes WORKS — 500 rows. Battr's sweep history is recoverable from FUB. */
+  notesBulk: { works: true, rows: 500 },
+};
+
 /** The four observations in order, for anything that wants the trend. */
 export const TIMELINE = [
   { date: "2026-09-02", weekday: "Wed", total: 866, at_risk: 17, neglected: 7 },

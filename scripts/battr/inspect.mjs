@@ -135,7 +135,8 @@ async function main() {
       const rows = await fub.paginate(path, {}, { max: 100 });
       console.log(`${path.padEnd(18)} OK — ${rows.length} rows`);
       for (const row of rows.slice(0, 25)) {
-        console.log(`  ${String(row.id ?? "?").padStart(6)}  ${JSON.stringify(row.name ?? row.label ?? row)}`);
+        // This account returns {id, timeframe}; other shapes use name/label.
+        console.log(`  ${String(row.id ?? "?").padStart(6)}  ${JSON.stringify(row.timeframe ?? row.name ?? row.label ?? row)}`);
       }
     } catch (err) {
       console.log(`${path.padEnd(18)} ${err.message.split("→")[1]?.trim() ?? err.message}`);
@@ -208,6 +209,35 @@ async function main() {
         ? "direction: PRESENT on every row — the reprieve can tell a reply from a blast."
         : `direction: present on ${directional}/${sample.length} rows *** the rest count as neither ***`
     );
+
+    // Confirmed 12 Sep 2026: neither `direction` nor `isIncoming` is returned on
+    // ANY row, so the reply reprieve currently spares nobody. It fails in the
+    // wrong direction — a lead who wrote back can still be swept.
+    //
+    // Something on the row must carry it. These are the candidates, and this
+    // prints enough to decide WITHOUT guessing: which are populated, and the
+    // distinct values of the enum-shaped ones. No subject, body, address or
+    // name is printed — those are the lead's own words and the lead's identity.
+    if (directional < sample.length && sample.length) {
+      console.log("\n  which row fields could carry direction?");
+      const CANDIDATES = ["userId", "status", "campaignOrigin", "sharedInboxId", "emailAccountId", "emailTemplateId", "actionPlanId", "bounced", "read", "archived", "unsubscribed", "hasEmailDraft"];
+      for (const key of CANDIDATES) {
+        const present = sample.filter((r) => r[key] !== null && r[key] !== undefined && r[key] !== "");
+        if (!present.length && !(key in (sample[0] ?? {}))) continue;
+        // Values only where the field is an enum or a flag. An id is reported
+        // as present/absent and a count, never as the id itself.
+        const vals = [...new Set(present.map((r) => r[key]))];
+        const enumish = vals.every((v) => typeof v === "boolean" || (typeof v === "string" && v.length < 24));
+        console.log(
+          `  ${key.padEnd(18)} populated ${String(present.length).padStart(3)}/${sample.length}` +
+            (enumish && vals.length <= 8 ? `   values: ${JSON.stringify(vals.sort())}` : `   ${vals.length} distinct`)
+        );
+      }
+      console.log("\n  Read it like this: a field populated on SOME rows and empty on the rest,");
+      console.log("  splitting the sample in two, is the direction flag. `userId` set means an");
+      console.log("  agent sent it; `userId` empty on a row that exists means the lead wrote in.");
+      console.log("  Confirm the split before wiring it — a wrong reading spares the wrong leads.");
+    }
   } catch (err) {
     console.log(`*** /emails per-person FAILED: ${err.message}`);
     console.log("    Until this works the engine holds every sweep rather than sweeping blind.");

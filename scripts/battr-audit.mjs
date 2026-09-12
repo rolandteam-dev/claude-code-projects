@@ -511,7 +511,15 @@ async function main() {
       // those lists silently come back empty rather than erroring — so say so.
       const unresolved = contacts.filter((c) => c.timeframeUnresolved).length;
       if (unresolved) {
-        say(`  WARNING: ${unresolved} nurture-stage contacts have no readable timeframe — the four nurture lists will under-report. Check the timeframe field name on a FUB contact.`);
+        say(`  ${unresolved} nurture-stage contacts have no timeframe set — they fall to CLEAN UP (1145), which reports and never sweeps.`);
+      }
+
+      // An id FUB returns that our table does not cover. Distinct from "blank":
+      // blank is a data gap someone can fill in, an unmapped id means FUB added
+      // a band and four lists are now quietly narrower than Battr's.
+      const unknownIds = [...new Set(contacts.filter((c) => c.timeframeIdUnknown).map((c) => c.custom_fields.fub.system_timeframeId))];
+      if (unknownIds.length) {
+        say(`  WARNING: timeframe ids not in TIMEFRAME_IDS: ${unknownIds.join(", ")} — run inspect-fub-fields and extend the map, or those leads are audited by nothing.`);
       }
 
       // The combined list excludes an owner group, but that condition reads a

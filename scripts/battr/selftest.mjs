@@ -22,7 +22,7 @@ import { classify, buildTouchIndex, classifyForList, runCombinedList, isExemptAg
 import { evaluateCondition, evaluateSet } from "./filters.mjs";
 import { normalizeContact } from "./contact.mjs";
 import { isDayAllowed } from "./schedule.mjs";
-import { lists, listById, memberListsOf, reportOnlyLists } from "./lists.mjs";
+import { lists, listById, memberListsOf, reportOnlyLists, TIMEFRAMES, TIMEFRAME_IDS } from "./lists.mjs";
 import { detectAtBats, summarizeAgents, formatRate } from "./atbats.mjs";
 import { buildAgentDigests, deliverDigests, renderDigestText, digestSubject } from "./alerts.mjs";
 import { describeError, fromAddress, mailConfigured } from "./email.mjs";
@@ -30,7 +30,7 @@ import { parseCsv, findColumn, mapRows } from "./import-atbats.mjs";
 import { bucketForSource, bucketName, isSourceAudited, leadBuckets, unmappedPolicy } from "./sources.mjs";
 import { FubClient } from "./fub.mjs";
 import { rules } from "./rules.mjs";
-import { TIMELINE, SEP_8, SEP_10, SEP_11 } from "./observed.mjs";
+import { TIMELINE, SEP_8, SEP_10, SEP_11, FUB_FIELDS } from "./observed.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
@@ -726,6 +726,128 @@ check("a client under contract is protected twice over", () => {
       `guarantee 2: "${stage}" must also be excluded by stage, independently of any list`
     );
   }
+});
+
+// FUB returns timeframeId, not timeframe. These fix the mapping in place so a
+// renumbering or a typo cannot quietly re-empty the four nurture lists.
+const TIMEFRAME_BANDS = [
+  { id: 1, band: "months0to3", list: 1106, name: "Weekly Nurture" },
+  { id: 2, band: "months3to6", list: 1107, name: "Bi-Weekly Nurture" },
+  { id: 3, band: "months6to12", list: 1108, name: "Monthly Nurture" },
+  { id: 4, band: "months12plus", list: 1109, name: "Quarterly Nurture" },
+];
+
+check("the timeframe map matches what FUB actually returned", () => {
+  // Two copies exist on purpose: FUB_FIELDS.timeframes is the transcript of the
+  // run, TIMEFRAME_IDS is what the engine acts on. Editing the second without
+  // the first is how a mapping drifts away from the thing it was read from.
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(TIMEFRAME_IDS).map(([k, v]) => [String(k), v])),
+    Object.fromEntries(Object.entries(FUB_FIELDS.timeframes).map(([k, v]) => [String(k), v])),
+    "TIMEFRAME_IDS must equal GET /v1/timeframes as recorded on 12 Sep 2026"
+  );
+});
+
+check("the fields FUB does not return are the ones we work around", () => {
+  // `timeframe` absent is the whole population gap, and the fix is to resolve
+  // the id instead. If a later run finds the name present, this is the check
+  // that should be revisited rather than the resolution being left as dead code.
+  assert.ok(FUB_FIELDS.absent.includes("timeframe"), "the name is not sent; the id is what we read");
+  assert.ok(FUB_FIELDS.absent.includes("groupIds"), "the owner-group exclusion cannot fire on this account");
+  assert.ok(
+    rules.exemptAgents.length > 0,
+    "with no group ids, exempting agents by name is the only thing standing in for group 52555"
+  );
+
+  // The reply reprieve is inert, and must be recorded as inert rather than
+  // described as working anywhere.
+  assert.equal(FUB_FIELDS.emailDirection.directional, 0);
+  const parity = readFileSync(join(ROOT, "docs", "battr-parity.md"), "utf8");
+  assert.ok(
+    /reprieve|direction/i.test(parity),
+    "a protection that currently spares nobody has to appear in the parity document"
+  );
+});
+
+check("every timeframe id FUB returns maps onto the band its list matches on", () => {
+  for (const { id, band } of TIMEFRAME_BANDS) {
+    const name = TIMEFRAME_IDS[id];
+    assert.ok(name, `id ${id} must resolve to a name`);
+    assert.ok(
+      TIMEFRAMES[band].includes(name),
+      `TIMEFRAME_IDS[${id}] = "${name}" is not in TIMEFRAMES.${band} — the list would match nobody`
+    );
+  }
+  // "No Plans" is in FUB's table and deliberately matches no band.
+  assert.equal(TIMEFRAME_IDS[5], "No Plans");
+  for (const key of Object.keys(TIMEFRAMES)) {
+    assert.ok(!TIMEFRAMES[key].includes("No Plans"), `"No Plans" must not fall into ${key}`);
+  }
+});
+
+for (const { id, list, name } of TIMEFRAME_BANDS) {
+  check(`a nurture lead with timeframeId ${id} lands in ${name}`, () => {
+    const c = normalizeContact(
+      { id: 700 + id, stage: "Nurture", created: daysAgo(400), timeframeId: id, assignedUserId: 5, tags: [] },
+      { lastOutbound: 0, lastInbound: 0 }
+    );
+    assert.equal(c.timeframeUnresolved, false, "the id must resolve");
+    assert.equal(evaluateSet(listById(list).list_filters, c), true, `${name} must select it`);
+
+    // And it must NOT also land in CLEAN UP, which selects on a blank timeframe.
+    assert.equal(
+      evaluateSet(listById(1145).list_filters, c),
+      false,
+      "a lead with a readable timeframe is not a no-timeframe lead"
+    );
+  });
+}
+
+check('timeframeId 5 ("No Plans") is audited by nothing, in ours as in Battr', () => {
+  const c = normalizeContact(
+    { id: 705, stage: "Nurture", created: daysAgo(400), timeframeId: 5, assignedUserId: 5, tags: [] },
+    { lastOutbound: 0, lastInbound: 0 }
+  );
+  for (const { list, name } of TIMEFRAME_BANDS) {
+    assert.equal(evaluateSet(listById(list).list_filters, c), false, `${name} must not claim it`);
+  }
+  assert.equal(evaluateSet(listById(1145).list_filters, c), false, "it has a timeframe, so it is not CLEAN UP either");
+});
+
+check("a blank timeframe still falls to CLEAN UP, which never sweeps", () => {
+  const c = normalizeContact(
+    { id: 706, stage: "Nurture", created: daysAgo(400), assignedUserId: 5, tags: [] },
+    { lastOutbound: 0, lastInbound: 0 }
+  );
+  assert.equal(c.timeframeUnresolved, true);
+  assert.equal(evaluateSet(listById(1145).list_filters, c), true);
+  assert.equal(listById(1145).report_only, true, "and it cannot act");
+});
+
+check("an id FUB adds later is reported, never guessed into a band", () => {
+  // The failure to avoid is a new band silently inheriting some other band's
+  // cadence. An unmapped id resolves to nothing and raises a flag instead.
+  const c = normalizeContact(
+    { id: 707, stage: "Nurture", created: daysAgo(400), timeframeId: 99, assignedUserId: 5, tags: [] },
+    { lastOutbound: 0, lastInbound: 0 }
+  );
+  assert.equal(c.timeframeIdUnknown, true, "an unknown id must be flagged");
+  // Unset, not guessed. (`first()` yields undefined when nothing matches; the
+  // evaluator treats that and null alike, which the CLEAN UP case above proves.)
+  const resolved = c.custom_fields.fub.system_timeframe;
+  assert.ok(resolved === null || resolved === undefined, `must not be invented, got ${JSON.stringify(resolved)}`);
+  for (const band of Object.values(TIMEFRAMES)) {
+    assert.ok(!band.includes(resolved), "an unmapped id must not resolve to any band name");
+  }
+  for (const { list, name } of TIMEFRAME_BANDS) {
+    assert.equal(evaluateSet(listById(list).list_filters, c), false, `${name} must not claim an unmapped id`);
+  }
+
+  // A known id is not flagged, and neither is a lead with no id at all.
+  const known = normalizeContact({ id: 708, stage: "Nurture", timeframeId: 2, tags: [] }, { lastOutbound: 0 });
+  assert.equal(known.timeframeIdUnknown, false);
+  const none = normalizeContact({ id: 709, stage: "Nurture", tags: [] }, { lastOutbound: 0 });
+  assert.equal(none.timeframeIdUnknown, false, "absent is a data gap, not an unknown id");
 });
 
 check("the day filter plus the three-day spread explain every observed night", () => {
