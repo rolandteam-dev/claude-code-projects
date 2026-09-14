@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ingestHomeowner, type IngestInput } from "@/lib/homeowners/ingest";
 import { sendWelcomeEmail } from "@/lib/homeowners/email";
+import { sendHomeownerActivity } from "@/lib/homeowners/fubActivity";
 
 export const runtime = "nodejs";
 
@@ -24,6 +25,9 @@ export async function POST(req: Request) {
 
   try {
     const { token, url, homeowner } = await ingestHomeowner(d);
+    // The request itself is the seller signal — it must reach the CRM even when
+    // email is switched off, which is why this is not tied to the send above.
+    await sendHomeownerActivity("home-value-request", homeowner);
     // Best-effort welcome email; never fail the request if email isn't configured.
     const email = await sendWelcomeEmail(homeowner);
     return NextResponse.json({ ok: true, token, url, emailed: email.sent });

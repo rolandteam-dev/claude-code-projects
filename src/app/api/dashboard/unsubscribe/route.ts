@@ -1,4 +1,5 @@
 import { homeownerStore } from "@/lib/homeowners/store";
+import { sendHomeownerActivity } from "@/lib/homeowners/fubActivity";
 import { homeownerBrand } from "@/lib/homeowners/brand";
 
 export const runtime = "nodejs";
@@ -28,7 +29,12 @@ export async function GET(req: Request) {
   const token = new URL(req.url).searchParams.get("token");
   if (!token) return page("Invalid unsubscribe link.");
   try {
-    await homeownerStore().unsubscribe(token);
+    const store = homeownerStore();
+    // Read first: after unsubscribe() we still need the contact details, and an
+    // agent must see the opt-out in FUB or they will keep emailing them.
+    const homeowner = await store.getByToken(token);
+    await store.unsubscribe(token);
+    if (homeowner) await sendHomeownerActivity("unsubscribe", homeowner);
   } catch {
     // fall through to a friendly message regardless
   }
