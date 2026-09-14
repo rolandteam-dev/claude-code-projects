@@ -1,6 +1,6 @@
 # Battr Parity Audit
 
-**The Roland Team · Internal Battr · rev 4 · 14 September 2026**
+**The Roland Team · Internal Battr · rev 5 · 14 September 2026**
 
 Readable version: https://claude.ai/code/artifact/9ea11959-2997-4c87-a980-643adb3d8f08
 
@@ -14,7 +14,7 @@ census of the live database. Each row is marked **confirmed**, **inferred**, or
 | Our funnel | **6.8%** of the member pool survives into the audit list. Battr keeps 7.1%. |
 | Hot Leads | **19 : 19** — ours against Battr's, exactly. Warm Back Up lands within 2.5%. |
 | Blocking field names | **0.** Both are fixed. FUB's own `/timeframes` gave up the map; texts are read per person. |
-| Automated checks | **163**, run before every audit. If they fail, the audit does not run. |
+| Automated checks | **165**, run before every audit. If they fail, the audit does not run. |
 
 ## Verdict — structurally faithful, two field names from finished
 
@@ -58,13 +58,26 @@ thinly across the model; it is one population, with one cause.
 | 10 Sep | Thu | 862 | 20 | 4 | raw `.eml`, both halves |
 | 11 Sep | Fri | 861 | 24 | 3 | raw `.eml`, both halves |
 | 12 Sep | **Sat** | 856 | 19 | — | raw `.eml`, **At Risk only** |
+| 13 Sep | **Sun** | 858 | 21 | — | raw `.eml`, **At Risk only** |
 
 Saturday is the useful one: the At Risk email arrived and the Neglected one did
 not. `nudgeDayFilter` is "Every Day" and `sweepDayFilter` is "Weekdays Excluding
 Monday" — both confirmed in a single night by what did and did not arrive.
 
-Four things fall out of these rows that a single night could not have shown.
+Both weekend nights sent one email, not two — the sweep day filter confirmed
+twice more. Five things fall out of these rows that a single night could not
+have shown.
 
+- **The `At Risk Since` stamp is never cleared, and that is what arms the
+  sweep.** A lead on Sunday read *Previous Status: compliant, Status: At Risk,
+  At Risk Since 9/07* — and got no new note. So working a lead removes it from
+  the at-risk list but not from the mark. Idempotency keys on the stamp
+  existing, not on the previous status, which means the interlock is **"ever
+  warned", not "recently warned"**: a lead warned once can be swept the moment
+  it next goes neglected, with no fresh warning and no three-day grace. Our
+  engine already behaves identically — a presence test, a write only when
+  absent, and no code path that clears it — but it is the sharpest edge in the
+  system and is now pinned by two tests.
 - **A lead leaves the at-risk tier by ageing, not by being swept.** *(This
   corrects the rev 2 wording.)* On Saturday the entire cohort flagged on 9/9 —
   three days earlier — left the at-risk list, on a night when nothing could be

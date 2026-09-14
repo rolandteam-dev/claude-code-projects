@@ -447,7 +447,95 @@ export const SEP_12 = {
   ],
 };
 
-/** The five observations in order, for anything that wants the trend. */
+/**
+ * A SIXTH observation, from the raw .eml of Sun 13 Sep 2026, 7:08 PM PT.
+ * At Risk only again — Sunday is not a sweep day either. Both weekend nights
+ * now agree with `sweepDayFilter`.
+ *
+ *   Total records in audit    858
+ *   At Risk records            21
+ *     already processed        13   (9/12 ×8, 9/11 ×4, and one dated 9/07)
+ *     new notes created         8
+ *   Excluded bucket/group     0/0
+ *
+ * ONE ROW CARRIES THE WHOLE FINDING. A lead sits in the carry-over with:
+ *
+ *     Status "At Risk"  ·  Previous Status "compliant"  ·  At Risk Since 9/07
+ *     Action Status: "Action already taken in previous audit"
+ *
+ * It was compliant yesterday and at risk today, yet Battr did NOT create a new
+ * note, and the stamp still reads 9/07 — six days back. Three facts follow, and
+ * none of them were visible in any earlier night:
+ *
+ *   1. `At Risk Since` IS NEVER CLEARED when a lead becomes compliant. Working
+ *      a lead removes it from the at-risk list; it does not remove the mark.
+ *   2. IDEMPOTENCY KEYS ON THE STAMP EXISTING, not on the previous status. A
+ *      lead returning to at-risk gets no second note, ever.
+ *   3. THE INTERLOCK IS "EVER WARNED", NOT "RECENTLY WARNED". Because the stamp
+ *      survives, a lead that was warned once in the past can be swept the
+ *      moment it next goes neglected — with no fresh warning, and no three-day
+ *      grace. The lead above would sweep on a stamp six days stale.
+ *
+ * OUR ENGINE ALREADY DOES ALL THREE. `alreadyFlagged` is a Boolean test on the
+ * field, the nudge branch writes the stamp only when it is absent, and nothing
+ * anywhere clears it. So this is a confirmation rather than a defect — but it
+ * is a sharp edge worth stating out loud: an agent who rescues a lead and then
+ * lets it slide again gets no second warning before it is taken.
+ *
+ * THE SATURDAY CORRECTION, CONFIRMED AGAIN. The 9/10 cohort (5 leads) came due
+ * on Sunday 9/13 and left the at-risk list entire, with nothing swept because
+ * Sunday cannot sweep. That is the second cohort in two nights to age out of
+ * at-risk on a non-sweep day.
+ *
+ * THE NEGLECTED BACKLOG, NOW COUNTABLE. Nothing has swept since Friday, and
+ * three cohorts have aged past the line or will before Tuesday:
+ *
+ *     9/09 cohort   5   aged out Sat 9/12
+ *     9/10 cohort   5   aged out Sun 9/13
+ *     9/11 cohort   4   due Mon 9/14 (nudge day, not a sweep day)
+ *     9/12 cohort   8   due Tue 9/15
+ *                  --
+ *                   22  upper bound for Tuesday 15 Sep, less whoever is worked
+ *
+ * That is a real forecast to check the engine against, and it sits under our
+ * 30-sweep cap. The cap can still bind on a heavier Tuesday — 8 Sep did 45.
+ *
+ * Names, FUB ids and per-lead links are deliberately not recorded.
+ */
+export const SEP_13 = {
+  date: "2026-09-13",
+  weekday: "Sunday",
+  total: 858,
+  at_risk: 21,
+  at_risk_new_notes: 8,
+  at_risk_already_flagged: 13,
+  neglected_email_sent: false,
+  excluded_lead_bucket: 0,
+  excluded_agent_group: 0,
+  carriedAtRiskSince: { "2026-09-07": 1, "2026-09-11": 4, "2026-09-12": 8 },
+  /**
+   * The row that proves the stamp is sticky: previously compliant, at risk
+   * again, no new note, and a stamp from six days earlier.
+   */
+  stampSurvivedCompliance: { atRiskSince: "2026-09-07", previousStatus: "compliant", action: "already taken" },
+  cohortAttrition: {
+    "2026-09-10": { was: 5, now: 0, dueOn: "2026-09-13", dueOnASweepDay: false },
+    "2026-09-11": { was: 5, now: 4, dueOn: "2026-09-14", dueOnASweepDay: false },
+    "2026-09-12": { was: 9, now: 8, dueOn: "2026-09-15", dueOnASweepDay: true },
+  },
+  sourcesSeen: [
+    "ISA Transfer",
+    "Zillow Preferred",
+    "TheRolandTeam.com",
+    "Ylopo",
+    "Trulia",
+    "Google PPC",
+    "Leadpops - Google Ads",
+    "HomeLight",
+  ],
+};
+
+/** The six observations in order, for anything that wants the trend. */
 export const TIMELINE = [
   { date: "2026-09-02", weekday: "Wed", total: 866, at_risk: 17, neglected: 7 },
   { date: "2026-09-08", weekday: "Tue", total: 903, at_risk: 23, neglected: 45 },
@@ -456,6 +544,7 @@ export const TIMELINE = [
   // Saturday: nudges ran, sweeps did not. `neglected: 0` is the day filter, not
   // an empty tier — leads were neglected, nothing was allowed to move them.
   { date: "2026-09-12", weekday: "Sat", total: 856, at_risk: 19, neglected: 0 },
+  { date: "2026-09-13", weekday: "Sun", total: 858, at_risk: 21, neglected: 0 },
 ];
 
 export const observedLists = [

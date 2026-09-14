@@ -30,7 +30,7 @@ import { parseCsv, findColumn, mapRows } from "./import-atbats.mjs";
 import { bucketForSource, bucketName, isSourceAudited, leadBuckets, unmappedPolicy } from "./sources.mjs";
 import { FubClient } from "./fub.mjs";
 import { rules } from "./rules.mjs";
-import { TIMELINE, SEP_8, SEP_10, SEP_11, SEP_12, FUB_FIELDS } from "./observed.mjs";
+import { TIMELINE, SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, FUB_FIELDS } from "./observed.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
@@ -895,9 +895,20 @@ check("the day filter plus the three-day spread explain every observed night", (
 });
 
 check("every observed night reconciles with the self-draining population", () => {
-  assert.equal(TIMELINE.length, 5, "every captured night belongs in the timeline");
+  // Derived, not a literal: adding a night's export without adding it to the
+  // timeline (or the reverse) fails here instead of needing a number bumped.
+  const fullNights = [SEP_8, SEP_10, SEP_11, SEP_12, SEP_13];
+  const byDate = Object.fromEntries(fullNights.map((n) => [n.date, n]));
+  for (const night of fullNights) {
+    assert.ok(
+      TIMELINE.some((t) => t.date === night.date),
+      `${night.date} has a full record but is missing from TIMELINE`
+    );
+  }
+  assert.ok(TIMELINE.length >= fullNights.length, "the timeline cannot be shorter than the nights recorded");
+
   for (const night of TIMELINE) {
-    const full = { "2026-09-08": SEP_8, "2026-09-10": SEP_10, "2026-09-11": SEP_11, "2026-09-12": SEP_12 }[night.date];
+    const full = byDate[night.date];
     if (!full) continue;
     assert.equal(night.total, full.total, `${night.date}: timeline disagrees with the record`);
     assert.equal(night.at_risk, full.at_risk, `${night.date}: at-risk disagrees`);
@@ -950,6 +961,87 @@ check("every observed night reconciles with the self-draining population", () =>
   );
 });
 
+check("the At Risk Since stamp survives a lead going compliant", () => {
+  // Observed 13 Sep: a lead reads Previous Status "compliant", Status "At Risk",
+  // At Risk Since 9/07, and Battr wrote no new note. Three behaviours in one row,
+  // all of which our engine must match exactly.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+
+  // 1. Idempotency keys on the stamp EXISTING, never on the previous status.
+  assert.match(
+    src,
+    /const alreadyFlagged = fields\.atRiskSince \? Boolean\(person\?\.\[fields\.atRiskSince\]\) : false;/,
+    "already-flagged must be a presence test on the field"
+  );
+
+  // 2. The stamp is written only when absent, so a returning lead keeps its
+  //    original date rather than being re-dated to today.
+  const nudge = src.slice(src.indexOf("// 5a. nudge"), src.indexOf("// 5b"));
+  assert.ok(nudge.includes("if (alreadyFlagged)"), "the nudge must short-circuit on the stamp");
+  assert.ok(
+    nudge.indexOf("if (alreadyFlagged)") < nudge.indexOf("[fields.atRiskSince]: today"),
+    "the stamp must be written only after the already-flagged branch returns"
+  );
+
+  // 3. Nothing anywhere clears it. Battr does not, and a lead whose stamp was
+  //    cleared would need a fresh three-day warn cycle before it could ever be
+  //    swept — quietly more lenient than the product we are mirroring.
+  // Only object-literal WRITES count. `person?.[fields.atRiskSince] : null` is a
+  // ternary READ for the report and must not be mistaken for a clearing write,
+  // which is why this matches `]:` with no space rather than anything looser.
+  const writes = [...src.matchAll(/\[fields\.atRiskSince\]:\s*([A-Za-z0-9_."]+)/g)].map((m) => m[1]);
+  assert.ok(writes.length > 0, "the stamp must be written somewhere, or the interlock never arms");
+  for (const value of writes) {
+    assert.equal(value, "today", `At Risk Since is assigned ${value} — nothing may clear or back-date it`);
+  }
+
+  assert.equal(SEP_13.stampSurvivedCompliance.previousStatus, "compliant");
+  assert.equal(SEP_13.stampSurvivedCompliance.action, "already taken");
+});
+
+check("the sweep interlock is 'ever warned', not 'recently warned'", () => {
+  // The consequence of the stamp being sticky, stated as a test because it is
+  // the sharpest edge in the whole engine: a lead warned once in the past can
+  // be swept the moment it next goes neglected, with no fresh warning. Battr
+  // works this way, we mirror it, and the mirroring must not drift into
+  // something more lenient by accident.
+  const warm = listById(1104);
+  const build = (quietDays, stampAgeDays) => {
+    const c = normalizeContact(
+      { id: 88, stage: "Lead", created: daysAgo(60), assignedUserId: 5, tags: [] },
+      { lastOutbound: 0 }
+    );
+    c.custom_fields.fub.system_lastCommunication = daysAgo(quietDays);
+    c.custom_fields.fub.customBattrAtRiskSince = stampAgeDays === null ? null : daysAgo(stampAgeDays);
+    return c;
+  };
+
+  // Hot Leads is the list that carries the interlock in its own filter, so it
+  // is the one that can prove a stale stamp still satisfies it.
+  const hot = listById(1144);
+  const hotLead = (quietDays, stampAgeDays) => {
+    const c = normalizeContact(
+      { id: 89, stage: "Lead", created: daysAgo(5), assignedUserId: 5, tags: [] },
+      { lastOutbound: 0 }
+    );
+    c.custom_fields.fub.system_lastCommunication = daysAgo(quietDays);
+    c.custom_fields.fub.customBattrAtRiskSince = stampAgeDays === null ? null : daysAgo(stampAgeDays);
+    return c;
+  };
+
+  assert.equal(classifyForList(hotLead(6, null), hot, NOW), "at_risk", "no stamp: warned, never swept");
+  assert.equal(classifyForList(hotLead(6, 1), hot, NOW), "neglected", "a fresh stamp arms the sweep");
+  assert.equal(
+    classifyForList(hotLead(6, 60), hot, NOW),
+    "neglected",
+    "and so does a stamp two months old — the interlock asks whether, not when"
+  );
+
+  // Warm Back Up reaches the same place through the engine rather than the
+  // filter, so a stale stamp must not spare it either.
+  assert.equal(classifyForList(build(14, 90), warm, NOW), "neglected");
+});
+
 check("a lead past the neglected line is neglected, sweep day or not", () => {
   // The 12 Sep correction, pinned. Saturday is not a sweep day, and the entire
   // cohort flagged on 9/9 still left the at-risk list that night. A lead leaves
@@ -989,7 +1081,7 @@ check("Battr's exclusion counters are action-time, on every night observed", () 
   // Both read zero even on a night when the combined list held 903 of a 12,000
   // pool. They cannot be counting selection, which is why we do that work in
   // the list filters rather than as a post-hoc subtraction.
-  for (const night of [SEP_8, SEP_10, SEP_11, SEP_12]) {
+  for (const night of [SEP_8, SEP_10, SEP_11, SEP_12, SEP_13]) {
     assert.equal(night.excluded_lead_bucket, 0, `${night.date}: bucket counter`);
     assert.equal(night.excluded_agent_group, 0, `${night.date}: agent-group counter`);
   }
