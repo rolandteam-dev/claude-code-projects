@@ -1,6 +1,6 @@
 # Battr Parity Audit
 
-**The Roland Team · Internal Battr · rev 3 · 12 September 2026**
+**The Roland Team · Internal Battr · rev 4 · 14 September 2026**
 
 Readable version: https://claude.ai/code/artifact/9ea11959-2997-4c87-a980-643adb3d8f08
 
@@ -14,7 +14,7 @@ census of the live database. Each row is marked **confirmed**, **inferred**, or
 | Our funnel | **6.8%** of the member pool survives into the audit list. Battr keeps 7.1%. |
 | Hot Leads | **19 : 19** — ours against Battr's, exactly. Warm Back Up lands within 2.5%. |
 | Blocking field names | **0.** Both are fixed. FUB's own `/timeframes` gave up the map; texts are read per person. |
-| Automated checks | **161**, run before every audit. If they fail, the audit does not run. |
+| Automated checks | **163**, run before every audit. If they fail, the audit does not run. |
 
 ## Verdict — structurally faithful, two field names from finished
 
@@ -56,9 +56,23 @@ thinly across the model; it is one population, with one cause.
 | 2 Sep | Wed | 866 | 17 | 7 | Aida Audits screen |
 | 8 Sep | Tue | 903 | 23 | 45 | audit emails |
 | 10 Sep | Thu | 862 | 20 | 4 | raw `.eml`, both halves |
+| 11 Sep | Fri | 861 | 24 | 3 | raw `.eml`, both halves |
+| 12 Sep | **Sat** | 856 | 19 | — | raw `.eml`, **At Risk only** |
 
-Three things fall out of those rows that a single night could not have shown.
+Saturday is the useful one: the At Risk email arrived and the Neglected one did
+not. `nudgeDayFilter` is "Every Day" and `sweepDayFilter` is "Weekdays Excluding
+Monday" — both confirmed in a single night by what did and did not arrive.
 
+Four things fall out of these rows that a single night could not have shown.
+
+- **A lead leaves the at-risk tier by ageing, not by being swept.** *(This
+  corrects the rev 2 wording.)* On Saturday the entire cohort flagged on 9/9 —
+  three days earlier — left the at-risk list, on a night when nothing could be
+  swept at all. At Risk and Neglected are exclusive states on a clock; the sweep
+  is an action taken on the neglected state, on the days the filter allows, not
+  the thing that produces it. Our classifier already worked this way, testing
+  the neglected tier first, so the model needed no change — only the
+  explanation did.
 - **The audit list drains itself.** 903 − 45 swept = 858, plus arrivals → 862
   observed. A swept lead lands in a pond, every member list requires "not in a
   pond", so it leaves the list the same night. The 7 / 45 / 4 spread is not

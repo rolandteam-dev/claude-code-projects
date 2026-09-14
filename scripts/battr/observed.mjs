@@ -219,6 +219,14 @@ export const SEP_10 = {
  * flagged on 9/8 either got worked or left tonight as neglected. The at-risk
  * tier has a three-day lifespan, and the record shows it draining on schedule.
  *
+ * CORRECTED BY 12 SEP — see SEP_12 below. The wording above implies a lead
+ * leaves the at-risk tier by being SWEPT. It does not. It leaves by aging past
+ * the neglected threshold, which happens on the clock whether or not that day
+ * is a sweep day. On Saturday 12 Sep the whole 9/9 cohort left the at-risk list
+ * with no sweep running at all. Our classifier already had this right —
+ * `classifyForList` tests the neglected tier before the at-risk one — so the
+ * error was in the description, not the code.
+ *
  * WHICH FORECASTS A LARGE TUESDAY. Sweeps run Tue–Fri, so a lead flagged
  * Wednesday comes due Saturday and waits until Tuesday; Thursday comes due
  * Sunday and waits; Friday comes due Monday and waits. The 5 + 7 + 12 leads
@@ -353,12 +361,101 @@ export const FUB_FIELDS = {
   notesBulk: { works: true, rows: 500 },
 };
 
-/** The four observations in order, for anything that wants the trend. */
+/**
+ * A FIFTH observation, from the raw .eml of Sat 12 Sep 2026, 7:08 PM PT.
+ *
+ * ONE EMAIL, NOT TWO. The At Risk half arrived; no Neglected half did. Saturday
+ * is not in `sweepDayFilter` ("Weekdays Excluding Monday") and IS covered by
+ * `nudgeDayFilter` ("Every Day"). Both filters, confirmed in one night by what
+ * did and did not arrive. This is the first weekend night observed.
+ *
+ *   Total records in audit    856
+ *   At Risk records            19
+ *     already processed        10   (dated 9/10 ×5, 9/11 ×5)
+ *     new notes created         9
+ *   Excluded bucket/group     0/0
+ *
+ * THE CORRECTION. Cross-referencing the carry-over against 11 Sep, three
+ * cohorts moved:
+ *
+ *   flagged 9/09:  5 → 0     due 9/12 (Sat) — a NON-sweep day
+ *   flagged 9/10:  7 → 5     due 9/13 (Sun)
+ *   flagged 9/11: 12 → 5     due 9/14 (Mon)
+ *
+ * The 9/09 cohort left the at-risk list entirely on the night its three days
+ * were up — and nothing was swept, because Saturday cannot sweep. So a lead
+ * does not leave the at-risk tier by being swept. It leaves by aging past the
+ * neglected threshold. Neglected and At Risk are exclusive states on a clock,
+ * and the sweep is an ACTION taken on the neglected state, on the days the
+ * filter allows, not the thing that produces it.
+ *
+ * That is exactly how `classifyForList` already works — it tests the neglected
+ * tier first and returns on the first match — so the model needed no change.
+ * What needed correcting was the explanation attached to SEP_11, which said the
+ * tier drains by sweeping. It drains on the clock. A test now pins the
+ * distinction so the two cannot be conflated again.
+ *
+ * THE NUDGE APPEARS TO WORK. The other 9 departures (2 of the 9/10 cohort,
+ * 7 of the 9/11) were NOT due and were NOT swept, so something moved them:
+ * an agent making contact, or a stage change taking them out of the list.
+ * Roughly half of a night's nudges stop being at-risk within a day or two.
+ * Encouraging, and not provable from these emails alone — recorded as an
+ * observation, not a claim.
+ *
+ * THE TUESDAY FORECAST, RESTATED. The earlier figure of 24 assumed nobody gets
+ * worked. Carrying the observed attrition forward, Tuesday 15 Sep should see
+ * the 9/09 cohort (already neglected, unswept, waiting) plus whatever of the
+ * 9/10, 9/11 and 9/12 cohorts survives the weekend — an upper bound of about
+ * 24 and a realistic figure well under our 30-sweep cap. The cap is still
+ * capable of binding on a heavy Tuesday; 8 Sep did 45.
+ *
+ * Names, FUB ids and per-lead links are deliberately not recorded. The cohort
+ * counts above come from cross-referencing rows between two nights; the people
+ * are client PII.
+ */
+export const SEP_12 = {
+  date: "2026-09-12",
+  weekday: "Saturday",
+  total: 856,
+  at_risk: 19,
+  at_risk_new_notes: 9,
+  at_risk_already_flagged: 10,
+  /** No neglected email was sent. Saturday is not a sweep day. */
+  neglected_email_sent: false,
+  excluded_lead_bucket: 0,
+  excluded_agent_group: 0,
+  /** `At Risk Since` on the 10 carried-over leads. The 9/09 cohort is entirely gone. */
+  carriedAtRiskSince: { "2026-09-10": 5, "2026-09-11": 5 },
+  /**
+   * How each cohort changed from 11 Sep to 12 Sep. The 9/09 row is the finding:
+   * a full cohort left the at-risk tier on a night with no sweep.
+   */
+  cohortAttrition: {
+    "2026-09-09": { was: 5, now: 0, dueOn: "2026-09-12", dueOnASweepDay: false },
+    "2026-09-10": { was: 7, now: 5, dueOn: "2026-09-13", dueOnASweepDay: false },
+    "2026-09-11": { was: 12, now: 5, dueOn: "2026-09-14", dueOnASweepDay: false },
+  },
+  sourcesSeen: [
+    "Trulia",
+    "TheRolandTeam.com",
+    "Google PPC",
+    "HomeLight",
+    "Zillow Preferred",
+    "zbuyer.com",
+    "Leadpops - Google Ads",
+    "Company Websites",
+  ],
+};
+
+/** The five observations in order, for anything that wants the trend. */
 export const TIMELINE = [
   { date: "2026-09-02", weekday: "Wed", total: 866, at_risk: 17, neglected: 7 },
   { date: "2026-09-08", weekday: "Tue", total: 903, at_risk: 23, neglected: 45 },
   { date: "2026-09-10", weekday: "Thu", total: 862, at_risk: 20, neglected: 4 },
   { date: "2026-09-11", weekday: "Fri", total: 861, at_risk: 24, neglected: 3 },
+  // Saturday: nudges ran, sweeps did not. `neglected: 0` is the day filter, not
+  // an empty tier — leads were neglected, nothing was allowed to move them.
+  { date: "2026-09-12", weekday: "Sat", total: 856, at_risk: 19, neglected: 0 },
 ];
 
 export const observedLists = [

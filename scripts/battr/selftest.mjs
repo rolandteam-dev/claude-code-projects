@@ -30,7 +30,7 @@ import { parseCsv, findColumn, mapRows } from "./import-atbats.mjs";
 import { bucketForSource, bucketName, isSourceAudited, leadBuckets, unmappedPolicy } from "./sources.mjs";
 import { FubClient } from "./fub.mjs";
 import { rules } from "./rules.mjs";
-import { TIMELINE, SEP_8, SEP_10, SEP_11, FUB_FIELDS } from "./observed.mjs";
+import { TIMELINE, SEP_8, SEP_10, SEP_11, SEP_12, FUB_FIELDS } from "./observed.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
@@ -894,10 +894,10 @@ check("the day filter plus the three-day spread explain every observed night", (
   );
 });
 
-check("four observed nights reconcile with the self-draining population", () => {
-  assert.equal(TIMELINE.length, 4, "every captured night belongs in the timeline");
+check("every observed night reconciles with the self-draining population", () => {
+  assert.equal(TIMELINE.length, 5, "every captured night belongs in the timeline");
   for (const night of TIMELINE) {
-    const full = { "2026-09-08": SEP_8, "2026-09-10": SEP_10, "2026-09-11": SEP_11 }[night.date];
+    const full = { "2026-09-08": SEP_8, "2026-09-10": SEP_10, "2026-09-11": SEP_11, "2026-09-12": SEP_12 }[night.date];
     if (!full) continue;
     assert.equal(night.total, full.total, `${night.date}: timeline disagrees with the record`);
     assert.equal(night.at_risk, full.at_risk, `${night.date}: at-risk disagrees`);
@@ -906,16 +906,36 @@ check("four observed nights reconcile with the self-draining population", () => 
   // A swept lead enters a pond, every member list requires notInAPond, so it
   // leaves the audit list the same night. The list shrinks by its own sweeps
   // and regrows by arrivals — it is never a backlog that only accumulates.
+  //
+  // Sweeps are not the ONLY exit, though, and assuming they were is what this
+  // check originally got wrong: 11 Sep closed at 861 with 3 swept, and 12 Sep
+  // opened at 856, two below what sweeps alone explain. Leads also leave by
+  // changing stage, being moved to a pond by hand, or being trashed. So the
+  // invariant is not "never shrinks faster than it sweeps" — it is that the
+  // unexplained churn stays small. A model error large enough to matter (a
+  // list that halves overnight, a membership rule that stops matching) blows
+  // through this; ordinary CRM housekeeping does not.
+  // Only ADJACENT nights can be checked this way. Between 2 Sep and 8 Sep there
+  // are five unobserved runs whose sweeps are not in this table, so the
+  // arithmetic has nothing to say about that pair — checking it anyway would
+  // need a tolerance so wide it asserted nothing.
+  const CHURN_TOLERANCE = 0.02;
+  let pairsChecked = 0;
   for (let i = 1; i < TIMELINE.length; i++) {
     const prev = TIMELINE[i - 1];
     const cur = TIMELINE[i];
-    const arrivals = cur.total - (prev.total - prev.neglected);
+    const gapDays = Math.round((new Date(cur.date) - new Date(prev.date)) / DAY_MS);
+    if (gapDays !== 1) continue;
+
+    pairsChecked++;
+    const churn = Math.abs(cur.total - (prev.total - prev.neglected));
     assert.ok(
-      arrivals >= 0,
-      `${cur.date}: ${cur.total} is below ${prev.total} − ${prev.neglected} swept — ` +
-        `the population cannot shrink faster than the sweeps explain`
+      churn <= prev.total * CHURN_TOLERANCE,
+      `${cur.date}: ${churn} leads unaccounted for between ${prev.total} − ${prev.neglected} swept ` +
+        `and ${cur.total} — beyond ${CHURN_TOLERANCE * 100}% that is a modelling error, not housekeeping`
     );
   }
+  assert.ok(pairsChecked >= 2, "at least two consecutive-night pairs must actually be exercised");
 
   // The at-risk tier drains on the same three-day clock. Nothing carried into
   // 11 Sep is older than 9/9, and the 9/8 cohort left as neglected.
@@ -930,11 +950,46 @@ check("four observed nights reconcile with the self-draining population", () => 
   );
 });
 
+check("a lead past the neglected line is neglected, sweep day or not", () => {
+  // The 12 Sep correction, pinned. Saturday is not a sweep day, and the entire
+  // cohort flagged on 9/9 still left the at-risk list that night. A lead leaves
+  // at-risk by AGEING past the neglected threshold, not by being swept — the
+  // sweep is an action taken on the neglected state, not the thing that
+  // produces it. Conflating the two is what made the earlier note wrong.
+  const warm = listById(1104); // 10 days to warn, 13 to sweep
+  const build = (quietDays) => {
+    const c = normalizeContact(
+      { id: 42, stage: "Lead", created: daysAgo(60), assignedUserId: 5, tags: [] },
+      { lastOutbound: 0 }
+    );
+    c.custom_fields.fub.system_lastCommunication = daysAgo(quietDays);
+    c.custom_fields.fub.customBattrAtRiskSince = daysAgo(quietDays - 10);
+    return c;
+  };
+
+  assert.equal(classifyForList(build(11), warm, NOW), "at_risk", "inside the band");
+  assert.equal(classifyForList(build(14), warm, NOW), "neglected", "past the band — regardless of the calendar");
+
+  // The two tiers are exclusive: nothing is ever both, so a lead that becomes
+  // neglected necessarily stops being reported as at-risk that same night.
+  for (const days of [9, 11, 14, 40]) {
+    const status = classifyForList(build(days), warm, NOW);
+    assert.ok(["compliant", "at_risk", "neglected"].includes(status), `${days}d produced ${status}`);
+  }
+
+  // And the day filter governs the ACTION only. Saturday sweeps nothing…
+  const tz = rules.timezone;
+  assert.equal(isDayAllowed(rules.sweepDayFilter, new Date("2026-09-12T19:00:00-07:00"), tz), false);
+  // …while the nudge runs every day, which is why one email arrived and not two.
+  assert.equal(isDayAllowed(rules.nudgeDayFilter, new Date("2026-09-12T19:00:00-07:00"), tz), true);
+  assert.equal(SEP_12.neglected_email_sent, false, "the absent email is the confirmation");
+});
+
 check("Battr's exclusion counters are action-time, on every night observed", () => {
   // Both read zero even on a night when the combined list held 903 of a 12,000
   // pool. They cannot be counting selection, which is why we do that work in
   // the list filters rather than as a post-hoc subtraction.
-  for (const night of [SEP_8, SEP_10, SEP_11]) {
+  for (const night of [SEP_8, SEP_10, SEP_11, SEP_12]) {
     assert.equal(night.excluded_lead_bucket, 0, `${night.date}: bucket counter`);
     assert.equal(night.excluded_agent_group, 0, `${night.date}: agent-group counter`);
   }
