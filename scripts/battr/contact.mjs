@@ -12,6 +12,14 @@
 
 import { bucketForSource } from "./sources.mjs";
 import { rules } from "./rules.mjs";
+import { TIMEFRAME_IDS } from "./lists.mjs";
+
+/** Resolve FUB's numeric timeframe id to the band name the nurture lists match on. */
+const resolveTimeframe = (person) => {
+  const id = person.timeframeId;
+  if (id === null || id === undefined || id === "") return null;
+  return TIMEFRAME_IDS[id] ?? null;
+};
 
 const first = (...values) => values.find((v) => v !== undefined && v !== null && v !== "");
 
@@ -81,20 +89,35 @@ export function normalizeContact(person, touch, stamps = {}, { inboundCountsAsTo
     custom_fields: {
       fub: {
         system_lastCommunication: lastCommunication,
-        // The nurture lists branch on timeframe. FUB exposes it as a name on
-        // some accounts and an id on others, so both are carried and the rules
-        // match the name. `timeframeUnresolved` below drives a diagnostic — a
-        // timeframe we can't read would silently empty four of the six lists.
-        system_timeframe: first(person.timeframe, person.timeframeName, null),
+        // The nurture lists branch on timeframe, and match on the NAME.
+        //
+        // This account returns no `timeframe` field on the person — only
+        // `timeframeId` — so reading the name alone found nobody and silently
+        // emptied four of the six member lists. The id is resolved through
+        // TIMEFRAME_IDS, which is FUB's own /timeframes table rather than a
+        // guess at what the numbers mean. An id outside that table stays
+        // unresolved and shows up in the diagnostic rather than being invented.
+        system_timeframe: first(person.timeframe, person.timeframeName, resolveTimeframe(person), null),
         system_timeframeId: first(person.timeframeId, null) ?? null,
         customBattrAtRiskSince: person[atRiskSinceKey] ?? null,
       },
     },
 
-    /** True when this contact is in a nurture stage but has no readable timeframe. */
+    /**
+     * True when this contact is in a nurture stage but has no readable
+     * timeframe — blank, or an id that is not in FUB's own table. Blank is a
+     * data gap someone can fill in; an unknown id is a mapping we need to
+     * extend, and conflating the two hides the second.
+     */
     timeframeUnresolved:
-      !first(person.timeframe, person.timeframeName, null) &&
+      !first(person.timeframe, person.timeframeName, resolveTimeframe(person), null) &&
       ["nurture", "spoke with customer"].includes(String(first(person.stage, person.stageName, "")).toLowerCase()),
+
+    /** An id FUB gave us that TIMEFRAME_IDS does not cover. Drives a loud diagnostic. */
+    timeframeIdUnknown:
+      person.timeframeId !== null &&
+      person.timeframeId !== undefined &&
+      TIMEFRAME_IDS[person.timeframeId] === undefined,
 
     // carried through for reporting and actions, not addressed by rules
     _raw: person,
