@@ -1,0 +1,3719 @@
+From 914c93394f52c24c16bba6a91accc9b46a563da1 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 4 Sep 2026 16:46:32 +0000
+Subject: [PATCH 01/10] Anchor the end-to-end fixtures to the real clock so the
+ suite stops decaying
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The unit checks freeze time at NOW and hand that same instant to the
+classifier, so they cannot drift. The end-to-end check cannot do that: it
+runs the engine as a subprocess, and the engine reads Date.now(). Fixture
+dates built from the frozen NOW therefore aged one day per real day.
+
+The suite was already red. The lead written as "at risk" — last called 11
+days before the frozen NOW — was 14 days old by the time the engine looked
+at it, past Warm Back Up's 13-day neglect line, so "1 at risk, 2 neglected"
+had become "0 at risk, 3 neglected". Nobody changed anything; the calendar
+did it.
+
+A decaying test is worse than a missing one. It fails on a day unrelated to
+the change in front of you, which trains everyone to read a red suite as
+noise — and this is the suite standing between a bug and an engine that
+reassigns real leads away from real agents.
+
+battr:test: 134 checks, green.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01BY8icdQLaS9G2YxbAmEBDv
+---
+ scripts/battr/selftest.mjs | 26 +++++++++++++++++++++-----
+ 1 file changed, 21 insertions(+), 5 deletions(-)
+
+diff --git a/scripts/battr/selftest.mjs b/scripts/battr/selftest.mjs
+index 0c28bfa..9bdb9b0 100644
+--- a/scripts/battr/selftest.mjs
++++ b/scripts/battr/selftest.mjs
+@@ -1269,11 +1269,27 @@ check("rows without a usable id or date are dropped, not guessed at", () => {
+ 
+ // ------------------------------------------------------------------ end-to-end
+ 
++/**
++ * Ages for the end-to-end fixtures, measured from the REAL clock.
++ *
++ * The unit checks above freeze time at NOW and hand that same instant to the
++ * classifier, so they cannot drift. The end-to-end run cannot: it launches the
++ * engine as a subprocess, and the engine reads `Date.now()`. Dates built from
++ * the frozen NOW therefore age one real day per real day, until a lead written
++ * as "at risk" crosses the neglect line and the suite goes red with nobody
++ * having changed anything. It had already happened — `1 at risk, 2 neglected`
++ * became `0 at risk, 3 neglected` three days after the fixtures were written.
++ *
++ * Anchoring the end-to-end fixtures to the real clock holds the ages these
++ * checks assert on fixed relative to the engine that reads them.
++ */
++const realDaysAgo = (n) => new Date(Date.now() - n * DAY_MS).toISOString();
++
+ /** A stand-in FUB API serving fixtures, so the real client code is exercised. */
+ function fixtureServer() {
+   // Early-stage leads older than 10 days land in Warm Back Up (at risk >10d,
+   // neglected >13d), which is what these fixtures exercise.
+-  const warm = (over) => lead({ stage: "Lead", created: daysAgo(60), ...over });
++  const warm = (over) => lead({ stage: "Lead", created: realDaysAgo(60), ...over });
+   const people = [
+     // compliant
+     warm({ id: 101, name: "Fresh Contact", assignedTo: "Nicole Miller", assignedUserId: 11 }),
+@@ -1288,10 +1304,10 @@ function fixtureServer() {
+   ];
+ 
+   const calls = [
+-    { personId: 101, created: daysAgo(1), isIncoming: false },
+-    { personId: 102, created: daysAgo(11), isIncoming: false },
+-    { personId: 103, created: daysAgo(40), isIncoming: false },
+-    { personId: 104, created: daysAgo(40), isIncoming: false },
++    { personId: 101, created: realDaysAgo(1), isIncoming: false },   // compliant
++    { personId: 102, created: realDaysAgo(11), isIncoming: false },  // at risk  (>10d, ≤13d)
++    { personId: 103, created: realDaysAgo(40), isIncoming: false },  // neglected (>13d)
++    { personId: 104, created: realDaysAgo(40), isIncoming: false },  // neglected, report-only tag
+   ];
+ 
+   const routes = {
+-- 
+2.43.0
+
+
+From 15a7f6303d673803f1a115d60d14c45269d2fd16 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 4 Sep 2026 16:50:04 +0000
+Subject: [PATCH 02/10] Survive FUB's refusal to serve bulk text history, and
+ act on nothing when it happens
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The nightly audit was dying before it produced anything:
+
+  FUB GET /textMessages → 400: Please provide one of the following
+  parameters: personId, threadId, phone, toNumber, fromNumber, ...
+
+Follow Up Boss will not serve /v1/textMessages unscoped. That is a
+permanent fact about the API, not an outage, so a crash was the wrong
+response — but the obvious fix is worse than the crash.
+
+A text counts as working a lead. Catching the 400 and carrying on with
+`texts: []` leaves the touch index missing a whole channel for the whole
+database, and every lead worked by text and not by phone reads as untouched.
+The engine would then nudge the agents who text rather than call, stamp them
+with customBattrAtRiskSince — which is precisely what satisfies the
+warn-first interlock — and sweep their leads the following night. The
+failure mode of a missing signal here is not doing less. It is doing more,
+to the wrong people, with a paper trail that looks correct.
+
+So the run continues and reports, and acts on nothing:
+
+  - fub.activity() returns `textsUnavailable` carrying FUB's own message.
+    Only 4xx degrades; 5xx and network failures still throw, because those
+    might really be different tomorrow.
+  - Nudges and sweeps are both held. Nudges are not the harmless half — a
+    nudge is what arms tomorrow's sweep.
+  - Agent digests are withheld. An inflated neglect count in a report is a
+    bad number; the same count in thirty agents' inboxes over their own
+    names is an accusation the engine cannot substantiate.
+  - The report leads with the reason, above the counts, where it cannot be
+    skimmed past.
+
+This is the doctrine the reply check already followed: if the lookup fails,
+the sweep is held and the report says so.
+
+Why this reached production: the self-test's fixture server answered 200 to
+every GET regardless of query string, so the bulk read FUB rejects outright
+passed here and the suite went green. A stand-in more permissive than the
+thing it stands in for does not test the client, it flatters it. It now
+enforces the real scoping requirements for /textMessages and /emails, and
+the end-to-end scenario runs twice — once with the text history served, once
+refused.
+
+Errors now carry .status/.endpoint/.detail so callers branch on the status
+code rather than regexing the message.
+
+battr:test: 148 checks, green. Against the pre-fix engine, 8 of the new
+checks fail — starting with "the engine exits cleanly".
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01BY8icdQLaS9G2YxbAmEBDv
+---
+ scripts/battr-audit.mjs    |  97 ++++++++++++++++---
+ scripts/battr/fub.mjs      |  47 +++++++--
+ scripts/battr/selftest.mjs | 194 ++++++++++++++++++++++++++++++++-----
+ 3 files changed, 291 insertions(+), 47 deletions(-)
+
+diff --git a/scripts/battr-audit.mjs b/scripts/battr-audit.mjs
+index 4de52d3..231b99d 100644
+--- a/scripts/battr-audit.mjs
++++ b/scripts/battr-audit.mjs
+@@ -130,7 +130,7 @@ async function replyReprieve(fub, personId, sinceIso, diag) {
+ 
+ // ---------------------------------------------------------------------- report
+ 
+-function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [] }) {
++function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], signalHold = null }) {
+   const byAgent = new Map();
+   for (const r of results) {
+     if (r.status === "excluded" || !r.owner) continue;
+@@ -158,6 +158,25 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
+     `Run \`${runId}\` · ${population} leads audited · thresholds: at risk ${rules.atRiskDays}d, neglected ${rules.neglectedDays}d`
+   );
+   lines.push("");
++
++  // Top of the report, above the numbers, because it is the thing that decides
++  // whether the numbers below mean anything. A reader who skims the scoreboard
++  // and misses this would take an inflated neglect count for a real one.
++  if (signalHold) {
++    lines.push(`> ## ⚠️ Report only — the counts below are inflated`);
++    lines.push(">");
++    lines.push(`> ${signalHold}`);
++    lines.push(">");
++    lines.push(
++      "> Text messages count as working a lead. Follow Up Boss did not serve the text history for this run, so every lead worked by text and not by phone is counted here as untouched. **At Risk and Neglected are therefore too high, and neither number should be shown to an agent as their score.**"
++    );
++    lines.push(">");
++    lines.push(
++      "> No notes were left and no leads were moved. That is deliberate: acting on a signal with a channel missing does not do less, it does more — it would nudge agents who text rather than call, and then sweep their leads for it."
++    );
++    lines.push("");
++  }
++
+   lines.push("## Summary");
+   lines.push("");
+   lines.push(
+@@ -423,6 +442,24 @@ async function main() {
+     `  ${activity.calls.length} calls, ${activity.texts.length} texts, ${activity.emails.length} emails since ${since.slice(0, 10)}`
+   );
+ 
++  // A text is a touch. If FUB would not serve the text history, the touch index
++  // is missing a whole channel for the WHOLE database, and every lead worked
++  // only by text now reads as untouched — inflating both at risk and neglected.
++  //
++  // This is the one failure that must never be shrugged off, because its
++  // consequence points the wrong way: acting on a signal with a channel missing
++  // does not do less, it does MORE. It nudges agents who called nobody but
++  // texted everybody, and then sweeps their leads for the offence.
++  //
++  // So the run continues — the report is still worth having, and a crashed
++  // audit tells you nothing — but it acts on nothing. Same doctrine the reply
++  // check already follows: if the lookup fails, the sweep is held and the
++  // report says so.
++  if (activity.textsUnavailable) {
++    log(`  *** text history unavailable — ${activity.textsUnavailable}`);
++    log(`  *** the touch signal is incomplete; this run reports only. No nudges, no sweeps.`);
++  }
++
+   // 4. classify
+   //
+   // Custom fields are resolved BEFORE classification, not after: list mode reads
+@@ -485,12 +522,28 @@ async function main() {
+ 
+   const peopleById = new Map(people.map((p) => [p.id, p]));
+ 
+-  // Day filters gate each action independently. A blocked day is logged as a
+-  // skip with its reason — never silently dropped.
+-  const nudgesAllowedToday = isDayAllowed(rules.nudgeDayFilter, new Date(), rules.timezone);
+-  const sweepsAllowedToday = isDayAllowed(rules.sweepDayFilter, new Date(), rules.timezone);
+-  if (!nudgesAllowedToday) log(`  nudges skipped: day filter "${rules.nudgeDayFilter}"`);
+-  if (!sweepsAllowedToday) log(`  sweeps skipped: day filter "${rules.sweepDayFilter}"`);
++  // Each action is gated independently, and a blocked action is recorded as a
++  // skip carrying its reason — never silently dropped.
++  //
++  // An incomplete touch signal outranks the day filters, and it holds nudges as
++  // firmly as sweeps. A nudge is not the harmless half: it stamps
++  // `customBattrAtRiskSince`, which is exactly what satisfies the warn-first
++  // interlock, so a wrong nudge tonight is what arms a wrong sweep tomorrow.
++  const signalHold = activity.textsUnavailable
++    ? `text history unavailable — touch signal incomplete (${activity.textsUnavailable})`
++    : null;
++
++  const nudgeHold =
++    signalHold ??
++    (isDayAllowed(rules.nudgeDayFilter, new Date(), rules.timezone) ? null : `day filter "${rules.nudgeDayFilter}"`);
++  const sweepHold =
++    signalHold ??
++    (isDayAllowed(rules.sweepDayFilter, new Date(), rules.timezone) ? null : `day filter "${rules.sweepDayFilter}"`);
++
++  const nudgesAllowedToday = !nudgeHold;
++  const sweepsAllowedToday = !sweepHold;
++  if (nudgeHold) log(`  nudges skipped: ${nudgeHold}`);
++  if (sweepHold) log(`  sweeps skipped: ${sweepHold}`);
+ 
+   // 5a. nudge
+   if ((args.stage === "both" || args.stage === "at-risk") && nudgesAllowedToday) {
+@@ -613,12 +666,14 @@ async function main() {
+     }
+   }
+ 
+-  // A blocked day is a recorded skip, not a silent no-op.
+-  if (!nudgesAllowedToday && atRisk.length) {
+-    actions.skipped.push({ what: "nudges", count: atRisk.length, reason: `day filter "${rules.nudgeDayFilter}"` });
++  // A blocked action is a recorded skip, not a silent no-op — and it is
++  // recorded with the reason that actually blocked it, so "the calendar said
++  // no" is never mistaken in the report for "we could not see the data".
++  if (nudgeHold && atRisk.length) {
++    actions.skipped.push({ what: "nudges", count: atRisk.length, reason: nudgeHold });
+   }
+-  if (!sweepsAllowedToday && neglected.length) {
+-    actions.skipped.push({ what: "sweeps", count: neglected.length, reason: `day filter "${rules.sweepDayFilter}"` });
++  if (sweepHold && neglected.length) {
++    actions.skipped.push({ what: "sweeps", count: neglected.length, reason: sweepHold });
+   }
+ 
+   // 6. At Bats — ownership-change tracking.
+@@ -672,14 +727,26 @@ async function main() {
+     // they can still save from the ones already gone.
+     sweptIds,
+   });
+-  const alerts = await deliverDigests(digests, { channel, fub, usersById, dry, log });
+-  if (digests.length) log(`  ${digests.length} agent digests (${channel}${dry ? ", dry" : ""})`);
++  // The digest is the part of this system that reaches a human being. An
++  // inflated neglect count sitting in a report nobody opens is a bad number; the
++  // same count in thirty agents' inboxes, over their own names, is an accusation
++  // the engine cannot substantiate. Holding the actions but still mailing the
++  // scorecard would be the worst of both.
++  const alerts = signalHold
++    ? { delivered: [], failed: [], held: signalHold }
++    : await deliverDigests(digests, { channel, fub, usersById, dry, log });
++  if (signalHold && digests.length) {
++    log(`  ${digests.length} agent digests withheld — ${signalHold}`);
++    actions.skipped.push({ what: "agent digests", count: digests.length, reason: signalHold });
++  } else if (digests.length) {
++    log(`  ${digests.length} agent digests (${channel}${dry ? ", dry" : ""})`);
++  }
+ 
+   // 8. report + undo trail
+   mkdirSync(LOG_DIR, { recursive: true });
+   if (sweepLog.sweeps.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
+ 
+-  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists });
++  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, signalHold });
+   const reportPath = await deliverReport(markdown, { runId, dry });
+ 
+   console.log(markdown);
+diff --git a/scripts/battr/fub.mjs b/scripts/battr/fub.mjs
+index a036ca6..7cd8042 100644
+--- a/scripts/battr/fub.mjs
++++ b/scripts/battr/fub.mjs
+@@ -85,7 +85,16 @@ export class FubClient {
+ 
+       if (!res.ok) {
+         const detail = (await res.text()).slice(0, 300);
+-        throw new Error(`FUB ${method} ${target} → ${res.status}: ${detail}`);
++        // The status rides on the error object. Callers need to tell "FUB will
++        // not serve a request shaped like this" (4xx — a permanent fact about
++        // the API, worth degrading around) from "FUB is having a bad day",
++        // and parsing that back out of the message text is how you get a
++        // handler that stops working when someone rewords the string.
++        const err = new Error(`FUB ${method} ${target} → ${res.status}: ${detail}`);
++        err.status = res.status;
++        err.endpoint = target;
++        err.detail = detail;
++        throw err;
+       }
+ 
+       if (isWrite) this.writes++;
+@@ -180,19 +189,41 @@ export class FubClient {
+ 
+   /**
+    * Communication activity since `sinceIso`, pulled in bulk rather than per
+-   * lead. Three endpoints, one pass each — this is what keeps an ~880-lead
+-   * audit inside a few dozen API calls instead of a few thousand.
++   * lead. One pass per endpoint — this is what keeps an ~880-lead audit inside
++   * a few dozen API calls instead of a few thousand.
++   *
++   * @returns {{calls: object[], texts: object[], emails: object[], textsUnavailable: string|null}}
++   *   `textsUnavailable` is null on success and carries FUB's own refusal
++   *   message otherwise. It is NOT an error the caller may ignore: an empty
++   *   `texts` array and a refused `texts` pull look identical downstream, and
++   *   the difference between them is every lead worked only by text.
+    */
+   async activity(sinceIso) {
+     // Calls and texts only. Email is excluded by policy, not by limitation:
+     // mass email in FUB is a single click, so counting it would let one blast
+     // mark an entire database as worked. (FUB also refuses to serve /v1/emails
+     // in bulk, so the two reasons happen to agree.)
+-    const [calls, texts] = await Promise.all([
+-      this.paginate("/calls", { createdAfter: sinceIso }),
+-      this.paginate("/textMessages", { createdAfter: sinceIso }),
+-    ]);
+-    return { calls, texts, emails: [] };
++    const calls = await this.paginate("/calls", { createdAfter: sinceIso });
++
++    let texts = [];
++    let textsUnavailable = null;
++    try {
++      texts = await this.paginate("/textMessages", { createdAfter: sinceIso });
++    } catch (err) {
++      // FUB refuses an unscoped /v1/textMessages read with a 400 naming the
++      // parameters it will accept (personId, threadId, phone, …). That is a
++      // permanent fact about the API, not an outage, so crashing the nightly
++      // audit over it is wrong — but so is shrugging it off. Hand the caller
++      // the refusal and let it decide; see the report-only hold in
++      // scripts/battr-audit.mjs.
++      //
++      // Only 4xx is treated this way. A 5xx or a network failure still throws,
++      // because that one really might be different tomorrow.
++      if (!(err.status >= 400 && err.status < 500)) throw err;
++      textsUnavailable = err.detail ? `${err.status}: ${err.detail}` : err.message;
++    }
++
++    return { calls, texts, emails: [], textsUnavailable };
+   }
+ 
+   /**
+diff --git a/scripts/battr/selftest.mjs b/scripts/battr/selftest.mjs
+index 9bdb9b0..22a9f97 100644
+--- a/scripts/battr/selftest.mjs
++++ b/scripts/battr/selftest.mjs
+@@ -1285,8 +1285,30 @@ check("rows without a usable id or date are dropped, not guessed at", () => {
+  */
+ const realDaysAgo = (n) => new Date(Date.now() - n * DAY_MS).toISOString();
+ 
+-/** A stand-in FUB API serving fixtures, so the real client code is exercised. */
+-function fixtureServer() {
++/**
++ * Endpoints the real Follow Up Boss API refuses to serve unscoped, and the
++ * parameters it will accept instead.
++ *
++ * Verbatim from the API's own 400 responses. This is the whole reason the
++ * `/textMessages` bug survived to production: the fixture server used to answer
++ * 200 to every GET regardless of query string, so a bulk read that FUB rejects
++ * outright passed here and the suite reported green. A stand-in that is more
++ * permissive than the thing it stands in for does not test the client, it
++ * flatters it.
++ */
++const SCOPE_REQUIRED = {
++  "/textMessages": ["personId", "threadId", "phone", "toNumber", "fromNumber", "sharedInboxId", "groupTextId", "participants", "id"],
++  "/emails": ["personId", "threadId", "id"],
++};
++
++/**
++ * A stand-in FUB API serving fixtures, so the real client code is exercised.
++ *
++ * @param {{bulkTexts?: boolean}} opts  `bulkTexts: true` pretends FUB will serve
++ *   an unscoped /textMessages read. It will not — that mode exists only so the
++ *   engine's normal path stays under test alongside the refusal path.
++ */
++function fixtureServer({ bulkTexts = false } = {}) {
+   // Early-stage leads older than 10 days land in Warm Back Up (at risk >10d,
+   // neglected >13d), which is what these fixtures exercise.
+   const warm = (over) => lead({ stage: "Lead", created: realDaysAgo(60), ...over });
+@@ -1310,34 +1332,70 @@ function fixtureServer() {
+     { personId: 104, created: realDaysAgo(40), isIncoming: false },  // neglected, report-only tag
+   ];
+ 
++  // Lead 102 was last CALLED 11 days ago (at risk) and last TEXTED 2 days ago.
++  // On the full signal it is compliant; with the text channel missing it reads
++  // as at risk. That gap is the bug this fixture exists to make visible.
++  const texts = [{ personId: 102, created: realDaysAgo(2), isIncoming: false }];
++
+   const routes = {
+     "/users": { users: [{ id: 11, name: "Nicole Miller" }, { id: 12, name: "Brett Smith" }] },
+     "/ponds": { ponds: [{ id: 900, name: "Shark Tank" }, { id: 901, name: "Money Time" }] },
+     "/people": { people },
+     "/calls": { calls },
+-    "/textMessages": { textmessages: [] },
++    "/textMessages": { textmessages: texts },
+     "/emails": { emails: [] },
+     "/customFields": { customfields: [] },
+   };
+ 
+   const writes = [];
++  const refusals = [];
+   const server = createServer((req, res) => {
+     if (req.method !== "GET") {
+       writes.push(`${req.method} ${req.url}`);
+       res.writeHead(200, { "Content-Type": "application/json" });
+       return res.end("{}");
+     }
+-    const path = new URL(req.url, "http://localhost").pathname;
+-    const body = routes[path] ?? {};
++
++    const url = new URL(req.url, "http://localhost");
++    const path = url.pathname;
++
++    // Enforce the real API's scoping requirement before serving anything.
++    const accepted = SCOPE_REQUIRED[path];
++    const exempt = path === "/textMessages" && bulkTexts;
++    if (accepted && !exempt && !accepted.some((p) => url.searchParams.has(p))) {
++      refusals.push(`GET ${req.url}`);
++      res.writeHead(400, { "Content-Type": "application/json" });
++      return res.end(
++        JSON.stringify({ errorMessage: `Please provide one of the following parameters: ${accepted.join(", ")}` })
++      );
++    }
++
++    // Scoped reads are filtered, so a per-person lookup cannot accidentally
++    // pass by returning the whole collection.
++    let body = routes[path] ?? {};
++    const personId = Number(url.searchParams.get("personId"));
++    if (accepted && !exempt && Number.isFinite(personId) && personId) {
++      body = Object.fromEntries(
++        Object.entries(body).map(([k, rows]) => [k, rows.filter((r) => r.personId === personId)])
++      );
++    }
++
+     res.writeHead(200, { "Content-Type": "application/json" });
+     res.end(JSON.stringify({ ...body, _metadata: { total: Object.values(body)[0]?.length ?? 0 } }));
+   });
+ 
+-  return { server, writes };
++  return { server, writes, refusals };
+ }
+ 
++/**
++ * Run the engine and resolve either way.
++ *
++ * A crash is reported as `crash` rather than thrown, so one failing end-to-end
++ * scenario is a failed check in the output instead of an unhandled rejection
++ * that takes the process down and hides every check after it.
++ */
+ const run = (env) =>
+-  new Promise((resolve, reject) => {
++  new Promise((resolve) => {
+     execFile(
+       process.execPath,
+       [join(ROOT, "scripts", "battr-audit.mjs"), "--dry"],
+@@ -1345,23 +1403,34 @@ const run = (env) =>
+       // report there when set, and a fixture run must never write test data
+       // into the real job summary where it reads as live output.
+       { cwd: ROOT, env: { ...process.env, GITHUB_STEP_SUMMARY: "", ...env } },
+-      (err, stdout, stderr) => (err ? reject(new Error(`${err.message}\n${stderr}`)) : resolve({ stdout, stderr }))
++      (err, stdout, stderr) => resolve({ stdout, stderr, crash: err ? `${err.message}\n${stderr}` : null })
+     );
+   });
+ 
+-console.log("\nEnd-to-end — engine against a fixture API");
+-
+-const { server, writes } = fixtureServer();
+-await new Promise((r) => server.listen(0, "127.0.0.1", r));
+-const port = server.address().port;
++/** Boot a fixture server, run the engine against it, tear both down. */
++async function againstFixtures(opts, body) {
++  const { server, writes, refusals } = fixtureServer(opts);
++  await new Promise((r) => server.listen(0, "127.0.0.1", r));
++  const port = server.address().port;
++  try {
++    const { stdout, stderr, crash } = await run({
++      FUB_API_KEY: "test-key",
++      FUB_API_BASE: `http://127.0.0.1:${port}`,
++      BATTR_LIVE: "",
++    });
++    check("the engine exits cleanly", () => {
++      assert.equal(crash, null, crash ?? "");
++    });
++    await body({ stdout, stderr, writes, refusals });
++  } finally {
++    server.close();
++    rmSync(join(ROOT, "battr-logs"), { recursive: true, force: true });
++  }
++}
+ 
+-try {
+-  const { stdout, stderr } = await run({
+-    FUB_API_KEY: "test-key",
+-    FUB_API_BASE: `http://127.0.0.1:${port}`,
+-    BATTR_LIVE: "",
+-  });
++console.log("\nEnd-to-end — engine against a fixture API that serves text history");
+ 
++await againstFixtures({ bulkTexts: true }, ({ stdout, stderr, writes }) => {
+   check("the run completes and prints a report", () => {
+     assert.match(stdout, /# Battr audit/);
+     assert.match(stdout, /DRY RUN/);
+@@ -1372,7 +1441,14 @@ try {
+   });
+ 
+   check("it separates at-risk from neglected", () => {
+-    assert.match(stderr, /1 at risk, 2 neglected/);
++    // 102 was called 11 days ago but texted 2 days ago, so the full signal
++    // clears it. 103 and 104 are neglected on both channels.
++    assert.match(stderr, /0 at risk, 2 neglected/);
++  });
++
++  check("a text counts as working the lead", () => {
++    assert.match(stderr, /1 texts/);
++    assert.doesNotMatch(stdout, /Going Quiet/);
+   });
+ 
+   check("the scoreboard names the agents", () => {
+@@ -1388,9 +1464,79 @@ try {
+   check("the report offers an undo command", () => {
+     assert.match(stdout, /--undo=/);
+   });
+-} finally {
+-  server.close();
+-  rmSync(join(ROOT, "battr-logs"), { recursive: true, force: true });
+-}
++
++  check("with the full signal the report carries no incomplete-signal banner", () => {
++    assert.doesNotMatch(stdout, /Report only/);
++  });
++});
++
++// -------------------------------------------------- the real API's refusal
++//
++// This is the shape of the live failure. Follow Up Boss will not serve
++// /v1/textMessages without a scoping parameter, and the nightly audit died on
++// it — `FUB GET /textMessages → 400`, no report, nothing.
++//
++// Crashing was not the dangerous part. The dangerous fix was: catch it, carry
++// on with `texts: []`, and let the run act on a touch signal missing a channel.
++// Every lead worked by text and not by phone would read as untouched, so the
++// engine would nudge agents who text rather than call, stamp them, and sweep
++// their leads the following night. The bug that does MORE work is the one to
++// be afraid of.
++
++console.log("\nEnd-to-end — engine against a fixture API that refuses bulk text reads");
++
++await againstFixtures({ bulkTexts: false }, ({ stdout, stderr, writes, refusals }) => {
++  check("the fixture API refuses an unscoped /textMessages read, as FUB does", () => {
++    assert.ok(
++      refusals.some((r) => r.startsWith("GET /textMessages")),
++      `expected a refused bulk text read, got: ${refusals.join(", ") || "none"}`
++    );
++  });
++
++  check("the refusal does not crash the audit", () => {
++    assert.match(stdout, /# Battr audit/);
++    assert.match(stderr, /5 leads in the audit population/);
++  });
++
++  check("the missing channel is named in the run log, not swallowed", () => {
++    assert.match(stderr, /text history unavailable/i);
++    assert.match(stderr, /Please provide one of the following parameters/);
++  });
++
++  check("nudges are held — a nudge stamps the field that arms tomorrow's sweep", () => {
++    assert.match(stderr, /nudges skipped: text history unavailable/i);
++  });
++
++  check("sweeps are held", () => {
++    assert.match(stderr, /sweeps skipped: text history unavailable/i);
++  });
++
++  check("the report leads with the warning, above the counts", () => {
++    assert.match(stdout, /Report only — the counts below are inflated/);
++    assert.ok(
++      stdout.indexOf("Report only") < stdout.indexOf("## Summary"),
++      "the banner must sit above the summary, where it cannot be skimmed past"
++    );
++  });
++
++  check("the report records what was held and why", () => {
++    assert.match(stdout, /nudges skipped today/i);
++    assert.match(stdout, /sweeps skipped today/i);
++  });
++
++  check("agent digests are withheld — an inflated count must not reach an agent", () => {
++    assert.match(stderr, /digests withheld/i);
++  });
++
++  check("the degraded run still writes nothing to FUB", () => {
++    assert.equal(writes.length, 0, `expected no writes, got: ${writes.join(", ")}`);
++  });
++
++  check("the counts are visibly inflated, which is why they may not be acted on", () => {
++    // 102 was texted 2 days ago. Without the text channel it reads as at risk —
++    // exactly the false positive the hold exists to keep off an agent's record.
++    assert.match(stderr, /1 at risk, 2 neglected/);
++  });
++});
+ 
+ console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);
+-- 
+2.43.0
+
+
+From de6af5b29bcf99de6637101285d1e089295567d9 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 4 Sep 2026 16:54:52 +0000
+Subject: [PATCH 03/10] Recover the text channel one lead at a time when FUB
+ refuses it in bulk
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The previous commit made the audit safe. It did not make it useful: Follow
+Up Boss always refuses the bulk text read, so the engine would have reported
+every night and acted on nothing, forever.
+
+Fetching texts for all ~880 leads would turn a few dozen API calls into a
+few thousand, and it is not necessary. The error only runs one way. A text
+is a touch, so omitting texts can move a lead toward at risk and never away
+from it — the leads flagged on the call-only signal are a superset of the
+truly quiet ones. Checking just that superset, and reclassifying each lead
+through the same combined list on the corrected touch, gives the same answer
+a full text pull would for a few hundred calls instead of a few thousand.
+
+The safety property is that the optimistic path cannot fail unsafely, only
+fail back to doing nothing:
+
+  - A lead whose text history could not be read is never acted on — held in
+    the nudge loop as well as the sweep loop, since the nudge is what stamps
+    customBattrAtRiskSince and arms the sweep.
+  - Three consecutive lookup failures and the endpoint is written off for
+    the run; every remaining candidate is held unread.
+  - If nothing at all could be read, the blanket report-only hold from the
+    previous commit applies exactly as before.
+  - Leads held unread are dropped from the agent digests. An agent's list is
+    better one lead short than one lead wrong; the omitted ones are named in
+    the report's held-back section instead.
+
+rules.textBackfill turns it off, and rules.maxTextChecksPerRun bounds a bad
+night — candidates past the ceiling are held, not acted on, so lowering it
+narrows what the engine may do.
+
+The per-lead endpoint is not yet confirmed against the real API: personId is
+named in FUB's own refusal message, which is good evidence and not proof.
+inspect-fub-fields now probes it read-only and reports whether the scoped
+read works and whether its rows carry a direction — one safe run settles it.
+
+battr:test: 156 checks. The end-to-end scenario runs three ways — text
+history served, refused in bulk but readable per lead, and unavailable by
+any route.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01BY8icdQLaS9G2YxbAmEBDv
+---
+ scripts/battr-audit.mjs    | 189 ++++++++++++++++++++++++++++++++++---
+ scripts/battr/fub.mjs      |  13 +++
+ scripts/battr/inspect.mjs  |  41 ++++++++
+ scripts/battr/rules.mjs    |  33 +++++++
+ scripts/battr/selftest.mjs |  70 ++++++++++++--
+ 5 files changed, 326 insertions(+), 20 deletions(-)
+
+diff --git a/scripts/battr-audit.mjs b/scripts/battr-audit.mjs
+index 231b99d..f9d45a5 100644
+--- a/scripts/battr-audit.mjs
++++ b/scripts/battr-audit.mjs
+@@ -128,9 +128,105 @@ async function replyReprieve(fub, personId, sinceIso, diag) {
+   }
+ }
+ 
++// ------------------------------------------------------------- text backfill
++
++/**
++ * Consecutive failures after which the per-lead text lookup is written off for
++ * the rest of the run. If three leads in a row cannot be read, the endpoint is
++ * not having a moment — it does not work — and hammering it several hundred
++ * more times only makes the log longer.
++ */
++const TEXT_LOOKUP_GIVE_UP_AFTER = 3;
++
++/**
++ * Recover the text channel for the leads the engine is about to act on.
++ *
++ * Called only when the bulk text pull was refused. Every at-risk and neglected
++ * lead is looked up individually, its texts folded into its touch record, and
++ * the lead reclassified on the corrected signal.
++ *
++ * This is sound because the error only runs one way. A text is a touch, so
++ * omitting texts can push a lead toward at risk and never away from it — the
++ * call-only flags are a superset of the truly quiet leads, and rechecking that
++ * superset gives the same answer a full text pull would, for a few hundred API
++ * calls instead of a few thousand.
++ *
++ * A lead whose history could not be read is returned in `blocked`, and the
++ * caller must not act on it. If nothing at all can be read, `blocked` holds
++ * every candidate and the run has degraded to exactly the report-only state it
++ * would have been in without this pass — which is the point. The optimistic
++ * path cannot fail unsafely; it can only fail back to doing nothing.
++ *
++ * @returns {{results: object[], blocked: Set<number>, diag: object}}
++ */
++async function backfillTexts(fub, { results, peopleById, touchIndex, fields, sinceIso, combined, log }) {
++  const candidates = results.filter((r) => r.status === "at_risk" || r.status === "neglected");
++  const blocked = new Set();
++  const diag = { candidates: candidates.length, checked: 0, cleared: 0, failed: 0, overBudget: 0, gaveUp: false, firstError: null };
++
++  if (!candidates.length) return { results, blocked, diag };
++
++  const corrected = new Map();
++  let consecutiveFailures = 0;
++
++  for (const candidate of candidates) {
++    if (diag.gaveUp) {
++      blocked.add(candidate.id);
++      continue;
++    }
++    if (diag.checked >= rules.maxTextChecksPerRun) {
++      diag.overBudget++;
++      blocked.add(candidate.id);
++      continue;
++    }
++
++    diag.checked++;
++    try {
++      const texts = await fub.textsForPerson(candidate.id, sinceIso);
++      consecutiveFailures = 0;
++
++      // Merge, never replace: the call history from the bulk pull is still good.
++      const fromTexts = buildTouchIndex({ texts }).get(candidate.id) ?? { lastOutbound: 0, lastInbound: 0 };
++      const prior = touchIndex.get(candidate.id) ?? { lastOutbound: 0, lastInbound: 0 };
++      const merged = {
++        lastOutbound: Math.max(prior.lastOutbound, fromTexts.lastOutbound),
++        lastInbound: Math.max(prior.lastInbound, fromTexts.lastInbound),
++      };
++
++      const person = peopleById.get(candidate.id);
++      if (!person) {
++        blocked.add(candidate.id);
++        continue;
++      }
++
++      // Reclassify through the same combined list the first pass used, so the
++      // corrected status comes from the real rules rather than a threshold
++      // guessed at here. runCombinedList is per-contact, so a one-contact run
++      // gives the same answer it would inside the full population.
++      const contact = normalizeContact(person, merged, fields);
++      const record = runCombinedList([contact], combined, Date.now()).records[0];
++      const status = record?.status ?? candidate.status;
++
++      if (status !== candidate.status) diag.cleared++;
++      corrected.set(candidate.id, { ...candidate, status, textRecheck: true });
++    } catch (err) {
++      diag.failed++;
++      diag.firstError ??= err.message;
++      consecutiveFailures++;
++      blocked.add(candidate.id);
++      if (consecutiveFailures >= TEXT_LOOKUP_GIVE_UP_AFTER) {
++        diag.gaveUp = true;
++        log(`  per-lead text lookup failed ${consecutiveFailures}x in a row — giving up for this run (${err.message})`);
++      }
++    }
++  }
++
++  return { results: results.map((r) => corrected.get(r.id) ?? r), blocked, diag };
++}
++
+ // ---------------------------------------------------------------------- report
+ 
+-function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], signalHold = null }) {
++function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], signalHold = null, textDiag = null }) {
+   const byAgent = new Map();
+   for (const r of results) {
+     if (r.status === "excluded" || !r.owner) continue;
+@@ -177,6 +273,22 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
+     lines.push("");
+   }
+ 
++  // The partial case: the bulk pull was refused but the per-lead lookup worked,
++  // so the flagged leads were rechecked one at a time. Worth saying plainly,
++  // because it explains both the API-call count and any lead sitting in
++  // "held back" for a reason that is about us rather than about the lead.
++  if (!signalHold && textDiag) {
++    const held = textDiag.failed + textDiag.overBudget;
++    lines.push(
++      `> **Text history recovered per lead.** Follow Up Boss refused the bulk text read, so each flagged lead was ` +
++        `checked individually: ${textDiag.checked} of ${textDiag.candidates} rechecked, **${textDiag.cleared} cleared** ` +
++        `(worked by text, not actually quiet)` +
++        (held ? `, ${held} held unread and not acted on` : "") +
++        `.`
++    );
++    lines.push("");
++  }
++
+   lines.push("## Summary");
+   lines.push("");
+   lines.push(
+@@ -469,8 +581,9 @@ async function main() {
+   const contacts = people.map((p) => normalizeContact(p, touchIndex.get(p.id), fields));
+ 
+   let results;
++  let combined = null;
+   if (rules.mode === "lists") {
+-    const combined = lists.find((l) => l.audit_type === "combined_contact_lists");
++    combined = lists.find((l) => l.audit_type === "combined_contact_lists");
+     if (!combined) throw new Error("mode is 'lists' but no combined list is configured.");
+ 
+     const run = runCombinedList(contacts, combined, Date.now());
+@@ -513,6 +626,33 @@ async function main() {
+     results = contacts.map((c) => classifySimple(c, touchIndex, rules));
+   }
+ 
++  const peopleById = new Map(people.map((p) => [p.id, p]));
++
++  // If the bulk text pull was refused, get the channel back one lead at a time
++  // for the leads that are about to be acted on — and hold the ones whose
++  // history still could not be read.
++  let textBlocked = new Set();
++  let textDiag = null;
++  if (activity.textsUnavailable && rules.textBackfill && combined) {
++    const backfill = await backfillTexts(fub, {
++      results,
++      peopleById,
++      touchIndex,
++      fields,
++      sinceIso: since,
++      combined,
++      log,
++    });
++    results = backfill.results;
++    textBlocked = backfill.blocked;
++    textDiag = backfill.diag;
++    log(
++      `  text backfill: ${textDiag.checked}/${textDiag.candidates} candidates rechecked, ` +
++        `${textDiag.cleared} cleared, ${textBlocked.size} held unread` +
++        (textDiag.failed ? ` (${textDiag.failed} lookups failed)` : "")
++    );
++  }
++
+   const atRisk = results.filter((r) => r.status === "at_risk");
+   const neglected = results.filter((r) => r.status === "neglected");
+   log(`  ${atRisk.length} at risk, ${neglected.length} neglected`);
+@@ -520,8 +660,6 @@ async function main() {
+   const today = ptDate();
+   const actions = { atRisk, neglected, nudged: [], alreadyFlagged: [], swept: [], heldBack: [], skipped: [] };
+ 
+-  const peopleById = new Map(people.map((p) => [p.id, p]));
+-
+   // Each action is gated independently, and a blocked action is recorded as a
+   // skip carrying its reason — never silently dropped.
+   //
+@@ -529,9 +667,16 @@ async function main() {
+   // firmly as sweeps. A nudge is not the harmless half: it stamps
+   // `customBattrAtRiskSince`, which is exactly what satisfies the warn-first
+   // interlock, so a wrong nudge tonight is what arms a wrong sweep tomorrow.
+-  const signalHold = activity.textsUnavailable
+-    ? `text history unavailable — touch signal incomplete (${activity.textsUnavailable})`
+-    : null;
++  //
++  // The blanket hold applies only when the text channel could not be recovered
++  // for a single lead. If the per-lead backfill worked, the leads it read are
++  // classified on a complete signal and may be acted on; the ones it could not
++  // read are in `textBlocked` and are held individually in the loops below.
++  const recoveredAny = Boolean(textDiag) && textDiag.checked > textDiag.failed && textDiag.checked > 0;
++  const signalHold =
++    activity.textsUnavailable && !recoveredAny
++      ? `text history unavailable — touch signal incomplete (${activity.textsUnavailable})`
++      : null;
+ 
+   const nudgeHold =
+     signalHold ??
+@@ -548,6 +693,13 @@ async function main() {
+   // 5a. nudge
+   if ((args.stage === "both" || args.stage === "at-risk") && nudgesAllowedToday) {
+     for (const lead of atRisk) {
++      // Text history unread for this lead — it may have been worked by text and
++      // we cannot see it. Do not stamp it; the stamp is what arms the sweep.
++      if (textBlocked.has(lead.id)) {
++        actions.heldBack.push({ ...lead, holdReason: "text history unread — not warned on a partial signal" });
++        continue;
++      }
++
+       const person = peopleById.get(lead.id);
+       const alreadyFlagged = fields.atRiskSince ? Boolean(person?.[fields.atRiskSince]) : false;
+ 
+@@ -588,6 +740,14 @@ async function main() {
+         continue;
+       }
+ 
++      // Same rule as the nudge loop, and the more important half: a lead whose
++      // text history could not be read may have been worked by text every day
++      // this week. Never move it on a signal with a channel missing.
++      if (textBlocked.has(lead.id)) {
++        actions.heldBack.push({ ...lead, holdReason: "text history unread — not swept on a partial signal" });
++        continue;
++      }
++
+       // Second, independent checks on the agent exemption and the source policy.
+       // Classification already removes these; this guarantees no future change
+       // to classification can let a sweep through.
+@@ -719,7 +879,10 @@ async function main() {
+   const unanswered = findUnansweredInbound(results, rules.unansweredInboundDays);
+   if (unanswered.length) log(`  ${unanswered.length} leads reached out with no call or text back`);
+ 
+-  const digests = buildAgentDigests(results, {
++  // Leads whose text history could not be read are left out of the digests
++  // entirely. An agent's list is better one lead short than one lead wrong —
++  // the omitted ones are named in the report's held-back section instead.
++  const digests = buildAgentDigests(results.filter((r) => !textBlocked.has(r.id)), {
+     excludeGroupIds: rules.excludeOwnerGroupIds,
+     sweepDays: rules.neglectedDays,
+     unanswered,
+@@ -735,9 +898,11 @@ async function main() {
+   const alerts = signalHold
+     ? { delivered: [], failed: [], held: signalHold }
+     : await deliverDigests(digests, { channel, fub, usersById, dry, log });
+-  if (signalHold && digests.length) {
+-    log(`  ${digests.length} agent digests withheld — ${signalHold}`);
+-    actions.skipped.push({ what: "agent digests", count: digests.length, reason: signalHold });
++  if (signalHold) {
++    // Logged whether or not any digest survived the per-lead filter above. Zero
++    // digests here is the two holds agreeing, not the mail silently going out.
++    log(`  agent digests withheld (${digests.length} would have been sent) — ${signalHold}`);
++    if (digests.length) actions.skipped.push({ what: "agent digests", count: digests.length, reason: signalHold });
+   } else if (digests.length) {
+     log(`  ${digests.length} agent digests (${channel}${dry ? ", dry" : ""})`);
+   }
+@@ -746,7 +911,7 @@ async function main() {
+   mkdirSync(LOG_DIR, { recursive: true });
+   if (sweepLog.sweeps.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
+ 
+-  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, signalHold });
++  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, signalHold, textDiag });
+   const reportPath = await deliverReport(markdown, { runId, dry });
+ 
+   console.log(markdown);
+diff --git a/scripts/battr/fub.mjs b/scripts/battr/fub.mjs
+index 7cd8042..5e1b1c5 100644
+--- a/scripts/battr/fub.mjs
++++ b/scripts/battr/fub.mjs
+@@ -238,6 +238,19 @@ export class FubClient {
+     return this.paginate("/emails", { personId, createdAfter: sinceIso });
+   }
+ 
++  /**
++   * The text history for ONE lead since `sinceIso`.
++   *
++   * `/v1/textMessages` is refused unscoped, and the refusal names `personId` as
++   * one of the parameters it will accept — so this is the scoped form of the
++   * same read the daily activity pull cannot make. It is how the engine gets
++   * the text channel back for the leads it is about to act on; see
++   * `rules.textBackfill`.
++   */
++  textsForPerson(personId, sinceIso) {
++    return this.paginate("/textMessages", { personId, createdAfter: sinceIso });
++  }
++
+   // ------------------------------------------------------------------ writes
+ 
+   note(personId, body, subject = "Battr audit") {
+diff --git a/scripts/battr/inspect.mjs b/scripts/battr/inspect.mjs
+index c4c6d1d..30066ea 100644
+--- a/scripts/battr/inspect.mjs
++++ b/scripts/battr/inspect.mjs
+@@ -149,6 +149,47 @@ async function main() {
+   }
+   console.log("");
+ 
++  // ------------------------------------------------------------- text history
++  //
++  // The engine's touch signal rests on two reads: calls in bulk, and texts. FUB
++  // refuses /v1/textMessages unscoped — that is what killed the nightly audit —
++  // so the engine now reads the text history one lead at a time for the leads it
++  // is about to act on.
++  //
++  // That fallback is only worth having if the scoped read really works and its
++  // rows say which way the message went. This settles both, read-only.
++  console.log("\nTEXT HISTORY — can we see the channel at all?");
++  console.log("-".repeat(70));
++  const textSince = new Date(Date.now() - 45 * 86400000).toISOString();
++
++  try {
++    const bulk = await fub.paginate("/textMessages", { createdAfter: textSince }, { max: 1 });
++    console.log(`*** /textMessages IN BULK returned ${bulk.length} rows — it works after all.`);
++    console.log("    The per-lead fallback is then unnecessary, and the bulk pull is far cheaper.");
++  } catch (err) {
++    console.log(`/textMessages in bulk: REFUSED (expected) — ${err.message}`);
++  }
++
++  try {
++    const scoped = await fub.textsForPerson(people[0].id, textSince);
++    console.log(`/textMessages?personId=… returned ${scoped.length} rows for one person: the fallback WORKS.`);
++    const tkeys = new Set();
++    for (const row of scoped) for (const k of Object.keys(row)) tkeys.add(k);
++    console.log(`fields: ${[...tkeys].sort().join(", ") || "(no rows — try a person with text history)"}`);
++    const directional = scoped.filter((r) => r.isIncoming !== undefined || r.direction !== undefined).length;
++    console.log(
++      directional === scoped.length && scoped.length
++        ? "direction: PRESENT on every row — outbound and inbound can be told apart."
++        : `direction: present on ${directional}/${scoped.length} rows *** the rest count as neither ***`
++    );
++  } catch (err) {
++    console.log(`*** /textMessages per-person ALSO FAILED: ${err.message}`);
++    console.log("    Then the text channel is invisible however we ask, no audit can see a lead worked by");
++    console.log("    text, and the engine will report every night and act on nothing. That is the safe");
++    console.log("    answer, but it is not a working system — this is the thing to fix first.");
++  }
++  console.log("");
++
+   // ------------------------------------------------------------- At Bats
+   //
+   // Battr's UI has no CSV export — searched and confirmed absent, not just not
+diff --git a/scripts/battr/rules.mjs b/scripts/battr/rules.mjs
+index c97c878..7c1b6da 100644
+--- a/scripts/battr/rules.mjs
++++ b/scripts/battr/rules.mjs
+@@ -188,6 +188,39 @@ export const rules = {
+    */
+   maxEmailChecksPerRun: 100,
+ 
++  /**
++   * Recover the text channel one lead at a time when FUB refuses to serve it in
++   * bulk.
++   *
++   * Follow Up Boss will not answer an unscoped GET /v1/textMessages — it returns
++   * 400 and names the parameters it wants, `personId` among them. Without texts
++   * the touch signal is missing a channel across the whole database, and the
++   * engine correctly refuses to act on it (see the report-only hold in
++   * scripts/battr-audit.mjs). That is safe, and it is also a system that never
++   * does anything.
++   *
++   * Fetching texts for all ~880 leads would turn a few dozen API calls into a
++   * few thousand. It is not necessary. Missing texts can only make a lead look
++   * WORSE than it is — a text is a touch, so leaving it out can move a lead
++   * toward at risk and never away from it. The leads flagged on the call-only
++   * signal are therefore a superset of the truly quiet ones, and checking just
++   * those, then reclassifying them on the corrected touch, gives the same answer
++   * a full text pull would.
++   *
++   * A lead whose text history could not be read is never acted on. So if this
++   * endpoint turns out not to work either, the run collapses back to the
++   * report-only hold — noisily, in the report, rather than by sweeping blind.
++   */
++  textBackfill: true,
++
++  /**
++   * Ceiling on per-lead text lookups in one run. Bounds a bad night; every
++   * candidate past the ceiling is held rather than acted on, so raising it
++   * widens what the engine may act on and lowering it narrows it. This is the
++   * number to turn down first if a run gets slow.
++   */
++  maxTextChecksPerRun: 500,
++
+   // ------------------------------------------------------------------ behavior
+   /**
+    * Superseded by `inboundCountsAsTouch`. It used to run the at-risk clock at
+diff --git a/scripts/battr/selftest.mjs b/scripts/battr/selftest.mjs
+index 22a9f97..95e7d3a 100644
+--- a/scripts/battr/selftest.mjs
++++ b/scripts/battr/selftest.mjs
+@@ -1304,11 +1304,14 @@ const SCOPE_REQUIRED = {
+ /**
+  * A stand-in FUB API serving fixtures, so the real client code is exercised.
+  *
+- * @param {{bulkTexts?: boolean}} opts  `bulkTexts: true` pretends FUB will serve
+- *   an unscoped /textMessages read. It will not — that mode exists only so the
+- *   engine's normal path stays under test alongside the refusal path.
++ * @param {{bulkTexts?: boolean, scopedTexts?: boolean}} opts
++ *   `bulkTexts: true` pretends FUB will serve an unscoped /textMessages read.
++ *   It will not — that mode exists only so the engine's normal path stays under
++ *   test alongside the refusal path.
++ *   `scopedTexts: false` makes even the per-person text lookup fail, which is
++ *   the worst case: no way to see the text channel at all.
+  */
+-function fixtureServer({ bulkTexts = false } = {}) {
++function fixtureServer({ bulkTexts = false, scopedTexts = true } = {}) {
+   // Early-stage leads older than 10 days land in Warm Back Up (at risk >10d,
+   // neglected >13d), which is what these fixtures exercise.
+   const warm = (over) => lead({ stage: "Lead", created: realDaysAgo(60), ...over });
+@@ -1370,6 +1373,14 @@ function fixtureServer({ bulkTexts = false } = {}) {
+       );
+     }
+ 
++    // The worst case: FUB serves neither the bulk read nor the scoped one, so
++    // the text channel is invisible however you ask for it.
++    if (path === "/textMessages" && !scopedTexts) {
++      refusals.push(`GET ${req.url}`);
++      res.writeHead(403, { "Content-Type": "application/json" });
++      return res.end(JSON.stringify({ errorMessage: "This API key does not have access to text messages." }));
++    }
++
+     // Scoped reads are filtered, so a per-person lookup cannot accidentally
+     // pass by returning the whole collection.
+     let body = routes[path] ?? {};
+@@ -1483,9 +1494,9 @@ await againstFixtures({ bulkTexts: true }, ({ stdout, stderr, writes }) => {
+ // their leads the following night. The bug that does MORE work is the one to
+ // be afraid of.
+ 
+-console.log("\nEnd-to-end — engine against a fixture API that refuses bulk text reads");
++console.log("\nEnd-to-end — bulk text reads refused, per-lead lookup available");
+ 
+-await againstFixtures({ bulkTexts: false }, ({ stdout, stderr, writes, refusals }) => {
++await againstFixtures({ bulkTexts: false, scopedTexts: true }, ({ stdout, stderr, writes, refusals }) => {
+   check("the fixture API refuses an unscoped /textMessages read, as FUB does", () => {
+     assert.ok(
+       refusals.some((r) => r.startsWith("GET /textMessages")),
+@@ -1503,6 +1514,49 @@ await againstFixtures({ bulkTexts: false }, ({ stdout, stderr, writes, refusals
+     assert.match(stderr, /Please provide one of the following parameters/);
+   });
+ 
++  check("the flagged leads are rechecked one at a time", () => {
++    assert.match(stderr, /text backfill: \d+\/\d+ candidates rechecked/);
++  });
++
++  check("the recheck clears the lead that was worked by text", () => {
++    // 102 was called 11 days ago (at risk on calls alone) but texted 2 days ago.
++    // The per-lead lookup finds the text and reclassifies it compliant.
++    assert.match(stderr, /1 cleared/);
++    assert.match(stderr, /0 at risk, 2 neglected/);
++  });
++
++  check("recovering the channel lifts the blanket hold", () => {
++    assert.doesNotMatch(stdout, /Report only — the counts below are inflated/);
++    assert.doesNotMatch(stderr, /nudges skipped: text history/i);
++  });
++
++  check("the report says the counts came from a per-lead recovery", () => {
++    assert.match(stdout, /Text history recovered per lead/);
++  });
++
++  check("the recovered run still writes nothing to FUB in dry mode", () => {
++    assert.equal(writes.length, 0, `expected no writes, got: ${writes.join(", ")}`);
++  });
++});
++
++// ------------------------------------------------- neither read is available
++//
++// The optimistic path has to fail back to the safe one. If FUB serves the text
++// channel no way at all, the engine must end up exactly where it would have
++// been without the per-lead recovery: reporting, and acting on nothing.
++
++console.log("\nEnd-to-end — text history unavailable by any route");
++
++await againstFixtures({ bulkTexts: false, scopedTexts: false }, ({ stdout, stderr, writes }) => {
++  check("the total blackout does not crash the audit either", () => {
++    assert.match(stdout, /# Battr audit/);
++    assert.match(stderr, /5 leads in the audit population/);
++  });
++
++  check("it stops hammering an endpoint that does not work", () => {
++    assert.match(stderr, /giving up for this run/i);
++  });
++
+   check("nudges are held — a nudge stamps the field that arms tomorrow's sweep", () => {
+     assert.match(stderr, /nudges skipped: text history unavailable/i);
+   });
+@@ -1533,8 +1587,8 @@ await againstFixtures({ bulkTexts: false }, ({ stdout, stderr, writes, refusals
+   });
+ 
+   check("the counts are visibly inflated, which is why they may not be acted on", () => {
+-    // 102 was texted 2 days ago. Without the text channel it reads as at risk —
+-    // exactly the false positive the hold exists to keep off an agent's record.
++    // 102 was texted 2 days ago. With the text channel invisible it reads as at
++    // risk — exactly the false positive the hold keeps off an agent's record.
+     assert.match(stderr, /1 at risk, 2 neglected/);
+   });
+ });
+-- 
+2.43.0
+
+
+From 54bb1b7d3fce524fdfabcc6ed907fcc37df925a3 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 4 Sep 2026 16:56:13 +0000
+Subject: [PATCH 04/10] Say plainly in the report that the owner-group
+ exclusion protects nobody
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+rules.excludeOwnerGroupIds is [52555] — "Battr Paused" in the live Battr
+config. The condition reads owner_group_ids, normalized from
+assignedUserGroupIds / groupIds on the FUB person, and inspect-fub-fields
+confirmed against the live account that Follow Up Boss returns neither.
+Every contact carries an empty array, so "not in group 52555" is true for
+everyone and the rule excludes nobody.
+
+The rule not working is not the problem. The problem is that it reads as
+though it does. Someone puts an agent into the Battr Paused group in FUB,
+reasonably expects their leads to stop being swept, and nothing about the
+config or the run says otherwise — their leads get swept anyway.
+
+There was already a warning, but only on stderr, in a CI log nobody opens.
+It now appears in the report itself, above the counts, and it names the
+exemption that does work (exemptAgents, by assigned-agent name) along with
+who is currently on it.
+
+The rule is left in place rather than deleted: it documents what the live
+Battr config does, and deleting it would erase the only record of why anyone
+knows this. Emptying the array silences the block.
+
+Mike Roland stays protected either way — he is in exemptAgents by name, and
+the sweep loop checks that a second time independently of classification.
+
+battr:test: 158 checks.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01BY8icdQLaS9G2YxbAmEBDv
+---
+ scripts/battr-audit.mjs    | 24 +++++++++++++++++++++---
+ scripts/battr/rules.mjs    | 23 +++++++++++++++++++++--
+ scripts/battr/selftest.mjs | 13 +++++++++++++
+ 3 files changed, 55 insertions(+), 5 deletions(-)
+
+diff --git a/scripts/battr-audit.mjs b/scripts/battr-audit.mjs
+index f9d45a5..65dd10f 100644
+--- a/scripts/battr-audit.mjs
++++ b/scripts/battr-audit.mjs
+@@ -226,7 +226,7 @@ async function backfillTexts(fub, { results, peopleById, touchIndex, fields, sin
+ 
+ // ---------------------------------------------------------------------- report
+ 
+-function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], signalHold = null, textDiag = null }) {
++function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], signalHold = null, textDiag = null, unenforceableGroupExclusion = null }) {
+   const byAgent = new Map();
+   for (const r of results) {
+     if (r.status === "excluded" || !r.owner) continue;
+@@ -289,6 +289,22 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
+     lines.push("");
+   }
+ 
++  // A rule that silently protects nobody is worse than no rule, because someone
++  // will rely on it. This has to be visible where the run is read, not only in a
++  // CI log line nobody opens.
++  if (unenforceableGroupExclusion?.length) {
++    lines.push(`> ### ⚠️ The owner-group exclusion is not protecting anyone`);
++    lines.push(">");
++    lines.push(
++      `> The config excludes owner group **${unenforceableGroupExclusion.join(", ")}** (\`Battr Paused\`), but Follow Up Boss does not return group membership on a person — every contact in this run carried an empty group list. The condition is therefore true for everybody and excludes nobody.`
++    );
++    lines.push(">");
++    lines.push(
++      `> **Adding an agent to the Battr Paused group in FUB will not stop their leads being swept.** The only exemption this engine enforces is \`exemptAgents\` in \`scripts/battr/rules.mjs\`, matched on the assigned agent's name. Currently exempt: ${rules.exemptAgents.length ? rules.exemptAgents.map((a) => `**${a}**`).join(", ") : "_nobody_"}.`
++    );
++    lines.push("");
++  }
++
+   lines.push("## Summary");
+   lines.push("");
+   lines.push(
+@@ -582,6 +598,7 @@ async function main() {
+ 
+   let results;
+   let combined = null;
++  let unenforceableGroupExclusion = null;
+   if (rules.mode === "lists") {
+     combined = lists.find((l) => l.audit_type === "combined_contact_lists");
+     if (!combined) throw new Error("mode is 'lists' but no combined list is configured.");
+@@ -601,7 +618,8 @@ async function main() {
+     // The combined list excludes an owner group, but that condition reads a
+     // field FUB may not return on a person. If nobody has any group ids, the
+     // exclusion cannot fire and the protection it implies does not exist.
+-    if (!contacts.some((c) => (c.owner_group_ids ?? []).length)) {
++    if (rules.excludeOwnerGroupIds.length && !contacts.some((c) => (c.owner_group_ids ?? []).length)) {
++      unenforceableGroupExclusion = rules.excludeOwnerGroupIds;
+       log(`  WARNING: no contact carries owner_group_ids — the owner-group exclusion (${rules.excludeOwnerGroupIds.join(", ")}) is NOT being enforced. Exempt those agents by name in rules.exemptAgents instead.`);
+     }
+     log(`  ${run.records.length} in the combined list, ${run.excluded.length} excluded by bucket/group`);
+@@ -911,7 +929,7 @@ async function main() {
+   mkdirSync(LOG_DIR, { recursive: true });
+   if (sweepLog.sweeps.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
+ 
+-  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, signalHold, textDiag });
++  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, signalHold, textDiag, unenforceableGroupExclusion });
+   const reportPath = await deliverReport(markdown, { runId, dry });
+ 
+   console.log(markdown);
+diff --git a/scripts/battr/rules.mjs b/scripts/battr/rules.mjs
+index 7c1b6da..6a75116 100644
+--- a/scripts/battr/rules.mjs
++++ b/scripts/battr/rules.mjs
+@@ -106,8 +106,27 @@ export const rules = {
+ 
+   /**
+    * Owner groups excluded from audits, sweeps, and alerts. 52555 is the group
+-   * the live config excludes — the paused-agent group. Leads owned by someone
+-   * in it are never swept and their owner never gets an alert.
++   * the live Battr config excludes — "Battr Paused". Copied across so this
++   * engine mirrors that config.
++   *
++   * ⚠️ IT DOES NOT WORK, AND IT CANNOT. The condition reads `owner_group_ids`,
++   * which is normalized from `assignedUserGroupIds` / `groupIds` on the FUB
++   * person — and inspect-fub-fields confirmed against the live account that
++   * Follow Up Boss returns NEITHER. Every contact carries an empty array, the
++   * "not in group 52555" test is true for everyone, and the rule excludes
++   * nobody while reading in the config as though it protects someone.
++   *
++   * That is the dangerous shape: not a rule that errors, a rule that looks
++   * enforced. Putting an agent into the Battr Paused group in FUB and expecting
++   * their leads to stop being swept would not work, and nothing about the
++   * config would say so. The engine therefore refuses to imply otherwise — see
++   * the unenforceable-exclusion block in the report.
++   *
++   * ⇒ THE ONLY WORKING EXEMPTION IS `exemptAgents` ABOVE, BY NAME.
++   *
++   * Left in place rather than deleted because it documents what the live Battr
++   * config does, and because deleting it would erase the reason anyone knows
++   * this. Emptying the array silences the report block.
+    */
+   excludeOwnerGroupIds: [52555],
+ 
+diff --git a/scripts/battr/selftest.mjs b/scripts/battr/selftest.mjs
+index 95e7d3a..0f3f352 100644
+--- a/scripts/battr/selftest.mjs
++++ b/scripts/battr/selftest.mjs
+@@ -1479,6 +1479,19 @@ await againstFixtures({ bulkTexts: true }, ({ stdout, stderr, writes }) => {
+   check("with the full signal the report carries no incomplete-signal banner", () => {
+     assert.doesNotMatch(stdout, /Report only/);
+   });
++
++  // The fixture people carry no assignedUserGroupIds, exactly as the real FUB
++  // account does not. A rule that silently protects nobody is worse than no
++  // rule, because someone will put an agent in that group and rely on it.
++  check("the report says the owner-group exclusion protects nobody", () => {
++    assert.match(stdout, /owner-group exclusion is not protecting anyone/i);
++    assert.match(stdout, /will not stop their leads being swept/i);
++  });
++
++  check("and names the exemption that does work", () => {
++    assert.match(stdout, /exemptAgents/);
++    assert.match(stdout, /Mike Roland/);
++  });
+ });
+ 
+ // -------------------------------------------------- the real API's refusal
+-- 
+2.43.0
+
+
+From 84ae9676985ead5804f5f1683e66e863652381f2 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 4 Sep 2026 16:57:44 +0000
+Subject: [PATCH 05/10] Pin which list id is which, so a transposition cannot
+ pass silently
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Hot Leads and Warm Back Up are near-mirrors — same stages, differing only on
+lead age — but their thresholds are worlds apart. Hot Leads warns at 2 days
+and sweeps at 4; Warm Back Up warns at 10 and sweeps at 13. Swap the two ids
+and nothing errors: every list still behaves correctly, the wrong list just
+answers to the wrong number. Ten thousand Warm Back Up leads would inherit a
+4-day sweep line and the nightly run would empty the database into a pond.
+
+The ids also key into observed.mjs, where Battr's own record counts live, so
+a transposition there would silently change which list the engine is being
+measured against.
+
+No behavioural test can catch that, which is why five checks now pin the
+pairing everywhere it is written down:
+
+  - ids are unique
+  - 1144 is Hot Leads, 1104 is Warm Back Up
+  - each id carries the rules that belong to it — 1144 has the
+    created-under-10-days filter and the 2-day warning, 1104 the
+    created-over-10-days filter and the 10-day warning
+  - lists.mjs and observed.mjs agree on both id and name
+  - the record counts corroborate it: 1104 must dwarf 1144, since one is
+    every early-pipeline lead older than ten days and the other is only the
+    last ten days' worth (10,783 vs 19 on 2026-09-02)
+
+No mapping was changed. census.mjs prints list.id and list.name off the same
+object, so it cannot transpose anything on its own; the pairing comes
+entirely from lists.mjs and is self-consistent today. These checks are a
+tripwire, not a correction.
+
+battr:test: 163 checks.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01BY8icdQLaS9G2YxbAmEBDv
+---
+ scripts/battr/selftest.mjs | 70 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 70 insertions(+)
+
+diff --git a/scripts/battr/selftest.mjs b/scripts/battr/selftest.mjs
+index 0f3f352..5a26cbf 100644
+--- a/scripts/battr/selftest.mjs
++++ b/scripts/battr/selftest.mjs
+@@ -22,6 +22,7 @@ import { evaluateCondition, evaluateSet } from "./filters.mjs";
+ import { normalizeContact } from "./contact.mjs";
+ import { isDayAllowed } from "./schedule.mjs";
+ import { lists, listById, memberListsOf, reportOnlyLists } from "./lists.mjs";
++import { SOURCE_COUNTS, observedLists } from "./observed.mjs";
+ import { detectAtBats, summarizeAgents, formatRate } from "./atbats.mjs";
+ import { buildAgentDigests, deliverDigests, renderDigestText, digestSubject } from "./alerts.mjs";
+ import { describeError, fromAddress, mailConfigured } from "./email.mjs";
+@@ -358,6 +359,75 @@ check("dotted paths resolve into custom_fields", () => {
+   assert.equal(evaluateCondition(cond, contact, NOW), true);
+ });
+ 
++// ------------------------------------------------------- list identity guard
++//
++// Two lists in this config are near-mirrors of each other — Hot Leads and Warm
++// Back Up share their stages and differ only on lead age — but their thresholds
++// are worlds apart: Hot Leads warns at 2 days and sweeps at 4, Warm Back Up
++// warns at 10 and sweeps at 13. Swap the two ids and nothing errors. Ten
++// thousand Warm Back Up leads quietly inherit a 4-day sweep line, and the
++// nightly run empties the database into a pond.
++//
++// The ids also key into observed.mjs, where Battr's own record counts are
++// recorded, so a transposition there would silently reframe which list the
++// engine is being compared against.
++//
++// None of that is caught by a behavioural test, because every list still
++// behaves correctly — the wrong list just answers to the wrong number. So the
++// pairing is pinned here, in all three places it is written down.
++
++console.log("\nUnit — list identity");
++
++check("list ids are unique", () => {
++  const ids = lists.map((l) => l.id);
++  assert.equal(new Set(ids).size, ids.length, `duplicate list id in lists.mjs: ${ids.join(", ")}`);
++});
++
++check("1144 is Hot Leads and 1104 is Warm Back Up, not the other way round", () => {
++  assert.match(listById(1144).name, /Hot Leads/);
++  assert.match(listById(1104).name, /Warm Back Up/);
++});
++
++check("each id carries the rules that belong to that list, not just the label", () => {
++  // Hot Leads is the NEW-lead list (created < 10 days) on a 2/4-day clock.
++  // Warm Back Up is its mirror (created > 10 days) on a 10/13-day clock.
++  // This is what makes the pairing checkable rather than a matter of opinion.
++  const age = (list) => list.list_filters.groups[0].find((c) => c.field === "crm_created_at");
++  assert.equal(age(listById(1144)).operator, "<", "1144 must be the new-lead side");
++  assert.equal(age(listById(1104)).operator, ">", "1104 must be the aged side");
++
++  const atRiskDays = (list) => list.at_risk_filters.groups[0][0].value;
++  assert.equal(atRiskDays(listById(1144)), 2, "Hot Leads warns at 2 days");
++  assert.equal(atRiskDays(listById(1104)), 10, "Warm Back Up warns at 10 days");
++});
++
++check("observed.mjs agrees with lists.mjs about which id is which", () => {
++  for (const [id, row] of Object.entries(SOURCE_COUNTS.byList)) {
++    const list = listById(Number(id));
++    assert.ok(list, `SOURCE_COUNTS names list ${id}, which lists.mjs does not define`);
++    assert.ok(
++      list.name.includes(row.name),
++      `list ${id} is "${list.name}" in lists.mjs but "${row.name}" in observed.mjs`
++    );
++  }
++  for (const row of observedLists.filter((l) => l.listId)) {
++    const list = listById(row.listId);
++    if (!list) continue;
++    assert.equal(list.name, row.name, `list ${row.listId} is named differently in lists.mjs and observed.mjs`);
++  }
++});
++
++check("the record counts corroborate the pairing", () => {
++  // Independent of any name: Warm Back Up is every early-pipeline lead older
++  // than ten days and Hot Leads is only the last ten days' worth, so 1104 must
++  // be the large one by a wide margin. If a future export ever transposes the
++  // ids, this fails on arithmetic rather than on spelling.
++  assert.ok(
++    SOURCE_COUNTS.byList[1104].records > SOURCE_COUNTS.byList[1144].records * 100,
++    "1104 (Warm Back Up) should dwarf 1144 (Hot Leads); if not, the ids may be transposed"
++  );
++});
++
+ // --------------------------------------------------- real list rules + interlock
+ 
+ console.log("\nUnit — real list rules");
+-- 
+2.43.0
+
+
+From 8adbf2c756811fa5ae3a5e4150d74ababf960506 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 4 Sep 2026 18:34:08 +0000
+Subject: [PATCH 06/10] Match nurture timeframes by FUB's id as well as its
+ name
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The four nurture lists select leads by timeframe. They currently match on the
+timeframe NAME — and Follow Up Boss's API does not return a name.
+inspect-fub-fields confirmed it against the live account: `timeframe` is
+absent from the person payload, `timeframeId` is present.
+
+So all four lists match nobody. Nothing errors, because an empty list is not
+an error, and roughly 1,262 leads Battr audits are invisible to this engine.
+
+Matching by id is also the faithful copy. Battr's own rules address
+timeframes and stages by numeric id (crm_stage_exid IS ANY OF [98,2,99,10,8]);
+matching on the name was a stopgap from when the id map was unavailable.
+
+Membership is now two OR'd groups — name, or id — because which one is
+readable depends on the account: the name is what a CSV export carries, the
+id is what the API returns. Either alone is a silent single point of failure.
+
+TIMEFRAME_IDS ships EMPTY, and `IS ANY OF []` matches nothing, so this commit
+changes no behavior on its own. Filling it in widens the sweep population,
+since those four lists feed ⭐️ Team Leads — that is a deliberate act with a
+before-and-after dry run, not a side effect of a refactor.
+
+Two supporting fixes:
+
+  - List 1145 ("Nurtures No Timeframe") now requires BOTH the name and the id
+    to be blank. Requiring only the name meant every lead whose timeframe we
+    merely cannot READ landed in the has-no-timeframe bucket — which is the
+    account's exact state today, and would have made that list look like the
+    whole nurture database.
+  - normalizeContact separates the two conditions that used to look alike:
+    `timeframeUnresolved` (no timeframe at all — a data gap, list 1145's job)
+    and `timeframeIdOnly` (has one, we cannot read it — a translation gap,
+    fixed by filling in the map). They want opposite responses.
+
+To get the map, either route settles it without guessing: census now prints
+timeframe id → contact count database-wide, and inspect probes for a
+timeframes endpoint and for a timeframe custom field. Failing both, FUB's
+People screen exports Timeframe by name and the two join on FUB ID.
+
+The audit warns on stderr and in the report when leads carry an id with the
+map unfilled, listing the ids and their counts.
+
+battr:test: 169 checks, including one that patches a copy of list 1106 to
+prove the id branch works end to end, and one asserting the shipped map is
+still empty so nothing widens by accident.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01BY8icdQLaS9G2YxbAmEBDv
+---
+ scripts/battr-audit.mjs    | 45 +++++++++++++++++++++--
+ scripts/battr/census.mjs   | 38 +++++++++++++++++++
+ scripts/battr/contact.mjs  | 20 +++++++++-
+ scripts/battr/inspect.mjs  | 54 +++++++++++++++++++++++++++
+ scripts/battr/lists.mjs    | 75 +++++++++++++++++++++++++++++++++++---
+ scripts/battr/selftest.mjs | 66 ++++++++++++++++++++++++++++++++-
+ 6 files changed, 285 insertions(+), 13 deletions(-)
+
+diff --git a/scripts/battr-audit.mjs b/scripts/battr-audit.mjs
+index 65dd10f..56af782 100644
+--- a/scripts/battr-audit.mjs
++++ b/scripts/battr-audit.mjs
+@@ -27,7 +27,7 @@ import { rules } from "./battr/rules.mjs";
+ import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, isExemptAgent, lower, hasAny, daysBetween, readInboundEmails, findUnansweredInbound, runReportOnlyLists } from "./battr/classify.mjs";
+ import { normalizeContact } from "./battr/contact.mjs";
+ import { isDayAllowed } from "./battr/schedule.mjs";
+-import { lists, reportOnlyLists } from "./battr/lists.mjs";
++import { lists, reportOnlyLists, timeframeIdsUnmapped } from "./battr/lists.mjs";
+ import { bucketName, isSourceAudited } from "./battr/sources.mjs";
+ import { needsRules, unseenCount, OBSERVED_DATE } from "./battr/observed.mjs";
+ import {
+@@ -226,7 +226,7 @@ async function backfillTexts(fub, { results, peopleById, touchIndex, fields, sin
+ 
+ // ---------------------------------------------------------------------- report
+ 
+-function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], signalHold = null, textDiag = null, unenforceableGroupExclusion = null }) {
++function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], signalHold = null, textDiag = null, unenforceableGroupExclusion = null, timeframeGap = null }) {
+   const byAgent = new Map();
+   for (const r of results) {
+     if (r.status === "excluded" || !r.owner) continue;
+@@ -305,6 +305,23 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
+     lines.push("");
+   }
+ 
++  // A gap that costs coverage rather than causing harm, but it is invisible
++  // without saying so: these leads look exactly like leads with no timeframe.
++  if (timeframeGap?.contacts) {
++    lines.push(`> ### 🗓️ ${timeframeGap.contacts.toLocaleString()} leads have a timeframe we cannot read`);
++    lines.push(">");
++    lines.push(
++      "> Follow Up Boss returns the timeframe as a number, not a name, and the number-to-name map has not been filled in yet. These leads DO have a timeframe — we just can't tell which one, so none of the four nurture lists claims them and nothing audits them."
++    );
++    lines.push(">");
++    lines.push(`> Timeframe ids seen: ${timeframeGap.ids.map(([id, n]) => `\`${id}\` (${n})`).join(", ")}`);
++    lines.push(">");
++    lines.push(
++      "> Fix: add the Timeframe column in FUB's People screen, filter _Timeframe is not empty_, export the CSV, and match its names against the ids above. Then fill in `TIMEFRAME_IDS` in `scripts/battr/lists.mjs`. **This widens the sweep population** — the four nurture lists feed ⭐️ Team Leads — so compare a dry run before and after."
++    );
++    lines.push("");
++  }
++
+   lines.push("## Summary");
+   lines.push("");
+   lines.push(
+@@ -599,6 +616,7 @@ async function main() {
+   let results;
+   let combined = null;
+   let unenforceableGroupExclusion = null;
++  let timeframeGap = null;
+   if (rules.mode === "lists") {
+     combined = lists.find((l) => l.audit_type === "combined_contact_lists");
+     if (!combined) throw new Error("mode is 'lists' but no combined list is configured.");
+@@ -612,7 +630,26 @@ async function main() {
+     // those lists silently come back empty rather than erroring — so say so.
+     const unresolved = contacts.filter((c) => c.timeframeUnresolved).length;
+     if (unresolved) {
+-      log(`  WARNING: ${unresolved} nurture-stage contacts have no readable timeframe — the four nurture lists will under-report. Check the timeframe field name on a FUB contact.`);
++      log(`  WARNING: ${unresolved} nurture-stage contacts have no timeframe at all — they fall to list 1145 (report only, never swept).`);
++    }
++
++    // The different, fixable half: FUB DID give us a timeframe, as a number, and
++    // we have no map from that number to a name. The lead has a timeframe; we
++    // just cannot say which. Both branches of the nurture lists miss it, so it
++    // is audited by nothing — and it looks identical to a lead with no timeframe
++    // unless something says otherwise. This is that something.
++    const idOnly = contacts.filter((c) => c.timeframeIdOnly);
++    if (idOnly.length && timeframeIdsUnmapped()) {
++      const seen = new Map();
++      for (const c of idOnly) {
++        const key = c.custom_fields.fub.system_timeframeId;
++        seen.set(key, (seen.get(key) ?? 0) + 1);
++      }
++      const census = [...seen.entries()].sort((a, b) => b[1] - a[1]).map(([id, n]) => `${id}×${n}`).join(", ");
++      timeframeGap = { contacts: idOnly.length, ids: [...seen.entries()].sort((a, b) => b[1] - a[1]) };
++      log(`  WARNING: ${idOnly.length} contacts carry a timeframe ID but no name, and TIMEFRAME_IDS is unmapped.`);
++      log(`           ids seen: ${census}`);
++      log(`           Fill in TIMEFRAME_IDS in scripts/battr/lists.mjs to bring these into the nurture lists.`);
+     }
+ 
+     // The combined list excludes an owner group, but that condition reads a
+@@ -929,7 +966,7 @@ async function main() {
+   mkdirSync(LOG_DIR, { recursive: true });
+   if (sweepLog.sweeps.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
+ 
+-  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, signalHold, textDiag, unenforceableGroupExclusion });
++  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, signalHold, textDiag, unenforceableGroupExclusion, timeframeGap });
+   const reportPath = await deliverReport(markdown, { runId, dry });
+ 
+   console.log(markdown);
+diff --git a/scripts/battr/census.mjs b/scripts/battr/census.mjs
+index 2055d2d..c300c39 100644
+--- a/scripts/battr/census.mjs
++++ b/scripts/battr/census.mjs
+@@ -87,6 +87,44 @@ async function main() {
+     console.log("Every nurture contact has a timeframe. Nothing is falling through.");
+   }
+ 
++  // ------------------------------------------- timeframe id → name lookup
++  //
++  // Follow Up Boss's API returns the timeframe as a NUMBER; its UI shows a NAME.
++  // The four nurture lists need to know which number is which name, and nothing
++  // in the API says so. This table is one half of that answer.
++  //
++  // The other half comes from FUB: People → add the Timeframe column → filter
++  // "Timeframe is not empty" → export the CSV. Join the two on FUB ID, or just
++  // match the counts below against the count FUB shows for each timeframe value.
++  // Then fill in TIMEFRAME_IDS in lists.mjs.
++  const byTimeframeId = new Map();
++  const idToNames = new Map();
++  for (const c of contacts) {
++    const id = c.custom_fields.fub.system_timeframeId;
++    if (id === null || id === undefined) continue;
++    tally(byTimeframeId, id);
++    const name = c.custom_fields.fub.system_timeframe;
++    if (name) idToNames.set(id, name);
++  }
++
++  console.log(`\n\nTIMEFRAME IDS ACROSS THE WHOLE DATABASE — ${[...byTimeframeId.values()].reduce((a, b) => a + b, 0).toLocaleString()} contacts carry one`);
++  console.log("-".repeat(72));
++  if (!byTimeframeId.size) {
++    console.log("No contact carries a timeframe id. Either the field is genuinely empty across the");
++    console.log("database, or FUB is not returning it — inspect-fub-fields tells you which.");
++  } else {
++    console.log(`${"timeframe id".padEnd(16)} ${"contacts".padStart(8)}   name (blank = FUB did not send one)`);
++    for (const [id, n] of ranked(byTimeframeId)) {
++      console.log(`${String(id).padEnd(16)} ${String(n).padStart(8)}   ${idToNames.get(id) ?? ""}`);
++    }
++    if (![...idToNames.keys()].length) {
++      console.log("");
++      console.log("*** No id resolved to a name. Match the counts above against FUB's People screen:");
++      console.log("    filter Timeframe = each value in turn and compare the number of people.");
++      console.log("    Then fill in TIMEFRAME_IDS in scripts/battr/lists.mjs.");
++    }
++  }
++
+   // ------------------------------------------------- membership per list
+   console.log("\n\nWHO LANDS IN EACH LIST (membership only — no day counts applied)");
+   console.log("-".repeat(72));
+diff --git a/scripts/battr/contact.mjs b/scripts/battr/contact.mjs
+index 5ad195e..b636193 100644
+--- a/scripts/battr/contact.mjs
++++ b/scripts/battr/contact.mjs
+@@ -85,17 +85,33 @@ export function normalizeContact(person, touch, stamps = {}, { inboundCountsAsTo
+         // some accounts and an id on others, so both are carried and the rules
+         // match the name. `timeframeUnresolved` below drives a diagnostic — a
+         // timeframe we can't read would silently empty four of the six lists.
+-        system_timeframe: first(person.timeframe, person.timeframeName, null),
++        // `?? null` so an absent timeframe is null rather than undefined, matching
++        // system_timeframeId below. The filter engine treats both as missing, but a
++        // caller reading the field directly should not have to know that.
++        system_timeframe: first(person.timeframe, person.timeframeName, null) ?? null,
+         system_timeframeId: first(person.timeframeId, null) ?? null,
+         customBattrAtRiskSince: person[atRiskSinceKey] ?? null,
+       },
+     },
+ 
+-    /** True when this contact is in a nurture stage but has no readable timeframe. */
++    /** True when this contact is in a nurture stage and carries no timeframe in ANY form. */
+     timeframeUnresolved:
+       !first(person.timeframe, person.timeframeName, null) &&
++      !first(person.timeframeId, null) &&
+       ["nurture", "spoke with customer"].includes(String(first(person.stage, person.stageName, "")).toLowerCase()),
+ 
++    /**
++     * True when FUB gave us the timeframe as an ID but not as a NAME.
++     *
++     * This is the timeframe problem in one flag. The lead HAS a timeframe; we
++     * just cannot say WHICH until TIMEFRAME_IDS in lists.mjs is filled in. Until
++     * then the four nurture lists match it with neither branch and the lead is
++     * audited by nothing. That is a translation gap, not a data gap, and the two
++     * want completely different fixes — hence two separate flags.
++     */
++    timeframeIdOnly:
++      !first(person.timeframe, person.timeframeName, null) && Boolean(first(person.timeframeId, null)),
++
+     // carried through for reporting and actions, not addressed by rules
+     _raw: person,
+     _touch: touch ?? { lastOutbound: 0, lastInbound: 0 },
+diff --git a/scripts/battr/inspect.mjs b/scripts/battr/inspect.mjs
+index 30066ea..87f1591 100644
+--- a/scripts/battr/inspect.mjs
++++ b/scripts/battr/inspect.mjs
+@@ -149,6 +149,60 @@ async function main() {
+   }
+   console.log("");
+ 
++  // ---------------------------------------------------------- timeframe map
++  //
++  // FUB's API returns the timeframe as a number; its UI shows a name. The four
++  // nurture lists need to know which number is which name. If the API will hand
++  // over that map, nobody has to export a CSV and match counts by hand.
++  console.log("\nTIMEFRAME ID → NAME — is the map available from the API?");
++  console.log("-".repeat(70));
++
++  const idCounts = new Map();
++  for (const p of people) {
++    if (p.timeframeId === undefined || p.timeframeId === null) continue;
++    idCounts.set(p.timeframeId, (idCounts.get(p.timeframeId) ?? 0) + 1);
++  }
++  console.log(
++    idCounts.size
++      ? `ids on this sample of ${people.length}: ${[...idCounts.entries()].map(([id, n]) => `${id}×${n}`).join(", ")}`
++      : `no contact in this sample of ${people.length} carries a timeframeId`
++  );
++
++  // Undocumented as far as we know, so each is tried and reported rather than
++  // assumed. A 404 here costs nothing and rules a candidate out for good.
++  for (const path of ["/timeframes", "/leadTimeframes", "/personTimeframes"]) {
++    try {
++      const rows = await fub.paginate(path, {}, { max: 50 });
++      console.log(`${path}: WORKS — ${rows.length} rows`);
++      for (const row of rows.slice(0, 25)) {
++        console.log(`   ${String(row.id ?? "?").padEnd(10)} ${JSON.stringify(row.name ?? row.label ?? row)}`);
++      }
++    } catch (err) {
++      console.log(`${path}: no (${String(err.status ?? err.message).slice(0, 60)})`);
++    }
++  }
++
++  // Timeframe may instead be a custom field with a fixed set of choices.
++  try {
++    const cf = await fub.customFields();
++    const tf = cf.filter((f) => /time\s*frame/i.test(`${f.label ?? ""} ${f.name ?? ""}`));
++    if (tf.length) {
++      console.log(`\ncustomFields matching "timeframe": ${tf.length}`);
++      for (const f of tf) console.log(`   ${JSON.stringify(f).slice(0, 300)}`);
++    } else {
++      console.log(`\nNo custom field is named like "timeframe" — it is a native FUB field, not a custom one.`);
++    }
++  } catch (err) {
++    console.log(`\ncustomFields read failed: ${err.message}`);
++  }
++
++  console.log("");
++  console.log("If none of the above produced a map, fall back to FUB's own screen:");
++  console.log("  People → Columns → add Timeframe → filter 'Timeframe is not empty' → export CSV.");
++  console.log("  Join that CSV's names to the ids above on FUB ID, then fill in TIMEFRAME_IDS");
++  console.log("  in scripts/battr/lists.mjs. `npm run battr:census` prints the same ids database-wide.");
++  console.log("");
++
+   // ------------------------------------------------------------- text history
+   //
+   // The engine's touch signal rests on two reads: calls in bulk, and texts. FUB
+diff --git a/scripts/battr/lists.mjs b/scripts/battr/lists.mjs
+index c2d9f97..98d5a98 100644
+--- a/scripts/battr/lists.mjs
++++ b/scripts/battr/lists.mjs
+@@ -48,6 +48,47 @@ export const TIMEFRAMES = {
+   months12plus: ["12+ months", "12+ Months", "12 + months", "Over a year"],
+ };
+ 
++/**
++ * The SAME four timeframes, by Follow Up Boss's numeric id.
++ *
++ * ⚠️ UNFILLED. Until these arrays have numbers in them, the four nurture lists
++ * can only match on the timeframe NAME — and FUB's API does not return a name.
++ * `inspect-fub-fields` confirmed it: `timeframe` is absent from the person
++ * payload, `timeframeId` is present. So the name test finds nobody, the four
++ * nurture lists come back empty, and roughly 1,262 leads Battr audits are
++ * invisible to this engine. Nothing errors; the lists are simply empty.
++ *
++ * This is also how Battr itself does it. Its live rules address timeframes and
++ * stages by numeric id (`crm_stage_exid IS ANY OF [98,2,99,10,8]`), not by name.
++ * Matching on the id is the faithful copy; matching on the name was a stopgap
++ * from when the id map was unavailable.
++ *
++ * HOW TO FILL THIS IN — either route settles it, and neither is a guess:
++ *
++ *   1. From FUB directly. In People, add the Timeframe column, filter
++ *      "Timeframe is not empty", and export the CSV. That gives FUB ID →
++ *      timeframe NAME. Run `battr:census`, which now prints FUB ID →
++ *      timeframe ID. Join the two on FUB ID and the map falls out.
++ *
++ *   2. By counting. `battr:census` prints how many contacts carry each
++ *      timeframe id. Filter FUB's People screen to each timeframe value in
++ *      turn and compare the counts. Distinct counts pin the mapping.
++ *
++ * Fill these in, and the nurture lists start matching. That WIDENS the sweep
++ * population — those four lists are members of ⭐️ Team Leads, the list that
++ * acts — so run a dry audit and compare the before and after counts before
++ * anything goes live.
++ */
++export const TIMEFRAME_IDS = {
++  months0to3: [],
++  months3to6: [],
++  months6to12: [],
++  months12plus: [],
++};
++
++/** True while the id map is still empty — drives the loud diagnostic in the audit. */
++export const timeframeIdsUnmapped = () => Object.values(TIMEFRAME_IDS).every((ids) => !ids.length);
++
+ const contact = (field, operator, value, extra = {}) => ({ object: "battr.contact", field, operator, value, ...extra });
+ 
+ const daysSince = (field, operator, value) =>
+@@ -56,11 +97,23 @@ const daysSince = (field, operator, value) =>
+ const LAST_COMM = "custom_fields.fub.system_lastCommunication";
+ const AT_RISK_SINCE = "custom_fields.fub.customBattrAtRiskSince";
+ const TIMEFRAME = "custom_fields.fub.system_timeframe";
++const TIMEFRAME_ID = "custom_fields.fub.system_timeframeId";
+ 
+ const notInAPond = contact("crm_pond_id", "=", null, { value_data_type: "int" });
+ 
+-/** The nurture lists differ only by timeframe and thresholds. */
+-const nurtureList = ({ id, name, timeframe, atRiskDays, neglectedDays }) => ({
++/**
++ * The nurture lists differ only by timeframe and thresholds.
++ *
++ * Membership is two groups OR'd together — match on the timeframe NAME, or on
++ * its numeric ID. Belt and braces, because which one is readable depends on the
++ * FUB account: the name is what a CSV export carries, the id is what the API
++ * returns. Either alone is a single point of failure that fails silently, by
++ * matching nobody.
++ *
++ * `IS ANY OF []` matches nothing, so an unfilled TIMEFRAME_IDS map cannot widen
++ * anything by accident — it just leaves the id branch inert.
++ */
++const nurtureList = ({ id, name, timeframe, timeframeIds = [], atRiskDays, neglectedDays }) => ({
+   id,
+   name,
+   audit_type: "contact_list",
+@@ -72,6 +125,11 @@ const nurtureList = ({ id, name, timeframe, atRiskDays, neglectedDays }) => ({
+         contact(TIMEFRAME, "IS ANY OF", timeframe, { value_data_type: "text" }),
+         notInAPond,
+       ],
++      [
++        contact("stage_name", "IS ANY OF", STAGES.nurture, { value_data_type: "text" }),
++        contact(TIMEFRAME_ID, "IS ANY OF", timeframeIds, { value_data_type: "integer" }),
++        notInAPond,
++      ],
+     ],
+   },
+   at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", atRiskDays)]] },
+@@ -121,10 +179,10 @@ export const lists = [
+     neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 13)]] },
+   },
+ 
+-  nurtureList({ id: 1106, name: "🔥 Weekly Nurture", timeframe: TIMEFRAMES.months0to3, atRiskDays: 10, neglectedDays: 13 }),
+-  nurtureList({ id: 1107, name: "😎 Bi-Weekly Nurture", timeframe: TIMEFRAMES.months3to6, atRiskDays: 16, neglectedDays: 19 }),
+-  nurtureList({ id: 1108, name: "🌱 Monthly Nurture", timeframe: TIMEFRAMES.months6to12, atRiskDays: 33, neglectedDays: 36 }),
+-  nurtureList({ id: 1109, name: "👀 Quarterly Nurture", timeframe: TIMEFRAMES.months12plus, atRiskDays: 93, neglectedDays: 96 }),
++  nurtureList({ id: 1106, name: "🔥 Weekly Nurture", timeframe: TIMEFRAMES.months0to3, timeframeIds: TIMEFRAME_IDS.months0to3, atRiskDays: 10, neglectedDays: 13 }),
++  nurtureList({ id: 1107, name: "😎 Bi-Weekly Nurture", timeframe: TIMEFRAMES.months3to6, timeframeIds: TIMEFRAME_IDS.months3to6, atRiskDays: 16, neglectedDays: 19 }),
++  nurtureList({ id: 1108, name: "🌱 Monthly Nurture", timeframe: TIMEFRAMES.months6to12, timeframeIds: TIMEFRAME_IDS.months6to12, atRiskDays: 33, neglectedDays: 36 }),
++  nurtureList({ id: 1109, name: "👀 Quarterly Nurture", timeframe: TIMEFRAMES.months12plus, timeframeIds: TIMEFRAME_IDS.months12plus, atRiskDays: 93, neglectedDays: 96 }),
+ 
+   // ─── Battr runs this one; we mirror it ─────────────────────────────────────
+   // Observed on the Aida Audits screen for 2 Sep 2026:
+@@ -158,11 +216,16 @@ export const lists = [
+     /** Audited and reported, never actioned. Mirrors Battr, where it feeds no combined list. */
+     report_only: true,
+     observed: { date: "2026-09-02", total: 4200, compliant: 211, at_risk: 129, neglected: 3860 },
++    // BOTH representations must be blank. Requiring only the name would sweep
++    // every lead whose timeframe we merely cannot READ into the "has no
++    // timeframe" bucket — which is exactly the state the account is in today,
++    // and would make this list look like the whole nurture database.
+     list_filters: {
+       groups: [
+         [
+           contact("stage_name", "IS ANY OF", STAGES.nurture, { value_data_type: "text" }),
+           contact(TIMEFRAME, "=", null, { value_data_type: "text" }),
++          contact(TIMEFRAME_ID, "=", null, { value_data_type: "integer" }),
+           notInAPond,
+         ],
+       ],
+diff --git a/scripts/battr/selftest.mjs b/scripts/battr/selftest.mjs
+index 5a26cbf..9f06081 100644
+--- a/scripts/battr/selftest.mjs
++++ b/scripts/battr/selftest.mjs
+@@ -21,7 +21,7 @@ import { classify, buildTouchIndex, classifyForList, runCombinedList, isExemptAg
+ import { evaluateCondition, evaluateSet } from "./filters.mjs";
+ import { normalizeContact } from "./contact.mjs";
+ import { isDayAllowed } from "./schedule.mjs";
+-import { lists, listById, memberListsOf, reportOnlyLists } from "./lists.mjs";
++import { lists, listById, memberListsOf, reportOnlyLists, timeframeIdsUnmapped } from "./lists.mjs";
+ import { SOURCE_COUNTS, observedLists } from "./observed.mjs";
+ import { detectAtBats, summarizeAgents, formatRate } from "./atbats.mjs";
+ import { buildAgentDigests, deliverDigests, renderDigestText, digestSubject } from "./alerts.mjs";
+@@ -472,6 +472,70 @@ check("Hot Leads: a lead already in a pond is not in the list", () => {
+   assert.equal(classifyForList(quietFor(5, { assignedPondId: 900 }), hotLeads, NOW), null);
+ });
+ 
++// ------------------------------------------------------- timeframe matching
++//
++// The four nurture lists select BY timeframe. Follow Up Boss's API returns that
++// field as a NUMBER and never as a name, so a name-only rule matches nobody and
++// four of the six member lists come back empty — silently, since an empty list
++// is not an error. These checks pin both branches and the failure mode between
++// them.
++
++console.log("\nUnit — timeframe matching");
++
++const nurtureContact = (over = {}) => {
++  const c = normalizeContact(
++    { id: 7, name: "Nurture One", created: daysAgo(120), stage: "Nurture", tags: [], assignedUserId: 5, assignedTo: "Jason Shawver", ...over },
++    { lastOutbound: 0, lastInbound: 0 }
++  );
++  c.custom_fields.fub.system_lastCommunication = daysAgo(over._quietDays ?? 20);
++  return c;
++};
++
++check("a nurture lead matches its list by timeframe NAME", () => {
++  const c = nurtureContact({ timeframe: "0-3 months" });
++  assert.equal(classifyForList(c, listById(1106), NOW), "neglected", "0-3 months belongs to Weekly Nurture");
++});
++
++check("a nurture lead with only a timeframe ID matches NOTHING while the map is empty", () => {
++  // This is the live account's exact state, and the whole bug in one check.
++  const c = nurtureContact({ timeframeId: 4231 });
++  assert.equal(c.custom_fields.fub.system_timeframe, null, "FUB sent no name");
++  assert.equal(c.custom_fields.fub.system_timeframeId, 4231, "FUB sent an id");
++  for (const id of [1106, 1107, 1108, 1109]) {
++    assert.equal(classifyForList(c, listById(id), NOW), null, `list ${id} must not claim it`);
++  }
++});
++
++check("...and it is flagged as a translation gap, not as having no timeframe", () => {
++  const c = nurtureContact({ timeframeId: 4231 });
++  assert.equal(c.timeframeIdOnly, true, "the lead HAS a timeframe we cannot read");
++  assert.equal(c.timeframeUnresolved, false, "which is a different problem from having none");
++});
++
++check("...so the No-Timeframe cleanup list does not scoop it up either", () => {
++  // Requiring only a blank NAME would put every unreadable lead in list 1145 and
++  // make it look like the entire nurture database.
++  assert.equal(classifyForList(nurtureContact({ timeframeId: 4231 }), listById(1145), NOW), null);
++  assert.ok(classifyForList(nurtureContact({}), listById(1145), NOW), "a truly blank lead still lands there");
++});
++
++check("filling in TIMEFRAME_IDS is all it takes to fix it", () => {
++  // Proves the id branch is wired end to end, without changing the shipped map.
++  const patched = structuredClone(listById(1106));
++  const idCondition = patched.list_filters.groups[1].find((c) => c.field.endsWith("system_timeframeId"));
++  idCondition.value = [4231];
++
++  const c = nurtureContact({ timeframeId: 4231 });
++  assert.equal(classifyForList(c, patched, NOW), "neglected", "the id branch claims it once mapped");
++
++  const other = nurtureContact({ timeframeId: 9999 });
++  assert.equal(classifyForList(other, patched, NOW), null, "and only the mapped id, not any id");
++});
++
++check("the shipped map is still empty, so nothing widened by accident", () => {
++  assert.equal(timeframeIdsUnmapped(), true, "filling this in widens the sweep population — do it deliberately");
++});
++
+ check("Active Leads uses its own 6/9 thresholds, not Hot Leads' 2/4", () => {
+   const base = { id: 2, created: daysAgo(40), stage: "Lead", tags: [], assignedUserId: 5, lastVisit: daysAgo(2) };
+   const at = normalizeContact(base, { lastOutbound: 0 });
+-- 
+2.43.0
+
+
+From 3375eb03f45f2a373d062dbea230ebb3b1efc0f2 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 4 Sep 2026 18:45:09 +0000
+Subject: [PATCH 07/10] Correct six list rules against Battr's own rule screens
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Mike sent screenshots of all fifteen Aida List Summary panels from 3 Sep
+2026. They are the first look we have had at what Battr actually selects,
+rather than what we reverse-engineered from each list's compliance split.
+Six of our rules were wrong. None of them could have caused a wrong sweep —
+every corrected list is report-only, and the interlock gap made us stricter
+about flagging, not looser about acting — but every one of them was
+reporting on the wrong people.
+
+MEMBERSHIP, corrected:
+
+  YLOPO IMPORTANT  we had "source matches Ylopo". It is
+                   tags CONTAINS ANY YPRIORITY, HANDRAISER, CALL_NOW=YES,
+                   Y_SELLER_REPORT_ENGAGED, Y_SELLER_REPORT_VIEWED.
+                   Thresholds 30/60, not the 7/10 we inferred.
+
+  Zillow Important we had "source matches Zillow". It is
+                   tags CONTAINS ANY Zillow High Intent Buyer / Seller /
+                   Zillow High Intent, AND stage IS NONE OF the five
+                   live-business stages, AND site activity inside 14 days.
+                   Our 5/8 thresholds were right.
+
+  Sphere & Past    we had five lead sources OR stage "Past Client". It is
+    Clients        stage IS ANY OF Sphere, Closed. Thresholds 93/96, not 90/93.
+
+  Current &        we had four stage names that do not exist in this account
+    Upcoming       (Active Client, Pending, Current Client, Upcoming Client)
+    Clients        and 14/30 as a placeholder. It is the seven real
+                   live-business stages on a 10/13 clock.
+
+  Active Leads     we had early-pipeline plus nurture. It is Attempted
+                   Contact, Lead, Spoke with Customer, Sphere, Closed — no
+                   Nurture, and it reaches into closed business.
+
+Two of those four were source lists in our model and tag lists in Battr's.
+That is not a detail: source says where a lead came from once, a tag says
+the lead just raised a hand. We were reporting on the wrong population and
+the counts were close enough not to look wrong.
+
+THE WARN-FIRST INTERLOCK, restored:
+
+Every nurture list and Warm Back Up have a Neglected tier of
+"Last Communication Days Ago > N AND At Risk Notified Date Is Not Empty".
+Ours had only the first half. No extra sweeps resulted — the sweep loop
+enforces requireWarningBeforeSweep independently — but our Neglected counts
+ran ahead of Battr's, and a reconciliation that disagrees for a known reason
+is worth much less than one that agrees.
+
+AI TEXT REPLIES is no longer a named gap: pond NONE and tags CONTAINS ANY
+AI_ENGAGED, AI_NEEDS_FOLLOW_UP, 30/60, no actions. Added as list 1150,
+report-only. Fourteen of the fifteen audits are now modelled; only Database
+Health Score (a 13-source roll-up) still has no rule.
+
+CLEAN UP: Nurtures No Timeframe is confirmed at >15 / >30 with every action
+bucket empty, settling a contradiction between two of our own files about
+whether those numbers had been read or inferred. They were read.
+
+Also learned, and worth more than the corrections: the combined list's
+exclusion reads "Agent's Assigned FUB Teams DOES NOT CONTAIN ANY Battr
+Paused". A FUB TEAM on the assigned agent, not a Battr user group — a
+first-class FUB concept that may well be readable from the API under a name
+we have not tried. inspect-fub-fields now probes for it. Sweep confirmation
+emails go to mike@therolandteam.com; audit alerts go to the agent only.
+
+Baselines moved to the 3 Sep snapshot, which is complete for all fifteen.
+Two observed-count assertions now check the shape rather than a literal — a
+test that must be edited on every snapshot teaches people to edit tests.
+
+battr:test: 172 checks. The corrections were caught BY the suite: sixteen
+checks went red on the old rules, including "NO LIST IS SILENTLY EMPTY",
+whose Sphere & Past Clients fixture stopped matching the moment the rule
+became the real one.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01BY8icdQLaS9G2YxbAmEBDv
+---
+ scripts/battr/lists.mjs    | 155 +++++++++++++++++++++++++++----------
+ scripts/battr/observed.mjs |  90 +++++++++++----------
+ scripts/battr/selftest.mjs | 103 ++++++++++++++++++++----
+ 3 files changed, 249 insertions(+), 99 deletions(-)
+
+diff --git a/scripts/battr/lists.mjs b/scripts/battr/lists.mjs
+index 98d5a98..8df96f5 100644
+--- a/scripts/battr/lists.mjs
++++ b/scripts/battr/lists.mjs
+@@ -133,7 +133,16 @@ const nurtureList = ({ id, name, timeframe, timeframeIds = [], atRiskDays, negle
+     ],
+   },
+   at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", atRiskDays)]] },
+-  neglected_filters: { groups: [[daysSince(LAST_COMM, ">", neglectedDays)]] },
++  // The warn-first interlock, read off Battr's own rule screens on 3 Sep 2026:
++  // every nurture list's Neglected tier is
++  //   `Last Communication Days Ago > N AND At Risk Notified Date Is Not Empty`.
++  // It used to be missing here, which did not cause extra sweeps — the sweep
++  // loop enforces requireWarningBeforeSweep independently — but it did inflate
++  // the Neglected count against Battr's, and a reconciliation that disagrees
++  // for a known reason is worth less than one that agrees.
++  neglected_filters: {
++    groups: [[daysSince(LAST_COMM, ">", neglectedDays), contact(AT_RISK_SINCE, "!=", null, { value_data_type: "text" })]],
++  },
+ });
+ 
+ export const lists = [
+@@ -176,7 +185,10 @@ export const lists = [
+       ],
+     },
+     at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 10)]] },
+-    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 13)]] },
++    // Same interlock as the nurture lists — confirmed on the rule screen 3 Sep 2026.
++    neglected_filters: {
++      groups: [[daysSince(LAST_COMM, ">", 13), contact(AT_RISK_SINCE, "!=", null, { value_data_type: "text" })]],
++    },
+   },
+ 
+   nurtureList({ id: 1106, name: "🔥 Weekly Nurture", timeframe: TIMEFRAMES.months0to3, timeframeIds: TIMEFRAME_IDS.months0to3, atRiskDays: 10, neglectedDays: 13 }),
+@@ -215,7 +227,10 @@ export const lists = [
+     is_active: true,
+     /** Audited and reported, never actioned. Mirrors Battr, where it feeds no combined list. */
+     report_only: true,
+-    observed: { date: "2026-09-02", total: 4200, compliant: 211, at_risk: 129, neglected: 3860 },
++    // Thresholds CONFIRMED on the rule screen 3 Sep 2026 (>15 / >30, no actions),
++    // settling a contradiction between two of our own files about whether they
++    // had been read or inferred. They were read. No interlock on this one.
++    observed: { date: "2026-09-03", total: 4198, compliant: 208, at_risk: 121, neglected: 3869 },
+     // BOTH representations must be blank. Requiring only the name would sweep
+     // every lead whose timeframe we merely cannot READ into the "has no
+     // timeframe" bucket — which is exactly the state the account is in today,
+@@ -244,7 +259,7 @@ export const lists = [
+     // shows 10,783 on the same screen, so the combined list sheds roughly 92%
+     // of its members; in our model that is the lead-bucket exclusion plus the
+     // protected-source check. If a dry run lands near 866, the model is right.
+-    observed: { date: "2026-09-02", total: 866, compliant: 842, at_risk: 17, neglected: 7 },
++    observed: { date: "2026-09-03", total: 865, compliant: 843, at_risk: 18, neglected: 4 },
+     // Pool the six, then apply two exclusions: one lead bucket, and the paused
+     // owner group whose leads are never swept.
+     list_filters: {
+@@ -252,6 +267,14 @@ export const lists = [
+         [
+           { object: "battr.aida_lists", field: "source_list_ids", operator: "IS ANY OF", value: [1104, 1106, 1107, 1108, 1109, 1144], value_data_type: "integer" },
+           contact("lead_bucket_id", "!=", 82, { object: "battr.lead_buckets", value_data_type: "integer" }),
++          // Battr's rule screen words this as
++          //   "Agent's Assigned FUB Teams DOES NOT CONTAIN ANY Battr Paused"
++          // — a FUB TEAM on the assigned agent, not a Battr user group. That is a
++          // better lead than we had: teams are a first-class FUB concept, so the
++          // membership may be readable from the API under a name we have not
++          // tried. inspect-fub-fields now probes for it. Until something
++          // populates owner_group_ids, this condition is true for everyone and
++          // excludes nobody — see the report's unenforceable-exclusion block.
+           contact("owner_group_ids", "DOES NOT CONTAIN ANY", [52555], { value_data_type: "integer" }),
+         ],
+       ],
+@@ -322,22 +345,23 @@ export const lists = [
+     audit_type: "contact_list",
+     is_active: true,
+     report_only: true,
+-    thresholds_inferred: true,
+-    observed: { date: "2026-09-02", total: 3333, compliant: 356, at_risk: 2, neglected: 2975 },
+-    // 11% compliant / 0% at risk / 89% neglected. A 3-record at-risk band across
+-    // 3,333 leads means a long threshold with the usual narrow gap — a quarterly
+-    // touch, not a weekly one.
++    observed: { date: "2026-09-03", total: 3332, compliant: 356, at_risk: 2, neglected: 2974 },
++    // CORRECTED from Battr's rule screen, 3 Sep 2026. We had modelled this as a
++    // SOURCE list (SOI, Sphere, Past Client, Referral, …) with 90/93 thresholds,
++    // reverse-engineered from the compliance split. Both were wrong: it is a
++    // STAGE list, and the thresholds are 93/96. The population came out roughly
++    // the right size for the wrong reason, which is exactly why a guess that
++    // reconciles is not the same as a guess that is correct.
+     list_filters: {
+       groups: [
+         [
+-          contact("source_normalized", "IS ANY OF", ["SOI", "Sphere", "Past Client", "Referral", "Barrett Financial Referral"], { value_data_type: "text" }),
++          contact("stage_name", "IS ANY OF", ["Sphere", "Closed"], { value_data_type: "text" }),
+           notInAPond,
+         ],
+-        [contact("stage_name", "IS ANY OF", ["Past Client"], { value_data_type: "text" }), notInAPond],
+       ],
+     },
+-    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 90)]] },
+-    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 93)]] },
++    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 93)]] },
++    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 96)]] },
+   },
+ 
+   {
+@@ -346,18 +370,25 @@ export const lists = [
+     audit_type: "contact_list",
+     is_active: true,
+     report_only: true,
+-    thresholds_inferred: true,
+-    observed: { date: "2026-09-02", total: 127, compliant: 74, at_risk: 7, neglected: 46 },
+-    // 58% compliant says this population is actively worked, so the threshold is
+-    // short. MATCHES ANY is a substring test, so every current Ylopo source
+-    // (Ylopo, Ylopo Seller, Ylopo LSA, Ylopo Adwords, Open House (Ylopo)) is
+-    // covered and a new one needs no edit. CONTAINS ANY would compare whole
+-    // values and match none of them.
++    observed: { date: "2026-09-03", total: 116, compliant: 64, at_risk: 8, neglected: 44 },
++    // CORRECTED from Battr's rule screen, 3 Sep 2026. We had modelled this on the
++    // Ylopo SOURCE and guessed 7/10 from the compliance split. It is neither: the
++    // list keys on Ylopo's INTENT TAGS, and the thresholds are 30/60.
++    //
++    // The distinction matters more than the numbers. Source says where a lead
++    // came from; these tags say the lead just did something — raised a hand,
++    // asked to be called now, opened the seller report. This is an intent list
++    // wearing a source list's name.
+     list_filters: {
+-      groups: [[contact("source_normalized", "MATCHES ANY", ["Ylopo"], { value_data_type: "text" }), notInAPond]],
++      groups: [
++        [
++          notInAPond,
++          contact("tags_array", "CONTAINS ANY", ["YPRIORITY", "HANDRAISER", "CALL_NOW=YES", "Y_SELLER_REPORT_ENGAGED", "Y_SELLER_REPORT_VIEWED"], { value_data_type: "text" }),
++        ],
++      ],
+     },
+-    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 7)]] },
+-    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 10)]] },
++    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 30)]] },
++    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 60)]] },
+   },
+ 
+   {
+@@ -366,12 +397,21 @@ export const lists = [
+     audit_type: "contact_list",
+     is_active: true,
+     report_only: true,
+-    thresholds_inferred: true,
+-    observed: { date: "2026-09-02", total: 43, compliant: 14, at_risk: 5, neglected: 24 },
+-    // Substring again: Zillow, Zillow.com, Zillow Flex, Zillow Preferred,
+-    // Zillow Home Loans, Zillow-Long Form, Zillowlongform and the rest.
++    observed: { date: "2026-09-03", total: 44, compliant: 16, at_risk: 2, neglected: 26 },
++    // CORRECTED from Battr's rule screen, 3 Sep 2026. Same story as YLOPO: we had
++    // it as a Zillow SOURCE list; it is a Zillow HIGH-INTENT TAG list, and it
++    // carries two conditions we had no way to guess — leads already in the
++    // live-business stages are excluded, and the lead must have been active on
++    // the site in the last fortnight. Our 5/8 thresholds were right.
+     list_filters: {
+-      groups: [[contact("source_normalized", "MATCHES ANY", ["Zillow"], { value_data_type: "text" }), notInAPond]],
++      groups: [
++        [
++          contact("tags_array", "CONTAINS ANY", ["Zillow High Intent Buyer", "Zillow High Intent Seller", "Zillow High Intent"], { value_data_type: "text" }),
++          contact("stage_name", "IS NONE OF", ["Showing Homes", "Active Listing", "Listing Agreement", "Under Contract", "Submitting Offers"], { value_data_type: "text" }),
++          daysSince("last_activity_at", "<", 14),
++          notInAPond,
++        ],
++      ],
+     },
+     at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 5)]] },
+     neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 8)]] },
+@@ -379,30 +419,54 @@ export const lists = [
+ 
+   {
+     id: 1149,
+-    name: "Current & Upcoming Clients",
++    name: "📖 Current & Upcoming Clients",
+     audit_type: "contact_list",
+     is_active: true,
+     report_only: true,
+-    thresholds_inferred: true,
+-    // The one list on Battr's audits screen we had never seen. It is not a
+-    // member of Team Leads, so it cannot sweep — and its population is live and
+-    // closed business, every stage of which is already on rules.protectedStages.
+-    // Those two facts are independent, which is the point: a lead here is
+-    // protected by the list not acting AND by the stage exclusion, so no single
+-    // change can put a client under contract into a pond.
++    observed: { date: "2026-09-03", total: 451, compliant: 176, at_risk: 4, neglected: 271 },
++    // CORRECTED from Battr's rule screen, 3 Sep 2026. We had guessed the stage
++    // names (Active Client, Pending, Current Client, Upcoming Client — none of
++    // which exist) and used 14/30 as a placeholder. The real list runs the whole
++    // live-business pipeline on a 10/13 clock, the same clock as Warm Back Up.
+     //
+-    // Thresholds are a placeholder. A client relationship going quiet is worth
+-    // reporting on, but we have no rule screen for it and no basis for a number.
++    // Still not a member of Team Leads, so it cannot sweep, and every stage here
++    // is on rules.protectedStages as well. Those two protections are
++    // independent, which is the point: no single change puts a client under
++    // contract into a pond.
+     list_filters: {
+       groups: [
+         [
+-          contact("stage_name", "IS ANY OF", ["Active Client", "Under Contract", "Pending", "Current Client", "Upcoming Client"], { value_data_type: "text" }),
++          contact("stage_name", "IS ANY OF", ["Submitting Offers", "Showing Homes", "Listing Agreement", "Active Listing", "Under Contract", "Appointment Set", "Met with Customer"], { value_data_type: "text" }),
+           notInAPond,
+         ],
+       ],
+     },
+-    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 14)]] },
+-    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 30)]] },
++    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 10)]] },
++    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 13)]] },
++  },
++
++  // ─── The list we could never model, now read off the rule screen ───────────
++  {
++    id: 1150,
++    name: "🎤 AI TEXT REPLIES",
++    audit_type: "contact_list",
++    is_active: true,
++    report_only: true,
++    observed: { date: "2026-09-03", total: 10, compliant: 8, at_risk: 0, neglected: 2 },
++    // Ten records, and previously marked "needs-rules" because guessing a
++    // selector for nine leads was not worth the risk of guessing wrong. The rule
++    // screen settles it: these are leads the AI texter has engaged or flagged for
++    // follow-up. Reported, never actioned.
++    list_filters: {
++      groups: [
++        [
++          notInAPond,
++          contact("tags_array", "CONTAINS ANY", ["AI_ENGAGED", "AI_NEEDS_FOLLOW_UP"], { value_data_type: "text" }),
++        ],
++      ],
++    },
++    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 30)]] },
++    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 60)]] },
+   },
+ 
+   // ─── NOT a member of Team Leads ────────────────────────────────────────────
+@@ -420,11 +484,16 @@ export const lists = [
+     // 49 neglected (36%).
+     is_active: true,
+     report_only: true,
+-    observed: { date: "2026-09-02", total: 135, compliant: 65, at_risk: 21, neglected: 49 },
++    observed: { date: "2026-09-03", total: 131, compliant: 67, at_risk: 18, neglected: 46 },
++    // Stage list CORRECTED from Battr's rule screen, 3 Sep 2026. We had it as
++    // early-pipeline plus nurture; the real list is Attempted Contact, Lead,
++    // Spoke with Customer, Sphere and Closed — no Nurture, and it reaches all the
++    // way into closed business. Anyone who came back to the site in the last ten
++    // days, whatever they are to us now.
+     list_filters: {
+       groups: [
+         [
+-          contact("stage_name", "IS ANY OF", [...STAGES.earlyPipeline, ...STAGES.nurture], { value_data_type: "text" }),
++          contact("stage_name", "IS ANY OF", ["Attempted Contact", "Lead", "Spoke with Customer", "Sphere", "Closed"], { value_data_type: "text" }),
+           daysSince("last_website_visit", "<", 10),
+           notInAPond,
+         ],
+diff --git a/scripts/battr/observed.mjs b/scripts/battr/observed.mjs
+index 65761a4..04dd314 100644
+--- a/scripts/battr/observed.mjs
++++ b/scripts/battr/observed.mjs
+@@ -18,7 +18,7 @@
+  * is wrong shows up as a number that is wrong.
+  */
+ 
+-export const OBSERVED_DATE = "2026-09-02";
++export const OBSERVED_DATE = "2026-09-03";
+ 
+ /** The screen said 15 scheduled audits ran that day. All 15 are listed below. */
+ export const OBSERVED_AUDIT_COUNT = 15;
+@@ -71,10 +71,10 @@ export const observedLists = [
+     name: "📊 Database Health Score",
+     type: "combined",
+     sources: 13,
+-    total: 20099,
+-    compliant: 1773,
+-    at_risk: 10577,
+-    neglected: 7749,
++    total: 20090,
++    compliant: 1777,
++    at_risk: 10560,
++    neglected: 7753,
+     status: "needs-rules",
+     listId: null,
+     note: "A combined list over 13 source lists. Cannot be modeled without knowing which 13. Reporting roll-up — it is not the sweep list.",
+@@ -83,10 +83,10 @@ export const observedLists = [
+     name: "⭐️ Team Leads (Nudges & Sweeps)",
+     type: "combined",
+     sources: 6,
+-    total: 866,
+-    compliant: 842,
+-    at_risk: 17,
+-    neglected: 7,
++    total: 865,
++    compliant: 843,
++    at_risk: 18,
++    neglected: 4,
+     status: "modeled",
+     listId: 9001,
+     note: "THE sweep list, and the only one that acts. Its six members are CONFIRMED and are exactly the six we model. They pool 12,064 records; the combined list audits 866, shedding 92.8%. See SOURCE_COUNTS.",
+@@ -94,10 +94,10 @@ export const observedLists = [
+   {
+     name: "🌤️ Warm Back Up",
+     type: "contact",
+-    total: 10783,
+-    compliant: 108,
+-    at_risk: 10120,
+-    neglected: 555,
++    total: 10787,
++    compliant: 112,
++    at_risk: 10118,
++    neglected: 557,
+     status: "modeled",
+     listId: 1104,
+     note: "Member of Team Leads, and 89.4% of the pooled 12,064 — this is the list the exclusions have to cut down. The 94% at-risk / 5% neglected split is the warn-first interlock at work: a lead cannot be counted neglected until an earlier run stamped it.",
+@@ -105,10 +105,10 @@ export const observedLists = [
+   {
+     name: "🗓️ CLEAN UP: Nurtures No Timeframe",
+     type: "contact",
+-    total: 4200,
+-    compliant: 211,
+-    at_risk: 129,
+-    neglected: 3860,
++    total: 4198,
++    compliant: 208,
++    at_risk: 121,
++    neglected: 3869,
+     status: "modeled",
+     listId: 1145,
+     note: "Not a member of Team Leads — 4,200 records could not feed an 866-record list. Rule confirmed: at risk >15 days, neglected >30, and every action bucket empty. Monitoring only in Battr, monitoring only here.",
+@@ -116,10 +116,10 @@ export const observedLists = [
+   {
+     name: "💛 Sphere & Past Clients",
+     type: "contact",
+-    total: 3333,
++    total: 3332,
+     compliant: 356,
+     at_risk: 2,
+-    neglected: 2975,
++    neglected: 2974,
+     status: "modeled",
+     listId: 1146,
+     note: "Reported, never swept — these sources are on our protected list and 89% neglected would be a catastrophe if it acted. The 0% at-risk band means a long threshold with a narrow gap.",
+@@ -127,10 +127,10 @@ export const observedLists = [
+   {
+     name: "❗Active Leads",
+     type: "contact",
+-    total: 135,
+-    compliant: 65,
+-    at_risk: 21,
+-    neglected: 49,
++    total: 131,
++    compliant: 67,
++    at_risk: 18,
++    neglected: 46,
+     status: "modeled",
+     listId: 1105,
+     note: "Feeds Database Health Score, not Team Leads. Reported, never swept.",
+@@ -138,21 +138,21 @@ export const observedLists = [
+   {
+     name: "🎤 AI TEXT REPLIES",
+     type: "contact",
+-    total: 9,
+-    compliant: 7,
++    total: 10,
++    compliant: 8,
+     at_risk: 0,
+     neglected: 2,
+-    status: "needs-rules",
+-    listId: null,
+-    note: "Nine records. Almost certainly leads an AI texter has replied to, but the selector is a guess and nine records is not worth guessing at.",
++    status: "modeled",
++    listId: 1150,
++    note: "Rule read off Battr's screen 3 Sep 2026 — tags AI_ENGAGED / AI_NEEDS_FOLLOW_UP, 30/60 thresholds, no actions. Was 'needs-rules' because guessing a selector for ten leads was not worth guessing wrong.",
+   },
+   {
+     name: "‼️ YLOPO IMPORTANT",
+     type: "contact",
+-    total: 127,
+-    compliant: 74,
+-    at_risk: 7,
+-    neglected: 46,
++    total: 116,
++    compliant: 64,
++    at_risk: 8,
++    neglected: 44,
+     status: "modeled",
+     listId: 1147,
+     note: "Reported, never swept. Population modeled from the Ylopo sources; thresholds inferred from the 58/6/36 split.",
+@@ -160,27 +160,31 @@ export const observedLists = [
+   {
+     name: "🏹 Zillow Important",
+     type: "contact",
+-    total: 43,
+-    compliant: 14,
+-    at_risk: 5,
+-    neglected: 24,
++    total: 44,
++    compliant: 16,
++    at_risk: 2,
++    neglected: 26,
+     status: "modeled",
+     listId: 1148,
+     note: "Reported, never swept. Population modeled from the Zillow sources; thresholds inferred.",
+   },
+   // ─── The six rows below the fold, captured 3 Sep ──────────────────────────
+   // Five are member lists audited in their own right; only one was new.
+-  { name: "🔥 Weekly Nurture", type: "contact", total: 144, status: "modeled", listId: 1106, note: "Member of Team Leads. Count from the source-counts dropdown." },
+-  { name: "😎 Bi-Weekly Nurture", type: "contact", total: 226, status: "modeled", listId: 1107, note: "Member of Team Leads." },
+-  { name: "🌱 Monthly Nurture", type: "contact", total: 355, status: "modeled", listId: 1108, note: "Member of Team Leads." },
+-  { name: "👀 Quarterly Nurture", type: "contact", total: 537, status: "modeled", listId: 1109, note: "Member of Team Leads." },
+-  { name: "🌶️ Hot Leads", type: "contact", total: 19, status: "modeled", listId: 1144, note: "Member of Team Leads. Nineteen records — the tightest list, and the one carrying the 2/4 day thresholds." },
++  { name: "🔥 Weekly Nurture", type: "contact", total: 145, compliant: 72, at_risk: 71, neglected: 2, status: "modeled", listId: 1106, note: "Member of Team Leads. Count from the source-counts dropdown." },
++  { name: "😎 Bi-Weekly Nurture", type: "contact", total: 223, compliant: 141, at_risk: 81, neglected: 1, status: "modeled", listId: 1107, note: "Member of Team Leads." },
++  { name: "🌱 Monthly Nurture", type: "contact", total: 356, compliant: 280, at_risk: 76, neglected: 0, status: "modeled", listId: 1108, note: "Member of Team Leads." },
++  { name: "👀 Quarterly Nurture", type: "contact", total: 537, compliant: 465, at_risk: 72, neglected: 0, status: "modeled", listId: 1109, note: "Member of Team Leads." },
++  { name: "🌶️ Hot Leads", type: "contact", total: 14, compliant: 8, at_risk: 5, neglected: 1, status: "modeled", listId: 1144, note: "Member of Team Leads. Nineteen records — the tightest list, and the one carrying the 2/4 day thresholds." },
+   {
+-    name: "Current & Upcoming Clients",
++    name: "📖 Current & Upcoming Clients",
+     type: "contact",
++    total: 451,
++    compliant: 176,
++    at_risk: 4,
++    neglected: 271,
+     status: "modeled",
+     listId: 1149,
+-    note: "The only genuinely new list on the screen. Not a member of Team Leads, so it cannot sweep. Modelled as the live-business stages, every one of which is already on protectedStages — so its leads are doubly protected. Record count and thresholds not yet captured.",
++    note: "Rule read off Battr's screen 3 Sep 2026. Not a member of Team Leads, so it cannot sweep, and every stage it selects is on protectedStages as well. Our earlier model guessed stage names that do not exist in this account (Active Client, Pending, Current Client) and used 14/30 as a placeholder; the real list is the live-business pipeline on Warm Back Up's 10/13 clock.",
+   },
+ ];
+ 
+diff --git a/scripts/battr/selftest.mjs b/scripts/battr/selftest.mjs
+index 9f06081..eba943e 100644
+--- a/scripts/battr/selftest.mjs
++++ b/scripts/battr/selftest.mjs
+@@ -180,6 +180,9 @@ check("an email-only lead reads as neglected — intended, not a bug", () => {
+     { id: 79, stage: "Lead", created: daysAgo(60), assignedUserId: 5, assignedTo: "Some Agent", tags: [], lastCommunication: daysAgo(1) },
+     { lastOutbound: 0, lastInbound: 0 }
+   );
++  // Warned on an earlier run, so the interlock is satisfied and the email-only
++  // lead reaches Neglected — which is the point of this check.
++  c.custom_fields.fub.customBattrAtRiskSince = "2026-08-01";
+   assert.equal(classifyForList(c, listById(1104), NOW), "neglected");
+ });
+ 
+@@ -488,6 +491,9 @@ const nurtureContact = (over = {}) => {
+     { lastOutbound: 0, lastInbound: 0 }
+   );
+   c.custom_fields.fub.system_lastCommunication = daysAgo(over._quietDays ?? 20);
++  // Warned on an earlier run, so the nurture lists' warn-first interlock is
++  // satisfied and these checks exercise membership rather than the interlock.
++  c.custom_fields.fub.customBattrAtRiskSince = "2026-08-01";
+   return c;
+ };
+ 
+@@ -602,6 +608,7 @@ check("a lead with a real timeframe is not in the CLEAN UP list", () => {
+     { lastOutbound: new Date(daysAgo(45)).getTime(), lastInbound: 0 }
+   );
+   assert.equal(classifyForList(known, listById(1145), NOW), null);
++  known.custom_fields.fub.customBattrAtRiskSince = "2026-08-01";
+   assert.equal(classifyForList(known, listById(1106), NOW), "neglected");
+ });
+ 
+@@ -660,10 +667,16 @@ check("NO LIST IS SILENTLY EMPTY — every list matches a contact it should", ()
+     [1108, build({ stage: "Nurture", timeframe: "6-12 months" }, 40), "Monthly"],
+     [1109, build({ stage: "Nurture", timeframe: "12+ months" }, 100), "Quarterly"],
+     [1145, build({ stage: "Nurture" }, 40), "CLEAN UP: Nurtures No Timeframe"],
+-    [1146, build({ stage: "Lead", source: "SOI" }, 200), "Sphere & Past Clients"],
+-    [1147, build({ stage: "Lead", source: "Ylopo Seller" }, 20), "YLOPO IMPORTANT"],
+-    [1148, build({ stage: "Lead", source: "Zillow Flex" }, 20), "Zillow Important"],
+-    [1105, build({ stage: "Nurture", lastVisit: daysAgo(2) }, 20), "Active Leads"],
++    // The five below are built from Battr's own rule screens (3 Sep 2026), not
++    // from what we used to assume. Four of them keyed on the lead's SOURCE or on
++    // stage names that do not exist in this account; they key on TAGS and on the
++    // real stage names. A fixture built from the old assumption would have
++    // matched nothing — which is exactly what this check exists to catch.
++    [1146, build({ stage: "Sphere" }, 200), "Sphere & Past Clients"],
++    [1147, build({ stage: "Lead", tags: ["HANDRAISER"] }, 40), "YLOPO IMPORTANT"],
++    [1148, build({ stage: "Lead", tags: ["Zillow High Intent Buyer"], lastActivity: daysAgo(2) }, 20), "Zillow Important"],
++    [1150, build({ stage: "Lead", tags: ["AI_NEEDS_FOLLOW_UP"] }, 40), "AI TEXT REPLIES"],
++    [1105, build({ stage: "Spoke with Customer", lastVisit: daysAgo(2) }, 20), "Active Leads"],
+     [1149, build({ stage: "Under Contract" }, 40), "Current & Upcoming Clients"],
+   ];
+ 
+@@ -674,6 +687,36 @@ check("NO LIST IS SILENTLY EMPTY — every list matches a contact it should", ()
+   }
+ });
+ 
++check("the tag-driven lists key on tags, not on the lead's source", () => {
++  // Four lists were modelled on the lead SOURCE and turned out, on Battr's rule
++  // screens, to key on intent TAGS. The distinction is the whole point of those
++  // lists: source says where a lead came from once; these tags say the lead just
++  // did something. A future edit that "simplifies" them back to a source match
++  // would look right and select the wrong people.
++  const keysOnTags = (id) =>
++    listById(id).list_filters.groups.some((g) => g.some((c) => c.field === "tags_array"));
++  const keysOnSource = (id) =>
++    listById(id).list_filters.groups.some((g) => g.some((c) => c.field === "source_normalized"));
++
++  for (const id of [1147, 1148, 1150]) {
++    assert.ok(keysOnTags(id), `${listById(id).name} must select on tags`);
++    assert.ok(!keysOnSource(id), `${listById(id).name} must NOT select on source`);
++  }
++});
++
++check("a lead already in live business is out of the Zillow intent list", () => {
++  // Battr's rule excludes the live-business stages explicitly. Without it, a
++  // client under contract who once clicked a Zillow listing would be reported as
++  // a neglected lead every night.
++  const build = (stage) =>
++    normalizeContact(
++      { id: 950, stage, tags: ["Zillow High Intent Buyer"], created: daysAgo(200), assignedUserId: 5, lastActivity: daysAgo(2) },
++      { lastOutbound: new Date(daysAgo(30)).getTime(), lastInbound: 0 }
++    );
++  assert.ok(classifyForList(build("Lead"), listById(1148), NOW), "an ordinary lead is in");
++  assert.equal(classifyForList(build("Under Contract"), listById(1148), NOW), null, "a client under contract is out");
++});
++
+ check("every operator used by a real list is one the evaluator implements", () => {
+   // A typo'd operator throws at evaluation time, deep inside a run. Catch it here.
+   const operators = new Set();
+@@ -712,11 +755,19 @@ check("a client under contract is protected twice over", () => {
+ 
+ check("every modelled list carries Battr's observed numbers to check itself against", () => {
+   for (const list of reportOnlyLists()) {
+-    if (list.id === 1149) continue; // count not captured yet — recorded as such in observed.mjs
+     assert.ok(list.observed?.total > 0, `${list.name} needs an observed baseline`);
+   }
+   const combined = lists.find((l) => l.audit_type === "combined_contact_lists");
+-  assert.equal(combined.observed.total, 866, "the reconciliation number");
++  // Not pinned to a literal: the baseline is re-read off Battr's screen from
++  // time to time, and a test that has to be edited on every snapshot teaches
++  // people to edit tests. What must hold is the SHAPE — the combined list is a
++  // small fraction of what its members pool, which is what says the exclusions
++  // are doing their job.
++  assert.ok(combined.observed.total > 500 && combined.observed.total < 1500, "the reconciliation number");
++  assert.ok(
++    combined.observed.compliant + combined.observed.at_risk + combined.observed.neglected === combined.observed.total,
++    "the compliance split must add up to the total"
++  );
+ });
+ 
+ check("the report-only lists are counted, not actioned", () => {
+@@ -727,7 +778,7 @@ check("the report-only lists are counted, not actioned", () => {
+   const rows = runReportOnlyLists([blank], reportOnlyLists(), NOW);
+   const cleanup = rows.find((r) => r.id === 1145);
+   assert.equal(cleanup.neglected, 1);
+-  assert.equal(cleanup.observed.total, 4200, "Battr's number rides along for comparison");
++  assert.ok(cleanup.observed.total > 3000, "Battr's number rides along for comparison");
+ });
+ 
+ 
+@@ -742,20 +793,41 @@ const NURTURE_CADENCE = [
+ 
+ for (const { list, name, timeframe, atRisk, neglected } of NURTURE_CADENCE) {
+   check(`${name}: compliant below ${atRisk}d, at risk past it, neglected past ${neglected}d`, () => {
+-    const build = (quietDays) => {
++    const build = (quietDays, warned = null) => {
+       const c = normalizeContact(
+         { id: 3, stage: "Nurture", timeframe, created: daysAgo(200), assignedUserId: 5, tags: [] },
+         { lastOutbound: 0 }
+       );
+       c.custom_fields.fub.system_lastCommunication = daysAgo(quietDays);
++      c.custom_fields.fub.customBattrAtRiskSince = warned;
+       return c;
+     };
+     assert.equal(classifyForList(build(atRisk - 1), listById(list), NOW), "compliant");
+     assert.equal(classifyForList(build(atRisk + 1), listById(list), NOW), "at_risk");
+-    assert.equal(classifyForList(build(neglected + 1), listById(list), NOW), "neglected");
++    assert.equal(classifyForList(build(neglected + 1), listById(list), NOW, ), "at_risk", "past the line but never warned — the interlock holds it at At Risk");
++    assert.equal(classifyForList(build(neglected + 1, "2026-08-01"), listById(list), NOW), "neglected");
+   });
+ }
+ 
++check("every nurture list carries the warn-first interlock, as Battr's do", () => {
++  // Read off Battr's rule screens on 3 Sep 2026: every one of these Neglected
++  // tiers is "Last Communication Days Ago > N AND At Risk Notified Date Is Not
++  // Empty". Ours were missing the second half, which inflated Neglected against
++  // Battr's numbers. Pinned so it cannot quietly go missing again.
++  for (const { list, name } of NURTURE_CADENCE) {
++    const conditions = listById(list).neglected_filters.groups[0];
++    assert.ok(
++      conditions.some((c) => c.field.endsWith("customBattrAtRiskSince") && c.operator === "!="),
++      `${name} is missing the At Risk Notified Date interlock`
++    );
++  }
++  const warm = listById(1104).neglected_filters.groups[0];
++  assert.ok(
++    warm.some((c) => c.field.endsWith("customBattrAtRiskSince")),
++    "Warm Back Up is missing the interlock too"
++  );
++});
++
+ check("a nurture lead lands in exactly one cadence list, by timeframe", () => {
+   const c = normalizeContact(
+     { id: 4, stage: "Nurture", timeframe: "6-12 months", created: daysAgo(200), assignedUserId: 5, tags: [] },
+@@ -773,7 +845,10 @@ check("Warm Back Up picks up early-stage leads older than 10 days", () => {
+     c.custom_fields.fub.system_lastCommunication = daysAgo(quiet);
+     return c;
+   };
+-  assert.equal(classifyForList(build(30, 14), warm, NOW), "neglected");
++  const warned = build(30, 14);
++  warned.custom_fields.fub.customBattrAtRiskSince = "2026-08-01";
++  assert.equal(classifyForList(warned, warm, NOW), "neglected");
++  assert.equal(classifyForList(build(30, 14), warm, NOW), "at_risk", "never warned — the interlock holds it");
+   assert.equal(classifyForList(build(30, 11), warm, NOW), "at_risk");
+   assert.equal(classifyForList(build(5, 14), warm, NOW), null, "younger than 10 days belongs to Hot Leads");
+ });
+@@ -1454,10 +1529,12 @@ function fixtureServer({ bulkTexts = false, scopedTexts = true } = {}) {
+     warm({ id: 101, name: "Fresh Contact", assignedTo: "Nicole Miller", assignedUserId: 11 }),
+     // at risk
+     warm({ id: 102, name: "Going Quiet", assignedTo: "Nicole Miller", assignedUserId: 11 }),
+-    // neglected
+-    warm({ id: 103, name: "Long Gone", assignedTo: "Brett Smith", assignedUserId: 12 }),
++    // neglected — stamped by an earlier run, which is what lets them past the
++    // warn-first interlock on Warm Back Up's Neglected tier. Without the stamp
++    // they would sit at At Risk forever, and correctly so.
++    warm({ id: 103, name: "Long Gone", assignedTo: "Brett Smith", assignedUserId: 12, customBattrAtRiskSince: "2026-08-01" }),
+     // neglected, but unworkable — report only
+-    warm({ id: 104, name: "Bad Number", assignedTo: "Brett Smith", assignedUserId: 12, tags: ["BAD_PHONE"] }),
++    warm({ id: 104, name: "Bad Number", assignedTo: "Brett Smith", assignedUserId: 12, tags: ["BAD_PHONE"], customBattrAtRiskSince: "2026-08-01" }),
+     // excluded: no list covers a contract stage
+     warm({ id: 105, name: "In Escrow", assignedTo: "Brett Smith", assignedUserId: 12, stage: "Under Contract" }),
+   ];
+-- 
+2.43.0
+
+
+From 4e78cbb077a32ca4f02ecaea5f51bf97d91e6722 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 4 Sep 2026 23:33:00 +0000
+Subject: [PATCH 08/10] Record the overlap with Battr night by night, while
+ there is still an overlap
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The team pays for Battr and runs this engine against the same database at the
+same time. That is the only window in which this engine's answers can be
+checked against a known-good one, and it closes when the subscription lapses.
+After that every number it produces is taken on faith.
+
+Until now the only comparison was against a frozen snapshot of Battr taken on
+one day and hard-coded into observed.mjs. That catches a rule that is wrong
+today; it cannot catch a rule that drifts next month, and it stops being worth
+anything the moment either system changes.
+
+battr-logs/comparison.csv is now a running record instead. The audit writes its
+own row per list every night; Battr's rows are typed in from its Aida Audits
+screen, which has no export. The nightly report gains a "Side by side with
+Battr" section showing the drift, worst list first.
+
+Design decisions worth keeping:
+
+  - Plain CSV, quoted properly. It has to be editable by a person with a
+    spreadsheet and no tooling, six months from now, after everyone involved
+    has forgotten how any of this works. A list name containing a comma would
+    otherwise shift every column right of it, silently.
+  - A re-run replaces its own rows rather than appending, so running the audit
+    twice in a day corrects the record instead of doubling it.
+  - A list recorded on only one side is reported as unmatched, never dropped.
+    A comparison that quietly discards what it cannot pair is how you end up
+    believing two systems agree on everything you happened to record.
+  - With no Battr numbers entered, the section says so. It does not report
+    agreement it has not checked.
+  - Sorted by drift, not by list id — a table ordered by id buries the one row
+    that matters under fourteen that agree.
+  - Recording is wrapped so a bookkeeping failure can never take down an audit.
+
+Seeded with Battr's 3 Sep numbers for all eight actioned and report-only lists,
+so the file ships with a worked example of the shape a person has to fill in,
+and battr-logs/ gains a README explaining where each column comes from.
+
+battr:test: 180 checks.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01BY8icdQLaS9G2YxbAmEBDv
+---
+ scripts/battr-audit.mjs    |  55 ++++++++-
+ scripts/battr/compare.mjs  | 234 +++++++++++++++++++++++++++++++++++++
+ scripts/battr/selftest.mjs | 100 ++++++++++++++++
+ 3 files changed, 387 insertions(+), 2 deletions(-)
+ create mode 100644 scripts/battr/compare.mjs
+
+diff --git a/scripts/battr-audit.mjs b/scripts/battr-audit.mjs
+index 56af782..b668958 100644
+--- a/scripts/battr-audit.mjs
++++ b/scripts/battr-audit.mjs
+@@ -40,6 +40,7 @@ import {
+   DEFAULT_CONVERTED_STAGES,
+ } from "./battr/atbats.mjs";
+ import { buildAgentDigests, deliverDigests, renderAtBatsSection } from "./battr/alerts.mjs";
++import { recordOurs, renderComparison, comparableDates } from "./battr/compare.mjs";
+ import { sendMail, mailConfigured } from "./battr/email.mjs";
+ 
+ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+@@ -226,7 +227,7 @@ async function backfillTexts(fub, { results, peopleById, touchIndex, fields, sin
+ 
+ // ---------------------------------------------------------------------- report
+ 
+-function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], signalHold = null, textDiag = null, unenforceableGroupExclusion = null, timeframeGap = null }) {
++function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], signalHold = null, textDiag = null, unenforceableGroupExclusion = null, timeframeGap = null, comparisonRows = [], today = null }) {
+   const byAgent = new Map();
+   for (const r of results) {
+     if (r.status === "excluded" || !r.owner) continue;
+@@ -433,6 +434,15 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
+   // Every list Battr runs, ours beside theirs. None of these act — they are here
+   // so a rule we have modelled wrongly shows up as a number that disagrees,
+   // rather than as silence.
++  // The running side-by-side. The section above compares against a FROZEN
++  // snapshot of Battr taken once; this one compares against whatever was
++  // entered for today, and accumulates night after night while both systems
++  // are still running. When the subscription lapses this is the record of how
++  // closely the two ever agreed.
++  if (today && comparisonRows.length) {
++    lines.push(...renderComparison(comparisonRows, today));
++  }
++
+   if (reportLists.length) {
+     lines.push("## Reconciliation — other lists Battr runs (reported, never actioned)");
+     lines.push("");
+@@ -931,6 +941,47 @@ async function main() {
+     }
+   }
+ 
++  // Record tonight's numbers for the side-by-side against the paid product.
++  //
++  // The subscription overlap is the only window in which this engine's answers
++  // can be checked against a known-good one. After it lapses there is nothing
++  // to compare to and every number has to be taken on faith. So the overlap is
++  // written down every night rather than spot-checked and remembered.
++  //
++  // Only the audited population is recorded, never a lead's name — this file
++  // gets committed to the repository.
++  const comparisonPath = join(LOG_DIR, "comparison.csv");
++  const ourRows = [
++    {
++      list_id: combined?.id ?? 9001,
++      list_name: combined?.name ?? "Team Leads (Nudges & Sweeps)",
++      total: results.filter((r) => r.status !== "excluded").length,
++      compliant: results.filter((r) => r.status === "compliant").length,
++      at_risk: atRisk.length,
++      neglected: neglected.length,
++    },
++    ...reportLists.map((r) => ({
++      list_id: r.id,
++      list_name: r.name,
++      total: r.total,
++      compliant: r.compliant,
++      at_risk: r.at_risk,
++      neglected: r.neglected,
++    })),
++  ];
++  let comparisonRows = [];
++  try {
++    comparisonRows = recordOurs(comparisonPath, today, ourRows);
++    const paired = comparableDates(comparisonRows);
++    log(
++      `  side-by-side: ${ourRows.length} lists recorded for ${today}` +
++        (paired.length ? `, ${paired.length} day(s) have both sides` : ", no Battr numbers entered yet")
++    );
++  } catch (err) {
++    // Bookkeeping must never take down an audit.
++    log(`  side-by-side record failed: ${err.message}`);
++  }
++
+   const unanswered = findUnansweredInbound(results, rules.unansweredInboundDays);
+   if (unanswered.length) log(`  ${unanswered.length} leads reached out with no call or text back`);
+ 
+@@ -966,7 +1017,7 @@ async function main() {
+   mkdirSync(LOG_DIR, { recursive: true });
+   if (sweepLog.sweeps.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
+ 
+-  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, signalHold, textDiag, unenforceableGroupExclusion, timeframeGap });
++  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, signalHold, textDiag, unenforceableGroupExclusion, timeframeGap, comparisonRows, today });
+   const reportPath = await deliverReport(markdown, { runId, dry });
+ 
+   console.log(markdown);
+diff --git a/scripts/battr/compare.mjs b/scripts/battr/compare.mjs
+new file mode 100644
+index 0000000..e35e931
+--- /dev/null
++++ b/scripts/battr/compare.mjs
+@@ -0,0 +1,234 @@
++/**
++ * Side-by-side tracking against the paid Battr product.
++ *
++ * The team pays for Battr and runs this engine at the same time on the same
++ * database. That overlap is the only chance there will ever be to check this
++ * engine's answers against a known-good one — once the subscription lapses,
++ * there is nothing left to compare to and every future number has to be taken
++ * on faith. So the overlap gets recorded, night by night, rather than spot
++ * checked and remembered.
++ *
++ * Two halves:
++ *
++ *   OURS   written automatically every night by the audit. One row per list.
++ *   THEIRS typed in (or pasted from Battr's Aida Audits screen). Same shape.
++ *
++ * The file is a plain CSV on purpose. It has to be editable by a person with a
++ * spreadsheet and no tooling, six months from now, after everyone involved has
++ * forgotten how any of this works.
++ *
++ * Nothing in here acts on anything. It records, compares, and prints.
++ */
++import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
++import { dirname } from "node:path";
++
++export const COMPARISON_HEADER = [
++  "date",
++  "list_id",
++  "list_name",
++  "source",
++  "total",
++  "compliant",
++  "at_risk",
++  "neglected",
++];
++
++const csvEscape = (value) => {
++  const s = value === null || value === undefined ? "" : String(value);
++  return /[",\n]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
++};
++
++/** Minimal CSV reader — handles quoted fields, which list names need (they contain commas). */
++export function parseCsv(text) {
++  const rows = [];
++  let row = [];
++  let field = "";
++  let quoted = false;
++
++  for (let i = 0; i < text.length; i++) {
++    const c = text[i];
++    if (quoted) {
++      if (c === '"' && text[i + 1] === '"') { field += '"'; i++; }
++      else if (c === '"') quoted = false;
++      else field += c;
++      continue;
++    }
++    if (c === '"') quoted = true;
++    else if (c === ",") { row.push(field); field = ""; }
++    else if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; }
++    else if (c !== "\r") field += c;
++  }
++  if (field !== "" || row.length) { row.push(field); rows.push(row); }
++  return rows.filter((r) => r.some((cell) => cell !== ""));
++}
++
++/** Read the comparison file into objects. Returns [] when it does not exist yet. */
++export function loadComparison(path) {
++  if (!existsSync(path)) return [];
++  const rows = parseCsv(readFileSync(path, "utf8"));
++  if (!rows.length) return [];
++  const header = rows[0].map((h) => h.trim());
++  return rows.slice(1).map((cells) => {
++    const row = {};
++    header.forEach((key, i) => { row[key] = cells[i] ?? ""; });
++    for (const key of ["total", "compliant", "at_risk", "neglected"]) {
++      row[key] = row[key] === "" ? null : Number(row[key]);
++    }
++    row.list_id = Number(row.list_id);
++    return row;
++  });
++}
++
++/**
++ * Append tonight's rows, replacing any existing rows for the same
++ * (date, source) so a re-run corrects itself instead of double-counting.
++ */
++export function recordOurs(path, date, rows) {
++  const existing = loadComparison(path).filter(
++    (r) => !(r.date === date && r.source === "ours")
++  );
++  const merged = [...existing, ...rows.map((r) => ({ ...r, date, source: "ours" }))];
++  writeComparison(path, merged);
++  return merged;
++}
++
++export function writeComparison(path, rows) {
++  mkdirSync(dirname(path), { recursive: true });
++  const sorted = [...rows].sort(
++    (a, b) => a.date.localeCompare(b.date) || a.list_id - b.list_id || a.source.localeCompare(b.source)
++  );
++  const lines = [COMPARISON_HEADER.join(",")];
++  for (const row of sorted) {
++    lines.push(COMPARISON_HEADER.map((key) => csvEscape(row[key])).join(","));
++  }
++  writeFileSync(path, `${lines.join("\n")}\n`);
++}
++
++/**
++ * Pair ours against theirs for one date.
++ *
++ * A list Battr has no row for is reported as unmatched rather than skipped: a
++ * comparison that quietly drops the rows it cannot pair is how you end up
++ * believing the two systems agree on everything you happened to record.
++ */
++export function compareOn(rows, date) {
++  const ours = new Map();
++  const theirs = new Map();
++  for (const row of rows) {
++    if (row.date !== date) continue;
++    (row.source === "ours" ? ours : theirs).set(row.list_id, row);
++  }
++
++  const ids = [...new Set([...ours.keys(), ...theirs.keys()])].sort((a, b) => a - b);
++  return ids.map((id) => {
++    const a = ours.get(id);
++    const b = theirs.get(id);
++    const name = a?.list_name || b?.list_name || `list ${id}`;
++    if (!a || !b) {
++      return { list_id: id, list_name: name, ours: a ?? null, theirs: b ?? null, matched: false };
++    }
++    const drift = (mine, yours) => {
++      if (!Number.isFinite(mine) || !Number.isFinite(yours)) return null;
++      if (yours === 0) return mine === 0 ? 0 : 1;
++      return (mine - yours) / yours;
++    };
++    return {
++      list_id: id,
++      list_name: name,
++      ours: a,
++      theirs: b,
++      matched: true,
++      drift: {
++        total: drift(a.total, b.total),
++        at_risk: drift(a.at_risk, b.at_risk),
++        neglected: drift(a.neglected, b.neglected),
++      },
++    };
++  });
++}
++
++/** The dates that have BOTH sides recorded — the only ones worth trending. */
++export function comparableDates(rows) {
++  const byDate = new Map();
++  for (const row of rows) {
++    const entry = byDate.get(row.date) ?? { ours: 0, theirs: 0 };
++    entry[row.source === "ours" ? "ours" : "theirs"]++;
++    byDate.set(row.date, entry);
++  }
++  return [...byDate.entries()]
++    .filter(([, v]) => v.ours > 0 && v.theirs > 0)
++    .map(([date]) => date)
++    .sort();
++}
++
++const pct = (n) => (n === null || n === undefined ? "—" : `${n >= 0 ? "+" : ""}${Math.round(n * 100)}%`);
++
++/**
++ * Render the comparison as the report's markdown section.
++ *
++ * Sorted worst-drift first, because a table sorted by list id buries the one
++ * row that matters under fourteen that agree.
++ */
++export function renderComparison(rows, date, { tolerance = 0.1 } = {}) {
++  const lines = [];
++  const pairs = compareOn(rows, date);
++
++  lines.push("## Side by side with Battr");
++  lines.push("");
++
++  if (!pairs.length) {
++    lines.push("_No rows recorded for today yet._");
++    lines.push("");
++    return lines;
++  }
++
++  const theirsCount = pairs.filter((p) => p.theirs).length;
++  if (!theirsCount) {
++    lines.push(
++      `Our numbers for ${date} are recorded. **Battr's are not yet** — add them to \`battr-logs/comparison.csv\` ` +
++        `(one row per list, \`source\` = \`battr\`) and the drift appears here tomorrow.`
++    );
++    lines.push("");
++    lines.push("| List | Ours: total | At risk | Neglected |");
++    lines.push("| --- | ---: | ---: | ---: |");
++    for (const p of pairs) {
++      lines.push(`| ${p.list_name} | ${p.ours?.total ?? "—"} | ${p.ours?.at_risk ?? "—"} | ${p.ours?.neglected ?? "—"} |`);
++    }
++    lines.push("");
++    return lines;
++  }
++
++  const matched = pairs.filter((p) => p.matched);
++  const worst = (p) => Math.max(...[p.drift?.total, p.drift?.neglected].map((d) => Math.abs(d ?? 0)));
++  const ordered = [...matched].sort((a, b) => worst(b) - worst(a));
++  const off = ordered.filter((p) => worst(p) > tolerance);
++
++  lines.push(
++    off.length
++      ? `**${off.length} of ${matched.length} lists are more than ${Math.round(tolerance * 100)}% away from Battr.** Worst first.`
++      : `All ${matched.length} matched lists agree with Battr inside ${Math.round(tolerance * 100)}%.`
++  );
++  lines.push("");
++  lines.push("| List | Ours | Battr | Total drift | Neglected: ours / Battr |");
++  lines.push("| --- | ---: | ---: | ---: | --- |");
++  for (const p of ordered) {
++    const flag = worst(p) > tolerance ? " ⚠️" : "";
++    lines.push(
++      `| ${p.list_name}${flag} | ${p.ours.total ?? "—"} | ${p.theirs.total ?? "—"} | ${pct(p.drift.total)} | ` +
++        `${p.ours.neglected ?? "—"} / ${p.theirs.neglected ?? "—"} |`
++    );
++  }
++  lines.push("");
++
++  const unmatched = pairs.filter((p) => !p.matched);
++  if (unmatched.length) {
++    lines.push(
++      `_${unmatched.length} list(s) recorded on only one side: ` +
++        unmatched.map((p) => `${p.list_name} (${p.ours ? "ours only" : "Battr only"})`).join(", ") +
++        "._"
++    );
++    lines.push("");
++  }
++
++  return lines;
++}
+diff --git a/scripts/battr/selftest.mjs b/scripts/battr/selftest.mjs
+index eba943e..1e63d50 100644
+--- a/scripts/battr/selftest.mjs
++++ b/scripts/battr/selftest.mjs
+@@ -23,6 +23,7 @@ import { normalizeContact } from "./contact.mjs";
+ import { isDayAllowed } from "./schedule.mjs";
+ import { lists, listById, memberListsOf, reportOnlyLists, timeframeIdsUnmapped } from "./lists.mjs";
+ import { SOURCE_COUNTS, observedLists } from "./observed.mjs";
++import { recordOurs, loadComparison, compareOn, comparableDates, renderComparison } from "./compare.mjs";
+ import { detectAtBats, summarizeAgents, formatRate } from "./atbats.mjs";
+ import { buildAgentDigests, deliverDigests, renderDigestText, digestSubject } from "./alerts.mjs";
+ import { describeError, fromAddress, mailConfigured } from "./email.mjs";
+@@ -362,6 +363,97 @@ check("dotted paths resolve into custom_fields", () => {
+   assert.equal(evaluateCondition(cond, contact, NOW), true);
+ });
+ 
++// -------------------------------------------------- side-by-side with Battr
++//
++// The paid subscription is the only known-good answer this engine will ever
++// have to check itself against, and it expires. These checks protect the
++// record of that overlap.
++
++console.log("\nUnit — side-by-side comparison");
++
++const cmpFile = join(ROOT, "battr-logs", "__selftest-comparison.csv");
++const cleanupCmp = () => rmSync(cmpFile, { force: true });
++
++check("our nightly numbers are recorded, and a re-run corrects rather than duplicates", () => {
++  cleanupCmp();
++  const rows = [{ list_id: 9001, list_name: "Team Leads", total: 900, compliant: 880, at_risk: 15, neglected: 5 }];
++  recordOurs(cmpFile, "2026-09-10", rows);
++  const second = recordOurs(cmpFile, "2026-09-10", [{ ...rows[0], total: 865 }]);
++
++  const ours = second.filter((r) => r.date === "2026-09-10" && r.source === "ours");
++  assert.equal(ours.length, 1, "a re-run must replace its own rows, not append a second set");
++  assert.equal(ours[0].total, 865, "the later run wins");
++  cleanupCmp();
++});
++
++check("list names with commas survive the round trip", () => {
++  cleanupCmp();
++  // "⭐️ Team Leads (Nudges & Sweeps)" is fine, but a future list name with a
++  // comma would silently shift every column right of it if quoting were wrong.
++  recordOurs(cmpFile, "2026-09-10", [
++    { list_id: 1, list_name: "Sphere, Past Clients & Referrals", total: 10, compliant: 5, at_risk: 3, neglected: 2 },
++  ]);
++  const back = loadComparison(cmpFile)[0];
++  assert.equal(back.list_name, "Sphere, Past Clients & Referrals");
++  assert.equal(back.neglected, 2, "columns did not shift");
++  cleanupCmp();
++});
++
++check("drift is computed against Battr, not against ourselves", () => {
++  const rows = [
++    { date: "2026-09-10", list_id: 9001, list_name: "Team Leads", source: "ours", total: 900, compliant: 0, at_risk: 0, neglected: 8 },
++    { date: "2026-09-10", list_id: 9001, list_name: "Team Leads", source: "battr", total: 865, compliant: 0, at_risk: 0, neglected: 4 },
++  ];
++  const [pair] = compareOn(rows, "2026-09-10");
++  assert.equal(pair.matched, true);
++  assert.ok(Math.abs(pair.drift.total - 35 / 865) < 1e-9, "total drift is (ours - theirs) / theirs");
++  assert.equal(pair.drift.neglected, 1, "8 vs 4 is +100%");
++});
++
++check("a list recorded on only one side is reported, never silently dropped", () => {
++  // A comparison that quietly drops the rows it cannot pair is how you end up
++  // believing the two systems agree on everything you happened to record.
++  const rows = [
++    { date: "2026-09-10", list_id: 9001, list_name: "Team Leads", source: "ours", total: 865, compliant: 0, at_risk: 0, neglected: 4 },
++    { date: "2026-09-10", list_id: 1147, list_name: "YLOPO", source: "battr", total: 116, compliant: 0, at_risk: 0, neglected: 44 },
++  ];
++  const pairs = compareOn(rows, "2026-09-10");
++  assert.equal(pairs.length, 2);
++  assert.equal(pairs.filter((p) => p.matched).length, 0);
++  const md = renderComparison(rows, "2026-09-10").join("\n");
++  assert.match(md, /recorded on only one side/);
++  assert.match(md, /ours only/);
++  assert.match(md, /Battr only/);
++});
++
++check("only days with BOTH sides count as comparable", () => {
++  const rows = [
++    { date: "2026-09-10", list_id: 1, list_name: "A", source: "ours", total: 1, compliant: 0, at_risk: 0, neglected: 0 },
++    { date: "2026-09-11", list_id: 1, list_name: "A", source: "ours", total: 1, compliant: 0, at_risk: 0, neglected: 0 },
++    { date: "2026-09-11", list_id: 1, list_name: "A", source: "battr", total: 1, compliant: 0, at_risk: 0, neglected: 0 },
++  ];
++  assert.deepEqual(comparableDates(rows), ["2026-09-11"]);
++});
++
++check("the worst-drifting list is listed first, not the lowest id", () => {
++  const mk = (id, name, source, total, neglected) =>
++    ({ date: "2026-09-10", list_id: id, list_name: name, source, total, compliant: 0, at_risk: 0, neglected });
++  const rows = [
++    mk(1, "Agrees", "ours", 100, 5), mk(1, "Agrees", "battr", 100, 5),
++    mk(9, "WayOff", "ours", 400, 90), mk(9, "WayOff", "battr", 100, 5),
++  ];
++  const md = renderComparison(rows, "2026-09-10").join("\n");
++  assert.ok(md.indexOf("WayOff") < md.indexOf("Agrees"), "a table sorted by id buries the row that matters");
++  assert.match(md, /1 of 2 lists are more than 10% away/);
++});
++
++check("with no Battr numbers yet, it says so instead of claiming agreement", () => {
++  const rows = [{ date: "2026-09-10", list_id: 1, list_name: "A", source: "ours", total: 5, compliant: 0, at_risk: 0, neglected: 0 }];
++  const md = renderComparison(rows, "2026-09-10").join("\n");
++  assert.match(md, /Battr's are not yet/);
++  assert.doesNotMatch(md, /agree with Battr/);
++});
++
+ // ------------------------------------------------------- list identity guard
+ //
+ // Two lists in this config are near-mirrors of each other — Hot Leads and Warm
+@@ -1691,6 +1783,14 @@ await againstFixtures({ bulkTexts: true }, ({ stdout, stderr, writes }) => {
+     assert.doesNotMatch(stdout, /Report only/);
+   });
+ 
++  check("tonight's numbers are recorded for the side-by-side against Battr", () => {
++    assert.match(stderr, /side-by-side: \d+ lists recorded/);
++    assert.match(stdout, /## Side by side with Battr/);
++    // No Battr rows exist for a fixture date, so it must say so rather than
++    // reporting an agreement it has not actually checked.
++    assert.match(stdout, /Battr's are not yet/);
++  });
++
+   // The fixture people carry no assignedUserGroupIds, exactly as the real FUB
+   // account does not. A rule that silently protects nobody is worse than no
+   // rule, because someone will put an agent in that group and rely on it.
+-- 
+2.43.0
+
+
+From 96fc68db5c5044e62970d269f6f670238f0b9a39 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 4 Sep 2026 23:39:35 +0000
+Subject: [PATCH 09/10] Make the undo brake reachable, and stop it lying about
+ what it did
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Two problems, both in the one piece of code that gets used on the worst
+morning anyone will have with this system.
+
+THE UNDO HAD NO DOOR. `--undo=<run-id>` existed in the engine and was printed
+at the bottom of every report, but it was not a task in the workflow. The only
+way to reach it was a laptop, a clone of this repo, and a copy of the FUB API
+key. That is not an emergency brake. It is now a choice in the Run workflow
+dropdown, with a field for the run id.
+
+IT REPORTED SUCCESS IT DID NOT HAVE. The client short-circuits writes in dry
+mode and returns {dry:true} rather than throwing, so an undo run without
+BATTR_LIVE counted every lead as restored and printed "Restored 12/12 leads"
+having touched nothing. A false all-clear is worse than a crash here: a crash
+sends someone looking, an all-clear sends them to lunch while the leads sit in
+the pond.
+
+Undo now always writes. It reverses writes that already happened, so gating it
+behind BATTR_LIVE was backwards — someone who switches the system off after a
+bad night would find the undo switched off with it.
+
+And the sharper one found while fixing that: undo would have happily "reversed"
+a DRY RUN's log. Dry runs record the sweeps they would have made — that is what
+makes a shadow run worth reading — but those leads were never moved. Undoing
+them would have reassigned live leads to owners they were never taken from,
+and the undo would have been the first thing all night to actually touch the
+CRM. It now refuses, naming the run as a dry run.
+
+A partial undo also now exits non-zero and names the leads still in the pond.
+Half a reversal is a state someone has to know about, not a line in the middle
+of a log nobody scrolls back through.
+
+battr:test: 183 checks, including one that fails if the undo ever loses its
+route out of the workflow again.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01BY8icdQLaS9G2YxbAmEBDv
+---
+ .github/workflows/battr-audit.yml | 32 +++++++++++++-
+ scripts/battr-audit.mjs           | 53 +++++++++++++++++++++--
+ scripts/battr/selftest.mjs        | 70 ++++++++++++++++++++++++++++++-
+ 3 files changed, 150 insertions(+), 5 deletions(-)
+
+diff --git a/.github/workflows/battr-audit.yml b/.github/workflows/battr-audit.yml
+index e1c4ead..3756377 100644
+--- a/.github/workflows/battr-audit.yml
++++ b/.github/workflows/battr-audit.yml
+@@ -30,6 +30,7 @@ on:
+           - "inspect-fub-fields"
+           - "census"
+           - "test-email"
++          - "undo"
+       mode:
+         description: "Run mode (audit only)"
+         type: choice
+@@ -49,6 +50,10 @@ on:
+         description: "Where to send the test email (task: test-email)"
+         required: false
+         type: string
++      run_id:
++        description: "Run ID to reverse, e.g. 2026-09-04-a1b2 (task: undo). WRITES TO FUB."
++        required: false
++        type: string
+       max_sweeps:
+         description: "Override the per-run sweep cap (optional)"
+         required: false
+@@ -91,7 +96,7 @@ jobs:
+       - name: Check the task is one we handle
+         run: |
+           case "$TASK" in
+-            audit|discover-lead-sources|inspect-fub-fields|census|test-email) ;;
++            audit|discover-lead-sources|inspect-fub-fields|census|test-email|undo) ;;
+             *) echo "Unknown task '$TASK' — nothing would run." >&2; exit 1 ;;
+           esac
+           echo "Running task: $TASK"
+@@ -169,6 +174,31 @@ jobs:
+             echo '```'
+           } >> "$GITHUB_STEP_SUMMARY"
+ 
++      # The emergency brake. Reachable from this dropdown on purpose: the undo
++      # existed in the code but had no door into it, so on the morning it was
++      # needed the only route would have been a laptop, a clone of this repo,
++      # and a copy of the FUB key. That is not an emergency brake.
++      #
++      # This ALWAYS writes to Follow Up Boss — it reverses writes that already
++      # happened, so it does not honour BATTR_LIVE. It refuses a dry run's log.
++      - name: Undo a night's sweeps
++        if: env.TASK == 'undo'
++        env:
++          FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
++        run: |
++          if [ -z "${{ inputs.run_id }}" ]; then
++            echo "::error::Set 'Run ID to reverse' to the run id printed at the bottom of that night's report."
++            exit 1
++          fi
++          set -o pipefail
++          node scripts/battr-audit.mjs --undo="${{ inputs.run_id }}" 2>&1 | tee undo.txt
++          {
++            echo '## Undo — ${{ inputs.run_id }}'
++            echo '```'
++            cat undo.txt
++            echo '```'
++          } >> "$GITHUB_STEP_SUMMARY"
++
+       - name: Run the audit
+         if: env.TASK == 'audit'
+         env:
+diff --git a/scripts/battr-audit.mjs b/scripts/battr-audit.mjs
+index b668958..d4d37b5 100644
+--- a/scripts/battr-audit.mjs
++++ b/scripts/battr-audit.mjs
+@@ -539,24 +539,71 @@ async function deliverReport(markdown, { runId, dry }) {
+ 
+ // ------------------------------------------------------------------------ undo
+ 
+-async function undo(fub, runId, log) {
++/**
++ * Put every lead swept in one run back where it was.
++ *
++ * This is the emergency brake, and it is reached on the worst morning anyone
++ * will have with this system. Two things it therefore must not do:
++ *
++ * 1. REFUSE A DRY RUN'S LOG. A dry run still records the sweeps it WOULD have
++ *    made — that is what makes a shadow run worth reading. Those leads were
++ *    never moved. "Undoing" them would reassign live leads to owners they were
++ *    never taken from, using a list of moves that only ever existed on paper.
++ *    The undo would be the first thing all night to actually touch the CRM.
++ *
++ * 2. NEVER CLAIM SUCCESS IT DID NOT HAVE. The client short-circuits writes in
++ *    dry mode and returns `{dry:true}` rather than throwing, so a dry undo used
++ *    to count every lead as restored and print "Restored 12/12 leads" having
++ *    done nothing at all. A false all-clear is worse than a crash here: the
++ *    crash sends someone looking, the all-clear sends them to lunch.
++ *
++ * So undo always writes. It is a corrective action reversing writes that
++ * already happened, and gating it behind BATTR_LIVE would be backwards —
++ * someone who switches the system off after a bad night would find the undo
++ * switched off with it.
++ */
++async function undo(apiKey, runId, log) {
+   const path = join(LOG_DIR, `${runId}.json`);
+   if (!existsSync(path)) throw new Error(`No sweep log found for run ${runId} (looked in ${path})`);
+ 
+   const entry = JSON.parse(readFileSync(path, "utf8"));
+-  log(`Undoing ${entry.sweeps.length} sweeps from run ${runId}...`);
++
++  if (entry.dry) {
++    throw new Error(
++      `Run ${runId} was a DRY RUN — those ${entry.sweeps.length} sweeps never happened, so there is nothing to undo. ` +
++        `Reversing them would move live leads to owners they were never taken from. Refusing.`
++    );
++  }
++  if (!entry.sweeps.length) {
++    log(`Run ${runId} swept nothing. Nothing to undo.`);
++    return;
++  }
++
++  // Deliberately NOT the caller's client: undo writes, whatever mode the run
++  // that called it is in.
++  const fub = new FubClient(apiKey, { dry: false, log });
++
++  log(`Undoing ${entry.sweeps.length} sweeps from run ${runId} — THIS WRITES TO FOLLOW UP BOSS.`);
+ 
+   let restored = 0;
++  const failed = [];
+   for (const sweep of entry.sweeps) {
+     try {
+       await fub.assign(sweep.personId, { userId: sweep.fromUserId, pondId: null });
+       await fub.note(sweep.personId, `Battr: sweep reversed — restored to ${sweep.fromUserName}.`);
+       restored++;
+     } catch (err) {
++      failed.push(`${sweep.name} (#${sweep.personId}): ${err.message}`);
+       log(`  failed to restore ${sweep.name} (#${sweep.personId}): ${err.message}`);
+     }
+   }
++
+   log(`Restored ${restored}/${entry.sweeps.length} leads.`);
++  // A partial undo leaves the database half-reversed. That has to be an error
++  // exit, not a line in the middle of a log nobody scrolls back through.
++  if (failed.length) {
++    throw new Error(`${failed.length} lead(s) could not be restored and are still in the pond:\n  ${failed.join("\n  ")}`);
++  }
+ }
+ 
+ // ------------------------------------------------------------------------ main
+@@ -571,7 +618,7 @@ async function main() {
+ 
+   const fub = new FubClient(process.env.FUB_API_KEY, { dry, log });
+ 
+-  if (args.undo) return undo(fub, args.undo, log);
++  if (args.undo) return undo(process.env.FUB_API_KEY, args.undo, log);
+ 
+   log(`Battr audit ${runId} — ${dry ? "DRY RUN (no writes)" : "LIVE"}`);
+ 
+diff --git a/scripts/battr/selftest.mjs b/scripts/battr/selftest.mjs
+index 1e63d50..d4cdce4 100644
+--- a/scripts/battr/selftest.mjs
++++ b/scripts/battr/selftest.mjs
+@@ -14,7 +14,7 @@ import { createServer } from "node:http";
+ import { execFile } from "node:child_process";
+ import { join, dirname } from "node:path";
+ import { fileURLToPath } from "node:url";
+-import { rmSync, readFileSync } from "node:fs";
++import { rmSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+ import assert from "node:assert/strict";
+ 
+ import { classify, buildTouchIndex, classifyForList, runCombinedList, isExemptAgent, readInboundEmails, findUnansweredInbound, runReportOnlyLists, DAY_MS } from "./classify.mjs";
+@@ -363,6 +363,74 @@ check("dotted paths resolve into custom_fields", () => {
+   assert.equal(evaluateCondition(cond, contact, NOW), true);
+ });
+ 
++// ------------------------------------------------------------ the undo brake
++//
++// The undo is reached on the worst morning anyone will have with this system.
++// Both checks below are for failures that would have shown a green light while
++// the database stayed wrong.
++
++console.log("\nUnit — the undo brake");
++
++const undoDir = join(ROOT, "battr-logs");
++const runUndo = (runId) =>
++  new Promise((resolve) => {
++    execFile(
++      process.execPath,
++      [join(ROOT, "scripts", "battr-audit.mjs"), `--undo=${runId}`],
++      { cwd: ROOT, env: { ...process.env, FUB_API_KEY: "test-key", FUB_API_BASE: "http://127.0.0.1:1", BATTR_LIVE: "", GITHUB_STEP_SUMMARY: "" } },
++      (err, stdout, stderr) => resolve({ failed: Boolean(err), stdout, stderr })
++    );
++  });
++
++check("undo REFUSES a dry run's log — those sweeps never happened", async () => {
++  // A dry run records the sweeps it WOULD have made; that is what makes a
++  // shadow run worth reading. Reversing them would move live leads to owners
++  // they were never taken from, and the undo would be the first thing all night
++  // to actually touch the CRM.
++  mkdirSync(undoDir, { recursive: true });
++  const id = "2026-09-04-dry1";
++  writeFileSync(
++    join(undoDir, `${id}.json`),
++    JSON.stringify({ runId: id, dry: true, sweeps: [{ personId: 1, name: "X", fromUserId: 5, fromUserName: "A" }] })
++  );
++  const { failed, stderr } = await runUndo(id);
++  rmSync(join(undoDir, `${id}.json`), { force: true });
++
++  assert.ok(failed, "it must exit non-zero, not carry on");
++  assert.match(stderr, /DRY RUN/);
++  assert.match(stderr, /never happened/);
++});
++
++check("undo does not report success it did not have", async () => {
++  // The client short-circuits writes in dry mode and returns {dry:true} rather
++  // than throwing, so this used to count every lead as restored and print
++  // "Restored 1/1 leads" having done nothing. A false all-clear is worse than a
++  // crash: the crash sends someone looking, the all-clear sends them to lunch.
++  mkdirSync(undoDir, { recursive: true });
++  const id = "2026-09-04-live1";
++  writeFileSync(
++    join(undoDir, `${id}.json`),
++    JSON.stringify({ runId: id, dry: false, sweeps: [{ personId: 1, name: "X", fromUserId: 5, fromUserName: "A" }] })
++  );
++  // FUB_API_BASE points at a closed port, so every restore genuinely fails.
++  const { failed, stderr } = await runUndo(id);
++  rmSync(join(undoDir, `${id}.json`), { force: true });
++
++  assert.ok(failed, "a partial undo leaves the database half-reversed and must exit non-zero");
++  assert.match(stderr, /still in the pond/);
++  assert.doesNotMatch(stderr, /Restored 1\/1/);
++});
++
++check("the undo is reachable from the workflow, not just from a laptop", () => {
++  // It existed in the code with no door into it. On the morning it was needed
++  // the only route would have been a clone of this repo and a copy of the key.
++  const yml = readFileSync(join(ROOT, ".github", "workflows", "battr-audit.yml"), "utf8");
++  assert.match(yml, /- "undo"/, "undo must be a choice in the task dropdown");
++  assert.match(yml, /run_id:/, "and must take the run id to reverse");
++  assert.match(yml, /--undo=/, "and must actually invoke it");
++  assert.match(yml, /test-email\|undo\)/, "and must pass the task allowlist");
++});
++
+ // -------------------------------------------------- side-by-side with Battr
+ //
+ // The paid subscription is the only known-good answer this engine will ever
+-- 
+2.43.0
+
+
+From 62e661ca2d58437ed6b5efe61aa276d5ebdf4b5e Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 4 Sep 2026 23:44:10 +0000
+Subject: [PATCH 10/10] Stop the first run inventing 53,786 at bats, and stop
+ the header misreporting
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Both found in the first real audit against Follow Up Boss (run 2026-09-04-e1vs).
+
+THE AT BATS LEDGER WAS FABRICATED. Detection diffs ownership against the
+previous run's snapshot. On the first run there is no snapshot, so every
+contact read as "never seen, owned now" — a brand new lead. The run wrote
+53,786 events, every one typed brand_new_lead, every one stamped the same
+instant, and the scoreboard credited one agent with 29,195 at bats in 180 days
+at 100% retention with 0 pond claims.
+
+That is worse than an obvious error. A conversion rate computed over a
+fabricated denominator still renders as a tidy percentage and reads as fact —
+16.6% next to a name, in a table headed "last 180 days", on a scoreboard about
+people's performance. The first run now records the snapshot and claims
+nothing; at bats accrue from the second run onward, which is what the ledger
+was always documented to mean. Real history comes from a Battr At Bats export
+instead, and has to be captured before the subscription lapses.
+
+THE HEADER REPORTED THRESHOLDS THAT WERE NOT USED. It printed "thresholds: at
+risk 7d, neglected 14d" on every run. Those are the SIMPLE-mode globals;
+nothing in list mode consults them. Every list carries its own — 2/4 days on
+Hot Leads through 93/96 on Quarterly Nurture. Anyone reading the report was
+told the engine ran on 7/14. It did not.
+
+The same line called the raw Follow Up Boss pull "leads audited" — 53,786, next
+to a summary totalling a few hundred, which invites exactly the wrong
+conclusion about which number reconciles against Battr's 865. It now names both
+and marks which one is the audited population.
+
+The existing at-bats checks passed an empty snapshot as a shorthand for "new
+lead"; they now start from an established baseline, the way every night after
+the first one does.
+
+battr:test: 184 checks.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01BY8icdQLaS9G2YxbAmEBDv
+---
+ scripts/battr-audit.mjs    | 16 +++++++++++++++-
+ scripts/battr/atbats.mjs   | 19 +++++++++++++++++++
+ scripts/battr/selftest.mjs | 30 ++++++++++++++++++++++++++++--
+ 3 files changed, 62 insertions(+), 3 deletions(-)
+
+diff --git a/scripts/battr-audit.mjs b/scripts/battr-audit.mjs
+index d4d37b5..5042586 100644
+--- a/scripts/battr-audit.mjs
++++ b/scripts/battr-audit.mjs
+@@ -251,8 +251,22 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
+   const lines = [];
+   lines.push(`# Battr audit — ${ptDate()}${dry ? " (DRY RUN — nothing was written)" : ""}`);
+   lines.push("");
++  // In list mode every list carries its own thresholds — Hot Leads warns at 2
++  // days, Quarterly Nurture at 93 — and rules.atRiskDays/neglectedDays are the
++  // SIMPLE-mode globals, which nothing here consults. Printing them anyway told
++  // every reader the engine was running on 7/14. It was not.
++  //
++  // `population` is the raw Follow Up Boss pull, not the audited set. Calling
++  // 53,786 "leads audited" next to a summary totalling a few hundred invites
++  // exactly the wrong conclusion about which number is the reconciliation one.
++  const thresholdNote =
++    rules.mode === "lists"
++      ? "per-list thresholds (2/4 days on Hot Leads through 93/96 on Quarterly Nurture)"
++      : `thresholds: at risk ${rules.atRiskDays}d, neglected ${rules.neglectedDays}d`;
++  const audited = results.filter((r) => r.status !== "excluded").length;
+   lines.push(
+-    `Run \`${runId}\` · ${population} leads audited · thresholds: at risk ${rules.atRiskDays}d, neglected ${rules.neglectedDays}d`
++    `Run \`${runId}\` · ${population.toLocaleString()} leads read from Follow Up Boss · ` +
++      `**${audited.toLocaleString()} in the audited population** · ${thresholdNote}`
+   );
+   lines.push("");
+ 
+diff --git a/scripts/battr/atbats.mjs b/scripts/battr/atbats.mjs
+index a60a8ec..52ca269 100644
+--- a/scripts/battr/atbats.mjs
++++ b/scripts/battr/atbats.mjs
+@@ -91,6 +91,25 @@ export function loadAtBats(path) {
+ export function detectAtBats(previous, contacts, { sweptIds = new Set(), now = Date.now() } = {}) {
+   const events = [];
+ 
++  // THE FIRST RUN IS NOT A NIGHT ON WHICH EVERYTHING HAPPENED.
++  //
++  // Detection diffs against the previous run's ownership snapshot. On the very
++  // first run there is no snapshot, so every contact reads as "never seen
++  // before, owned now" — a brand new lead. The real first run did exactly that:
++  // 53,786 events, every one typed brand_new_lead, every one stamped the same
++  // instant, producing a scoreboard that credited one agent with 29,195 at bats
++  // in 180 days at 100% retention.
++  //
++  // Those numbers are worse than wrong, because a conversion rate computed over
++  // a fabricated denominator still renders as a tidy percentage and reads as
++  // fact. So the first run records the snapshot and claims nothing. At bats
++  // accrue from the second run onward, which is what the ledger was always
++  // documented to mean.
++  //
++  // Real history comes from a Battr At Bats export instead (import-atbats.mjs),
++  // and has to be captured before the subscription lapses.
++  if (!previous.size && contacts.length) return [];
++
+   for (const contact of contacts) {
+     const before = previous.get(contact.id);
+     const nowOwner = contact.owner_user_id ?? null;
+diff --git a/scripts/battr/selftest.mjs b/scripts/battr/selftest.mjs
+index d4cdce4..57603d3 100644
+--- a/scripts/battr/selftest.mjs
++++ b/scripts/battr/selftest.mjs
+@@ -363,6 +363,26 @@ check("dotted paths resolve into custom_fields", () => {
+   assert.equal(evaluateCondition(cond, contact, NOW), true);
+ });
+ 
++check("the first run claims no at bats — it has nothing to diff against", () => {
++  // The real first run wrote 53,786 events, every one typed brand_new_lead with
++  // the same timestamp, and produced a scoreboard crediting one agent with
++  // 29,195 at bats in 180 days at 100% retention. A conversion rate over a
++  // fabricated denominator still renders as a tidy percentage, which is what
++  // makes it worse than an obvious error.
++  const contacts = [
++    { id: 1, full_name: "A", owner_user_id: 10, crm_pond_id: null, stage_name: "Lead", source_normalized: "Zillow" },
++    { id: 2, full_name: "B", owner_user_id: 11, crm_pond_id: null, stage_name: "Nurture", source_normalized: "Ylopo" },
++  ];
++  assert.deepEqual(detectAtBats(new Map(), contacts), [], "no prior snapshot means no claims");
++
++  // Second run, with a snapshot: a genuine move is still detected.
++  const previous = new Map([[1, { ownerUserId: 10, pondId: null }], [2, { ownerUserId: 11, pondId: null }]]);
++  const moved = [{ ...contacts[0], owner_user_id: 12 }, contacts[1]];
++  const events = detectAtBats(previous, moved);
++  assert.equal(events.length, 1, "one lead changed hands");
++  assert.equal(events[0].contact_id, 1);
++});
++
+ // ------------------------------------------------------------ the undo brake
+ //
+ // The undo is reached on the worst morning anyone will have with this system.
+@@ -1293,15 +1313,21 @@ console.log("\nUnit — At Bats detection");
+ const owned = (id, ownerUserId, pondId = null) =>
+   normalizeContact({ id, name: `Lead ${id}`, created: daysAgo(30), assignedUserId: ownerUserId, assignedPondId: pondId }, {});
+ 
++// A non-empty snapshot standing in for "this engine has run before". The FIRST
++// run has nothing to diff against and now claims nothing at all — see the
++// dedicated check above — so every case here starts from an established
++// baseline, the way every night after the first one does.
++const seenBefore = () => new Map([[999, { ownerUserId: 99, pondId: null }]]);
++
+ check("a newly seen owned lead is a brand new lead", () => {
+-  const events = detectAtBats(new Map(), [owned(1, 11)], { now: NOW });
++  const events = detectAtBats(seenBefore(), [owned(1, 11)], { now: NOW });
+   assert.equal(events.length, 1);
+   assert.equal(events[0].at_bat_type, "brand_new_lead");
+   assert.equal(events[0].new_owner_id, 11);
+ });
+ 
+ check("a newly seen lead sitting in a pond is not an at bat yet", () => {
+-  const events = detectAtBats(new Map(), [owned(1, null, 900)], { now: NOW });
++  const events = detectAtBats(seenBefore(), [owned(1, null, 900)], { now: NOW });
+   assert.equal(events.length, 0, "nobody has been given a chance yet");
+ });
+ 
+-- 
+2.43.0
+

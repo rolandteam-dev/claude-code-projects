@@ -91,6 +91,17 @@ export function loadAtBats(path) {
 export function detectAtBats(previous, contacts, { sweptIds = new Set(), now = Date.now() } = {}) {
   const events = [];
 
+  // COLD START. With no prior snapshot every owned contact looks like a lead
+  // that just arrived, so the first run wrote 53,786 brand_new_lead rows
+  // stamped the same instant and produced a scoreboard crediting one agent with
+  // 29,195 at bats at 100% retention. A database that already exists is not a
+  // stream of new leads; it is a baseline. Record it and emit nothing.
+  //
+  // `previous` being empty is the only signal for this, and it is the right one:
+  // once ownership.csv exists the guard stands down on its own and genuine
+  // changes are detected from the next run onward.
+  if (!previous || previous.size === 0) return events;
+
   for (const contact of contacts) {
     const before = previous.get(contact.id);
     const nowOwner = contact.owner_user_id ?? null;

@@ -52,11 +52,64 @@ export const rules = {
    */
   activityLookbackDays: 45,
 
+  /**
+   * Follow Up Boss refuses `/v1/textMessages` in bulk — the same 400 it gives
+   * for `/v1/emails` — so the daily activity pull carries calls only. Without
+   * texts, a lead an agent has only ever texted reads as never contacted, which
+   * is why the run refuses to sweep at all when a channel is missing.
+   *
+   * FUB does serve one person's thread. So after the first classification pass
+   * the audit fetches texts per person for exactly the leads an action would
+   * touch — the at-risk and neglected ones, a few dozen, not the whole
+   * database — and folds them in. Folding only moves last-touch forward, so a
+   * backfilled text can move a lead from neglected toward compliant and never
+   * the other way.
+   */
+  perPersonTextBackfill: true,
+
+  /**
+   * The most leads to backfill in one run. A bound on the API cost of the pass
+   * above: if more than this many leads look actionable, the backfill is
+   * abandoned rather than half-done, and the run reports the gap as before.
+   * A partial backfill is the dangerous state — it would look complete.
+   */
+  maxTextBackfill: 200,
+
+  /**
+   * MIKE'S CALL, DELIBERATELY LEFT OFF.
+   *
+   * With the backfill above, last-touch is complete for every lead the run
+   * would act on, so the reason sweeps are disabled no longer applies. But
+   * turning that into "sweeps may now proceed" takes the number of leads that
+   * can be swept from zero to non-zero, and that is not a change to make on
+   * anyone's behalf.
+   *
+   * Set this to true to let a run sweep on a backfilled touch index. Until
+   * then the report carries the correct at-risk and neglected counts — which
+   * is what makes it comparable to Battr's nightly emails — and still moves
+   * nothing.
+   */
+  sweepOnBackfilledTexts: false,
+
   // ------------------------------------------------------------- sweep targets
   /**
-   * Where neglected leads land. The first pond that resolves by name is used;
-   * `overflowPond` catches sweeps once `maxSweepsPerPond` is hit in one run.
-   * Battr sweeps mostly to Shark Tank with a minority to Money Time.
+   * Where neglected leads land.
+   *
+   * UNCONFIRMED, and the one departure from Battr most likely to be wrong.
+   *
+   * Battr's neglected email of 10 Sep 2026 carries an `Assignment Target Type`
+   * and `Assignment Target Name` for every lead it moved. All four that night
+   * read **Pond / Shark Tank**. Not one went to Money Time.
+   *
+   * The 25-lead split below was inferred from Money Time appearing in older
+   * audit mail; it was never read off Battr's rule screen, and Battr's own
+   * config resolves the target through an assignment rule set (id 41) rather
+   * than a fixed pond. If Battr sent all 45 of Tuesday 8 Sep's sweeps to Shark
+   * Tank, then on a Tuesday this would route 20 leads to a pond Battr never
+   * sends them to — leads that are then in the wrong agent's queue.
+   *
+   * The 8 Sep neglected email settles it. Until then, treat `maxSweepsPerPond`
+   * as a guess wearing a number, and see SEP_10 in observed.mjs.
    */
   sweepPond: "Shark Tank",
   overflowPond: "Money Time",
@@ -136,11 +189,64 @@ export const rules = {
    */
   requireWarningBeforeSweep: true,
 
+  // ------------------------------------------------------ inbound contact
+  /**
+   * A call or text FROM the lead counts as a touch and resets the clock.
+   *
+   * Per Mike. The reasoning is the same one that spares a lead who replies by
+   * email: a live two-way conversation is not a neglected lead, whichever side
+   * started it, and taking it away mid-thread is the one mistake this engine
+   * must not make. Outbound email is still excluded — that one is a single
+   * click for thirty people.
+   *
+   * The cost: a lead who calls in and is never called back now reads as
+   * compliant. That case does not disappear — `unansweredInboundDays` below
+   * puts it in its own section of the report, by name, every night.
+   */
+  inboundCountsAsTouch: true,
+
+  /**
+   * Days after an inbound call or text with no outbound reply before the lead
+   * is listed under "Inbound, never answered" in the report. Reporting only —
+   * these leads are never swept for it.
+   */
+  unansweredInboundDays: 2,
+
+  // ------------------------------------------------- the lead wrote back
+  /**
+   * A REPLY from the lead spares it from the sweep.
+   *
+   * Outbound email is never counted as working a lead: FUB batch-emails thirty
+   * people in one click, so a single blast would mark the database worked. A
+   * reply is the opposite — it cannot be sent in bulk, and it means there is a
+   * live conversation that should not be yanked out from under the agent.
+   *
+   * Checked per-lead at sweep time only (FUB won't serve email in bulk), which
+   * is affordable because only a couple of dozen leads reach that point a day.
+   *
+   * NOTE: a reply nobody answered is arguably WORSE neglect than silence, and
+   * this rule protects it. That is deliberate but it is not free — spared leads
+   * are listed by name every day under "Neglected but not swept", so an ignored
+   * conversation shows up in the report instead of hiding in it.
+   */
+  inboundEmailSparesSweep: true,
+
+  /** How recent the reply has to be to count. Older than this and the sweep proceeds. */
+  inboundEmailWindowDays: 14,
+
+  /**
+   * Ceiling on per-lead email lookups in one run. Sweeps are capped at 30, so
+   * this is generous; it exists so a strange run can't turn into thousands of
+   * API calls.
+   */
+  maxEmailChecksPerRun: 100,
+
   // ------------------------------------------------------------------ behavior
   /**
-   * OFF mirrors Battr exactly. ON is our improvement: when a lead has spoken
-   * last and nobody answered, the at-risk clock runs at half speed — an ignored
-   * inbound message is worse neglect than silence, not the same.
+   * Superseded by `inboundCountsAsTouch`. It used to run the at-risk clock at
+   * half speed for a lead whose last word was inbound; now inbound resets the
+   * clock outright, so this would fight it. Left at false, and the unanswered
+   * case is reported instead of acted on.
    */
   escalateUnanswered: false,
 

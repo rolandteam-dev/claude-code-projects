@@ -170,12 +170,12 @@ export class FubClient {
    * when available; without it we fall back to every non-trashed person and let
    * the exclusion rules do the filtering.
    */
-  people({ smartListId } = {}) {
-    return this.paginate("/people", {
-      smartListId,
-      includeTrash: false,
-      sort: "id",
-    });
+  people({ smartListId } = {}, { max = Infinity } = {}) {
+    return this.paginate(
+      "/people",
+      { smartListId, includeTrash: false, sort: "id" },
+      { max }
+    );
   }
 
   /**
@@ -184,15 +184,60 @@ export class FubClient {
    * audit inside a few dozen API calls instead of a few thousand.
    */
   async activity(sinceIso) {
-    // Calls and texts only. Email is excluded by policy, not by limitation:
-    // mass email in FUB is a single click, so counting it would let one blast
-    // mark an entire database as worked. (FUB also refuses to serve /v1/emails
-    // in bulk, so the two reasons happen to agree.)
-    const [calls, texts] = await Promise.all([
-      this.paginate("/calls", { createdAfter: sinceIso }),
-      this.paginate("/textMessages", { createdAfter: sinceIso }),
-    ]);
-    return { calls, texts, emails: [] };
+    // Calls and texts. Email is excluded by policy, not by limitation: mass
+    // email in FUB is a single click, so counting it would let one blast mark
+    // an entire database as worked.
+    //
+    // A channel FUB will not serve in bulk is reported as UNAVAILABLE rather
+    // than thrown or quietly skipped. Skipping is the dangerous option: without
+    // texts, every lead an agent has only ever texted reads as never contacted,
+    // and the sweep would take those leads off the agent who actually worked
+    // them. The caller refuses to sweep on an incomplete touch index.
+    const unavailable = [];
+
+    const channel = async (name, path) => {
+      try {
+        return await this.paginate(path, { createdAfter: sinceIso });
+      } catch (err) {
+        // A 400 here means FUB requires a per-record filter — it is a shape
+        // problem with the endpoint, not a transient failure, so retrying or
+        // failing the run both waste the read we already paid for.
+        if (/→ 400:/.test(err.message)) {
+          unavailable.push({ channel: name, reason: err.message.split("→ 400:")[1]?.trim() ?? err.message });
+          this.log(`  ${name}: NOT available in bulk — ${err.message}`);
+          return [];
+        }
+        throw err;
+      }
+    };
+
+    const [calls, texts] = await Promise.all([channel("calls", "/calls"), channel("texts", "/textMessages")]);
+    return { calls, texts, emails: [], unavailable };
+  }
+
+  /**
+   * The email thread for ONE lead since `sinceIso`.
+   *
+   * FUB refuses `/v1/emails` in bulk, which is why the daily activity pull
+   * carries no email at all — but a single person's thread is served fine. The
+   * sweep loop uses this on the handful of leads that are about to move, to
+   * check whether the lead has written back.
+   */
+  emailsForPerson(personId, sinceIso) {
+    return this.paginate("/emails", { personId, createdAfter: sinceIso });
+  }
+
+  /**
+   * The text-message thread for ONE lead since `sinceIso`.
+   *
+   * `/v1/textMessages` refuses a bulk read with the same 400 as `/v1/emails`
+   * ("personId, threadId, phone ... must be specified"), but serves a single
+   * person's thread. The audit uses this to backfill texts for the handful of
+   * leads an action would touch, rather than leaving the whole touch index
+   * incomplete because the bulk endpoint does not exist.
+   */
+  textsForPerson(personId, sinceIso) {
+    return this.paginate("/textMessages", { personId, createdAfter: sinceIso });
   }
 
   // ------------------------------------------------------------------ writes

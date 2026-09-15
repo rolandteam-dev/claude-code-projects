@@ -132,7 +132,26 @@ export function evaluateCondition(condition, contact, now = Date.now()) {
       if (missing) return true;
       return !asArray(value).some((v) => sameValue(actual, v, type));
 
-    // Array-column operators: tags_array, owner_group_ids.
+    // Substring operators, for scalar text. `CONTAINS ANY` below is an ARRAY
+    // membership test — it compares whole values — so it cannot be used to match
+    // "Ylopo" against a source named "Ylopo Seller". Reaching for it there
+    // returns false for every contact and the list silently reports zero, which
+    // is the exact failure this project keeps hitting. These are the operators
+    // for that job.
+    case "MATCHES ANY": {
+      if (missing) return false;
+      const haystack = String(actual).toLowerCase();
+      return asArray(value).some((v) => haystack.includes(String(v).toLowerCase()));
+    }
+
+    case "DOES NOT MATCH ANY": {
+      if (missing) return true;
+      const haystack = String(actual).toLowerCase();
+      return !asArray(value).some((v) => haystack.includes(String(v).toLowerCase()));
+    }
+
+    // Array-column operators: tags_array, owner_group_ids. These compare WHOLE
+    // values, not substrings — see MATCHES ANY above.
     case "CONTAINS ANY":
       return asArray(value).some((v) => asArray(actual).some((a) => sameValue(a, v, type)));
 

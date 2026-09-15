@@ -12,7 +12,8 @@ name: Battr audit
 #
 # Required secret: FUB_API_KEY
 # Optional secrets: RESEND_API_KEY (emails the report), BATTR_WEBHOOK_URL (Slack)
-# Optional variables: BATTR_LIVE, BATTR_SMART_LIST_ID, BATTR_REPORT_TO
+# Optional variables: BATTR_LIVE, BATTR_SMART_LIST_ID, BATTR_REPORT_TO,
+#                     BATTR_ALERT_CHANNEL, BATTR_REPORT_FROM
 
 on:
   schedule:
@@ -27,6 +28,8 @@ on:
           - "audit"
           - "discover-lead-sources"
           - "inspect-fub-fields"
+          - "census"
+          - "test-email"
       mode:
         description: "Run mode (audit only)"
         type: choice
@@ -42,6 +45,10 @@ on:
           - "both"
           - "at-risk"
           - "neglected"
+      email_to:
+        description: "Where to send the test email (task: test-email)"
+        required: false
+        type: string
       max_sweeps:
         description: "Override the per-run sweep cap (optional)"
         required: false
@@ -57,20 +64,43 @@ concurrency:
 jobs:
   audit:
     runs-on: ubuntu-latest
+    env:
+      # Resolve the task ONCE, with a default.
+      #
+      # This used to be read as `inputs.task` directly in every step condition.
+      # The `inputs` context is only populated for workflow_dispatch — on a
+      # SCHEDULED run it is empty, so `inputs.task == 'audit'` was false and the
+      # nightly 7 PM audit was skipped every single night while the run reported
+      # success in fifteen seconds. Verified against runs #4 and #5.
+      #
+      # A default here makes a scheduled run mean "audit", which is the only
+      # thing a schedule could sensibly mean.
+      TASK: ${{ inputs.task || 'audit' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
 
       - name: Self-test the rule engine
         run: node scripts/battr/selftest.mjs
 
+      # A typo'd or unhandled task would skip every step and still go green —
+      # the exact shape of the bug above. Refuse instead.
+      - name: Check the task is one we handle
+        run: |
+          case "$TASK" in
+            audit|discover-lead-sources|inspect-fub-fields|census|test-email) ;;
+            *) echo "Unknown task '$TASK' — nothing would run." >&2; exit 1 ;;
+          esac
+          echo "Running task: $TASK"
+
+
       # Lists every lead source in the database with counts and current bucket,
       # so the mapping can be filled in without anyone running node locally.
       - name: Discover lead sources
-        if: inputs.task == 'discover-lead-sources'
+        if: env.TASK == 'discover-lead-sources'
         env:
           FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
         run: |
@@ -89,7 +119,7 @@ jobs:
       # depending on a mis-guessed field name is caught directly instead of
       # silently protecting or flagging nobody.
       - name: Inspect FUB fields
-        if: inputs.task == 'inspect-fub-fields'
+        if: env.TASK == 'inspect-fub-fields'
         env:
           FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
         run: |
@@ -102,16 +132,56 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # How many leads fall outside the audit, and why. The number Battr never
+      # reported: nurture contacts with no timeframe, which matched none of its
+      # four nurture lists and were therefore never audited at all.
+      - name: Stage and timeframe census
+        if: env.TASK == 'census'
+        env:
+          FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
+        run: |
+          set -o pipefail
+          node scripts/battr/census.mjs | tee census.txt
+          {
+            echo '## Stage and timeframe census'
+            echo '```'
+            cat census.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Proves the Resend setup end to end without waiting for 7 PM. Sends a
+      # sample agent digest and a sample report, both built from invented leads
+      # — no FUB key, nothing read from the database.
+      - name: Send a test email
+        if: env.TASK == 'test-email'
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          BATTR_REPORT_FROM: ${{ vars.BATTR_REPORT_FROM }}
+          BATTR_REPORT_TO: ${{ vars.BATTR_REPORT_TO }}
+          BATTR_TEST_EMAIL_TO: ${{ inputs.email_to }}
+        run: |
+          set -o pipefail
+          node scripts/battr/test-email.mjs | tee mail.txt
+          {
+            echo '## Test email'
+            echo '```'
+            cat mail.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Run the audit
-        if: inputs.task == 'audit'
+        if: env.TASK == 'audit'
         env:
           FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           BATTR_WEBHOOK_URL: ${{ secrets.BATTR_WEBHOOK_URL }}
           BATTR_SMART_LIST_ID: ${{ vars.BATTR_SMART_LIST_ID }}
           BATTR_REPORT_TO: ${{ vars.BATTR_REPORT_TO }}
-          # How agents are told: report_only (default), fub_task, or email.
+          # How agents are told: email (default), fub_task, or report_only.
           BATTR_ALERT_CHANNEL: ${{ vars.BATTR_ALERT_CHANNEL }}
+          # From address on the per-agent emails. Must be on a domain verified
+          # in Resend, or Resend refuses the send.
+          BATTR_REPORT_FROM: ${{ vars.BATTR_REPORT_FROM }}
           # A manual run honors its own choice; the schedule honors the repo variable.
           BATTR_LIVE: ${{ inputs.mode == 'live' || (github.event_name == 'schedule' && vars.BATTR_LIVE == 'true') }}
         run: |
@@ -120,7 +190,7 @@ jobs:
             ${{ inputs.max_sweeps && format('--max-sweeps={0}', inputs.max_sweeps) || '' }}
 
       - name: Commit the audit trail
-        if: inputs.task == 'audit'
+        if: env.TASK == 'audit'
         run: |
           if [ -z "$(git status --porcelain battr-logs/)" ]; then
             echo "Nothing to record."

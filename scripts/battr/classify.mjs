@@ -46,28 +46,122 @@ export const hasAny = (list, values) => {
  */
 export function buildTouchIndex({ calls = [], texts = [], emails = [] }) {
   const index = new Map();
-
-  const fold = (rows) => {
-    for (const row of rows) {
-      const personId = row.personId ?? row.person?.id;
-      const created = row.created ?? row.createdAt;
-      if (!personId || !created) continue;
-
-      const inbound = row.isIncoming === true || row.direction === "inbound";
-      const at = new Date(created).getTime();
-      if (!Number.isFinite(at)) continue;
-
-      const entry = index.get(personId) ?? { lastOutbound: 0, lastInbound: 0 };
-      if (inbound) entry.lastInbound = Math.max(entry.lastInbound, at);
-      else entry.lastOutbound = Math.max(entry.lastOutbound, at);
-      index.set(personId, entry);
-    }
-  };
-
-  fold(calls);
-  fold(texts);
-  fold(emails);
+  foldTouches(index, calls);
+  foldTouches(index, texts);
+  foldTouches(index, emails);
   return index;
+}
+
+/**
+ * Fold communication rows into an existing touch index, in place.
+ *
+ * Separated from `buildTouchIndex` so the audit can backfill a channel FUB
+ * would not serve in bulk, per person, after the first pass. Folding is
+ * monotonic: it only ever moves `lastOutbound` / `lastInbound` forward, so a
+ * backfill can move a lead from neglected toward compliant and never the other
+ * way. That property is what makes the backfill safe to run before the sweep
+ * decision, and a test asserts it.
+ */
+export function foldTouches(index, rows = []) {
+  for (const row of rows) {
+    const personId = row.personId ?? row.person?.id;
+    const created = row.created ?? row.createdAt;
+    if (!personId || !created) continue;
+
+    const inbound = row.isIncoming === true || row.direction === "inbound";
+    const at = new Date(created).getTime();
+    if (!Number.isFinite(at)) continue;
+
+    const entry = index.get(personId) ?? { lastOutbound: 0, lastInbound: 0 };
+    if (inbound) entry.lastInbound = Math.max(entry.lastInbound, at);
+    else entry.lastOutbound = Math.max(entry.lastOutbound, at);
+    index.set(personId, entry);
+  }
+  return index;
+}
+
+/**
+ * Did the lead write back?
+ *
+ * Outbound email is never a touch — Follow Up Boss sends one batch email to
+ * thirty leads in a single click, so counting it would let one blast mark the
+ * whole database as worked. A REPLY is the opposite: it cannot be manufactured
+ * in bulk, and it is direct evidence the lead is alive and in conversation.
+ *
+ * Direction is read the same way the touch index reads calls and texts. Rows
+ * that carry no direction at all are counted separately rather than guessed —
+ * treating an unreadable row as inbound would quietly reopen the batch-email
+ * hole, and treating it as outbound would quietly sweep live conversations.
+ *
+ * @returns {{ latest: number, undirected: number }} latest inbound epoch ms (0 = none)
+ */
+export function readInboundEmails(emails = []) {
+  let latest = 0;
+  let undirected = 0;
+
+  for (const row of emails) {
+    const at = new Date(row?.created ?? row?.createdAt ?? 0).getTime();
+    if (!Number.isFinite(at) || at === 0) continue;
+
+    if (row?.isIncoming === undefined && row?.direction === undefined) {
+      undirected++;
+      continue;
+    }
+    if (row.isIncoming === true || lower(row.direction) === "inbound") {
+      latest = Math.max(latest, at);
+    }
+  }
+
+  return { latest, undirected };
+}
+
+/**
+ * Leads who reached out and got no call or text back.
+ *
+ * Counting inbound as a touch (Mike's rule) makes these leads read as compliant
+ * everywhere else — correct, since there IS a live conversation, but it would
+ * also make the worst case in the database invisible: a lead who called in and
+ * was never called back. This finds them so they can be reported by name.
+ *
+ * Sorted longest-waiting first, because that is the order to work them in.
+ */
+export function findUnansweredInbound(results, days, now = Date.now()) {
+  const cutoff = days * DAY_MS;
+  return results
+    .filter((r) => {
+      const t = r.contact?._touch;
+      if (!t?.lastInbound) return false;
+      if (t.lastInbound <= (t.lastOutbound ?? 0)) return false;
+      return now - t.lastInbound > cutoff;
+    })
+    .map((r) => ({ ...r, waitingDays: Math.floor((now - r.contact._touch.lastInbound) / DAY_MS) }))
+    .sort((a, b) => b.waitingDays - a.waitingDays);
+}
+
+/**
+ * Run the lists that are audited but never actioned, and count them.
+ *
+ * These mirror lists Battr runs alongside the sweep list. They exist so the
+ * nightly report covers what Battr's screen covers — and so a rule we have
+ * modelled wrongly shows up as a count that disagrees with Battr's, rather than
+ * as silence. Nothing here can move a lead.
+ */
+export function runReportOnlyLists(contacts, reportLists, now = Date.now()) {
+  return reportLists.map((list) => {
+    const tally = { compliant: 0, at_risk: 0, neglected: 0 };
+    for (const contact of contacts) {
+      const status = classifyForList(contact, list, now);
+      if (status) tally[status]++;
+    }
+    return {
+      id: list.id,
+      name: list.name,
+      total: tally.compliant + tally.at_risk + tally.neglected,
+      ...tally,
+      observed: list.observed ?? null,
+      thresholdsInferred: Boolean(list.thresholds_inferred),
+    };
+  });
 }
 
 // ------------------------------------------------------------ agent exemption

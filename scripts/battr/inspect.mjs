@@ -50,11 +50,25 @@ const SAFE_VALUES = new Set([
   "delayed",
 ]);
 
+/**
+ * Every person field that might carry a last-contact timestamp.
+ *
+ * Live finding: FUB refuses GET /v1/textMessages in bulk (400, "personId,
+ * threadId, phone ... must be specified"), the same way it refuses /v1/emails.
+ * Calls come back fine. So the touch index cannot be built from the messages
+ * endpoints alone, and the fallback — if there is one — has to be a field FUB
+ * already returns on the person record.
+ *
+ * This lists every candidate with a sample value so we can see which exist and
+ * whether any of them separates a call or text from an email.
+ */
+const TOUCH_CANDIDATES = /^(last|recent).*(comm|contact|call|text|message|activity|reach|touch)/i;
+
 /** The mappings the rules depend on, and where each one lands if it is wrong. */
 const CRITICAL = [
   ["timeframe", "four of the six audit lists branch on it — wrong means they return empty"],
   ["timeframeId", "the id form of the same field"],
-  ["lastCommunication", "the fallback that makes email-only outreach visible"],
+  ["lastCommunication", "NOT used — it counts email and inbound; shown only to confirm we are right to ignore it"],
   ["stageId", "stage matching falls back to the stage name if absent"],
   ["assignedUserGroupIds", "the owner-group exclusion (52555) depends on it"],
   ["groupIds", "alternate spelling of the same"],
@@ -96,6 +110,58 @@ async function main() {
     else console.log(`${" ".repeat(24)} ${why}`);
   }
 
+  console.log("\n\nLAST-CONTACT CANDIDATES — the fallback for texts, which FUB will not serve in bulk");
+  console.log("-".repeat(70));
+  const touchFields = [...keys].filter((k) => TOUCH_CANDIDATES.test(k)).sort();
+  if (!touchFields.length) {
+    console.log("*** NONE. There is no person-level last-contact field, so a text-only lead");
+    console.log("    cannot be distinguished from a never-contacted one, and sweeping is unsafe.");
+  }
+  for (const field of touchFields) {
+    const present = people.filter((p) => p[field] !== undefined && p[field] !== null);
+    console.log(`${field.padEnd(28)} present on ${String(present.length).padStart(3)}/${people.length}   e.g. ${show(present[0]?.[field])}`);
+  }
+  console.log("\nWhat we need is one that counts calls and texts but NOT email. If none does,");
+  console.log("the honest options are: sweep on calls alone, or do not sweep at all.");
+
+  // Is there an id -> name lookup for timeframe? If the person payload carries
+  // ids rather than names, this endpoint is what turns them into the bands the
+  // nurture lists match on — and its absence is what would force the CSV export
+  // fallback.
+  console.log("\n\nTIMEFRAME LOOKUP — is there an id -> name map to be had?");
+  console.log("-".repeat(70));
+  for (const path of ["/timeframes", "/leadTimeframes"]) {
+    try {
+      const rows = await fub.paginate(path, {}, { max: 100 });
+      console.log(`${path.padEnd(18)} OK — ${rows.length} rows`);
+      for (const row of rows.slice(0, 25)) {
+        // This account returns {id, timeframe}; other shapes use name/label.
+        console.log(`  ${String(row.id ?? "?").padStart(6)}  ${JSON.stringify(row.timeframe ?? row.name ?? row.label ?? row)}`);
+      }
+    } catch (err) {
+      console.log(`${path.padEnd(18)} ${err.message.split("→")[1]?.trim() ?? err.message}`);
+    }
+  }
+
+  // The other place a timeframe can live: an account custom field rather than
+  // the built-in. If both exist, the People screen column and Battr's mirror
+  // may simply be bound to different ones — which is one explanation for
+  // 514 on the screen against 1,262 in Battr's lists.
+  try {
+    const fields = await fub.customFields();
+    const tf = fields.filter((f) => /timeframe|time.?frame|timeline|when.*(buy|move)/i.test(`${f.label} ${f.name}`));
+    console.log(`\ncustom fields matching "timeframe": ${tf.length}`);
+    for (const f of tf) {
+      console.log(`  name=${f.name}  label=${JSON.stringify(f.label)}  type=${f.type}${f.choices ? `  choices=${JSON.stringify(f.choices).slice(0, 200)}` : ""}`);
+    }
+    if (tf.length) {
+      console.log("\n>>> A custom timeframe field EXISTS as well as the built-in. Confirm which");
+      console.log("    one the People screen column is bound to before trusting either count.");
+    }
+  } catch (err) {
+    console.log(`\ncustom fields unreadable: ${err.message}`);
+  }
+
   console.log("\n\nCUSTOM FIELDS ON THE PERSON (custom*)");
   console.log("-".repeat(70));
   const custom = [...keys].filter((k) => k.startsWith("custom")).sort();
@@ -124,6 +190,102 @@ async function main() {
     );
   }
   console.log("\nA null above is a rule that is silently doing nothing. That is what to fix.\n");
+
+  // The reply reprieve depends on two things nobody has confirmed: that FUB
+  // serves /v1/emails filtered to one person, and that the rows say which way
+  // the email went. If either is wrong, no lead can ever be swept — loudly, by
+  // design, but better to find out here than on the first live run.
+  console.log("\nREPLY REPRIEVE — can we tell a reply from a blast?");
+  console.log("-".repeat(70));
+  try {
+    const sample = await fub.emailsForPerson(people[0].id, new Date(Date.now() - 365 * 86400000).toISOString());
+    console.log(`/emails?personId=… returned ${sample.length} rows for one person (bulk is refused; per-person is not).`);
+    const keys = new Set();
+    for (const row of sample) for (const k of Object.keys(row)) keys.add(k);
+    console.log(`fields: ${[...keys].sort().join(", ") || "(no rows to inspect — try a person with email history)"}`);
+    const directional = sample.filter((r) => r.isIncoming !== undefined || r.direction !== undefined).length;
+    console.log(
+      directional === sample.length && sample.length
+        ? "direction: PRESENT on every row — the reprieve can tell a reply from a blast."
+        : `direction: present on ${directional}/${sample.length} rows *** the rest count as neither ***`
+    );
+
+    // Confirmed 12 Sep 2026: neither `direction` nor `isIncoming` is returned on
+    // ANY row, so the reply reprieve currently spares nobody. It fails in the
+    // wrong direction — a lead who wrote back can still be swept.
+    //
+    // Something on the row must carry it. These are the candidates, and this
+    // prints enough to decide WITHOUT guessing: which are populated, and the
+    // distinct values of the enum-shaped ones. No subject, body, address or
+    // name is printed — those are the lead's own words and the lead's identity.
+    if (directional < sample.length && sample.length) {
+      console.log("\n  which row fields could carry direction?");
+      const CANDIDATES = ["userId", "status", "campaignOrigin", "sharedInboxId", "emailAccountId", "emailTemplateId", "actionPlanId", "bounced", "read", "archived", "unsubscribed", "hasEmailDraft"];
+      for (const key of CANDIDATES) {
+        const present = sample.filter((r) => r[key] !== null && r[key] !== undefined && r[key] !== "");
+        if (!present.length && !(key in (sample[0] ?? {}))) continue;
+        // Values only where the field is an enum or a flag. An id is reported
+        // as present/absent and a count, never as the id itself.
+        const vals = [...new Set(present.map((r) => r[key]))];
+        const enumish = vals.every((v) => typeof v === "boolean" || (typeof v === "string" && v.length < 24));
+        console.log(
+          `  ${key.padEnd(18)} populated ${String(present.length).padStart(3)}/${sample.length}` +
+            (enumish && vals.length <= 8 ? `   values: ${JSON.stringify(vals.sort())}` : `   ${vals.length} distinct`)
+        );
+      }
+      console.log("\n  Read it like this: a field populated on SOME rows and empty on the rest,");
+      console.log("  splitting the sample in two, is the direction flag. `userId` set means an");
+      console.log("  agent sent it; `userId` empty on a row that exists means the lead wrote in.");
+      console.log("  Confirm the split before wiring it — a wrong reading spares the wrong leads.");
+    }
+  } catch (err) {
+    console.log(`*** /emails per-person FAILED: ${err.message}`);
+    console.log("    Until this works the engine holds every sweep rather than sweeping blind.");
+  }
+  console.log("");
+
+  // ------------------------------------------------------------- At Bats
+  //
+  // Battr's UI has no CSV export — searched and confirmed absent, not just not
+  // found. So the At Bats history it holds is unrecoverable through Battr.
+  //
+  // But the history is not only in Battr. Every sweep it performed left a note
+  // on the lead in Follow Up Boss, and those notes are ours. If /v1/notes can be
+  // read in bulk, that trail can be replayed into the ledger.
+  //
+  // This probes whether that is possible before anyone writes a parser for it.
+  //
+  // PRIVACY: only note SUBJECTS are printed, and only those seen five or more
+  // times. A subject repeated five times is a template, not a person.
+  console.log("\nAT BATS RECONSTRUCTION — can we replay Battr's sweeps out of FUB's notes?");
+  console.log("-".repeat(70));
+  try {
+    const notes = await fub.paginate("/notes", {}, { max: 500 });
+    console.log(`/notes returned ${notes.length} rows (asked for up to 500). Bulk read: WORKS.`);
+
+    const subjects = new Map();
+    for (const note of notes) {
+      const subject = String(note.subject ?? "(none)").slice(0, 80);
+      subjects.set(subject, (subjects.get(subject) ?? 0) + 1);
+    }
+    const templates = [...subjects.entries()].filter(([, n]) => n >= 5).sort((a, b) => b[1] - a[1]);
+
+    console.log(`\n${templates.length} repeated subjects (5+ occurrences) — these are automation templates:`);
+    for (const [subject, n] of templates.slice(0, 25)) {
+      console.log(`  ${String(n).padStart(5)}  ${subject}`);
+    }
+    if (!templates.length) console.log("  none — every subject is unique, so no automation trail to mine.");
+
+    const fields = new Set();
+    for (const note of notes.slice(0, 50)) for (const k of Object.keys(note)) fields.add(k);
+    console.log(`\nnote fields: ${[...fields].sort().join(", ")}`);
+    console.log("\nIf a Battr sweep subject appears above, its history is recoverable and cancelling loses nothing.");
+  } catch (err) {
+    console.log(`/notes bulk read FAILED: ${err.message}`);
+    console.log("Then Battr's At Bats history is not recoverable, and the ledger starts from today.");
+    console.log("That costs scoreboard depth, nothing operational.");
+  }
+  console.log("");
 }
 
 main().catch((err) => {

@@ -24,11 +24,12 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { FubClient } from "./battr/fub.mjs";
 import { rules } from "./battr/rules.mjs";
-import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, isExemptAgent, lower, hasAny } from "./battr/classify.mjs";
+import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, isExemptAgent, lower, hasAny, daysBetween, readInboundEmails, findUnansweredInbound, runReportOnlyLists, foldTouches } from "./battr/classify.mjs";
 import { normalizeContact } from "./battr/contact.mjs";
 import { isDayAllowed } from "./battr/schedule.mjs";
-import { lists } from "./battr/lists.mjs";
+import { lists, reportOnlyLists } from "./battr/lists.mjs";
 import { bucketName, isSourceAudited } from "./battr/sources.mjs";
+import { needsRules, unseenCount, OBSERVED_DATE } from "./battr/observed.mjs";
 import {
   loadOwnership,
   saveOwnership,
@@ -39,9 +40,20 @@ import {
   DEFAULT_CONVERTED_STAGES,
 } from "./battr/atbats.mjs";
 import { buildAgentDigests, deliverDigests, renderAtBatsSection } from "./battr/alerts.mjs";
+import { sendMail, mailConfigured } from "./battr/email.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const LOG_DIR = join(ROOT, "battr-logs");
+/**
+ * Overridable so the self-test can point a run at a scratch directory.
+ *
+ * It used to be a constant, and the e2e test cleaned up afterwards by removing
+ * `battr-logs` wholesale — which deletes the committed audit trail and, worse,
+ * `state/ownership.csv`. Losing that snapshot is not a tidy-up: the next run
+ * then sees no baseline, and before the cold-start guard that meant minting a
+ * brand_new_lead for all fifty-odd thousand contacts. Running the tests must
+ * not be able to do that.
+ */
+const LOG_DIR = process.env.BATTR_LOG_DIR || join(ROOT, "battr-logs");
 
 // ---------------------------------------------------------------------- args
 
@@ -98,9 +110,37 @@ async function resolveCustomFields(fub, log) {
   return map;
 }
 
+// ------------------------------------------------------------ reply reprieve
+
+/**
+ * Has this lead written back? If so it is spared the sweep.
+ *
+ * Failure is treated as "spared", not "sweep anyway". A lead left in place today
+ * is swept tomorrow once the lookup works; a lead swept mid-conversation is a
+ * client relationship handed to a stranger. The count of unchecked leads goes in
+ * the report so a broken lookup is loud rather than invisible.
+ */
+async function replyReprieve(fub, personId, sinceIso, diag) {
+  if (diag.checks >= rules.maxEmailChecksPerRun) {
+    diag.budgetSpent++;
+    return { spared: true, reason: `email check budget (${rules.maxEmailChecksPerRun}) spent` };
+  }
+
+  diag.checks++;
+  try {
+    const { latest, undirected } = readInboundEmails(await fub.emailsForPerson(personId, sinceIso));
+    diag.undirected += undirected;
+    if (!latest) return { spared: false };
+    return { spared: true, reason: `lead replied by email ${daysBetween(latest)}d ago` };
+  } catch (err) {
+    diag.failures.push(err.message);
+    return { spared: true, reason: `could not check for a reply (${err.message})` };
+  }
+}
+
 // ---------------------------------------------------------------------- report
 
-function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] } }) {
+function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], touchIncomplete = [] }) {
   const byAgent = new Map();
   for (const r of results) {
     if (r.status === "excluded" || !r.owner) continue;
@@ -124,9 +164,31 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
   const lines = [];
   lines.push(`# Battr audit — ${ptDate()}${dry ? " (DRY RUN — nothing was written)" : ""}`);
   lines.push("");
+  // "53786 leads audited" was the raw database pull, not the audit list. The
+  // audited population is what the combined list actually holds — Battr's
+  // equivalent number is 866 — and conflating the two makes every rate in this
+  // report look sixty times better than it is.
+  const audited = results.filter((r) => r.status !== "excluded").length;
   lines.push(
-    `Run \`${runId}\` · ${population} leads audited · thresholds: at risk ${rules.atRiskDays}d, neglected ${rules.neglectedDays}d`
+    `Run \`${runId}\` · **${audited} leads audited** of ${population} pulled from Follow Up Boss · ` +
+      `thresholds: at risk ${rules.atRiskDays}d, neglected ${rules.neglectedDays}d`
   );
+  if (touchIncomplete.length) {
+    lines.push("");
+    lines.push("> ## ⚠ THIS AUDIT IS NOT COMPLETE — DO NOT ACT ON THE NEGLECTED COUNTS");
+    lines.push(">");
+    for (const gap of touchIncomplete) {
+      lines.push(`> Follow Up Boss would not serve **${gap.channel}** in bulk: \`${gap.reason}\``);
+    }
+    lines.push(">");
+    lines.push(
+      "> Every lead below is judged on the channels that *could* be read. A lead an agent has only " +
+        "ever texted therefore reads as never contacted. **Sweeps are disabled for this run** — the " +
+        "engine will not take a lead off an agent on evidence it knows is partial."
+    );
+    lines.push("");
+  }
+
   lines.push("");
   lines.push("## Summary");
   lines.push("");
@@ -137,6 +199,22 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     `- Neglected: **${actions.neglected.length}** (${actions.swept.length} swept, ${actions.heldBack.length} held back)`
   );
   lines.push(`- Excluded: ${results.filter((r) => r.status === "excluded").length}`);
+
+  // A bound cap means the run did NOT do what the rules say it should — it did
+  // less, deliberately. That is the brake working, but it has to be visible:
+  // Battr processed 45 neglected on Tuesday 8 Sep against 7 on Wednesday 2 Sep,
+  // because sweeps run Tue–Fri and Tuesday clears three days of backlog. A cap
+  // of 30 clips a Tuesday and nothing else, so the day it binds is exactly the
+  // day someone should be told rather than left to infer it from a long list.
+  const cappedOut = actions.heldBack.filter((h) => /sweep cap/.test(h.holdReason ?? "")).length;
+  if (cappedOut) {
+    lines.push(
+      `- ⚠ **The per-run sweep cap held back ${cappedOut} lead${cappedOut === 1 ? "" : "s"}.** ` +
+        `They are still neglected and will be reconsidered on the next eligible run. ` +
+        `Battr's own Tuesday volume has reached 45, so a cap of ${rules.maxSweepsPerRun} binds on Tuesdays by design — ` +
+        `raise it in rules.mjs only deliberately.`
+    );
+  }
   for (const s of actions.skipped ?? []) {
     lines.push(`- **${s.count} ${s.what} skipped today** — ${s.reason}`);
   }
@@ -169,6 +247,47 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     lines.push("");
   }
 
+  // A reply lookup that quietly stops working would spare every lead forever and
+  // the run would still look healthy. Say so on the face of the report instead.
+  if (replyDiag?.failures?.length) {
+    lines.push(
+      `> **${replyDiag.failures.length} leads were not swept because the reply lookup failed** — ` +
+        `e.g. \`${replyDiag.failures[0]}\`. Nothing was swept blind, but fix this: ` +
+        `until it works, no lead can be swept.`
+    );
+    lines.push("");
+  }
+  if (replyDiag?.undirected) {
+    lines.push(
+      `> ${replyDiag.undirected} emails carried no direction field, so they counted as neither sent nor received. ` +
+        `Check what \`/v1/emails\` returns before trusting the reply reprieve.`
+    );
+    lines.push("");
+  }
+  if (replyDiag?.budgetSpent) {
+    lines.push(`> ${replyDiag.budgetSpent} leads were held back unchecked: the per-run reply-lookup budget was spent.`);
+    lines.push("");
+  }
+
+  // Inbound resets the clock, so a lead who called in and was never called back
+  // reads as compliant everywhere else in this report. That case is the most
+  // expensive kind of neglect there is, so it gets its own section rather than
+  // disappearing into the rule that spared it.
+  if (unanswered.length) {
+    lines.push(`## Inbound, never answered (${unanswered.length})`);
+    lines.push("");
+    lines.push("These leads called or texted us and nobody has called or texted back since.");
+    lines.push("They are not swept for it — an inbound contact counts as a touch — but this is the list to work.");
+    lines.push("");
+    lines.push("| Lead | Owner | Days since they reached out | Source |");
+    lines.push("| --- | --- | ---: | --- |");
+    for (const u of unanswered.slice(0, 50)) {
+      lines.push(`| ${u.name} | ${u.owner || "unassigned"} | ${u.waitingDays} | ${u.source || "—"} |`);
+    }
+    if (unanswered.length > 50) lines.push(`| …and ${unanswered.length - 50} more | | | |`);
+    lines.push("");
+  }
+
   // Which sources drive the sweeps — this is what tells you whether a source
   // belongs in the audit at all, or in the excluded bucket.
   const bySource = new Map();
@@ -195,13 +314,47 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     lines.push("");
   }
 
+  // Every list Battr runs, ours beside theirs. None of these act — they are here
+  // so a rule we have modelled wrongly shows up as a number that disagrees,
+  // rather than as silence.
+  if (reportLists.length) {
+    lines.push("## Reconciliation — other lists Battr runs (reported, never actioned)");
+    lines.push("");
+    lines.push(`| List | Ours | Battr ${OBSERVED_DATE} | Ours: C / AR / N | Battr: C / AR / N |`);
+    lines.push("| --- | ---: | ---: | --- | --- |");
+    for (const r of reportLists) {
+      const o = r.observed;
+      const mine = `${r.compliant} / ${r.at_risk} / ${r.neglected}`;
+      const theirs = o ? `${o.compliant} / ${o.at_risk} / ${o.neglected}` : "—";
+      const flag = r.thresholdsInferred ? " ⚠︎" : "";
+      lines.push(`| ${r.name}${flag} | ${r.total} | ${o?.total ?? "—"} | ${mine} | ${theirs} |`);
+    }
+    lines.push("");
+    lines.push("⚠︎ = thresholds inferred from Battr's compliance split, not read off its rule screen. A wide miss on that row means the threshold is wrong, not the data.");
+    lines.push("");
+
+    const gaps = needsRules();
+    if (gaps.length || unseenCount() > 0) {
+      lines.push("**Still unmodelled:**");
+      for (const g of gaps) lines.push(`- ${g.name} — ${g.total.toLocaleString()} records on ${OBSERVED_DATE}. ${g.note}`);
+      if (unseenCount() > 0) {
+        lines.push(`- ${unseenCount()} further scheduled audits ran that day and have not been captured.`);
+      }
+      lines.push("");
+    }
+  }
+
   lines.push(renderAtBatsSection(agentStats));
 
   if (alerts.delivered.length || alerts.failed.length) {
-    lines.push(`## Agent alerts (${alerts.delivered.length} sent, ${alerts.failed.length} failed)`);
+    // On a dry run nothing left the building. Saying "sent" here is how a
+    // shadow report gets mistaken for a live one.
+    const verb = dry ? "would send" : "sent";
+    lines.push(`## Agent alerts (${alerts.delivered.length} ${verb}, ${alerts.failed.length} failed)`);
     lines.push("");
     for (const d of alerts.delivered) {
-      lines.push(`- ${d.agent}: ${d.atRisk.length} at risk, ${d.neglected.length} sweeping — ${d.via}`);
+      const waiting = d.unanswered?.length ? `, ${d.unanswered.length} waiting on a call back` : "";
+      lines.push(`- ${d.agent}: ${d.atRisk.length} at risk, ${d.neglected.length} sweeping${waiting} — ${d.via}`);
     }
     for (const f of alerts.failed) lines.push(`- ${f.agent}: FAILED — ${f.reason}`);
     lines.push("");
@@ -231,25 +384,16 @@ async function deliverReport(markdown, { runId, dry }) {
 
   const subject = `Battr audit — ${ptDate()}${dry ? " (dry run)" : ""}`;
 
-  if (process.env.RESEND_API_KEY && process.env.BATTR_REPORT_TO) {
+  if (mailConfigured() && process.env.BATTR_REPORT_TO) {
     try {
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: process.env.BATTR_REPORT_FROM || "battr@therolandteam.com",
-          to: process.env.BATTR_REPORT_TO.split(","),
-          subject,
-          text: markdown,
-        }),
-      });
-      if (!res.ok) console.error(`  email delivery failed: ${res.status} ${(await res.text()).slice(0, 200)}`);
+      await sendMail({ to: process.env.BATTR_REPORT_TO, subject, text: markdown });
     } catch (err) {
-      console.error(`  email delivery failed: ${err.message}`);
+      // Never fatal: the report is already on disk and in the job summary, and
+      // failing the run over a mail problem would hide a clean audit.
+      console.error(`  report email failed: ${err.message}`);
     }
+  } else if (process.env.BATTR_REPORT_TO && !mailConfigured()) {
+    console.error("  report email skipped: BATTR_REPORT_TO is set but RESEND_API_KEY is not");
   }
 
   if (process.env.BATTR_WEBHOOK_URL) {
@@ -327,57 +471,136 @@ async function main() {
     `  ${activity.calls.length} calls, ${activity.texts.length} texts, ${activity.emails.length} emails since ${since.slice(0, 10)}`
   );
 
+  // A channel FUB will not serve in bulk leaves the touch index incomplete, and
+  // an incomplete touch index is the one state in which sweeping does real
+  // damage: a lead an agent has only ever texted reads as never contacted, and
+  // gets taken off the agent who actually worked it. Report, never sweep.
+  const touchIncomplete = activity.unavailable ?? [];
+  if (touchIncomplete.length) {
+    for (const gap of touchIncomplete) {
+      log(`  WARNING: ${gap.channel} could not be read — last-touch is incomplete`);
+    }
+    log("  SWEEPS DISABLED for this run: an incomplete touch index would sweep leads that were worked.");
+  }
+
   // 4. classify
   //
   // Custom fields are resolved BEFORE classification, not after: list mode reads
   // `customBattrAtRiskSince` off each contact to enforce the warn-first
   // interlock, so the field's API name has to be known while normalizing.
   const fields = await resolveCustomFields(fub, log);
-  const contacts = people.map((p) => normalizeContact(p, touchIndex.get(p.id), fields));
+  // Classification is a closure because it reads the touch index, and the
+  // backfill below can move last-touch forward for the leads that matter.
+  // Running it again is cheaper and less error-prone than patching results.
+  let contacts = [];
+  const classifyPopulation = ({ quiet = false } = {}) => {
+    const say = quiet ? () => {} : log;
+    contacts = people.map((p) => normalizeContact(p, touchIndex.get(p.id), fields));
 
-  let results;
-  if (rules.mode === "lists") {
-    const combined = lists.find((l) => l.audit_type === "combined_contact_lists");
-    if (!combined) throw new Error("mode is 'lists' but no combined list is configured.");
+    let results;
+    if (rules.mode === "lists") {
+      const combined = lists.find((l) => l.audit_type === "combined_contact_lists");
+      if (!combined) throw new Error("mode is 'lists' but no combined list is configured.");
 
-    const run = runCombinedList(contacts, combined, Date.now());
-    if (run.missingMemberLists.length) {
-      log(`  WARNING: member lists ${run.missingMemberLists.join(", ")} have no rule JSON — population is narrower than the live audit.`);
-    }
-
-    // Four of the six member lists branch on FUB timeframe. If we can't read it,
-    // those lists silently come back empty rather than erroring — so say so.
-    const unresolved = contacts.filter((c) => c.timeframeUnresolved).length;
-    if (unresolved) {
-      log(`  WARNING: ${unresolved} nurture-stage contacts have no readable timeframe — the four nurture lists will under-report. Check the timeframe field name on a FUB contact.`);
-    }
-
-    // The combined list excludes an owner group, but that condition reads a
-    // field FUB may not return on a person. If nobody has any group ids, the
-    // exclusion cannot fire and the protection it implies does not exist.
-    if (!contacts.some((c) => (c.owner_group_ids ?? []).length)) {
-      log(`  WARNING: no contact carries owner_group_ids — the owner-group exclusion (${rules.excludeOwnerGroupIds.join(", ")}) is NOT being enforced. Exempt those agents by name in rules.exemptAgents instead.`);
-    }
-    log(`  ${run.records.length} in the combined list, ${run.excluded.length} excluded by bucket/group`);
-
-    // Two exclusions applied after the union, both surfaced as "excluded" in the
-    // report rather than quietly vanishing from the counts.
-    //
-    // The source check cannot be left to the combined list's `lead_bucket_id !=
-    // 82` condition: an unmapped source has a null bucket, and `null != 82` is
-    // true, so an unclassified source would sail through regardless of
-    // unmappedPolicy. isSourceAudited is the only thing that honours it.
-    results = run.records.map((r) => {
-      if (isExemptAgent(r.owner, rules)) {
-        return { ...r, status: "excluded", reason: `exempt agent (${r.owner})` };
+      const run = runCombinedList(contacts, combined, Date.now());
+      if (run.missingMemberLists.length) {
+        say(`  WARNING: member lists ${run.missingMemberLists.join(", ")} have no rule JSON — population is narrower than the live audit.`);
       }
-      if (!isSourceAudited(r.source)) {
-        return { ...r, status: "excluded", reason: `protected source (${r.source || "none"})` };
+
+      // Four of the six member lists branch on FUB timeframe. If we can't read it,
+      // those lists silently come back empty rather than erroring — so say so.
+      const unresolved = contacts.filter((c) => c.timeframeUnresolved).length;
+      if (unresolved) {
+        say(`  ${unresolved} nurture-stage contacts have no timeframe set — they fall to CLEAN UP (1145), which reports and never sweeps.`);
       }
-      return r;
-    });
-  } else {
-    results = contacts.map((c) => classifySimple(c, touchIndex, rules));
+
+      // An id FUB returns that our table does not cover. Distinct from "blank":
+      // blank is a data gap someone can fill in, an unmapped id means FUB added
+      // a band and four lists are now quietly narrower than Battr's.
+      const unknownIds = [...new Set(contacts.filter((c) => c.timeframeIdUnknown).map((c) => c.custom_fields.fub.system_timeframeId))];
+      if (unknownIds.length) {
+        say(`  WARNING: timeframe ids not in TIMEFRAME_IDS: ${unknownIds.join(", ")} — run inspect-fub-fields and extend the map, or those leads are audited by nothing.`);
+      }
+
+      // The combined list excludes an owner group, but that condition reads a
+      // field FUB may not return on a person. If nobody has any group ids, the
+      // exclusion cannot fire and the protection it implies does not exist.
+      if (!contacts.some((c) => (c.owner_group_ids ?? []).length)) {
+        say(`  WARNING: no contact carries owner_group_ids — the owner-group exclusion (${rules.excludeOwnerGroupIds.join(", ")}) is NOT being enforced. Exempt those agents by name in rules.exemptAgents instead.`);
+      }
+      say(`  ${run.records.length} in the combined list, ${run.excluded.length} excluded by bucket/group`);
+
+      // Two exclusions applied after the union, both surfaced as "excluded" in the
+      // report rather than quietly vanishing from the counts.
+      //
+      // The source check cannot be left to the combined list's `lead_bucket_id !=
+      // 82` condition: an unmapped source has a null bucket, and `null != 82` is
+      // true, so an unclassified source would sail through regardless of
+      // unmappedPolicy. isSourceAudited is the only thing that honours it.
+      results = run.records.map((r) => {
+        if (isExemptAgent(r.owner, rules)) {
+          return { ...r, status: "excluded", reason: `exempt agent (${r.owner})` };
+        }
+        if (!isSourceAudited(r.source)) {
+          return { ...r, status: "excluded", reason: `protected source (${r.source || "none"})` };
+        }
+        return r;
+      });
+    } else {
+      results = contacts.map((c) => classifySimple(c, touchIndex, rules));
+    }
+    return results;
+  };
+
+  let results = classifyPopulation();
+
+  // 4b. BACKFILL THE CHANNEL FUB WOULD NOT SERVE IN BULK
+  //
+  // `/v1/textMessages` refuses a whole-database read, so the touch index above
+  // is calls-only and the run will not sweep on it. But FUB serves one person's
+  // thread happily, and only a few dozen leads are ever actionable — so ask
+  // about those, per person, and fold the answers in.
+  //
+  // Folding is monotonic: it moves last-touch forward, never back. So a text
+  // found here can only move a lead from neglected toward compliant. The pass
+  // cannot make anyone newly sweepable, which is why it is safe to run before
+  // the sweep decision rather than after.
+  let textBackfill = null;
+  const missingTexts = touchIncomplete.find((g) => g.channel === "texts");
+  if (missingTexts && rules.perPersonTextBackfill) {
+    const candidates = results.filter((r) => r.status === "at_risk" || r.status === "neglected");
+    if (candidates.length > rules.maxTextBackfill) {
+      // Abandoned, not half-done. A partial backfill is the one genuinely
+      // dangerous outcome here: it looks like a complete touch index.
+      log(`  text backfill SKIPPED: ${candidates.length} actionable leads exceeds maxTextBackfill (${rules.maxTextBackfill}).`);
+      textBackfill = { attempted: candidates.length, complete: false, reason: "over the cap" };
+    } else {
+      log(`  backfilling texts for ${candidates.length} actionable leads (FUB serves these per person)...`);
+      const before = { atRisk: results.filter((r) => r.status === "at_risk").length, neglected: results.filter((r) => r.status === "neglected").length };
+      let rows = 0;
+      let failed = 0;
+      for (const cand of candidates) {
+        try {
+          const texts = await fub.textsForPerson(cand.id, since);
+          rows += texts.length;
+          foldTouches(touchIndex, texts);
+        } catch (err) {
+          // One lead's thread failing leaves the index incomplete for that
+          // lead, and there is no way to tell a "no texts" from a "could not
+          // read". So the whole pass is incomplete, and sweeps stay off.
+          failed++;
+          log(`  text backfill failed for one lead: ${err.message}`);
+        }
+      }
+      results = classifyPopulation({ quiet: true });
+      const after = { atRisk: results.filter((r) => r.status === "at_risk").length, neglected: results.filter((r) => r.status === "neglected").length };
+      textBackfill = { attempted: candidates.length, rows, failed, complete: failed === 0, before, after };
+      log(
+        `  text backfill: ${rows} messages over ${candidates.length} leads` +
+          (failed ? `, ${failed} FAILED — touch index still incomplete` : "") +
+          ` — at risk ${before.atRisk} → ${after.atRisk}, neglected ${before.neglected} → ${after.neglected}`
+      );
+    }
   }
 
   const atRisk = results.filter((r) => r.status === "at_risk");
@@ -391,10 +614,30 @@ async function main() {
 
   // Day filters gate each action independently. A blocked day is logged as a
   // skip with its reason — never silently dropped.
-  const nudgesAllowedToday = isDayAllowed(rules.nudgeDayFilter, new Date(), rules.timezone);
-  const sweepsAllowedToday = isDayAllowed(rules.sweepDayFilter, new Date(), rules.timezone);
-  if (!nudgesAllowedToday) log(`  nudges skipped: day filter "${rules.nudgeDayFilter}"`);
-  if (!sweepsAllowedToday) log(`  sweeps skipped: day filter "${rules.sweepDayFilter}"`);
+  // An incomplete touch signal blocks BOTH tiers, not just the sweep.
+  //
+  // Run 2026-09-04-e1vs held all 55 sweeps for exactly this reason and still
+  // wrote 8 nudges. That is the wrong half to hold. A nudge stamps
+  // `Battr At Risk Since`, and that stamp is the whole of the warn-first
+  // interlock: a wrong nudge tonight is what arms a wrong sweep tomorrow, on a
+  // night when the run has already decided it cannot trust its own evidence.
+  //
+  // The backfill above can restore a complete touch index for every lead an
+  // action would touch. That removes the REASON sweeps are disabled, but not
+  // the decision: acting on a backfilled index takes the number of leads that
+  // can be swept from zero to non-zero, so it waits on an explicit opt-in
+  // (`rules.sweepOnBackfilledTexts`) rather than switching itself on. Until
+  // then the counts in the report are correct and nothing moves — which is the
+  // state that makes the report comparable to Battr's nightly emails.
+  const touchComplete = touchIncomplete.length === 0 || textBackfill?.complete === true;
+  const touchUsable = touchIncomplete.length === 0 || (textBackfill?.complete === true && rules.sweepOnBackfilledTexts === true);
+  const touchReason = touchComplete
+    ? "last-touch complete via per-person backfill, but rules.sweepOnBackfilledTexts is off"
+    : "last-touch incomplete";
+  const nudgesAllowedToday = isDayAllowed(rules.nudgeDayFilter, new Date(), rules.timezone) && touchUsable;
+  const sweepsAllowedToday = isDayAllowed(rules.sweepDayFilter, new Date(), rules.timezone) && touchUsable;
+  if (!nudgesAllowedToday) log(`  nudges skipped: ${touchUsable ? `day filter "${rules.nudgeDayFilter}"` : touchReason}`);
+  if (!sweepsAllowedToday) log(`  sweeps skipped: ${touchUsable ? `day filter "${rules.sweepDayFilter}"` : touchReason}`);
 
   // 5a. nudge
   if ((args.stage === "both" || args.stage === "at-risk") && nudgesAllowedToday) {
@@ -423,8 +666,10 @@ async function main() {
 
   // 5b. sweep
   const sweepLog = { runId, timestamp: new Date().toISOString(), dry, sweeps: [] };
+  const replyDiag = { checks: 0, undirected: 0, budgetSpent: 0, spared: 0, failures: [] };
   if ((args.stage === "both" || args.stage === "neglected") && sweepsAllowedToday) {
     const cap = args.maxSweeps ?? rules.maxSweepsPerRun;
+    const replyWindow = new Date(Date.now() - rules.inboundEmailWindowDays * DAY_MS).toISOString();
     let primaryCount = 0;
 
     for (const lead of neglected) {
@@ -457,6 +702,20 @@ async function main() {
         const warned = fields.atRiskSince ? Boolean(person?.[fields.atRiskSince]) : false;
         if (!warned) {
           actions.heldBack.push({ ...lead, holdReason: "never warned — interlock held the sweep" });
+          continue;
+        }
+      }
+
+      // Last gate before the lead moves: did the lead write back? An agent can
+      // batch-email thirty people in one click, so outbound email never counts
+      // as working a lead — but a reply cannot be sent in bulk, and sweeping a
+      // live conversation away from the agent holding it is the one mistake
+      // this engine must not make.
+      if (rules.inboundEmailSparesSweep) {
+        const reprieve = await replyReprieve(fub, lead.id, replyWindow, replyDiag);
+        if (reprieve.spared) {
+          replyDiag.spared++;
+          actions.heldBack.push({ ...lead, holdReason: reprieve.reason });
           continue;
         }
       }
@@ -502,11 +761,24 @@ async function main() {
   }
 
   // A blocked day is a recorded skip, not a silent no-op.
+  const incompleteReason = () =>
+    (touchComplete
+      ? `${touchIncomplete.map((g) => g.channel).join(", ")} backfilled per person and complete — ` +
+        `set rules.sweepOnBackfilledTexts to act on it`
+      : `last-touch incomplete — ${touchIncomplete.map((g) => g.channel).join(", ")} could not be read in bulk`);
   if (!nudgesAllowedToday && atRisk.length) {
-    actions.skipped.push({ what: "nudges", count: atRisk.length, reason: `day filter "${rules.nudgeDayFilter}"` });
+    actions.skipped.push({
+      what: "nudges",
+      count: atRisk.length,
+      reason: touchUsable ? `day filter "${rules.nudgeDayFilter}"` : incompleteReason(),
+    });
   }
   if (!sweepsAllowedToday && neglected.length) {
-    actions.skipped.push({ what: "sweeps", count: neglected.length, reason: `day filter "${rules.sweepDayFilter}"` });
+    actions.skipped.push({
+      what: "sweeps",
+      count: neglected.length,
+      reason: touchUsable ? `day filter "${rules.sweepDayFilter}"` : incompleteReason(),
+    });
   }
 
   // 6. At Bats — ownership-change tracking.
@@ -518,10 +790,15 @@ async function main() {
   const ledgerPath = join(LOG_DIR, "at-bats.jsonl");
 
   const sweptIds = new Set(actions.swept.map((s) => s.personId));
-  const newAtBats = detectAtBats(loadOwnership(statePath), contacts, { sweptIds });
+  const priorOwnership = loadOwnership(statePath);
+  const newAtBats = detectAtBats(priorOwnership, contacts, { sweptIds });
   appendAtBats(ledgerPath, newAtBats);
   saveOwnership(statePath, contacts);
-  if (newAtBats.length) log(`  ${newAtBats.length} new at bats recorded`);
+  if (!priorOwnership || priorOwnership.size === 0) {
+    log(`  ownership baseline recorded for ${contacts.length} contacts — no at bats from a cold start`);
+  } else if (newAtBats.length) {
+    log(`  ${newAtBats.length} new at bats recorded`);
+  }
 
   const stageList = await fub.stages().catch(() => []);
   const convertedStageExids = stageList
@@ -536,11 +813,45 @@ async function main() {
   });
 
   // 7. Per-agent alerts — what tells the AGENT, as opposed to the note on the lead.
-  const channel = process.env.BATTR_ALERT_CHANNEL || "report_only";
-  const digests = buildAgentDigests(results, {
-    excludeGroupIds: rules.excludeOwnerGroupIds,
-    sweepDays: rules.neglectedDays,
-  });
+  // Email, matching what Battr did: each agent gets their own list. Override
+  // with the BATTR_ALERT_CHANNEL repository variable (report_only | fub_task).
+  const channel = process.env.BATTR_ALERT_CHANNEL || "email";
+  // The lists Battr runs that never act. Counted every night so a wrong rule
+  // surfaces as a number, not as silence.
+  const reportLists = rules.mode === "lists" ? runReportOnlyLists(contacts, reportOnlyLists(), Date.now()) : [];
+  for (const r of reportLists) {
+    const drift = r.observed && r.observed.total ? Math.abs(r.total - r.observed.total) / r.observed.total : 0;
+    if (drift > 0.25) {
+      log(`  ${r.name}: ${r.total} vs Battr's ${r.observed.total} on ${OBSERVED_DATE} — off by ${Math.round(drift * 100)}%`);
+    }
+  }
+
+  const unanswered = findUnansweredInbound(results, rules.unansweredInboundDays);
+  if (unanswered.length) log(`  ${unanswered.length} leads reached out with no call or text back`);
+
+  // Digests are withheld on an unusable touch signal, for the same reason the
+  // actions are. Run 2026-09-04-e1vs would have emailed thirteen agents that
+  // their leads were "sweeping" — Quetza Adame that eighteen of hers were going
+  // — on a night the engine swept nothing and had already said in its own report
+  // that it could not trust the counts. Telling thirty agents their book is
+  // being taken, wrongly, is not a smaller mistake than taking it.
+  const digests = touchUsable
+    ? buildAgentDigests(results, {
+        excludeGroupIds: rules.excludeOwnerGroupIds,
+        sweepDays: rules.neglectedDays,
+        unanswered,
+        // Built AFTER the sweep loop, so the digest can tell an agent which
+        // leads they can still save from the ones already gone.
+        sweptIds,
+      })
+    : [];
+
+  if (!touchUsable) {
+    const wouldHave = buildAgentDigests(results, { excludeGroupIds: rules.excludeOwnerGroupIds, unanswered, sweptIds }).length;
+    log(`  ${wouldHave} agent digests WITHHELD — ${incompleteReason()}`);
+    actions.skipped.push({ what: "agent alerts", count: wouldHave, reason: incompleteReason() });
+  }
+
   const alerts = await deliverDigests(digests, { channel, fub, usersById, dry, log });
   if (digests.length) log(`  ${digests.length} agent digests (${channel}${dry ? ", dry" : ""})`);
 
@@ -548,7 +859,7 @@ async function main() {
   mkdirSync(LOG_DIR, { recursive: true });
   if (sweepLog.sweeps.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
 
-  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts });
+  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete });
   const reportPath = await deliverReport(markdown, { runId, dry });
 
   console.log(markdown);
