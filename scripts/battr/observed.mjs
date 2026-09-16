@@ -623,9 +623,9 @@ export const observedLists = [
     compliant: 7,
     at_risk: 0,
     neglected: 2,
-    status: "needs-rules",
-    listId: null,
-    note: "Nine records. Almost certainly leads an AI texter has replied to, but the selector is a guess and nine records is not worth guessing at.",
+    status: "modeled",
+    listId: 1150,
+    note: "Rule screen read 3 Sep 2026: pond NONE and tags CONTAINS ANY AI_ENGAGED, AI_NEEDS_FOLLOW_UP, thresholds 30/60, no actions. Modelled as list 1150, report-only.",
   },
   {
     name: "‼️ YLOPO IMPORTANT",
@@ -657,7 +657,7 @@ export const observedLists = [
   { name: "👀 Quarterly Nurture", type: "contact", total: 537, status: "modeled", listId: 1109, note: "Member of Team Leads." },
   { name: "🌶️ Hot Leads", type: "contact", total: 19, status: "modeled", listId: 1144, note: "Member of Team Leads. Nineteen records — the tightest list, and the one carrying the 2/4 day thresholds." },
   {
-    name: "Current & Upcoming Clients",
+    name: "📖 Current & Upcoming Clients",
     type: "contact",
     status: "modeled",
     listId: 1149,
@@ -667,8 +667,10 @@ export const observedLists = [
 
 /**
  * Lists known to exist but never captured. Now zero: all 15 scheduled audits
- * are accounted for. Two still need their RULES (status "needs-rules"), which
- * is a different thing from not knowing they exist.
+ * are accounted for. After the rule screens of 3 Sep were applied on 16 Sep,
+ * only ONE still needs its rule — 📊 Database Health Score, a roll-up over 13
+ * source lists that cannot be modelled without knowing which 13. Needing a rule
+ * is a different thing from not knowing the list exists.
  */
 export const unseenCount = () => Math.max(0, OBSERVED_AUDIT_COUNT - observedLists.length);
 

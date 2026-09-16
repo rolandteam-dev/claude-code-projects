@@ -169,9 +169,15 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
   // equivalent number is 866 — and conflating the two makes every rate in this
   // report look sixty times better than it is.
   const audited = results.filter((r) => r.status !== "excluded").length;
+  // In list mode every member list carries its own pair of thresholds, so the
+  // single global pair is not what judged anybody — printing it here read as
+  // "this run used 7/14" when Hot Leads used 2/4 and Quarterly Nurture 93/96.
+  const thresholdNote =
+    rules.mode === "lists"
+      ? "thresholds: per list (2/4 Hot … 93/96 Quarterly)"
+      : `thresholds: at risk ${rules.atRiskDays}d, neglected ${rules.neglectedDays}d`;
   lines.push(
-    `Run \`${runId}\` · **${audited} leads audited** of ${population} pulled from Follow Up Boss · ` +
-      `thresholds: at risk ${rules.atRiskDays}d, neglected ${rules.neglectedDays}d`
+    `Run \`${runId}\` · **${audited} leads audited** of ${population} pulled from Follow Up Boss · ${thresholdNote}`
   );
   if (touchIncomplete.length) {
     lines.push("");
@@ -413,24 +419,71 @@ async function deliverReport(markdown, { runId, dry }) {
 
 // ------------------------------------------------------------------------ undo
 
-async function undo(fub, runId, log) {
+/**
+ * Put every lead swept in one run back where it was.
+ *
+ * This is the emergency brake, and it gets reached on the worst morning anyone
+ * will have with this system. Two things it therefore must not do:
+ *
+ * 1. REVERSE A DRY RUN'S LOG. A dry run still records the sweeps it WOULD have
+ *    made — that is what makes a shadow run worth reading. Those leads were
+ *    never moved. "Undoing" them would reassign live leads to owners they were
+ *    never taken from, from a list of moves that only ever existed on paper,
+ *    and the undo would be the first thing all night to actually touch the CRM.
+ *
+ * 2. CLAIM SUCCESS IT DID NOT HAVE. The client short-circuits writes in dry
+ *    mode and returns `{dry:true}` rather than throwing, so a dry undo counted
+ *    every lead as restored and printed "Restored 12/12 leads" having done
+ *    nothing. A false all-clear is worse than a crash here: a crash sends
+ *    someone looking, an all-clear sends them to lunch while the leads sit in
+ *    the pond.
+ *
+ * So undo always writes. It is a corrective action reversing writes that
+ * already happened, and gating it behind BATTR_LIVE would be backwards —
+ * someone who switches the system off after a bad night would find the undo
+ * switched off with it.
+ */
+async function undo(apiKey, runId, log) {
   const path = join(LOG_DIR, `${runId}.json`);
   if (!existsSync(path)) throw new Error(`No sweep log found for run ${runId} (looked in ${path})`);
 
   const entry = JSON.parse(readFileSync(path, "utf8"));
-  log(`Undoing ${entry.sweeps.length} sweeps from run ${runId}...`);
+
+  if (entry.dry) {
+    throw new Error(
+      `Run ${runId} was a DRY RUN — those ${entry.sweeps.length} sweeps never happened, so there is nothing to undo. ` +
+        `Reversing them would move live leads to owners they were never taken from. Refusing.`
+    );
+  }
+  if (!entry.sweeps.length) {
+    log(`Run ${runId} swept nothing. Nothing to undo.`);
+    return;
+  }
+
+  // Deliberately NOT the caller's client: undo writes, whatever mode the run
+  // that invoked it is in.
+  const fub = new FubClient(apiKey, { dry: false, log });
+
+  log(`Undoing ${entry.sweeps.length} sweeps from run ${runId} — THIS WRITES TO FOLLOW UP BOSS.`);
 
   let restored = 0;
+  const failed = [];
   for (const sweep of entry.sweeps) {
     try {
       await fub.assign(sweep.personId, { userId: sweep.fromUserId, pondId: null });
       await fub.note(sweep.personId, `Battr: sweep reversed — restored to ${sweep.fromUserName}.`);
       restored++;
     } catch (err) {
-      log(`  failed to restore ${sweep.name} (#${sweep.personId}): ${err.message}`);
+      failed.push(`${sweep.name} (#${sweep.personId}): ${err.message}`);
     }
   }
   log(`Restored ${restored}/${entry.sweeps.length} leads.`);
+
+  // A partial undo leaves the database half-reversed. That has to be an error
+  // exit, not a line in the middle of a log nobody scrolls back through.
+  if (failed.length) {
+    throw new Error(`${failed.length} lead(s) could not be restored and are still in the pond:\n  ${failed.join("\n  ")}`);
+  }
 }
 
 // ------------------------------------------------------------------------ main
@@ -445,7 +498,7 @@ async function main() {
 
   const fub = new FubClient(process.env.FUB_API_KEY, { dry, log });
 
-  if (args.undo) return undo(fub, args.undo, log);
+  if (args.undo) return undo(process.env.FUB_API_KEY, args.undo, log);
 
   log(`Battr audit ${runId} — ${dry ? "DRY RUN (no writes)" : "LIVE"}`);
 

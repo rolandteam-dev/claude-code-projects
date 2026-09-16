@@ -68,12 +68,22 @@ export const rules = {
   perPersonTextBackfill: true,
 
   /**
-   * The most leads to backfill in one run. A bound on the API cost of the pass
-   * above: if more than this many leads look actionable, the backfill is
-   * abandoned rather than half-done, and the run reports the gap as before.
-   * A partial backfill is the dangerous state — it would look complete.
+   * The most leads to backfill in one run. If more than this many look
+   * actionable the backfill is abandoned rather than half-done — a partial
+   * backfill is the dangerous state, because it would look complete.
+   *
+   * THIS IS A RUNAWAY GUARD, NOT A RATION, and it was set wrong at first. At
+   * 200 it blocked its own fix: the run of 14 Sep had 420 actionable leads
+   * precisely BECAUSE texts were unreadable, so the backfill skipped, the
+   * counts stayed inflated, and the number that tripped the cap was the number
+   * the cap existed to bring down.
+   *
+   * The bound that means something is the audit list itself — every lead in it
+   * could in principle need backfilling, and 909 were audited on 14 Sep. Above
+   * that is not a busy night, it is a broken membership rule, which is the case
+   * worth abandoning on.
    */
-  maxTextBackfill: 200,
+  maxTextBackfill: 1000,
 
   /**
    * MIKE'S CALL, DELIBERATELY LEFT OFF.

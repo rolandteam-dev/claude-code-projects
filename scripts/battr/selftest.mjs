@@ -30,7 +30,7 @@ import { parseCsv, findColumn, mapRows } from "./import-atbats.mjs";
 import { bucketForSource, bucketName, isSourceAudited, leadBuckets, unmappedPolicy } from "./sources.mjs";
 import { FubClient } from "./fub.mjs";
 import { rules } from "./rules.mjs";
-import { TIMELINE, SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, FUB_FIELDS } from "./observed.mjs";
+import { TIMELINE, SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, FUB_FIELDS, SOURCE_COUNTS, observedLists } from "./observed.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
@@ -184,6 +184,8 @@ check("an email-only lead reads as neglected — intended, not a bug", () => {
     { id: 79, stage: "Lead", created: daysAgo(60), assignedUserId: 5, assignedTo: "Some Agent", tags: [], lastCommunication: daysAgo(1) },
     { lastOutbound: 0, lastInbound: 0 }
   );
+  // Warned already, so the interlock is satisfied and the tier is reachable.
+  c.custom_fields.fub.customBattrAtRiskSince = daysAgo(3);
   assert.equal(classifyForList(c, listById(1104), NOW), "neglected");
 });
 
@@ -473,6 +475,7 @@ check("a lead with a real timeframe is not in the CLEAN UP list", () => {
     { lastOutbound: new Date(daysAgo(45)).getTime(), lastInbound: 0 }
   );
   assert.equal(classifyForList(known, listById(1145), NOW), null);
+  known.custom_fields.fub.customBattrAtRiskSince = daysAgo(2);
   assert.equal(classifyForList(known, listById(1106), NOW), "neglected");
 });
 
@@ -515,6 +518,22 @@ check("an unusable touch signal holds the NUDGE, not just the sweep", () => {
     "the nudge gate must carry the same touchUsable condition as the sweep gate"
   );
   assert.match(src, /const sweepsAllowedToday = isDayAllowed\(rules\.sweepDayFilter[^)]*\)[^;]*&& touchUsable;/);
+});
+
+check("the backfill cap cannot ration a normal night", () => {
+  // The 14 Sep run skipped its backfill because 420 actionable leads exceeded
+  // a cap of 200 — and there were 420 precisely BECAUSE texts were unreadable.
+  // The cap blocked its own fix. It is a runaway guard, so it must sit above
+  // any audit list we have ever seen, derived from the record rather than
+  // eyeballed.
+  const biggestNight = Math.max(...TIMELINE.map((n) => n.total));
+  assert.ok(
+    rules.maxTextBackfill > biggestNight,
+    `maxTextBackfill (${rules.maxTextBackfill}) must exceed the largest observed audit list (${biggestNight}) — ` +
+      `below that it rations normal operation instead of catching a broken membership rule`
+  );
+  // And our own run audited 909, more than any Battr night on record.
+  assert.ok(rules.maxTextBackfill >= 909, "our own 14 Sep run audited 909; the cap must clear that too");
 });
 
 check("a per-person backfill cannot switch sweeping on by itself", () => {
@@ -678,10 +697,15 @@ check("NO LIST IS SILENTLY EMPTY — every list matches a contact it should", ()
     [1108, build({ stage: "Nurture", timeframe: "6-12 months" }, 40), "Monthly"],
     [1109, build({ stage: "Nurture", timeframe: "12+ months" }, 100), "Quarterly"],
     [1145, build({ stage: "Nurture" }, 40), "CLEAN UP: Nurtures No Timeframe"],
-    [1146, build({ stage: "Lead", source: "SOI" }, 200), "Sphere & Past Clients"],
-    [1147, build({ stage: "Lead", source: "Ylopo Seller" }, 20), "YLOPO IMPORTANT"],
-    [1148, build({ stage: "Lead", source: "Zillow Flex" }, 20), "Zillow Important"],
-    [1105, build({ stage: "Nurture", lastVisit: daysAgo(2) }, 20), "Active Leads"],
+    // Corrected 3 Sep 2026 from Battr's rule screens: 1146 is a STAGE list, and
+    // 1147 / 1148 are INTENT TAG lists rather than the source lists we had. The
+    // fixtures move with the rules, which is the point of this check — each one
+    // is a contact built to fall inside the list as it is actually defined.
+    [1146, build({ stage: "Sphere" }, 200), "Sphere & Past Clients"],
+    [1147, build({ stage: "Lead", tags: ["HANDRAISER"] }, 40), "YLOPO IMPORTANT"],
+    [1148, build({ stage: "Lead", tags: ["Zillow High Intent Buyer"], lastActivity: daysAgo(2) }, 20), "Zillow Important"],
+    [1150, build({ stage: "Lead", tags: ["AI_ENGAGED"] }, 40), "AI TEXT REPLIES"],
+    [1105, build({ stage: "Spoke with Customer", lastVisit: daysAgo(2) }, 20), "Active Leads"],
     [1149, build({ stage: "Under Contract" }, 40), "Current & Upcoming Clients"],
   ];
 
@@ -689,6 +713,141 @@ check("NO LIST IS SILENTLY EMPTY — every list matches a contact it should", ()
     const status = classifyForList(contact, listById(id), NOW);
     assert.ok(status !== null, `${label} (${id}) selected nobody — its rule matches no contact`);
     assert.notEqual(status, "compliant", `${label} (${id}) never flags — check its thresholds`);
+  }
+});
+
+// Hot Leads and Warm Back Up are near-mirrors — same stages, differing only on
+// lead age — but their thresholds are worlds apart: 2/4 against 10/13. Swap the
+// two ids and nothing errors. Every list still behaves correctly; the wrong list
+// just answers to the wrong number, and ten thousand Warm Back Up leads inherit
+// a 4-day sweep line that would empty the database into a pond in one night.
+//
+// The ids also key into observed.mjs, where Battr's own counts live, so a
+// transposition there silently changes which list we are being measured against.
+// No behavioural test can catch either, which is why these pin the pairing
+// everywhere it is written down.
+
+check("list ids are unique", () => {
+  const ids = lists.map((l) => l.id);
+  assert.equal(new Set(ids).size, ids.length, `duplicate list id in lists.mjs: ${ids.join(", ")}`);
+});
+
+check("1144 is Hot Leads and 1104 is Warm Back Up, not the other way round", () => {
+  assert.match(listById(1144).name, /Hot Leads/);
+  assert.match(listById(1104).name, /Warm Back Up/);
+});
+
+check("each id carries the rules that belong to that list, not just the label", () => {
+  // The label could be right while the rules are transposed, which is the case
+  // a name check alone would wave through.
+  const age = (list) => list.list_filters.groups[0].find((c) => c.field === "crm_created_at");
+  assert.equal(age(listById(1144)).operator, "<", "1144 must be the new-lead side");
+  assert.equal(age(listById(1104)).operator, ">", "1104 must be the aged side");
+
+  const atRiskDays = (list) => list.at_risk_filters.groups[0][0].value;
+  assert.equal(atRiskDays(listById(1144)), 2, "Hot Leads warns at 2 days");
+  assert.equal(atRiskDays(listById(1104)), 10, "Warm Back Up warns at 10 days");
+});
+
+check("observed.mjs agrees with lists.mjs about which id is which", () => {
+  for (const [id, row] of Object.entries(SOURCE_COUNTS.byList)) {
+    const list = listById(Number(id));
+    assert.ok(list, `SOURCE_COUNTS names list ${id}, which lists.mjs does not define`);
+    assert.ok(
+      list.name.includes(row.name) || row.name.includes(list.name.replace(/^[^\w]+\s*/, "")),
+      `list ${id} is "${list.name}" in lists.mjs but "${row.name}" in SOURCE_COUNTS`
+    );
+  }
+  for (const row of observedLists.filter((l) => l.listId)) {
+    const list = listById(row.listId);
+    assert.ok(list, `observed.mjs names list ${row.listId}, which lists.mjs does not define`);
+    assert.equal(list.name, row.name, `list ${row.listId} is named differently in lists.mjs and observed.mjs`);
+  }
+});
+
+check("the record counts corroborate the pairing", () => {
+  // Independent of the names: Warm Back Up held 10,783 of the 12,064 pool and
+  // Hot Leads 19. If those ever swap, the ids have been transposed somewhere
+  // upstream of both files.
+  const warm = SOURCE_COUNTS.byList[1104];
+  const hot = SOURCE_COUNTS.byList[1144];
+  assert.ok(warm.records > hot.records * 100, "Warm Back Up must dwarf Hot Leads — it is the whole aged database");
+});
+
+check("the undo brake has a door, and it is not gated on BATTR_LIVE", () => {
+  // `--undo=<run-id>` existed and was printed at the bottom of every report,
+  // but it was not a task in the workflow: the only way to reach it was a
+  // laptop, a clone of this repo and a copy of the FUB key. That is not an
+  // emergency brake. It is reached on the worst morning anyone will have with
+  // this system, so it needs a route out of the dropdown.
+  const wf = readFileSync(join(ROOT, ".github", "workflows", "battr-audit.yml"), "utf8");
+  assert.match(wf, /^\s+- "undo"$/m, "undo must be a choice in the task dropdown");
+  assert.match(wf, /undo_run_id:/, "and it needs somewhere to type the run id");
+  assert.match(wf, /\|census\|test-email\|undo\)/, "the task guard must accept it, or the run is red before it starts");
+  assert.match(wf, /name: Undo a run/, "and there must be a step that actually runs it");
+
+  // Reversing a sweep undoes a write that already happened. Gating that behind
+  // BATTR_LIVE is backwards: switch the system off after a bad night and the
+  // undo goes off with it.
+  const step = wf.slice(wf.indexOf("name: Undo a run"), wf.indexOf("name: Commit the audit trail"));
+  assert.ok(!step.includes("BATTR_LIVE"), "the undo step must not depend on BATTR_LIVE");
+
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(
+    src,
+    /const fub = new FubClient\(apiKey, \{ dry: false, log \}\);/,
+    "undo must build its own writing client, not inherit the caller's dry one"
+  );
+});
+
+check("undo refuses a dry run's log rather than inventing a reassignment", () => {
+  // The sharpest edge in the whole engine. A dry run records the sweeps it
+  // WOULD have made — that is what makes a shadow run worth reading — but those
+  // leads never moved. Reversing them would assign live leads to owners they
+  // were never taken from, and the undo would be the first thing all night to
+  // actually touch the CRM.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  const fn = src.slice(src.indexOf("async function undo("), src.indexOf("// ---", src.indexOf("async function undo(")));
+
+  assert.match(fn, /if \(entry\.dry\)/, "undo must check whether the run it is reversing was dry");
+  assert.ok(
+    fn.indexOf("if (entry.dry)") < fn.indexOf("new FubClient"),
+    "the refusal must come BEFORE a writing client exists"
+  );
+  assert.match(fn, /Refusing\./);
+
+  // And the sweep log has to carry the flag, or the check above reads undefined
+  // and every run looks live.
+  assert.match(src, /const sweepLog = \{ runId, timestamp: [^}]*dry, sweeps: \[\] \}/, "the log must record dry");
+
+  // A partial undo leaves the database half-reversed; that is an error exit,
+  // not a line in a log nobody scrolls back through.
+  assert.match(fn, /could not be restored and are still in the pond/);
+  assert.ok(fn.includes("throw new Error(`${failed.length}"), "a partial undo must throw, naming the leads left behind");
+});
+
+check("every sweeping list carries the warn-first interlock in its own rule", () => {
+  // Read off Battr's rule screens 3 Sep 2026 and applied 16 Sep: each member
+  // list's Neglected tier is `Last Communication > N AND At Risk Notified Is
+  // Not Empty`. Ours had only the first half.
+  //
+  // This is also the proof that the correction NARROWED rather than widened.
+  // Adding a condition to a conjunction can only ever remove leads from the
+  // tier, so no lead became newly sweepable — and the interlock is now enforced
+  // in two independent places, the rule and the sweep loop, so losing either
+  // one still leaves a lead protected.
+  const { ids, resolved } = memberListsOf(lists.find((l) => l.audit_type === "combined_contact_lists"));
+  assert.ok(ids.length >= 6, "the combined list must still have its member lists");
+
+  for (const list of resolved) {
+    const groups = list.neglected_filters?.groups ?? [];
+    assert.ok(groups.length > 0, `${list.name} has no neglected tier`);
+    for (const group of groups) {
+      assert.ok(
+        group.some((c) => c.field.endsWith("customBattrAtRiskSince") && c.operator === "!=" && c.value === null),
+        `${list.name}: a neglected group with no "At Risk Since is not empty" condition would sweep an unwarned lead`
+      );
+    }
   }
 });
 
@@ -1139,17 +1298,27 @@ const NURTURE_CADENCE = [
 
 for (const { list, name, timeframe, atRisk, neglected } of NURTURE_CADENCE) {
   check(`${name}: compliant below ${atRisk}d, at risk past it, neglected past ${neglected}d`, () => {
-    const build = (quietDays) => {
+    // `warned` is the At Risk Notified stamp. Battr's Neglected tier on every
+    // nurture list requires it, so a lead past the line that was never warned
+    // stays at risk — the warn-first interlock, in the rule rather than only in
+    // the sweep loop.
+    const build = (quietDays, warned = true) => {
       const c = normalizeContact(
         { id: 3, stage: "Nurture", timeframe, created: daysAgo(200), assignedUserId: 5, tags: [] },
         { lastOutbound: 0 }
       );
       c.custom_fields.fub.system_lastCommunication = daysAgo(quietDays);
+      c.custom_fields.fub.customBattrAtRiskSince = warned ? daysAgo(quietDays - atRisk) : null;
       return c;
     };
     assert.equal(classifyForList(build(atRisk - 1), listById(list), NOW), "compliant");
     assert.equal(classifyForList(build(atRisk + 1), listById(list), NOW), "at_risk");
     assert.equal(classifyForList(build(neglected + 1), listById(list), NOW), "neglected");
+    assert.equal(
+      classifyForList(build(neglected + 1, false), listById(list), NOW),
+      "at_risk",
+      "never warned: past the line but not yet neglected"
+    );
   });
 }
 
@@ -1165,12 +1334,14 @@ check("a nurture lead lands in exactly one cadence list, by timeframe", () => {
 
 check("Warm Back Up picks up early-stage leads older than 10 days", () => {
   const warm = listById(1104);
-  const build = (age, quiet) => {
+  const build = (age, quiet, warned = true) => {
     const c = normalizeContact({ id: 5, stage: "Attempted Contact", created: daysAgo(age), assignedUserId: 5, tags: [] }, { lastOutbound: 0 });
     c.custom_fields.fub.system_lastCommunication = daysAgo(quiet);
+    c.custom_fields.fub.customBattrAtRiskSince = warned ? daysAgo(1) : null;
     return c;
   };
   assert.equal(classifyForList(build(30, 14), warm, NOW), "neglected");
+  assert.equal(classifyForList(build(30, 14, false), warm, NOW), "at_risk", "Warm Back Up carries the interlock too");
   assert.equal(classifyForList(build(30, 11), warm, NOW), "at_risk");
   assert.equal(classifyForList(build(5, 14), warm, NOW), null, "younger than 10 days belongs to Hot Leads");
 });
@@ -1840,17 +2011,17 @@ function fixtureServer() {
     warm({ id: 101, name: "Fresh Contact", assignedTo: "Nicole Miller", assignedUserId: 11 }),
     // at risk
     warm({ id: 102, name: "Going Quiet", assignedTo: "Nicole Miller", assignedUserId: 11 }),
-    // neglected
-    warm({ id: 103, name: "Long Gone", assignedTo: "Brett Smith", assignedUserId: 12 }),
+    // neglected — warned four days ago, so the interlock is satisfied
+    warm({ id: 103, name: "Long Gone", assignedTo: "Brett Smith", assignedUserId: 12, customBattrAtRiskSince: ago(4) }),
     // neglected, but unworkable — report only
-    warm({ id: 104, name: "Bad Number", assignedTo: "Brett Smith", assignedUserId: 12, tags: ["BAD_PHONE"] }),
+    warm({ id: 104, name: "Bad Number", assignedTo: "Brett Smith", assignedUserId: 12, tags: ["BAD_PHONE"], customBattrAtRiskSince: ago(4) }),
     // excluded: no list covers a contract stage
     warm({ id: 105, name: "In Escrow", assignedTo: "Brett Smith", assignedUserId: 12, stage: "Under Contract" }),
     // NEGLECTED ON CALLS, but texted three days ago. FUB will not serve texts
     // in bulk, so the first pass cannot see that and reads this lead as
     // abandoned. The per-person backfill is the only thing that saves it, and
     // saving it is the whole point: this is a lead an agent actually worked.
-    warm({ id: 106, name: "Texted Recently", assignedTo: "Brett Smith", assignedUserId: 12 }),
+    warm({ id: 106, name: "Texted Recently", assignedTo: "Brett Smith", assignedUserId: 12, customBattrAtRiskSince: ago(4) }),
   ];
 
   // Each one sits in the middle of its tier, not on a boundary, so a run at any
@@ -1875,7 +2046,13 @@ function fixtureServer() {
     // NOT listed: /textMessages. The handler below answers it the way FUB does
     // — 400 in bulk, the thread when a personId is given.
     "/emails": { emails: [] },
-    "/customFields": { customfields: [] },
+    // The interlock field, as FUB returns it once Battr has created it. Without
+    // this the stamp can never be read, and before the rule carried the
+    // interlock that silently did not matter — the fixture was passing for the
+    // wrong reason.
+    "/customFields": {
+      customfields: [{ id: 1, name: "customBattrAtRiskSince", label: "Battr At Risk Since", type: "date" }],
+    },
   };
 
   const writes = [];
