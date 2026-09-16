@@ -118,8 +118,27 @@ export const rules = {
    * Tank, then on a Tuesday this would route 20 leads to a pond Battr never
    * sends them to — leads that are then in the wrong agent's queue.
    *
-   * The 8 Sep neglected email settles it. Until then, treat `maxSweepsPerPond`
-   * as a guess wearing a number, and see SEP_10 in observed.mjs.
+   * REFUTED, 15 Sep 2026. That night swept 19 leads — well under the 25 this
+   * model overflows at, so every one of them should have gone to Shark Tank.
+   * Eighteen did. ONE went to Money Time.
+   *
+   * So the split is not by count, and this rule is wrong in kind rather than
+   * in its number. Raising or lowering 25 cannot fix a model that is measuring
+   * the wrong thing.
+   *
+   * What decides it is still unknown. The Money Time lead shares its owner with
+   * two leads that went to Shark Tank the same night, and its source with
+   * eleven of them, so it is neither of those. Battr resolves the target
+   * through assignment rule set 41, which is the screen that would say.
+   *
+   * NOT CHANGED, deliberately — pond routing is only ever edited to match
+   * Battr's own rule screen, and that screen has not been read. Recorded as a
+   * known-wrong model rather than quietly left looking deliberate. The practical
+   * size of the error: on a night like 15 Sep we would put one lead in the right
+   * pond that Battr puts in the other; on a 45-sweep Tuesday we would send 20
+   * leads to Money Time where the observed rate is closer to one in twenty.
+   *
+   * See SEP_15 in observed.mjs.
    */
   sweepPond: "Shark Tank",
   overflowPond: "Money Time",
