@@ -578,6 +578,28 @@ async function main() {
       // The combined list excludes an owner group, but that condition reads a
       // field FUB may not return on a person. If nobody has any group ids, the
       // exclusion cannot fire and the protection it implies does not exist.
+      // THE INTERLOCK HAS TO BE READABLE, or it silently empties the sweep.
+      //
+      // Since 16 Sep every member list's neglected tier requires
+      // `customBattrAtRiskSince` to be set — Battr's own rule. That makes an
+      // unreadable stamp far more dangerous than it used to be: before, a null
+      // stamp only skipped the sweep loop's second check; now it makes the
+      // neglected tier unreachable for EVERY lead, and the run reports zero
+      // neglected and looks like the healthiest night on record.
+      //
+      // Battr has been stamping leads daily for weeks, so a population with no
+      // stamps at all is a read failure, not a clean database.
+      const stamped = contacts.filter((c) => c.custom_fields.fub.customBattrAtRiskSince).length;
+      if (!stamped) {
+        say(
+          `  WARNING: not one contact carries ${fields.atRiskSince || "customBattrAtRiskSince"} — the warn-first interlock ` +
+            `cannot fire, so NO lead can reach the neglected tier and a zero here is a read failure, not a clean database. ` +
+            `Check the field's API name with inspect-fub-fields before trusting tonight's neglected count.`
+        );
+      } else {
+        say(`  ${stamped} contacts carry an At Risk Since stamp — the interlock is readable.`);
+      }
+
       if (!contacts.some((c) => (c.owner_group_ids ?? []).length)) {
         say(`  WARNING: no contact carries owner_group_ids — the owner-group exclusion (${rules.excludeOwnerGroupIds.join(", ")}) is NOT being enforced. Exempt those agents by name in rules.exemptAgents instead.`);
       }

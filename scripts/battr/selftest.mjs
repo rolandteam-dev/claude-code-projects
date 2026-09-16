@@ -1246,6 +1246,37 @@ check("Battr's exclusion counters are action-time, on every night observed", () 
   }
 });
 
+check("an unreadable interlock stamp is loud, not a quiet zero", () => {
+  // Putting the interlock into the rules (16 Sep) changed what a null stamp
+  // costs. Before, it only skipped the sweep loop's second check. Now it makes
+  // the neglected tier unreachable for every lead in every member list — so a
+  // wrong field name would produce "0 neglected" and read as the best night the
+  // system has ever had. This is the exact failure shape this project keeps
+  // hitting, so it gets a guard rather than a comment.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /const stamped = contacts\.filter\(\(c\) => c\.custom_fields\.fub\.customBattrAtRiskSince\)\.length;/);
+  assert.match(src, /the warn-first interlock ./, "the warning has to name the interlock");
+  assert.match(src, /a read failure, not a clean database/, "and say which of the two a zero means");
+
+  // Proof the exposure is real: a lead past the neglected line with no stamp is
+  // NOT neglected on any member list. That is correct behaviour and exactly why
+  // the diagnostic is needed.
+  const { resolved } = memberListsOf(lists.find((l) => l.audit_type === "combined_contact_lists"));
+  const unstamped = normalizeContact(
+    { id: 77, stage: "Attempted Contact", created: daysAgo(400), assignedUserId: 5, tags: [] },
+    { lastOutbound: 0 }
+  );
+  unstamped.custom_fields.fub.system_lastCommunication = daysAgo(400);
+  unstamped.custom_fields.fub.customBattrAtRiskSince = null;
+  for (const list of resolved) {
+    assert.notEqual(
+      classifyForList(unstamped, list, NOW),
+      "neglected",
+      `${list.name}: an unstamped lead must not be neglected — which is why a database with no stamps sweeps nobody`
+    );
+  }
+});
+
 check("the count-based pond model is refuted, and recorded as refuted", () => {
   // 15 Sep swept 19 leads — comfortably under the 25 at which maxSweepsPerPond
   // overflows — and still sent one to Money Time. So the split is not by count,
