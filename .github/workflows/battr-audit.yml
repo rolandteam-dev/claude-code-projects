@@ -30,6 +30,11 @@ on:
           - "inspect-fub-fields"
           - "census"
           - "test-email"
+          - "undo"
+      undo_run_id:
+        description: "Run id to reverse (undo only) — e.g. 2026-09-14-mzl3, from the bottom of that run's report"
+        type: string
+        required: false
       mode:
         description: "Run mode (audit only)"
         type: choice
@@ -91,7 +96,7 @@ jobs:
       - name: Check the task is one we handle
         run: |
           case "$TASK" in
-            audit|discover-lead-sources|inspect-fub-fields|census|test-email) ;;
+            audit|discover-lead-sources|inspect-fub-fields|census|test-email|undo) ;;
             *) echo "Unknown task '$TASK' — nothing would run." >&2; exit 1 ;;
           esac
           echo "Running task: $TASK"
@@ -188,6 +193,22 @@ jobs:
           node scripts/battr-audit.mjs \
             --stage="${{ inputs.stage || 'both' }}" \
             ${{ inputs.max_sweeps && format('--max-sweeps={0}', inputs.max_sweeps) || '' }}
+
+      # The emergency brake. Reversing a sweep is a corrective action against
+      # writes that already happened, so it is deliberately NOT gated on
+      # BATTR_LIVE — someone who switches the system off after a bad night must
+      # not find the undo switched off with it. The engine refuses a dry run's
+      # log on its own, so this cannot move leads that were never moved.
+      - name: Undo a run
+        if: env.TASK == 'undo'
+        env:
+          FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
+        run: |
+          if [ -z "${{ inputs.undo_run_id }}" ]; then
+            echo "undo needs a run id — the one at the bottom of that run's report." >&2
+            exit 1
+          fi
+          node scripts/battr-audit.mjs --undo="${{ inputs.undo_run_id }}"
 
       - name: Commit the audit trail
         if: env.TASK == 'audit'

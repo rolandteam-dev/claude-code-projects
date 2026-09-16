@@ -716,6 +716,58 @@ check("NO LIST IS SILENTLY EMPTY — every list matches a contact it should", ()
   }
 });
 
+check("the undo brake has a door, and it is not gated on BATTR_LIVE", () => {
+  // `--undo=<run-id>` existed and was printed at the bottom of every report,
+  // but it was not a task in the workflow: the only way to reach it was a
+  // laptop, a clone of this repo and a copy of the FUB key. That is not an
+  // emergency brake. It is reached on the worst morning anyone will have with
+  // this system, so it needs a route out of the dropdown.
+  const wf = readFileSync(join(ROOT, ".github", "workflows", "battr-audit.yml"), "utf8");
+  assert.match(wf, /^\s+- "undo"$/m, "undo must be a choice in the task dropdown");
+  assert.match(wf, /undo_run_id:/, "and it needs somewhere to type the run id");
+  assert.match(wf, /\|census\|test-email\|undo\)/, "the task guard must accept it, or the run is red before it starts");
+  assert.match(wf, /name: Undo a run/, "and there must be a step that actually runs it");
+
+  // Reversing a sweep undoes a write that already happened. Gating that behind
+  // BATTR_LIVE is backwards: switch the system off after a bad night and the
+  // undo goes off with it.
+  const step = wf.slice(wf.indexOf("name: Undo a run"), wf.indexOf("name: Commit the audit trail"));
+  assert.ok(!step.includes("BATTR_LIVE"), "the undo step must not depend on BATTR_LIVE");
+
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(
+    src,
+    /const fub = new FubClient\(apiKey, \{ dry: false, log \}\);/,
+    "undo must build its own writing client, not inherit the caller's dry one"
+  );
+});
+
+check("undo refuses a dry run's log rather than inventing a reassignment", () => {
+  // The sharpest edge in the whole engine. A dry run records the sweeps it
+  // WOULD have made — that is what makes a shadow run worth reading — but those
+  // leads never moved. Reversing them would assign live leads to owners they
+  // were never taken from, and the undo would be the first thing all night to
+  // actually touch the CRM.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  const fn = src.slice(src.indexOf("async function undo("), src.indexOf("// ---", src.indexOf("async function undo(")));
+
+  assert.match(fn, /if \(entry\.dry\)/, "undo must check whether the run it is reversing was dry");
+  assert.ok(
+    fn.indexOf("if (entry.dry)") < fn.indexOf("new FubClient"),
+    "the refusal must come BEFORE a writing client exists"
+  );
+  assert.match(fn, /Refusing\./);
+
+  // And the sweep log has to carry the flag, or the check above reads undefined
+  // and every run looks live.
+  assert.match(src, /const sweepLog = \{ runId, timestamp: [^}]*dry, sweeps: \[\] \}/, "the log must record dry");
+
+  // A partial undo leaves the database half-reversed; that is an error exit,
+  // not a line in a log nobody scrolls back through.
+  assert.match(fn, /could not be restored and are still in the pond/);
+  assert.ok(fn.includes("throw new Error(`${failed.length}"), "a partial undo must throw, naming the leads left behind");
+});
+
 check("every sweeping list carries the warn-first interlock in its own rule", () => {
   // Read off Battr's rule screens 3 Sep 2026 and applied 16 Sep: each member
   // list's Neglected tier is `Last Communication > N AND At Risk Notified Is
