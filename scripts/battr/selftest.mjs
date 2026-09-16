@@ -30,7 +30,7 @@ import { parseCsv, findColumn, mapRows } from "./import-atbats.mjs";
 import { bucketForSource, bucketName, isSourceAudited, leadBuckets, unmappedPolicy } from "./sources.mjs";
 import { FubClient } from "./fub.mjs";
 import { rules } from "./rules.mjs";
-import { TIMELINE, SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, FUB_FIELDS, SOURCE_COUNTS, observedLists } from "./observed.mjs";
+import { TIMELINE, SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, SEP_15, FUB_FIELDS, SOURCE_COUNTS, observedLists } from "./observed.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
@@ -1056,7 +1056,7 @@ check("the day filter plus the three-day spread explain every observed night", (
 check("every observed night reconciles with the self-draining population", () => {
   // Derived, not a literal: adding a night's export without adding it to the
   // timeline (or the reverse) fails here instead of needing a number bumped.
-  const fullNights = [SEP_8, SEP_10, SEP_11, SEP_12, SEP_13];
+  const fullNights = [SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, SEP_15];
   const byDate = Object.fromEntries(fullNights.map((n) => [n.date, n]));
   for (const night of fullNights) {
     assert.ok(
@@ -1240,30 +1240,69 @@ check("Battr's exclusion counters are action-time, on every night observed", () 
   // Both read zero even on a night when the combined list held 903 of a 12,000
   // pool. They cannot be counting selection, which is why we do that work in
   // the list filters rather than as a post-hoc subtraction.
-  for (const night of [SEP_8, SEP_10, SEP_11, SEP_12, SEP_13]) {
+  for (const night of [SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, SEP_15]) {
     assert.equal(night.excluded_lead_bucket, 0, `${night.date}: bucket counter`);
     assert.equal(night.excluded_agent_group, 0, `${night.date}: agent-group counter`);
   }
 });
 
-check("every observed sweep went to Shark Tank, and our overflow is marked unconfirmed", () => {
-  let total = 0;
-  for (const night of [SEP_10, SEP_11]) {
-    const targets = night.assignmentTargets.Pond ?? {};
-    assert.deepEqual(Object.keys(targets), ["Shark Tank"], `${night.date}: an unobserved pond`);
-    total += targets["Shark Tank"];
-  }
-  assert.equal(total, 7, "every sweep we have a target column for");
+check("an unreadable interlock stamp is loud, not a quiet zero", () => {
+  // Putting the interlock into the rules (16 Sep) changed what a null stamp
+  // costs. Before, it only skipped the sweep loop's second check. Now it makes
+  // the neglected tier unreachable for every lead in every member list — so a
+  // wrong field name would produce "0 neglected" and read as the best night the
+  // system has ever had. This is the exact failure shape this project keeps
+  // hitting, so it gets a guard rather than a comment.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /const stamped = contacts\.filter\(\(c\) => c\.custom_fields\.fub\.customBattrAtRiskSince\)\.length;/);
+  assert.match(src, /the warn-first interlock ./, "the warning has to name the interlock");
+  assert.match(src, /a read failure, not a clean database/, "and say which of the two a zero means");
 
-  // No observed night exceeded the cap in a table we can read, so these nights
-  // neither confirm nor refute it. Guard the shape so the departure stays a
-  // known one: the overflow pond must be configured, and the cap must sit
-  // below the per-run cap or it could never fire at all.
-  assert.ok(rules.maxSweepsPerPond > 0, "the overflow threshold must exist to be audited");
-  assert.ok(
-    rules.maxSweepsPerPond < rules.maxSweepsPerRun,
-    "an overflow cap at or above the run cap is dead configuration"
+  // Proof the exposure is real: a lead past the neglected line with no stamp is
+  // NOT neglected on any member list. That is correct behaviour and exactly why
+  // the diagnostic is needed.
+  const { resolved } = memberListsOf(lists.find((l) => l.audit_type === "combined_contact_lists"));
+  const unstamped = normalizeContact(
+    { id: 77, stage: "Attempted Contact", created: daysAgo(400), assignedUserId: 5, tags: [] },
+    { lastOutbound: 0 }
   );
+  unstamped.custom_fields.fub.system_lastCommunication = daysAgo(400);
+  unstamped.custom_fields.fub.customBattrAtRiskSince = null;
+  for (const list of resolved) {
+    assert.notEqual(
+      classifyForList(unstamped, list, NOW),
+      "neglected",
+      `${list.name}: an unstamped lead must not be neglected — which is why a database with no stamps sweeps nobody`
+    );
+  }
+});
+
+check("the count-based pond model is refuted, and recorded as refuted", () => {
+  // 15 Sep swept 19 leads — comfortably under the 25 at which maxSweepsPerPond
+  // overflows — and still sent one to Money Time. So the split is not by count,
+  // and no value of the threshold fixes it. This check exists so the model
+  // cannot drift back to looking deliberate while it is known to be wrong.
+  const targets = SEP_15.assignmentTargets.Pond;
+  assert.equal(targets["Money Time"], 1, "the night that refutes the model");
+  assert.ok(
+    SEP_15.neglected < rules.maxSweepsPerPond,
+    `${SEP_15.neglected} sweeps is below the ${rules.maxSweepsPerPond} overflow point, so our model sends all of them ` +
+      `to ${rules.sweepPond} — Battr did not`
+  );
+
+  // The earlier nights, where everything did go to Shark Tank.
+  for (const night of [SEP_10, SEP_11]) {
+    assert.deepEqual(Object.keys(night.assignmentTargets.Pond), ["Shark Tank"], `${night.date}`);
+  }
+
+  // The rule is deliberately NOT corrected — pond routing is only ever edited
+  // from Battr's own rule screen, and assignment rule set 41 has not been read.
+  // What is required is that the file says so, in the file someone editing the
+  // routing would be reading.
+  const src = readFileSync(join(ROOT, "scripts", "battr", "rules.mjs"), "utf8");
+  const block = src.slice(src.indexOf("Where neglected leads land"), src.indexOf("sweepPond:"));
+  assert.match(block, /REFUTED/, "a model known to be wrong must say so where it is defined");
+  assert.match(block, /NOT CHANGED, deliberately/, "and must say why it was left alone");
 });
 
 check("every modelled list carries Battr's observed numbers to check itself against", () => {

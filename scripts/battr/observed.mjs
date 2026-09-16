@@ -535,7 +535,95 @@ export const SEP_13 = {
   ],
 };
 
-/** The six observations in order, for anything that wants the trend. */
+/**
+ * A SEVENTH observation, from the raw .eml of Tue 15 Sep 2026, 7:08–7:11 PM PT.
+ * The Tuesday this project has been building toward, and it settles three
+ * things at once.
+ *
+ *   Total records in audit    880        Total records in audit    880
+ *   At Risk records            23        Neglected records          19
+ *     already processed        16        Records moved             19
+ *     new notes created         7        Records not moved          0
+ *   Excluded bucket/group     0/0        Excluded bucket/group    0/0
+ *
+ * 1. THE FORECAST HELD. On 13 Sep we predicted the Tuesday backlog from the
+ *    cohort dates: 5 + 5 + 4 + 8 = 22 as an upper bound, less whoever got
+ *    worked over the weekend, and comfortably under our 30-sweep cap. Battr
+ *    swept 19, and the stamps break down exactly as the cohorts predicted:
+ *
+ *      At Risk Since 9/09   3 swept   (5 flagged, 2 worked)
+ *      At Risk Since 9/10   5 swept
+ *      At Risk Since 9/11   5 swept
+ *      At Risk Since 9/12   6 swept
+ *
+ *    A model that predicts a number three days out, on the hardest day to
+ *    predict, is a model that understands the mechanism.
+ *
+ * 2. THE STICKY STAMP, CAUGHT CAUSING A SWEEP. One of the 9/11 cohort was in
+ *    Saturday's at-risk list, GONE from Sunday's — worked, and compliant — and
+ *    swept on Tuesday carrying its original 9/11 stamp. That is the behaviour
+ *    recorded on 13 Sep (the stamp survives a compliant excursion, and the
+ *    interlock asks "ever warned", not "recently warned") observed end to end,
+ *    from warning through rescue through sweep. An agent saved that lead and
+ *    got no second warning before it was taken.
+ *
+ * 3. MONEY TIME EXISTS, AND OUR POND MODEL IS REFUTED. Eighteen leads went to
+ *    Pond / Shark Tank. ONE went to Pond / Money Time.
+ *
+ *    Nineteen sweeps is well under the 25 at which `maxSweepsPerPond` overflows,
+ *    so under our model every one of them goes to Shark Tank. The split is
+ *    therefore NOT by count, and the rule is wrong in kind rather than in its
+ *    number — no value of 25 fixes it.
+ *
+ *    It is not the owner (two of that agent's other leads went to Shark Tank
+ *    the same night) and not the source (eleven Shark Tank leads share it).
+ *    Assignment rule set 41 is the screen that would say. The rule is left
+ *    unchanged, because pond routing is only ever edited from Battr's own rule
+ *    screen, and recorded as known-wrong rather than left looking deliberate.
+ *
+ * A fourth, smaller note: one at-risk row reads `Previous Status: None` rather
+ * than "compliant" — a lead that was not in the audit list at all on the
+ * previous run, rather than one that was compliant in it. Worth knowing before
+ * anyone reads "None" as a data error.
+ *
+ * Names, FUB ids and per-lead links are deliberately not recorded.
+ */
+export const SEP_15 = {
+  date: "2026-09-15",
+  weekday: "Tuesday",
+  total: 880,
+  at_risk: 23,
+  at_risk_new_notes: 7,
+  at_risk_already_flagged: 16,
+  neglected: 19,
+  records_moved: 19,
+  records_not_moved: 0,
+  excluded_lead_bucket: 0,
+  excluded_agent_group: 0,
+  /** THE FINDING: Money Time, on a night far below the 25-lead overflow point. */
+  assignmentTargets: { Pond: { "Shark Tank": 18, "Money Time": 1 } },
+  /** `At Risk Since` on the 19 swept leads — the cohorts, clearing on schedule. */
+  sweptAtRiskSince: { "2026-09-09": 3, "2026-09-10": 5, "2026-09-11": 5, "2026-09-12": 6 },
+  /** What we predicted on 13 Sep, before any of this was visible. */
+  forecast: { upperBound: 22, actual: 19, capAtTheTime: 30, bound: false },
+  sourcesSeen: [
+    "Google PPC",
+    "zbuyer.com",
+    "Zillow Preferred",
+    "Jeffery Dragovich",
+    "Ylopo",
+    "zBuyer",
+    "ISA Transfer",
+    "TheRolandTeam.com",
+    "Citywide Long Form",
+    "Noah Cash Offer",
+    "Trulia",
+    "Company Websites",
+    "Leadpops - Google Ads",
+  ],
+};
+
+/** The seven observations in order, for anything that wants the trend. */
 export const TIMELINE = [
   { date: "2026-09-02", weekday: "Wed", total: 866, at_risk: 17, neglected: 7 },
   { date: "2026-09-08", weekday: "Tue", total: 903, at_risk: 23, neglected: 45 },
@@ -545,6 +633,8 @@ export const TIMELINE = [
   // an empty tier — leads were neglected, nothing was allowed to move them.
   { date: "2026-09-12", weekday: "Sat", total: 856, at_risk: 19, neglected: 0 },
   { date: "2026-09-13", weekday: "Sun", total: 858, at_risk: 21, neglected: 0 },
+  // 14 Sep (Mon) not captured — a nudge-only day, like the weekend.
+  { date: "2026-09-15", weekday: "Tue", total: 880, at_risk: 23, neglected: 19 },
 ];
 
 export const observedLists = [
