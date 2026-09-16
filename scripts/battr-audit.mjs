@@ -41,6 +41,7 @@ import {
 } from "./battr/atbats.mjs";
 import { buildAgentDigests, deliverDigests, renderAtBatsSection } from "./battr/alerts.mjs";
 import { sendMail, mailConfigured } from "./battr/email.mjs";
+import { appendComparisons, readComparisons, drift } from "./battr/compare.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 /**
@@ -54,6 +55,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
  * not be able to do that.
  */
 const LOG_DIR = process.env.BATTR_LOG_DIR || join(ROOT, "battr-logs");
+/** The running record of our numbers against Battr's. See compare.mjs. */
+const COMPARISON_PATH = join(LOG_DIR, "comparison.csv");
 
 // ---------------------------------------------------------------------- args
 
@@ -140,7 +143,7 @@ async function replyReprieve(fub, personId, sinceIso, diag) {
 
 // ---------------------------------------------------------------------- report
 
-function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], touchIncomplete = [] }) {
+function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], touchIncomplete = [], unenforceable = [], comparisonDrift = [] }) {
   const byAgent = new Map();
   for (const r of results) {
     if (r.status === "excluded" || !r.owner) continue;
@@ -191,6 +194,28 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
       "> Every lead below is judged on the channels that *could* be read. A lead an agent has only " +
         "ever texted therefore reads as never contacted. **Sweeps are disabled for this run** — the " +
         "engine will not take a lead off an agent on evidence it knows is partial."
+    );
+    lines.push("");
+  }
+
+  // An exclusion that cannot fire is more dangerous than one that is absent.
+  // Absent, nobody relies on it. Present-but-inert, someone puts an agent in
+  // the group, reasonably expects their leads to stop being swept, and nothing
+  // anywhere says otherwise — their leads get swept anyway. This used to be a
+  // stderr line in a CI log nobody opens; it belongs above the counts, in the
+  // report the decision gets made from.
+  if (unenforceable.length) {
+    lines.push("");
+    lines.push("> ## ⚠ AN EXCLUSION IN THIS CONFIG PROTECTS NOBODY");
+    lines.push(">");
+    for (const gap of unenforceable) {
+      lines.push(`> **${gap.rule}** — ${gap.why}`);
+    }
+    lines.push(">");
+    lines.push(
+      `> The exemption that DOES work is \`rules.exemptAgents\`, matched on the assigned agent's name. ` +
+        `Currently: ${rules.exemptAgents.length ? rules.exemptAgents.join(", ") : "(nobody)"}. ` +
+        `Putting an agent in a Follow Up Boss group or team will not protect their leads.`
     );
     lines.push("");
   }
@@ -323,6 +348,30 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
   // Every list Battr runs, ours beside theirs. None of these act — they are here
   // so a rule we have modelled wrongly shows up as a number that disagrees,
   // rather than as silence.
+  // The running record, as opposed to the frozen snapshot below. A rule that is
+  // wrong today shows up in the snapshot; a rule that DRIFTS shows up here, and
+  // only here — and only while the subscription that produces Battr's numbers
+  // is still being paid for.
+  if (comparisonDrift.length) {
+    lines.push("## Side by side with Battr — the running record");
+    lines.push("");
+    lines.push("| List | Ours | Battr | Drift | Battr's row read |");
+    lines.push("| --- | ---: | ---: | ---: | --- |");
+    for (const d of comparisonDrift) {
+      const sign = d.driftPct > 0 ? "+" : "";
+      lines.push(
+        `| ${d.listName} | ${d.ours} | ${d.battr} | ${sign}${d.driftPct.toFixed(1)}% | ${d.battrDate} |`
+      );
+    }
+    lines.push("");
+    lines.push(
+      "Worst drift first. Battr's rows are typed in by hand from its Aida Audits screen, which has no " +
+        "export — so a stale date in the last column means nobody has transcribed lately, not that Battr " +
+        "stopped changing. `battr-logs/comparison.csv` is the file to add them to."
+    );
+    lines.push("");
+  }
+
   if (reportLists.length) {
     lines.push("## Reconciliation — other lists Battr runs (reported, never actioned)");
     lines.push("");
@@ -546,6 +595,9 @@ async function main() {
   // backfill below can move last-touch forward for the leads that matter.
   // Running it again is cheaper and less error-prone than patching results.
   let contacts = [];
+  // Rules that are configured but cannot fire against this account's data.
+  // Collected during classification, surfaced at the top of the report.
+  const unenforceable = [];
   const classifyPopulation = ({ quiet = false } = {}) => {
     const say = quiet ? () => {} : log;
     contacts = people.map((p) => normalizeContact(p, touchIndex.get(p.id), fields));
@@ -600,6 +652,19 @@ async function main() {
         say(`  ${stamped} contacts carry an At Risk Since stamp — the interlock is readable.`);
       }
 
+      if (
+        rules.excludeOwnerGroupIds.length &&
+        !contacts.some((c) => (c.owner_group_ids ?? []).length) &&
+        !unenforceable.some((u) => u.rule.startsWith("Owner-group"))
+      ) {
+        unenforceable.push({
+          rule: `Owner-group exclusion (group ${rules.excludeOwnerGroupIds.join(", ")} — "Battr Paused")`,
+          why:
+            "Follow Up Boss returns neither `assignedUserGroupIds` nor `groupIds` on a person, confirmed against " +
+            "the live account. Every contact carries an empty array, so “not in that group” is true for " +
+            "everyone and the condition excludes nobody.",
+        });
+      }
       if (!contacts.some((c) => (c.owner_group_ids ?? []).length)) {
         say(`  WARNING: no contact carries owner_group_ids — the owner-group exclusion (${rules.excludeOwnerGroupIds.join(", ")}) is NOT being enforced. Exempt those agents by name in rules.exemptAgents instead.`);
       }
@@ -901,6 +966,47 @@ async function main() {
     }
   }
 
+  // The overlap with Battr is the only window in which these numbers can be
+  // checked against a known-good system, and it closes when the subscription
+  // does. Record tonight's rows while there is still something to compare to.
+  // Our rows only — anything attributed to Battr in that file was typed in from
+  // its own screen by a person, because an engine inventing them would make the
+  // comparison circular.
+  const auditedNow = results.filter((r) => r.status !== "excluded").length;
+  const comparisonRows = [
+    {
+      date: today,
+      source: "ours",
+      listId: 0,
+      listName: "⭐️ Team Leads (combined)",
+      total: auditedNow,
+      compliant: auditedNow - atRisk.length - neglected.length,
+      at_risk: atRisk.length,
+      neglected: neglected.length,
+    },
+    ...reportLists.map((r) => ({
+      date: today,
+      source: "ours",
+      listId: r.id,
+      listName: r.name,
+      total: r.total,
+      compliant: r.compliant,
+      at_risk: r.at_risk,
+      neglected: r.neglected,
+    })),
+  ];
+  try {
+    appendComparisons(COMPARISON_PATH, comparisonRows);
+  } catch (err) {
+    log(`  could not record tonight's comparison row: ${err.message}`);
+  }
+  let comparisonDrift = [];
+  try {
+    comparisonDrift = drift(readComparisons(COMPARISON_PATH));
+  } catch (err) {
+    log(`  could not read the comparison history: ${err.message}`);
+  }
+
   const unanswered = findUnansweredInbound(results, rules.unansweredInboundDays);
   if (unanswered.length) log(`  ${unanswered.length} leads reached out with no call or text back`);
 
@@ -934,7 +1040,7 @@ async function main() {
   mkdirSync(LOG_DIR, { recursive: true });
   if (sweepLog.sweeps.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
 
-  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete });
+  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete, unenforceable, comparisonDrift });
   const reportPath = await deliverReport(markdown, { runId, dry });
 
   console.log(markdown);

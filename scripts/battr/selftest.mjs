@@ -29,6 +29,7 @@ import { describeError, fromAddress, mailConfigured } from "./email.mjs";
 import { parseCsv, findColumn, mapRows } from "./import-atbats.mjs";
 import { bucketForSource, bucketName, isSourceAudited, leadBuckets, unmappedPolicy } from "./sources.mjs";
 import { FubClient } from "./fub.mjs";
+import { appendComparisons, readComparisons, drift } from "./compare.mjs";
 import { rules } from "./rules.mjs";
 import { TIMELINE, SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, SEP_15, FUB_FIELDS, SOURCE_COUNTS, observedLists } from "./observed.mjs";
 
@@ -1244,6 +1245,96 @@ check("Battr's exclusion counters are action-time, on every night observed", () 
     assert.equal(night.excluded_lead_bucket, 0, `${night.date}: bucket counter`);
     assert.equal(night.excluded_agent_group, 0, `${night.date}: agent-group counter`);
   }
+});
+
+console.log("\nUnit — the running comparison with Battr");
+
+check("a list name with a comma or a quote cannot corrupt the file", () => {
+  // This file has to be editable six months from now by a person with a
+  // spreadsheet and no tooling. One unquoted comma in a list name shifts every
+  // column after it and the drift table starts lying quietly.
+  const path = join(SCRATCH_LOGS, `cmp-${Date.now()}.csv`);
+  const rows = [
+    { date: "2026-09-16", source: "ours", listId: 1, listName: 'Sphere, Past Clients & "VIP"', total: 10, compliant: 5, at_risk: 2, neglected: 3 },
+  ];
+  appendComparisons(path, rows);
+  const back = readComparisons(path);
+  assert.equal(back.length, 1);
+  assert.equal(back[0].listName, 'Sphere, Past Clients & "VIP"', "the name must survive a round trip intact");
+  assert.equal(back[0].total, 10);
+  assert.equal(back[0].neglected, 3);
+});
+
+check("the header is written once, and appending never duplicates it", () => {
+  const path = join(SCRATCH_LOGS, `cmp2-${Date.now()}.csv`);
+  const row = (date) => ({ date, source: "ours", listId: 7, listName: "X", total: 1, compliant: 1, at_risk: 0, neglected: 0 });
+  appendComparisons(path, [row("2026-09-16")]);
+  appendComparisons(path, [row("2026-09-17")]);
+  const text = readFileSync(path, "utf8");
+  assert.equal(text.split("\n").filter((l) => l.startsWith("date,")).length, 1, "exactly one header");
+  assert.equal(readComparisons(path).length, 2, "and both nights are kept — the file is append-only");
+});
+
+check("drift compares our latest against Battr's latest, worst first", () => {
+  // Battr's rows are transcribed by hand and will usually lag ours. Comparing
+  // same-date-only would leave the table empty on every night nobody typed one
+  // in, which is most nights.
+  const rows = [
+    { date: "2026-09-10", source: "battr", listId: 1, listName: "Close", total: 100, compliant: 0, at_risk: 0, neglected: 0 },
+    { date: "2026-09-16", source: "ours", listId: 1, listName: "Close", total: 105, compliant: 0, at_risk: 0, neglected: 0 },
+    { date: "2026-09-10", source: "battr", listId: 2, listName: "Miles off", total: 100, compliant: 0, at_risk: 0, neglected: 0 },
+    { date: "2026-09-16", source: "ours", listId: 2, listName: "Miles off", total: 300, compliant: 0, at_risk: 0, neglected: 0 },
+    // No Battr row at all — excluded rather than shown as infinite drift.
+    { date: "2026-09-16", source: "ours", listId: 3, listName: "Untranscribed", total: 50, compliant: 0, at_risk: 0, neglected: 0 },
+  ];
+  const d = drift(rows);
+  assert.equal(d.length, 2, "a list with no Battr row is not a 100% drift, it is unknown");
+  assert.equal(d[0].listId, 2, "worst drift first");
+  assert.equal(Math.round(d[0].driftPct), 200);
+  assert.equal(Math.round(d[1].driftPct), 5);
+  assert.equal(d[0].battrDate, "2026-09-10", "the staleness of Battr's row has to be visible");
+});
+
+check("the engine records its own rows and never Battr's", () => {
+  // An engine that writes Battr's side of the comparison is comparing itself
+  // to itself. Every "battr" row in that file was read off Battr's screen by a
+  // person.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  const block = src.slice(src.indexOf("const comparisonRows"), src.indexOf("appendComparisons(COMPARISON_PATH"));
+  assert.ok(block.includes('source: "ours"'), "the engine writes its own rows");
+  assert.ok(!block.includes('source: "battr"'), "and must never write Battr's");
+});
+
+check("an exclusion that protects nobody says so in the report, not just the log", () => {
+  // rules.excludeOwnerGroupIds is [52555] — "Battr Paused" in the live Battr
+  // config — and inspect-fub-fields confirmed FUB returns neither
+  // assignedUserGroupIds nor groupIds, so the condition is true for everyone
+  // and excludes nobody.
+  //
+  // The rule not working is not the problem. The problem is that it READS as
+  // though it does: someone puts an agent in the Battr Paused group, reasonably
+  // expects their leads to stop being swept, and gets no signal otherwise. A
+  // warning on stderr, in a CI log nobody opens, is not that signal.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /AN EXCLUSION IN THIS CONFIG PROTECTS NOBODY/, "it must appear in the report body");
+
+  // Above the counts, not buried under them — otherwise it is read after the
+  // decision rather than before it.
+  assert.ok(
+    src.indexOf("AN EXCLUSION IN THIS CONFIG PROTECTS NOBODY") < src.indexOf('lines.push("## Summary")'),
+    "the block must come before the Summary section"
+  );
+
+  // And it must name the exemption that DOES work, or it is a complaint rather
+  // than an instruction.
+  const block = src.slice(src.indexOf("AN EXCLUSION IN THIS CONFIG"), src.indexOf('lines.push("## Summary")'));
+  assert.match(block, /rules\.exemptAgents/, "it must point at the mechanism that works");
+  assert.match(block, /will not protect their leads/);
+
+  // The rule itself stays in place: it documents what the live Battr config
+  // does, and deleting it would erase the only record of why we know this.
+  assert.ok(rules.excludeOwnerGroupIds.length > 0, "the rule is kept as documentation, not deleted");
+  assert.ok(rules.exemptAgents.length > 0, "and something must actually be protecting someone");
 });
 
 check("an unreadable interlock stamp is loud, not a quiet zero", () => {
