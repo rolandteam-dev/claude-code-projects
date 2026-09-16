@@ -96,6 +96,21 @@ const TIMEFRAME = "custom_fields.fub.system_timeframe";
 
 const notInAPond = contact("crm_pond_id", "=", null, { value_data_type: "int" });
 
+/**
+ * Intent tags, read off Battr's rule screens on 3 Sep 2026.
+ *
+ * Both of these lists were modelled as SOURCE lists and are in fact TAG lists.
+ * The difference is not cosmetic: a source records where a lead came from once
+ * and never changes; these tags are set when the lead does something now. We
+ * were reporting on every lead a vendor ever sent, which is why YLOPO came back
+ * 2,389 against Battr's 127 and Zillow 2,344 against 43.
+ */
+const YLOPO_INTENT_TAGS = ["YPRIORITY", "HANDRAISER", "CALL_NOW=YES", "Y_SELLER_REPORT_ENGAGED", "Y_SELLER_REPORT_VIEWED"];
+const ZILLOW_INTENT_TAGS = ["Zillow High Intent Buyer", "Zillow High Intent Seller", "Zillow High Intent"];
+
+/** The live-business stages, as this account actually names them. */
+const LIVE_BUSINESS_STAGES = ["Showing Homes", "Active Listing", "Listing Agreement", "Under Contract", "Submitting Offers"];
+
 /** The nurture lists differ only by timeframe and thresholds. */
 const nurtureList = ({ id, name, timeframe, atRiskDays, neglectedDays }) => ({
   id,
@@ -112,7 +127,16 @@ const nurtureList = ({ id, name, timeframe, atRiskDays, neglectedDays }) => ({
     ],
   },
   at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", atRiskDays)]] },
-  neglected_filters: { groups: [[daysSince(LAST_COMM, ">", neglectedDays)]] },
+  // The warn-first interlock, read off Battr's own rule screens on 3 Sep 2026:
+  // every nurture list's Neglected tier is
+  //   `Last Communication Days Ago > N AND At Risk Notified Date Is Not Empty`.
+  // It used to be missing here, which caused no extra sweeps — the sweep loop
+  // enforces requireWarningBeforeSweep independently — but it did inflate the
+  // Neglected count against Battr's, and a reconciliation that disagrees for a
+  // known reason is worth less than one that agrees.
+  neglected_filters: {
+    groups: [[daysSince(LAST_COMM, ">", neglectedDays), contact(AT_RISK_SINCE, "!=", null, { value_data_type: "text" })]],
+  },
 });
 
 export const lists = [
@@ -155,7 +179,10 @@ export const lists = [
       ],
     },
     at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 10)]] },
-    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 13)]] },
+    // Same interlock as the nurture lists — confirmed on the rule screen 3 Sep 2026.
+    neglected_filters: {
+      groups: [[daysSince(LAST_COMM, ">", 13), contact(AT_RISK_SINCE, "!=", null, { value_data_type: "text" })]],
+    },
   },
 
   nurtureList({ id: 1106, name: "🔥 Weekly Nurture", timeframe: TIMEFRAMES.months0to3, atRiskDays: 10, neglectedDays: 13 }),
@@ -296,22 +323,26 @@ export const lists = [
     audit_type: "contact_list",
     is_active: true,
     report_only: true,
-    thresholds_inferred: true,
-    observed: { date: "2026-09-02", total: 3333, compliant: 356, at_risk: 2, neglected: 2975 },
+    observed: { date: "2026-09-03", total: 3332, compliant: 356, at_risk: 2, neglected: 2974 },
+    // CORRECTED from Battr's rule screen, 3 Sep 2026. We had modelled this as a
+    // SOURCE list (SOI, Sphere, Past Client, Referral, …) with 90/93 thresholds,
+    // reverse-engineered from the compliance split. Both were wrong: it is a
+    // STAGE list, and the thresholds are 93/96. The population came out roughly
+    // the right size for the wrong reason, which is exactly why a guess that
+    // reconciles is not the same as a guess that is correct.
     // 11% compliant / 0% at risk / 89% neglected. A 3-record at-risk band across
     // 3,333 leads means a long threshold with the usual narrow gap — a quarterly
     // touch, not a weekly one.
     list_filters: {
       groups: [
         [
-          contact("source_normalized", "IS ANY OF", ["SOI", "Sphere", "Past Client", "Referral", "Barrett Financial Referral"], { value_data_type: "text" }),
+          contact("stage_name", "IS ANY OF", ["Sphere", "Closed"], { value_data_type: "text" }),
           notInAPond,
         ],
-        [contact("stage_name", "IS ANY OF", ["Past Client"], { value_data_type: "text" }), notInAPond],
       ],
     },
-    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 90)]] },
-    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 93)]] },
+    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 93)]] },
+    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 96)]] },
   },
 
   {
@@ -320,18 +351,31 @@ export const lists = [
     audit_type: "contact_list",
     is_active: true,
     report_only: true,
-    thresholds_inferred: true,
-    observed: { date: "2026-09-02", total: 127, compliant: 74, at_risk: 7, neglected: 46 },
+    observed: { date: "2026-09-03", total: 116, compliant: 64, at_risk: 8, neglected: 44 },
+    // CORRECTED from Battr's rule screen, 3 Sep 2026. We had modelled this on the
+    // Ylopo SOURCE and guessed 7/10 from the compliance split. It is neither: the
+    // list keys on Ylopo's INTENT TAGS, and the thresholds are 30/60.
+    //
+    // The distinction matters more than the numbers. Source says where a lead
+    // came from once; these tags say the lead just did something — raised a
+    // hand, asked to be called now, opened the seller report. This is an intent
+    // list wearing a source list's name, and we were reporting on everyone Ylopo
+    // ever sent us instead of the handful currently signalling.
     // 58% compliant says this population is actively worked, so the threshold is
     // short. MATCHES ANY is a substring test, so every current Ylopo source
     // (Ylopo, Ylopo Seller, Ylopo LSA, Ylopo Adwords, Open House (Ylopo)) is
     // covered and a new one needs no edit. CONTAINS ANY would compare whole
     // values and match none of them.
     list_filters: {
-      groups: [[contact("source_normalized", "MATCHES ANY", ["Ylopo"], { value_data_type: "text" }), notInAPond]],
+      groups: [
+        [
+          notInAPond,
+          contact("tags_array", "CONTAINS ANY", YLOPO_INTENT_TAGS, { value_data_type: "text" }),
+        ],
+      ],
     },
-    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 7)]] },
-    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 10)]] },
+    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 30)]] },
+    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 60)]] },
   },
 
   {
@@ -340,12 +384,23 @@ export const lists = [
     audit_type: "contact_list",
     is_active: true,
     report_only: true,
-    thresholds_inferred: true,
-    observed: { date: "2026-09-02", total: 43, compliant: 14, at_risk: 5, neglected: 24 },
+    observed: { date: "2026-09-03", total: 44, compliant: 16, at_risk: 2, neglected: 26 },
+    // CORRECTED from Battr's rule screen, 3 Sep 2026. Same story as YLOPO: we had
+    // it as a Zillow SOURCE list; it is a Zillow HIGH-INTENT TAG list, and it
+    // carries two conditions we had no way to guess — leads already in the
+    // live-business stages are excluded, and the lead must have been active on
+    // the site in the last fortnight. Our 5/8 thresholds were right.
     // Substring again: Zillow, Zillow.com, Zillow Flex, Zillow Preferred,
     // Zillow Home Loans, Zillow-Long Form, Zillowlongform and the rest.
     list_filters: {
-      groups: [[contact("source_normalized", "MATCHES ANY", ["Zillow"], { value_data_type: "text" }), notInAPond]],
+      groups: [
+        [
+          contact("tags_array", "CONTAINS ANY", ZILLOW_INTENT_TAGS, { value_data_type: "text" }),
+          contact("stage_name", "IS NONE OF", LIVE_BUSINESS_STAGES, { value_data_type: "text" }),
+          daysSince("last_activity_at", "<", 14),
+          notInAPond,
+        ],
+      ],
     },
     at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 5)]] },
     neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 8)]] },
@@ -353,11 +408,16 @@ export const lists = [
 
   {
     id: 1149,
-    name: "Current & Upcoming Clients",
+    name: "📖 Current & Upcoming Clients",
     audit_type: "contact_list",
     is_active: true,
     report_only: true,
-    thresholds_inferred: true,
+    observed: { date: "2026-09-03", total: 451, compliant: 176, at_risk: 4, neglected: 271 },
+    // CORRECTED from Battr's rule screen, 3 Sep 2026. We had guessed the stage
+    // names — Active Client, Pending, Current Client, Upcoming Client, none of
+    // which exist in this account — and used 14/30 as an admitted placeholder.
+    // The real list runs the whole live-business pipeline on a 10/13 clock, the
+    // same clock as Warm Back Up.
     // The one list on Battr's audits screen we had never seen. It is not a
     // member of Team Leads, so it cannot sweep — and its population is live and
     // closed business, every stage of which is already on rules.protectedStages.
@@ -370,13 +430,38 @@ export const lists = [
     list_filters: {
       groups: [
         [
-          contact("stage_name", "IS ANY OF", ["Active Client", "Under Contract", "Pending", "Current Client", "Upcoming Client"], { value_data_type: "text" }),
+          contact("stage_name", "IS ANY OF", ["Submitting Offers", "Showing Homes", "Listing Agreement", "Active Listing", "Under Contract", "Appointment Set", "Met with Customer"], { value_data_type: "text" }),
           notInAPond,
         ],
       ],
     },
-    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 14)]] },
-    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 30)]] },
+    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 10)]] },
+    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 13)]] },
+  },
+
+  // ─── The list we could never model, now read off the rule screen ───────────
+  {
+    id: 1150,
+    name: "🎤 AI TEXT REPLIES",
+    audit_type: "contact_list",
+    is_active: true,
+    report_only: true,
+    observed: { date: "2026-09-03", total: 10, compliant: 8, at_risk: 0, neglected: 2 },
+    // Previously marked "needs-rules": guessing a selector for nine leads was
+    // not worth the risk of guessing wrong. The rule screen settles it — these
+    // are leads the AI texter has engaged or flagged for follow-up. Reported,
+    // never actioned. Fourteen of Battr's fifteen audits are now modelled;
+    // only Database Health Score, a 13-source roll-up, still has no rule.
+    list_filters: {
+      groups: [
+        [
+          notInAPond,
+          contact("tags_array", "CONTAINS ANY", ["AI_ENGAGED", "AI_NEEDS_FOLLOW_UP"], { value_data_type: "text" }),
+        ],
+      ],
+    },
+    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 30)]] },
+    neglected_filters: { groups: [[daysSince(LAST_COMM, ">", 60)]] },
   },
 
   // ─── NOT a member of Team Leads ────────────────────────────────────────────
@@ -394,11 +479,16 @@ export const lists = [
     // 49 neglected (36%).
     is_active: true,
     report_only: true,
-    observed: { date: "2026-09-02", total: 135, compliant: 65, at_risk: 21, neglected: 49 },
+    observed: { date: "2026-09-03", total: 131, compliant: 67, at_risk: 18, neglected: 46 },
+    // Stage list CORRECTED from Battr's rule screen, 3 Sep 2026. We had it as
+    // early-pipeline plus nurture; the real list is Attempted Contact, Lead,
+    // Spoke with Customer, Sphere and Closed — no Nurture at all, and it reaches
+    // the whole way into closed business. Anyone who came back to the site in
+    // the last ten days, whatever they are to us now.
     list_filters: {
       groups: [
         [
-          contact("stage_name", "IS ANY OF", [...STAGES.earlyPipeline, ...STAGES.nurture], { value_data_type: "text" }),
+          contact("stage_name", "IS ANY OF", ["Attempted Contact", "Lead", "Spoke with Customer", "Sphere", "Closed"], { value_data_type: "text" }),
           daysSince("last_website_visit", "<", 10),
           notInAPond,
         ],

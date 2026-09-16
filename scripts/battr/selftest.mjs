@@ -184,6 +184,8 @@ check("an email-only lead reads as neglected — intended, not a bug", () => {
     { id: 79, stage: "Lead", created: daysAgo(60), assignedUserId: 5, assignedTo: "Some Agent", tags: [], lastCommunication: daysAgo(1) },
     { lastOutbound: 0, lastInbound: 0 }
   );
+  // Warned already, so the interlock is satisfied and the tier is reachable.
+  c.custom_fields.fub.customBattrAtRiskSince = daysAgo(3);
   assert.equal(classifyForList(c, listById(1104), NOW), "neglected");
 });
 
@@ -473,6 +475,7 @@ check("a lead with a real timeframe is not in the CLEAN UP list", () => {
     { lastOutbound: new Date(daysAgo(45)).getTime(), lastInbound: 0 }
   );
   assert.equal(classifyForList(known, listById(1145), NOW), null);
+  known.custom_fields.fub.customBattrAtRiskSince = daysAgo(2);
   assert.equal(classifyForList(known, listById(1106), NOW), "neglected");
 });
 
@@ -694,10 +697,15 @@ check("NO LIST IS SILENTLY EMPTY — every list matches a contact it should", ()
     [1108, build({ stage: "Nurture", timeframe: "6-12 months" }, 40), "Monthly"],
     [1109, build({ stage: "Nurture", timeframe: "12+ months" }, 100), "Quarterly"],
     [1145, build({ stage: "Nurture" }, 40), "CLEAN UP: Nurtures No Timeframe"],
-    [1146, build({ stage: "Lead", source: "SOI" }, 200), "Sphere & Past Clients"],
-    [1147, build({ stage: "Lead", source: "Ylopo Seller" }, 20), "YLOPO IMPORTANT"],
-    [1148, build({ stage: "Lead", source: "Zillow Flex" }, 20), "Zillow Important"],
-    [1105, build({ stage: "Nurture", lastVisit: daysAgo(2) }, 20), "Active Leads"],
+    // Corrected 3 Sep 2026 from Battr's rule screens: 1146 is a STAGE list, and
+    // 1147 / 1148 are INTENT TAG lists rather than the source lists we had. The
+    // fixtures move with the rules, which is the point of this check — each one
+    // is a contact built to fall inside the list as it is actually defined.
+    [1146, build({ stage: "Sphere" }, 200), "Sphere & Past Clients"],
+    [1147, build({ stage: "Lead", tags: ["HANDRAISER"] }, 40), "YLOPO IMPORTANT"],
+    [1148, build({ stage: "Lead", tags: ["Zillow High Intent Buyer"], lastActivity: daysAgo(2) }, 20), "Zillow Important"],
+    [1150, build({ stage: "Lead", tags: ["AI_ENGAGED"] }, 40), "AI TEXT REPLIES"],
+    [1105, build({ stage: "Spoke with Customer", lastVisit: daysAgo(2) }, 20), "Active Leads"],
     [1149, build({ stage: "Under Contract" }, 40), "Current & Upcoming Clients"],
   ];
 
@@ -705,6 +713,31 @@ check("NO LIST IS SILENTLY EMPTY — every list matches a contact it should", ()
     const status = classifyForList(contact, listById(id), NOW);
     assert.ok(status !== null, `${label} (${id}) selected nobody — its rule matches no contact`);
     assert.notEqual(status, "compliant", `${label} (${id}) never flags — check its thresholds`);
+  }
+});
+
+check("every sweeping list carries the warn-first interlock in its own rule", () => {
+  // Read off Battr's rule screens 3 Sep 2026 and applied 16 Sep: each member
+  // list's Neglected tier is `Last Communication > N AND At Risk Notified Is
+  // Not Empty`. Ours had only the first half.
+  //
+  // This is also the proof that the correction NARROWED rather than widened.
+  // Adding a condition to a conjunction can only ever remove leads from the
+  // tier, so no lead became newly sweepable — and the interlock is now enforced
+  // in two independent places, the rule and the sweep loop, so losing either
+  // one still leaves a lead protected.
+  const { ids, resolved } = memberListsOf(lists.find((l) => l.audit_type === "combined_contact_lists"));
+  assert.ok(ids.length >= 6, "the combined list must still have its member lists");
+
+  for (const list of resolved) {
+    const groups = list.neglected_filters?.groups ?? [];
+    assert.ok(groups.length > 0, `${list.name} has no neglected tier`);
+    for (const group of groups) {
+      assert.ok(
+        group.some((c) => c.field.endsWith("customBattrAtRiskSince") && c.operator === "!=" && c.value === null),
+        `${list.name}: a neglected group with no "At Risk Since is not empty" condition would sweep an unwarned lead`
+      );
+    }
   }
 });
 
@@ -1155,17 +1188,27 @@ const NURTURE_CADENCE = [
 
 for (const { list, name, timeframe, atRisk, neglected } of NURTURE_CADENCE) {
   check(`${name}: compliant below ${atRisk}d, at risk past it, neglected past ${neglected}d`, () => {
-    const build = (quietDays) => {
+    // `warned` is the At Risk Notified stamp. Battr's Neglected tier on every
+    // nurture list requires it, so a lead past the line that was never warned
+    // stays at risk — the warn-first interlock, in the rule rather than only in
+    // the sweep loop.
+    const build = (quietDays, warned = true) => {
       const c = normalizeContact(
         { id: 3, stage: "Nurture", timeframe, created: daysAgo(200), assignedUserId: 5, tags: [] },
         { lastOutbound: 0 }
       );
       c.custom_fields.fub.system_lastCommunication = daysAgo(quietDays);
+      c.custom_fields.fub.customBattrAtRiskSince = warned ? daysAgo(quietDays - atRisk) : null;
       return c;
     };
     assert.equal(classifyForList(build(atRisk - 1), listById(list), NOW), "compliant");
     assert.equal(classifyForList(build(atRisk + 1), listById(list), NOW), "at_risk");
     assert.equal(classifyForList(build(neglected + 1), listById(list), NOW), "neglected");
+    assert.equal(
+      classifyForList(build(neglected + 1, false), listById(list), NOW),
+      "at_risk",
+      "never warned: past the line but not yet neglected"
+    );
   });
 }
 
@@ -1181,12 +1224,14 @@ check("a nurture lead lands in exactly one cadence list, by timeframe", () => {
 
 check("Warm Back Up picks up early-stage leads older than 10 days", () => {
   const warm = listById(1104);
-  const build = (age, quiet) => {
+  const build = (age, quiet, warned = true) => {
     const c = normalizeContact({ id: 5, stage: "Attempted Contact", created: daysAgo(age), assignedUserId: 5, tags: [] }, { lastOutbound: 0 });
     c.custom_fields.fub.system_lastCommunication = daysAgo(quiet);
+    c.custom_fields.fub.customBattrAtRiskSince = warned ? daysAgo(1) : null;
     return c;
   };
   assert.equal(classifyForList(build(30, 14), warm, NOW), "neglected");
+  assert.equal(classifyForList(build(30, 14, false), warm, NOW), "at_risk", "Warm Back Up carries the interlock too");
   assert.equal(classifyForList(build(30, 11), warm, NOW), "at_risk");
   assert.equal(classifyForList(build(5, 14), warm, NOW), null, "younger than 10 days belongs to Hot Leads");
 });
@@ -1856,17 +1901,17 @@ function fixtureServer() {
     warm({ id: 101, name: "Fresh Contact", assignedTo: "Nicole Miller", assignedUserId: 11 }),
     // at risk
     warm({ id: 102, name: "Going Quiet", assignedTo: "Nicole Miller", assignedUserId: 11 }),
-    // neglected
-    warm({ id: 103, name: "Long Gone", assignedTo: "Brett Smith", assignedUserId: 12 }),
+    // neglected — warned four days ago, so the interlock is satisfied
+    warm({ id: 103, name: "Long Gone", assignedTo: "Brett Smith", assignedUserId: 12, customBattrAtRiskSince: ago(4) }),
     // neglected, but unworkable — report only
-    warm({ id: 104, name: "Bad Number", assignedTo: "Brett Smith", assignedUserId: 12, tags: ["BAD_PHONE"] }),
+    warm({ id: 104, name: "Bad Number", assignedTo: "Brett Smith", assignedUserId: 12, tags: ["BAD_PHONE"], customBattrAtRiskSince: ago(4) }),
     // excluded: no list covers a contract stage
     warm({ id: 105, name: "In Escrow", assignedTo: "Brett Smith", assignedUserId: 12, stage: "Under Contract" }),
     // NEGLECTED ON CALLS, but texted three days ago. FUB will not serve texts
     // in bulk, so the first pass cannot see that and reads this lead as
     // abandoned. The per-person backfill is the only thing that saves it, and
     // saving it is the whole point: this is a lead an agent actually worked.
-    warm({ id: 106, name: "Texted Recently", assignedTo: "Brett Smith", assignedUserId: 12 }),
+    warm({ id: 106, name: "Texted Recently", assignedTo: "Brett Smith", assignedUserId: 12, customBattrAtRiskSince: ago(4) }),
   ];
 
   // Each one sits in the middle of its tier, not on a boundary, so a run at any
@@ -1891,7 +1936,13 @@ function fixtureServer() {
     // NOT listed: /textMessages. The handler below answers it the way FUB does
     // — 400 in bulk, the thread when a personId is given.
     "/emails": { emails: [] },
-    "/customFields": { customfields: [] },
+    // The interlock field, as FUB returns it once Battr has created it. Without
+    // this the stamp can never be read, and before the rule carried the
+    // interlock that silently did not matter — the fixture was passing for the
+    // wrong reason.
+    "/customFields": {
+      customfields: [{ id: 1, name: "customBattrAtRiskSince", label: "Battr At Risk Since", type: "date" }],
+    },
   };
 
   const writes = [];
