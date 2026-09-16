@@ -1,0 +1,15 @@
+date,source,list_id,list_name,total,compliant,at_risk,neglected
+2026-09-02,battr,0,⭐️ Team Leads (combined),866,842,17,7
+2026-09-08,battr,0,⭐️ Team Leads (combined),903,835,23,45
+2026-09-10,battr,0,⭐️ Team Leads (combined),862,838,20,4
+2026-09-11,battr,0,⭐️ Team Leads (combined),861,834,24,3
+2026-09-12,battr,0,⭐️ Team Leads (combined),856,,19,
+2026-09-13,battr,0,⭐️ Team Leads (combined),858,,21,
+2026-09-15,battr,0,⭐️ Team Leads (combined),880,838,23,19
+2026-09-03,battr,1145,🗓️ CLEAN UP: Nurtures No Timeframe,4198,208,121,3869
+2026-09-03,battr,1146,💛 Sphere & Past Clients,3332,356,2,2974
+2026-09-03,battr,1147,‼️ YLOPO IMPORTANT,116,64,8,44
+2026-09-03,battr,1148,🏹 Zillow Important,44,16,2,26
+2026-09-03,battr,1149,📖 Current & Upcoming Clients,451,176,4,271
+2026-09-03,battr,1105,❗Active Leads,131,67,18,46
+2026-09-03,battr,1150,🎤 AI TEXT REPLIES,10,8,0,2
