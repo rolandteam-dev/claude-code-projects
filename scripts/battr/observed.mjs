@@ -657,7 +657,7 @@ export const observedLists = [
   { name: "👀 Quarterly Nurture", type: "contact", total: 537, status: "modeled", listId: 1109, note: "Member of Team Leads." },
   { name: "🌶️ Hot Leads", type: "contact", total: 19, status: "modeled", listId: 1144, note: "Member of Team Leads. Nineteen records — the tightest list, and the one carrying the 2/4 day thresholds." },
   {
-    name: "Current & Upcoming Clients",
+    name: "📖 Current & Upcoming Clients",
     type: "contact",
     status: "modeled",
     listId: 1149,

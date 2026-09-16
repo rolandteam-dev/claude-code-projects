@@ -30,7 +30,7 @@ import { parseCsv, findColumn, mapRows } from "./import-atbats.mjs";
 import { bucketForSource, bucketName, isSourceAudited, leadBuckets, unmappedPolicy } from "./sources.mjs";
 import { FubClient } from "./fub.mjs";
 import { rules } from "./rules.mjs";
-import { TIMELINE, SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, FUB_FIELDS } from "./observed.mjs";
+import { TIMELINE, SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, FUB_FIELDS, SOURCE_COUNTS, observedLists } from "./observed.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
@@ -714,6 +714,64 @@ check("NO LIST IS SILENTLY EMPTY — every list matches a contact it should", ()
     assert.ok(status !== null, `${label} (${id}) selected nobody — its rule matches no contact`);
     assert.notEqual(status, "compliant", `${label} (${id}) never flags — check its thresholds`);
   }
+});
+
+// Hot Leads and Warm Back Up are near-mirrors — same stages, differing only on
+// lead age — but their thresholds are worlds apart: 2/4 against 10/13. Swap the
+// two ids and nothing errors. Every list still behaves correctly; the wrong list
+// just answers to the wrong number, and ten thousand Warm Back Up leads inherit
+// a 4-day sweep line that would empty the database into a pond in one night.
+//
+// The ids also key into observed.mjs, where Battr's own counts live, so a
+// transposition there silently changes which list we are being measured against.
+// No behavioural test can catch either, which is why these pin the pairing
+// everywhere it is written down.
+
+check("list ids are unique", () => {
+  const ids = lists.map((l) => l.id);
+  assert.equal(new Set(ids).size, ids.length, `duplicate list id in lists.mjs: ${ids.join(", ")}`);
+});
+
+check("1144 is Hot Leads and 1104 is Warm Back Up, not the other way round", () => {
+  assert.match(listById(1144).name, /Hot Leads/);
+  assert.match(listById(1104).name, /Warm Back Up/);
+});
+
+check("each id carries the rules that belong to that list, not just the label", () => {
+  // The label could be right while the rules are transposed, which is the case
+  // a name check alone would wave through.
+  const age = (list) => list.list_filters.groups[0].find((c) => c.field === "crm_created_at");
+  assert.equal(age(listById(1144)).operator, "<", "1144 must be the new-lead side");
+  assert.equal(age(listById(1104)).operator, ">", "1104 must be the aged side");
+
+  const atRiskDays = (list) => list.at_risk_filters.groups[0][0].value;
+  assert.equal(atRiskDays(listById(1144)), 2, "Hot Leads warns at 2 days");
+  assert.equal(atRiskDays(listById(1104)), 10, "Warm Back Up warns at 10 days");
+});
+
+check("observed.mjs agrees with lists.mjs about which id is which", () => {
+  for (const [id, row] of Object.entries(SOURCE_COUNTS.byList)) {
+    const list = listById(Number(id));
+    assert.ok(list, `SOURCE_COUNTS names list ${id}, which lists.mjs does not define`);
+    assert.ok(
+      list.name.includes(row.name) || row.name.includes(list.name.replace(/^[^\w]+\s*/, "")),
+      `list ${id} is "${list.name}" in lists.mjs but "${row.name}" in SOURCE_COUNTS`
+    );
+  }
+  for (const row of observedLists.filter((l) => l.listId)) {
+    const list = listById(row.listId);
+    assert.ok(list, `observed.mjs names list ${row.listId}, which lists.mjs does not define`);
+    assert.equal(list.name, row.name, `list ${row.listId} is named differently in lists.mjs and observed.mjs`);
+  }
+});
+
+check("the record counts corroborate the pairing", () => {
+  // Independent of the names: Warm Back Up held 10,783 of the 12,064 pool and
+  // Hot Leads 19. If those ever swap, the ids have been transposed somewhere
+  // upstream of both files.
+  const warm = SOURCE_COUNTS.byList[1104];
+  const hot = SOURCE_COUNTS.byList[1144];
+  assert.ok(warm.records > hot.records * 100, "Warm Back Up must dwarf Hot Leads — it is the whole aged database");
 });
 
 check("the undo brake has a door, and it is not gated on BATTR_LIVE", () => {
