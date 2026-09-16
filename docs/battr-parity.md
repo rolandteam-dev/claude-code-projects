@@ -1,236 +1,178 @@
 # Battr Parity Audit
 
-**The Roland Team · Internal Battr · rev 5 · 14 September 2026**
+**The Roland Team · Internal Battr · rev 6 · 16 September 2026**
 
 Readable version: https://claude.ai/code/artifact/9ea11959-2997-4c87-a980-643adb3d8f08
 
-Every behaviour of the Battr subscription set against what we have built — now
-with real numbers on both sides. Three of Battr's own audit nights and one
-census of the live database. Each row is marked **confirmed**, **inferred**, or
-**gap**, and nothing here is asserted from memory.
+Seven of Battr's own audit nights, one census of the live database, its fifteen
+rule screens, and a nightly dry run of our own.
 
 | | |
 |---|---|
-| Our funnel | **6.8%** of the member pool survives into the audit list. Battr keeps 7.1%. |
-| Hot Leads | **19 : 19** — ours against Battr's, exactly. Warm Back Up lands within 2.5%. |
-| Blocking field names | **0.** Both are fixed. FUB's own `/timeframes` gave up the map; texts are read per person. |
-| Automated checks | **165**, run before every audit. If they fail, the audit does not run. |
+| Audits modelled | **14 of 15.** Only Database Health Score, a roll-up over 13 unknown lists, has no rule. |
+| On the big list | **0.3%** — CLEAN UP, ours 4,213 against Battr's 4,200, on the live database. |
+| Blocking gaps | **3.** One needs a screen, one a probe, one a DNS record. None needs code. |
+| Automated checks | **180**, run before every audit. If they fail, the audit does not run. |
 
-## Verdict — structurally faithful, two field names from finished
+## Verdict — the engine is right, three things outside it are not
 
-The part with no direct confirmation behind it — how the combined list sheds 93%
-of its own members — turns out to behave almost exactly as Battr's does. That
-was the open question this audit was built around, and it has closed favourably.
+Every gap that was about our code has closed. The population matches, the rules
+are Battr's own rather than ours reverse-engineered, and the sweeping path is
+stricter than it was. What is left is a rule screen nobody has opened, a probe
+nobody has run, a domain nobody has verified — and one behaviour we can prove is
+wrong but cannot yet fix.
 
-| The funnel | Member pool | → Audit list | Kept |
-|---|---:|---:|---:|
-| Battr | 12,064 | 862 | 7.1% |
-| Ours | 10,533 | ~720 | **6.8%** |
-
-And the 1,531 missing from our pool is almost exactly the **1,262** sitting in
-the four nurture lists we currently cannot populate. The shortfall is not spread
-thinly across the model; it is one population, with one cause.
-
-> **Both blocking gaps are now closed.** We read `timeframe`; FUB returns
-> `timeframeId`. `GET /v1/timeframes` turned out to serve the account's own
-> lookup table — `1: 0-3 Months, 2: 3-6 Months, 3: 6-12 Months, 4: 12+ Months,
-> 5: No Plans` — which maps one-to-one onto the four nurture bands. That is read
-> from FUB, not inferred. And FUB refuses text messages in bulk but serves one
-> person's thread, so the audit now asks about the few dozen leads an action
-> would touch and folds the answers in.
->
-> **The numbers below predate both fixes.** A census run will restate them; they
-> are kept here as the last measured state rather than replaced with estimates.
-
-> **What this changes about who can be swept.** Populating the four nurture
-> lists takes them from nobody to roughly 1,262 leads — all of which Battr
-> sweeps today, which is the point. But it is still a widening, so it is stated
-> plainly rather than buried: nothing can actually move, because `BATTR_LIVE` is
-> absent *and* `rules.sweepOnBackfilledTexts` is false. Two independent switches,
-> both off, both Mike's.
-
-## Evidence — three of Battr's own nights
-
-| Date | Day | In audit | At risk | Neglected | Source |
-|---|---|---:|---:|---:|---|
-| 2 Sep | Wed | 866 | 17 | 7 | Aida Audits screen |
-| 8 Sep | Tue | 903 | 23 | 45 | audit emails |
-| 10 Sep | Thu | 862 | 20 | 4 | raw `.eml`, both halves |
-| 11 Sep | Fri | 861 | 24 | 3 | raw `.eml`, both halves |
-| 12 Sep | **Sat** | 856 | 19 | — | raw `.eml`, **At Risk only** |
-| 13 Sep | **Sun** | 858 | 21 | — | raw `.eml`, **At Risk only** |
-
-Saturday is the useful one: the At Risk email arrived and the Neglected one did
-not. `nudgeDayFilter` is "Every Day" and `sweepDayFilter` is "Weekdays Excluding
-Monday" — both confirmed in a single night by what did and did not arrive.
-
-Both weekend nights sent one email, not two — the sweep day filter confirmed
-twice more. Five things fall out of these rows that a single night could not
-have shown.
-
-- **The `At Risk Since` stamp is never cleared, and that is what arms the
-  sweep.** A lead on Sunday read *Previous Status: compliant, Status: At Risk,
-  At Risk Since 9/07* — and got no new note. So working a lead removes it from
-  the at-risk list but not from the mark. Idempotency keys on the stamp
-  existing, not on the previous status, which means the interlock is **"ever
-  warned", not "recently warned"**: a lead warned once can be swept the moment
-  it next goes neglected, with no fresh warning and no three-day grace. Our
-  engine already behaves identically — a presence test, a write only when
-  absent, and no code path that clears it — but it is the sharpest edge in the
-  system and is now pinned by two tests.
-- **A lead leaves the at-risk tier by ageing, not by being swept.** *(This
-  corrects the rev 2 wording.)* On Saturday the entire cohort flagged on 9/9 —
-  three days earlier — left the at-risk list, on a night when nothing could be
-  swept at all. At Risk and Neglected are exclusive states on a clock; the sweep
-  is an action taken on the neglected state, on the days the filter allows, not
-  the thing that produces it. Our classifier already worked this way, testing
-  the neglected tier first, so the model needed no change — only the
-  explanation did.
-- **The audit list drains itself.** 903 − 45 swept = 858, plus arrivals → 862
-  observed. A swept lead lands in a pond, every member list requires "not in a
-  pond", so it leaves the list the same night. The 7 / 45 / 4 spread is not
-  volatility — it is the day filter plus the drain, and both are modelled.
-- **The interlock, visible in Battr's own record.** Three of the four leads
-  swept on Thursday carry `At Risk Since 9/7` — flagged Monday, taken Thursday.
-  Monday is a nudge day and not a sweep day; Thursday is both.
-- **The exclusion counters are action-time, not membership.** Both read zero on
-  every night, including one where the combined list held 903 of a 12,000 pool.
-  They cannot be counting selection. Our model is right to do that work in the
-  list filters.
-
-## Numbers — ours against theirs, list by list
-
-Our figures from the census of 5 September; Battr's from the source-counts
-dropdown of 2 September.
-
-| List | Ours | Battr | Verdict |
+| Measured | Ours | Battr | Verdict |
 |---|---:|---:|---|
+| Leads audited | 909 | 858 | within 6% |
+| 🗓️ CLEAN UP | 4,213 | 4,200 | **0.3%** |
 | 🌶️ Hot Leads | 19 | 19 | exact |
 | 🌤️ Warm Back Up | 10,514 | 10,783 | −2.5% |
-| 🔥 Weekly Nurture | 0 | 144 | gap — `timeframeId` |
-| 😎 Bi-Weekly Nurture | 0 | 226 | gap — `timeframeId` |
-| 🌱 Monthly Nurture | 0 | 355 | gap — `timeframeId` |
-| 👀 Quarterly Nurture | 0 | 537 | gap — `timeframeId` |
-| 🗓️ CLEAN UP: no timeframe | 8,959 | 4,200 | gap — same cause |
+| Funnel kept | 6.8% | 7.1% | confirmed |
 
-> **Why CLEAN UP is double, and why that is reassuring.** Every nurture lead
-> whose timeframe we cannot read falls through the four bands into the
-> no-timeframe list. 8,959 against Battr's 4,200 is not a second bug — it is the
-> first one, seen from the other side. Fix the field and both numbers move
-> together.
+From the 14 September run, the first that completed. Its neglected count was
+wrong — 392 against Battr's handful — for a reason since fixed.
 
-### And our one audit run
+> **The one behaviour we know is wrong.** On 15 September Battr swept 19 leads:
+> **18 to Shark Tank and one to Money Time.** Nineteen is well below the 25 at
+> which our model overflows, so under our rule all nineteen go to Shark Tank.
+> The split is **not by count** — the rule is wrong in kind, and no value of 25
+> fixes it. Not the owner, not the source; both checked against that night's rows.
+>
+> Left unchanged deliberately: pond routing is only ever edited from Battr's own
+> rule screen, and assignment rule set 41 has not been read. One lead in the
+> wrong pond on a night like that; twenty on a 45-sweep Tuesday.
 
-| | Ours, 4 Sep | Battr, 10 Sep | Why |
-|---|---:|---:|---|
-| At Risk | 8 | 20 | Missing nurture population, and leads skip the tier |
-| Neglected | 55 | 4 | Blind to texts, so leads jump straight past "at risk" |
+## Evidence — seven of Battr's own nights
 
-That inversion is the texts bug rendered as a number. A lead we cannot see a
-text for is not merely miscounted — it skips the warning tier entirely and
-arrives as neglected. Which is exactly why that run refused to sweep.
+| Date | Day | In audit | At risk | Neglected | What it established |
+|---|---|---:|---:|---:|---|
+| 2 Sep | Wed | 866 | 17 | 7 | The source counts, and the 92.8% shed |
+| 8 Sep | Tue | 903 | 23 | 45 | Exclusion counters are action-time |
+| 10 Sep | Thu | 862 | 20 | 4 | The list self-drains; the interlock across days |
+| 11 Sep | Fri | 861 | 24 | 3 | The three-day spread, measured |
+| 12 Sep | Sat | 856 | 19 | — | A lead ages out of at-risk; no weekend sweeps |
+| 13 Sep | Sun | 858 | 21 | — | The stamp survives a compliant excursion |
+| 15 Sep | Tue | 880 | 23 | 19 | Forecast held at 19 v 22; Money Time appears |
+
+Three of those changed the model:
+
+- **A lead leaves the at-risk tier by ageing, not by being swept.** On Saturday
+  the whole cohort flagged three days earlier left the list, on a night nothing
+  could be swept. At Risk and Neglected are exclusive states on a clock; the
+  sweep is an action taken on the second, not the thing that produces it.
+- **The interlock asks "ever warned", not "recently warned."** A lead read
+  *Previous Status: compliant, At Risk Since 9/07* and got no new note. The stamp
+  is never cleared. On 15 Sep one such lead was warned, rescued by its agent, and
+  swept anyway — with no second warning.
+- **The forecast held.** Three days out, from cohort dates alone, we predicted
+  Tuesday's backlog at 22 as an upper bound. Battr swept 19, and the stamps broke
+  down exactly as the cohorts predicted: 3, 5, 5, 6.
+
+## Rules — six we had wrong, corrected from Battr's screens
+
+| List | What we had | What it is |
+|---|---|---|
+| ‼️ YLOPO IMPORTANT | source matches Ylopo, 7/10 | five intent tags, 30/60 |
+| 🏹 Zillow Important | source matches Zillow, 5/8 | high-intent tags, not live-business, site activity <14d, 5/8 |
+| 💛 Sphere & Past Clients | five lead sources, 90/93 | stage Sphere or Closed, 93/96 |
+| 📖 Current & Upcoming | four stages that do not exist, 14/30 | seven live-business stages, 10/13 |
+| ❗Active Leads | early pipeline + nurture | five named stages, no Nurture, into closed business |
+| 🎤 AI TEXT REPLIES | unmodelled gap | two AI tags, 30/60, list 1150 |
+
+> **Two were the wrong kind of list entirely.** YLOPO and Zillow Important were
+> **source** lists in our model and **tag** lists in Battr's. A source records
+> where a lead came from once; an intent tag is set when the lead does something
+> now. We were reporting on every lead Ylopo ever sent — 2,389 — instead of the
+> 127 currently raising a hand. The counts were close enough in shape not to look
+> wrong, which is why a guess that reconciles is not a guess that is correct.
+
+**The interlock, restored where Battr keeps it.** Every nurture list and Warm
+Back Up have a Neglected tier of `Last Communication > N AND At Risk Notified Is
+Not Empty`; ours carried only the first half. Adding a term to a conjunction can
+only remove leads from the tier, so this narrowed the sweep and could not widen
+it.
 
 ## Behaviour — capability by capability
 
 | Behaviour | Battr | Ours | State |
 |---|---|---|---|
-| Run schedule | ~6:55–7:09 PM PT | 02:00 UTC = 7:00 PM PT | confirmed |
-| Compliance states | compliant / at risk / neglected | identical, plus `excluded` | confirmed |
-| The six member lists | read off the source-counts dropdown | the same six, same thresholds | confirmed |
-| Combined-list shedding | keeps 7.1% of its pool | keeps 6.8% | confirmed |
-| At-risk action | one note, once per lead | same text, same idempotency | confirmed |
-| Neglected action | sweep to pond | same | confirmed |
-| Day filters | nudge daily, sweep Tue–Fri | same — and seen working across 9/7 → 9/10 | confirmed |
-| Warn-first interlock | `At Risk Since` must exist | same, re-checked in the sweep loop | confirmed |
+| Run schedule | 7:08 PM PT, reliably | 02:00 UTC, delayed hours by GitHub | differs |
+| The six member lists | source-counts dropdown | same six, same thresholds | confirmed |
+| Combined-list shedding | keeps 7.1% | keeps 6.8% | confirmed |
+| Timeframe bands | four nurture lists | resolved from `timeframeId` via FUB's table | confirmed |
+| Day filters | nudge daily, sweep Tue–Fri | same — both weekend nights | confirmed |
+| Warn-first interlock | in the rule and at action time | same, both places | confirmed |
+| Idempotency | keys on the stamp existing | same — presence test, write when absent | confirmed |
+| Last touch | calls and texts | calls in bulk, texts per person | confirmed |
 | Exclusions | counters are action-time | done in the list filters | confirmed |
-| Sweep target | Pond / Shark Tank | Shark Tank | confirmed |
-| Pond overflow | no Money Time in any observed sweep | first 25 Shark Tank, rest Money Time | **unconfirmed** |
-| Per-run cap | none seen; 45 in one night | 30 — binds on a Tuesday | ours |
-| Timeframe bands | four nurture lists, 1,262 leads | resolved from `timeframeId` via FUB's own table | confirmed |
-| Last touch | calls and texts | calls in bulk, texts per person for actionable leads | confirmed |
-| Reply reprieve | not a Battr feature | built, but inert — no row carries direction | **gap (ours)** |
+| Owner-group exclusion | "Battr Paused" FUB team | cannot fire — FUB returns no group ids | **gap** |
+| Pond routing | assignment rule set 41 | count-based overflow — **refuted** | **gap** |
+| Reply reprieve | not a Battr feature | built, inert — no row carries direction | **gap (ours)** |
 | 📊 Database Health Score | 13 sources, 20,099 records | not modelled | **gap** |
-| 🎤 AI TEXT REPLIES | 9 records | not modelled | **gap** |
+| Undo | none | a workflow task; refuses a dry run's log | ours only |
+| Per-agent scoreboard | per-lead wall of text | worst-first, plus unanswered inbound | ours only |
+| Running comparison | — | `comparison.csv`, drift worst-first | ours only |
 
-## Where we deliberately differ
-
-- **Full undo** *(safer)* — every sweep logged with lead, agent and pond; one
-  command reverses a night. Battr has no equivalent.
-- **It refuses to act on partial evidence** *(safer)* — when a communication
-  channel cannot be read, nudges hold, sweeps hold, and the agent emails are
-  withheld. Battr has no notion of distrusting its own input.
-- **A 30-sweep cap, and a cold-start guard** *(safer)* — the cap binds on
-  Tuesdays by design and says so in the report. The guard stops a first run
-  reading an existing database as 53,786 new leads.
-- **New lead sources protected by default** *(safer)* — 138 sources mapped, 117
-  audited, 21 protected, plus every "Schneider *" as a group.
-- **Outbound email never counts** *(stricter)* — FUB batch-emails thirty leads
-  in one click. An agent who only emails reads as neglected — intended.
-- **Inbound counts, and a reply spares** *(softer)* — a call or text from the
-  lead resets the clock; an email reply within 14 days stops the sweep.
-- **"Inbound, never answered"** *(new)* — the counterweight: leads who reached
-  out and got nothing back, longest wait first, at the top of the agent's own
-  email.
-- **A worst-first scoreboard, and a nightly reconciliation table** *(new)* —
-  Battr's emails were near-100% unread. The acceptance test now runs itself
-  every night.
-
-## Gaps — what is left
+## Gaps — what is left, and who can close it
 
 | Gap | Costs | Closed by |
 |---|---|---|
-| ~~The timeframe id map~~ | — | **Closed 12 Sep.** `GET /v1/timeframes`, read not guessed. |
-| ~~Last touch from texts~~ | — | **Closed 12 Sep.** Per-person backfill on actionable leads only. |
-| **The email reply reprieve is inert** | A lead who wrote back by email can still be swept. Fails in the wrong direction. | One `inspect-fub-fields` run. It now prints which row fields are populated so `userId` can be confirmed rather than assumed. |
-| **The interlock is unverified live** | Fails safe — a null stamp means no sweep — but the warn-first rule has never been seen working against real data. | Nudge one test lead and confirm `customBattrAtRiskSince` comes back on the person. |
-| The owner-group exclusion cannot fire | Group 52555 is not excluded by group. Confirmed absent: FUB returns neither `assignedUserGroupIds` nor `groupIds`. | Nothing — worked around by exempting those agents by name. Recorded so it is not mistaken for working. |
-| Pond overflow | On a 45-sweep Tuesday, 20 leads into a pond Battr never uses. | The 8 Sep neglected email, as a `.eml`. |
-| Two unmodelled lists | Reporting completeness. Neither can act. | Their rule screens. |
-| Thresholds on three monitoring lists | May report a wrong split. Cannot act. | Their rule screens, or leave them — the nightly table shows the drift. |
-| The nightly audit on `main` is failing | No audit has run since 4 Sep. Seven consecutive nights red. | Landing this branch. The fixture's dates drifted against the real clock; `main` still has 97 checks to this branch's 161. |
+| Pond routing | One lead in the wrong pond on a small night; twenty on a heavy Tuesday. | **Mike** — the assignment rule set 41 screen. |
+| The reply reprieve is inert | A lead who wrote back by email can still be swept. Fails in the wrong direction. | **Mike** — one `inspect-fub-fields` run. |
+| Sending domain unverified | Thirty agents get "your leads are being taken" from `onboarding@resend.dev`. | **Mike** — verify therolandteam.com in Resend. |
+| Interlock unverified live | Fails safe, but if the stamp cannot be read no lead can ever be swept. | The nightly run now counts stamped contacts and calls zero a read failure. |
+| Owner-group exclusion | Group 52555 excludes nobody. Someone could rely on it. | Nothing — worked around by name; the report says so above the counts. |
+| 📊 Database Health Score | Reporting completeness only. It cannot act. | **Mike** — its rule screen, if worth modelling at all. |
+| Run time | Our report lands hours after Battr's. | Nothing clean. GitHub's scheduler is best-effort. |
 
 ## Proof — how this is known to be true
 
 The characteristic failure here is not a crash. It is a rule that quietly does
-nothing while the run looks healthy. It has happened nine times, and every fix
-added the guard rather than only the patch.
+nothing while the run looks healthy. It has happened eleven times. Every fix
+added the guard, not only the patch — and three guards have since caught a real
+defect on their first run.
 
-- **No list is silently empty** *(test)* — each of the eleven lists gets a
-  contact built to fall inside it, and must select and flag it.
-- **No report-only list can reach the sweep** *(test)* — asserted over the whole
-  set, so a new monitoring list cannot be wired in by accident.
-- **A client under contract is protected twice** *(test)* — by the list not
-  acting, and by the stage exclusion, independently.
-- **The suite cannot delete the audit trail** *(test)* — it used to, every run,
-  taking the ownership baseline with it, which recreated the cold start that
-  fabricated 53,786 at bats.
-- **Truncation and unknown tasks are fatal** *(runtime)* — a short database read
-  throws. A run where nothing would execute is red, not green — the scheduled
-  audit silently skipped itself for weeks before that guard existed.
+- **No list is silently empty.** Each of the twelve lists gets a contact built to
+  fall inside it. It caught the corrected Sphere rule the moment the fixture
+  stopped matching.
+- **The list ids cannot be transposed.** Hot Leads and Warm Back Up are
+  near-mirrors on 2/4 and 10/13; swap them and ten thousand leads inherit a
+  four-day sweep line. Five checks pin it; one caught a rename left half-done.
+- **A partial backfill can never read as complete.** One lead's thread failing
+  makes the whole pass incomplete — a lead we could not read is
+  indistinguishable from a lead with no texts.
+- **The undo refuses a dry run's log.** Reversing sweeps that never happened
+  would assign live leads to owners they were never taken from.
+- **A zero that should be impossible is called out.** If no contact carries an
+  At Risk Since stamp the neglected tier is unreachable; the run says that is a
+  read failure, not a clean database.
+
+All 180 checks run **before** every audit, in the same job.
 
 ## The go-live gate
 
 | Step | Task | Pass condition |
 |---|---|---|
-| 1 | ~~`inspect-fub-fields`~~ | **Done 12 Sep.** Map obtained; two new gaps found and recorded. |
-| 2 | `census` | The four nurture lists populate. CLEAN UP falls from 8,959 toward 4,200. Pool approaches 12,000. |
-| 3 | `audit` / dry | **Audited population near 862–903**, at risk near 20, neglected in single figures on a Wed–Fri. |
-| 4 | `inspect-fub-fields` again | Identify the email direction field, or accept that the reprieve spares nobody. |
-| 5 | Nudge one test lead | Confirm the At Risk Since stamp comes back on the person — the interlock, verified. |
-| 6 | Two weeks shadowing | Counts track Battr's nightly, including one Tuesday. |
-| 7 | `sweepOnBackfilledTexts: true`, then `BATTR_LIVE=true` | Two switches, deliberately separate. |
+| 1 | Tonight's dry run | Neglected in single figures. The four corrected lists near 127 / 44 / 3,332 / 131. The stamp line non-zero. |
+| 2 | `inspect-fub-fields` | An email field separating inbound from outbound, or an accepted decision that the reprieve spares nobody. |
+| 3 | Rule set 41 | Pond routing matches Battr's, or is accepted as a known divergence. |
+| 4 | Resend domain | Agent digests can send from therolandteam.com. |
+| 5 | Two weeks shadowing | Drift under 5% on every list in `comparison.csv`, including one Tuesday. |
+| 6 | One live nudge | The stamp comes back on the person. |
+| 7 | Two switches | `sweepOnBackfilledTexts`, then `BATTR_LIVE`. Deliberately separate. |
 
 **For the reviewer.** The policy surface is `scripts/battr/rules.mjs` and
-`scripts/battr/lists.mjs`. `scripts/battr/observed.mjs` is the ground truth this
-document is checked against, including all three observation nights. The place
-to look hardest is no longer `runCombinedList` — the funnel now matches — but
-`normalizeContact`, where two field names are read that Follow Up Boss does not
-return.
+`scripts/battr/lists.mjs`; `scripts/battr/observed.mjs` is the ground truth every
+claim here is checked against. The place to look hardest is `rules.sweepPond` and
+its overflow — the one model we can prove is wrong and have deliberately not
+changed, because pond routing is only ever edited from Battr's own screen.
 
 ---
 
 Battr's app is unreachable from the build environment — the network policy
 refuses `battr.ai` at the proxy — so everything attributed to Battr comes from
-its audits screen of 2 September, its audit emails of 8 and 10 September, and
-rule details supplied directly. Lead names and FUB ids from those emails are
-deliberately not recorded anywhere in the repository.
+its audits screen of 2 September, its fifteen rule screens of 3 September, its
+nightly emails of 8 to 15 September, and figures supplied directly. Lead names
+and Follow Up Boss ids from those emails are deliberately recorded nowhere in
+the repository.
