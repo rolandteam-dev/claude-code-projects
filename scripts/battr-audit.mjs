@@ -169,9 +169,15 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
   // equivalent number is 866 — and conflating the two makes every rate in this
   // report look sixty times better than it is.
   const audited = results.filter((r) => r.status !== "excluded").length;
+  // In list mode every member list carries its own pair of thresholds, so the
+  // single global pair is not what judged anybody — printing it here read as
+  // "this run used 7/14" when Hot Leads used 2/4 and Quarterly Nurture 93/96.
+  const thresholdNote =
+    rules.mode === "lists"
+      ? "thresholds: per list (2/4 Hot … 93/96 Quarterly)"
+      : `thresholds: at risk ${rules.atRiskDays}d, neglected ${rules.neglectedDays}d`;
   lines.push(
-    `Run \`${runId}\` · **${audited} leads audited** of ${population} pulled from Follow Up Boss · ` +
-      `thresholds: at risk ${rules.atRiskDays}d, neglected ${rules.neglectedDays}d`
+    `Run \`${runId}\` · **${audited} leads audited** of ${population} pulled from Follow Up Boss · ${thresholdNote}`
   );
   if (touchIncomplete.length) {
     lines.push("");

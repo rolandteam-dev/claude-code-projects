@@ -517,6 +517,22 @@ check("an unusable touch signal holds the NUDGE, not just the sweep", () => {
   assert.match(src, /const sweepsAllowedToday = isDayAllowed\(rules\.sweepDayFilter[^)]*\)[^;]*&& touchUsable;/);
 });
 
+check("the backfill cap cannot ration a normal night", () => {
+  // The 14 Sep run skipped its backfill because 420 actionable leads exceeded
+  // a cap of 200 — and there were 420 precisely BECAUSE texts were unreadable.
+  // The cap blocked its own fix. It is a runaway guard, so it must sit above
+  // any audit list we have ever seen, derived from the record rather than
+  // eyeballed.
+  const biggestNight = Math.max(...TIMELINE.map((n) => n.total));
+  assert.ok(
+    rules.maxTextBackfill > biggestNight,
+    `maxTextBackfill (${rules.maxTextBackfill}) must exceed the largest observed audit list (${biggestNight}) — ` +
+      `below that it rations normal operation instead of catching a broken membership rule`
+  );
+  // And our own run audited 909, more than any Battr night on record.
+  assert.ok(rules.maxTextBackfill >= 909, "our own 14 Sep run audited 909; the cap must clear that too");
+});
+
 check("a per-person backfill cannot switch sweeping on by itself", () => {
   // The backfill restores a complete touch index, which removes the REASON
   // sweeps are held. Turning that into permission to sweep takes the number of
