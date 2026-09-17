@@ -31,7 +31,7 @@ import { bucketForSource, bucketName, isSourceAudited, leadBuckets, unmappedPoli
 import { FubClient } from "./fub.mjs";
 import { appendComparisons, readComparisons, drift } from "./compare.mjs";
 import { rules } from "./rules.mjs";
-import { TIMELINE, SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, SEP_15, FUB_FIELDS, SOURCE_COUNTS, observedLists } from "./observed.mjs";
+import { TIMELINE, SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, SEP_15, SEP_16, FUB_FIELDS, SOURCE_COUNTS, observedLists } from "./observed.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
@@ -1057,7 +1057,7 @@ check("the day filter plus the three-day spread explain every observed night", (
 check("every observed night reconciles with the self-draining population", () => {
   // Derived, not a literal: adding a night's export without adding it to the
   // timeline (or the reverse) fails here instead of needing a number bumped.
-  const fullNights = [SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, SEP_15];
+  const fullNights = [SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, SEP_15, SEP_16];
   const byDate = Object.fromEntries(fullNights.map((n) => [n.date, n]));
   for (const night of fullNights) {
     assert.ok(
@@ -1097,6 +1097,10 @@ check("every observed night reconciles with the self-draining population", () =>
     const cur = TIMELINE[i];
     const gapDays = Math.round((new Date(cur.date) - new Date(prev.date)) / DAY_MS);
     if (gapDays !== 1) continue;
+    // A night somebody moved leads in bulk has an explanation the arithmetic
+    // cannot see. Skipping it by name keeps the bound tight for every other
+    // night; widening the tolerance to absorb it would not.
+    if (byDate[cur.date]?.bulkMoveObserved || byDate[prev.date]?.bulkMoveObserved) continue;
 
     pairsChecked++;
     const churn = Math.abs(cur.total - (prev.total - prev.neglected));
@@ -1241,7 +1245,7 @@ check("Battr's exclusion counters are action-time, on every night observed", () 
   // Both read zero even on a night when the combined list held 903 of a 12,000
   // pool. They cannot be counting selection, which is why we do that work in
   // the list filters rather than as a post-hoc subtraction.
-  for (const night of [SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, SEP_15]) {
+  for (const night of [SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, SEP_15, SEP_16]) {
     assert.equal(night.excluded_lead_bucket, 0, `${night.date}: bucket counter`);
     assert.equal(night.excluded_agent_group, 0, `${night.date}: agent-group counter`);
   }
@@ -1335,6 +1339,51 @@ check("an exclusion that protects nobody says so in the report, not just the log
   // does, and deleting it would erase the only record of why we know this.
   assert.ok(rules.excludeOwnerGroupIds.length > 0, "the rule is kept as documentation, not deleted");
   assert.ok(rules.exemptAgents.length > 0, "and something must actually be protecting someone");
+});
+
+check("the person read asks for custom fields, or the interlock reads null forever", () => {
+  // Follow Up Boss returns a DEFAULT field set from /v1/people and custom
+  // fields are not in it. Without `fields: allFields` the At Risk Since stamp
+  // is absent from every record — not because no lead has it, but because we
+  // never asked. That produced "0 neglected" on 16 Sep, which looked healthier
+  // than the 392 it replaced.
+  const src = readFileSync(join(ROOT, "scripts", "battr", "fub.mjs"), "utf8");
+  const fn = src.slice(src.indexOf("people({ smartListId }"), src.indexOf("activity(sinceIso)"));
+  assert.match(fn, /fields: "allFields"/, "the people read must request custom fields");
+
+  // Naming the fields we use instead would drop whatever someone forgets to
+  // add — the same failure one field further along.
+  assert.ok(!/fields: \[/.test(fn), "an explicit field list is how this breaks again");
+});
+
+check("a website visit is a website visit, not any activity", () => {
+  // The fallback to lastActivity made "visited the site in the last 10 days"
+  // mean "did anything at all in the last 10 days". Active Leads came back
+  // 8,083 against Battr's 131 — a sixty-fold overcount from one plausible
+  // fallback. A lead with activity but no visit must not be in the list.
+  const withActivityOnly = normalizeContact(
+    { id: 601, stage: "Lead", created: daysAgo(400), lastActivity: daysAgo(1), assignedUserId: 5, tags: [] },
+    { lastOutbound: 0 }
+  );
+  // `first()` yields undefined when nothing matches; the evaluator treats that
+  // and null alike, which the list check below is the real proof of.
+  assert.ok(withActivityOnly.last_website_visit == null, "activity is not a visit");
+  assert.equal(
+    // NOW, explicitly: this list has a days-since condition in its MEMBERSHIP
+    // filter, and evaluateSet falls back to the real clock while the fixture is
+    // built from the tests' frozen instant. That mismatch is what made the
+    // end-to-end suite rot a day at a time back in September.
+    evaluateSet(listById(1105).list_filters, withActivityOnly, NOW),
+    false,
+    "Active Leads must not claim a lead that never visited the site"
+  );
+
+  // And a real visit still selects.
+  const visited = normalizeContact(
+    { id: 602, stage: "Lead", created: daysAgo(400), lastVisit: daysAgo(2), assignedUserId: 5, tags: [] },
+    { lastOutbound: 0 }
+  );
+  assert.equal(evaluateSet(listById(1105).list_filters, visited, NOW), true);
 });
 
 check("an unreadable interlock stamp is loud, not a quiet zero", () => {

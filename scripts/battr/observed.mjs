@@ -623,7 +623,67 @@ export const SEP_15 = {
   ],
 };
 
-/** The seven observations in order, for anything that wants the trend. */
+/**
+ * An EIGHTH observation, Wed 16 Sep 2026 — and the one that shows a lead can be
+ * swept twice.
+ *
+ *   Total records in audit    786   (880 on 15 Sep — down 94)
+ *   At Risk records            19   (10 carried, 9 new)
+ *   Neglected records           8   (all 8 to Shark Tank)
+ *   Excluded bucket/group     0/0
+ *
+ * TWO OF THE EIGHT WERE SWEPT THE NIGHT BEFORE. Two FUB ids in this list are
+ * also in the 15 Sep list, with the same At Risk Since dates, both marked
+ * "Successfully swept to pond" on both nights. A lead in a pond fails
+ * `notInAPond` and leaves the audit list, so it can only be back if somebody
+ * took it OUT of the pond during the day — claimed it — and then did not
+ * contact it. Last communication is unchanged, the stamp is sticky, so it
+ * crosses the neglected line again that same evening and is swept again.
+ *
+ * That is a churn loop, and it is worth Mike knowing about as an operational
+ * fact rather than a bug: claiming a lead out of Shark Tank buys one day. Both
+ * of these belonged to the same agent, which is the kind of thing the per-agent
+ * scoreboard exists to surface.
+ *
+ * Our engine would do the same thing — the behaviour follows from rules we have
+ * confirmed, not from a defect — so nothing is changed here. Recorded because
+ * "why does the same lead keep appearing" is a question someone will ask.
+ *
+ * THE POPULATION DROPPED 94 ON A NIGHT THAT SWEPT 8. The other ~86 left for
+ * some other reason, and a new pond appeared in our own run the same night:
+ * "Brett Pond", absent from the pond list on 14 and 15 Sep. A bulk move into a
+ * new pond takes leads out of every member list at once, which fits. Benign,
+ * but it means 15→16 Sep is not a night the drain arithmetic can be checked
+ * against.
+ */
+export const SEP_16 = {
+  date: "2026-09-16",
+  weekday: "Wednesday",
+  total: 786,
+  at_risk: 19,
+  at_risk_new_notes: 9,
+  at_risk_already_flagged: 10,
+  neglected: 8,
+  records_moved: 8,
+  records_not_moved: 0,
+  excluded_lead_bucket: 0,
+  excluded_agent_group: 0,
+  assignmentTargets: { Pond: { "Shark Tank": 8 } },
+  sweptAtRiskSince: { "2026-09-07": 1, "2026-09-10": 1, "2026-09-12": 1, "2026-09-13": 4, "2026-09-15": 1 },
+  /** Swept on 15 Sep AND again on 16 Sep, same stamp. Claimed back, not worked. */
+  reSweptFromPreviousNight: 2,
+  /** A pond that did not exist on 14 or 15 Sep. ~86 leads left the list unexplained by sweeps. */
+  newPondObserved: "Brett Pond",
+  /**
+   * Somebody moved leads in bulk this day, so the drain arithmetic cannot be
+   * checked across 15→16 Sep. Flagged rather than absorbed by a wider tolerance:
+   * loosening the bound to fit one explained night would stop it catching an
+   * unexplained one.
+   */
+  bulkMoveObserved: true,
+};
+
+/** The eight observations in order, for anything that wants the trend. */
 export const TIMELINE = [
   { date: "2026-09-02", weekday: "Wed", total: 866, at_risk: 17, neglected: 7 },
   { date: "2026-09-08", weekday: "Tue", total: 903, at_risk: 23, neglected: 45 },
@@ -635,6 +695,9 @@ export const TIMELINE = [
   { date: "2026-09-13", weekday: "Sun", total: 858, at_risk: 21, neglected: 0 },
   // 14 Sep (Mon) not captured — a nudge-only day, like the weekend.
   { date: "2026-09-15", weekday: "Tue", total: 880, at_risk: 23, neglected: 19 },
+  // A new pond appeared and ~86 leads left the list by some route other than a
+  // sweep, so the drain arithmetic has nothing to say about this pair.
+  { date: "2026-09-16", weekday: "Wed", total: 786, at_risk: 19, neglected: 8 },
 ];
 
 export const observedLists = [
