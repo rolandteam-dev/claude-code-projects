@@ -642,6 +642,18 @@ async function main() {
       // Battr has been stamping leads daily for weeks, so a population with no
       // stamps at all is a read failure, not a clean database.
       const stamped = contacts.filter((c) => c.custom_fields.fub.customBattrAtRiskSince).length;
+      if (!stamped && !unenforceable.some((u) => u.rule.startsWith("Warn-first"))) {
+        // On 16 Sep this fired correctly and nobody saw it, because it went to
+        // stderr while the report said "Neglected: 0" — the same log-only
+        // mistake the owner-group warning had just been fixed for. A zero that
+        // should be impossible belongs above the counts, not in a CI log.
+        unenforceable.push({
+          rule: "Warn-first interlock (At Risk Since)",
+          why:
+            "Not one contact carries the stamp, so no lead can reach the neglected tier and the zero below is a " +
+            "READ FAILURE, not a clean database. Every neglected count in this report is meaningless until it is fixed.",
+        });
+      }
       if (!stamped) {
         say(
           `  WARNING: not one contact carries ${fields.atRiskSince || "customBattrAtRiskSince"} — the warn-first interlock ` +

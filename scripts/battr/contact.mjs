@@ -81,7 +81,17 @@ export function normalizeContact(person, touch, stamps = {}, { inboundCountsAsTo
     crm_created_at: first(person.created, person.createdAt, null),
     last_activity_at: first(person.lastActivity, person.lastActivityAt, null),
     last_communication_at: lastCommunication,
-    last_website_visit: first(person.lastVisit, person.lastWebsiteVisit, person.lastActivity, null),
+    /**
+     * A WEBSITE VISIT, not any activity. The fallback to `lastActivity` used to
+     * be here and it made "visited the site in the last 10 days" mean "did
+     * anything at all in the last 10 days" — which is nearly everyone. Active
+     * Leads came back 8,083 against Battr's 131, a sixty-fold overcount, from
+     * one plausible-looking fallback.
+     *
+     * If FUB returns no visit timestamp the condition should select nobody and
+     * say so, rather than quietly select everybody.
+     */
+    last_website_visit: first(person.lastVisit, person.lastWebsiteVisit, null),
 
     tags_array: tags,
 

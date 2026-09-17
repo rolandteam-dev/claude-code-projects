@@ -170,10 +170,29 @@ export class FubClient {
    * when available; without it we fall back to every non-trashed person and let
    * the exclusion rules do the filtering.
    */
+  /**
+   * `fields: "allFields"` is load-bearing, and its absence cost a week.
+   *
+   * Follow Up Boss returns a DEFAULT field set from /v1/people, and custom
+   * fields are not in it. inspect-fub-fields reported "custom fields on the
+   * person: none" across a 40-person sample and that was read as "these pond
+   * leads have never been nudged" — a reasonable story that happened to be
+   * wrong. The field was never absent from the record; it was absent from the
+   * response, on every record, because we never asked for it.
+   *
+   * It only became visible when the warn-first interlock moved into the rules
+   * on 16 Sep. From that night the neglected tier needed
+   * `customBattrAtRiskSince`, nobody had it, and the run reported
+   * **0 neglected** while looking healthier than the 392 it replaced.
+   *
+   * Asking for everything rather than naming the fields we use is deliberate:
+   * an explicit list silently drops whatever someone forgets to add to it, and
+   * that is the same failure again one field further along.
+   */
   people({ smartListId } = {}, { max = Infinity } = {}) {
     return this.paginate(
       "/people",
-      { smartListId, includeTrash: false, sort: "id" },
+      { smartListId, includeTrash: false, sort: "id", fields: "allFields" },
       { max }
     );
   }
