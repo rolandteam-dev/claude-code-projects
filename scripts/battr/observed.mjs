@@ -683,7 +683,105 @@ export const SEP_16 = {
   bulkMoveObserved: true,
 };
 
-/** The eight observations in order, for anything that wants the trend. */
+/**
+ * A NINTH observation, Thu 17 Sep 2026 — the first night our own run can be set
+ * against Battr's with the interlock readable on both sides.
+ *
+ *   Total records in audit    796
+ *   At Risk records            32   (10 carried, 22 new)
+ *   Neglected records           7   (all 7 to Shark Tank)
+ *
+ * TWENTY-TWO NEW WARNINGS, AND TEN OF THEM ARE ONE BLOCK. Ten of the new
+ * at-risk rows share an owner, the source "Zillow", consecutive FUB ids, and
+ * `Previous Status: None` — several with no name at all. Consecutive ids mean
+ * they were created together; `Previous Status: None` means they were not in
+ * the audit list on the previous run. A sync or import dropped a batch in and
+ * they crossed the warn line before anyone touched them.
+ *
+ * Worth knowing before reading 22 as an accountability signal: it is 12 leads
+ * going quiet and 10 leads arriving unworked, which are different problems.
+ *
+ * A THIRD RE-SWEEP. One of the seven swept tonight was also swept on 16 Sep,
+ * carrying the same 9/10 stamp — the third night running that a lead has been
+ * claimed back out of a pond and taken again without being contacted. Same
+ * agent as the two on 16 Sep.
+ */
+export const SEP_17 = {
+  date: "2026-09-17",
+  weekday: "Thursday",
+  total: 796,
+  at_risk: 32,
+  at_risk_new_notes: 22,
+  at_risk_already_flagged: 10,
+  neglected: 7,
+  records_moved: 7,
+  records_not_moved: 0,
+  excluded_lead_bucket: 0,
+  excluded_agent_group: 0,
+  assignmentTargets: { Pond: { "Shark Tank": 7 } },
+  /** Ten of the 22 new warnings: one owner, one source, consecutive ids, no prior status. */
+  bulkArrivalsInNewWarnings: 10,
+  reSweptFromPreviousNight: 1,
+};
+
+/**
+ * OUR RUN THE SAME NIGHT (2026-09-17-qmti), for the record that matters.
+ *
+ *   audited      828   against Battr's 796   (+4.0%)
+ *   neglected     18   against Battr's   7
+ *   at risk      279   against Battr's  32
+ *
+ * THE INTERLOCK IS READABLE. `fields: allFields` landed and the "not one
+ * contact carries the stamp" block is gone from the report. Neglected moved
+ * 0 → 18, which is the first time that number has meant anything.
+ *
+ * THE AT-RISK GAP IS THE EMAIL RULE, not a defect — most likely. Battr judges
+ * on FUB's own Last Communication, which counts email. We exclude outbound
+ * email by policy, because one FUB batch send would mark the database as
+ * worked. A lead whose only recent contact is an email therefore reads as
+ * worked to Battr and untouched to us. That is the divergence this project
+ * chose on day one, and 279 against 32 is roughly its size.
+ *
+ * Stated as the leading explanation rather than a finding: it has not been
+ * measured directly, and the way to measure it is to count leads whose only
+ * activity in the window is email.
+ */
+export const OURS_SEP_17 = {
+  date: "2026-09-17",
+  runId: "2026-09-17-qmti",
+  audited: 828,
+  at_risk: 279,
+  neglected: 18,
+  interlockReadable: true,
+  /** Six of eight lists inside 6%. Two left, both the same root cause. */
+  drift: {
+    "💛 Sphere & Past Clients": 0.1,
+    "🗓️ CLEAN UP": -3.3,
+    "‼️ YLOPO IMPORTANT": -3.4,
+    "📖 Current & Upcoming Clients": 3.5,
+    "⭐️ Team Leads (combined)": -5.9,
+    "🎤 AI TEXT REPLIES": 10.0,
+    "🏹 Zillow Important": 218.2,
+    "❗Active Leads": -100.0,
+  },
+  /**
+   * BOTH REMAINING MISSES ARE ONE MISSING FIELD. Battr's rules for these two
+   * say "site activity"; we have no website-visit timestamp from FUB, only
+   * `lastActivity`, which counts everything.
+   *
+   * Active Leads used lastActivity and came back 8,083 against 131. Removing
+   * that fallback took it to 0 — wrong in the other direction, but visibly and
+   * honestly wrong rather than a sixty-fold overcount wearing a plausible
+   * number. Zillow Important still reads lastActivity and sits at +218%, which
+   * is the same error at a third the scale.
+   *
+   * The field list we have was read WITHOUT allFields, so it is not the whole
+   * record. A fresh inspect run is the thing that settles it.
+   */
+  blockedOn: "a website-visit timestamp from FUB; lastActivity is not it",
+};
+
+/** The nine observations in order, for anything that wants the trend. */
 export const TIMELINE = [
   { date: "2026-09-02", weekday: "Wed", total: 866, at_risk: 17, neglected: 7 },
   { date: "2026-09-08", weekday: "Tue", total: 903, at_risk: 23, neglected: 45 },
@@ -698,6 +796,7 @@ export const TIMELINE = [
   // A new pond appeared and ~86 leads left the list by some route other than a
   // sweep, so the drain arithmetic has nothing to say about this pair.
   { date: "2026-09-16", weekday: "Wed", total: 786, at_risk: 19, neglected: 8 },
+  { date: "2026-09-17", weekday: "Thu", total: 796, at_risk: 32, neglected: 7 },
 ];
 
 export const observedLists = [
