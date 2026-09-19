@@ -235,6 +235,30 @@ export class FubClient {
   }
 
   /**
+   * How many people are in a collection, without paging through it.
+   *
+   * FUB reports the size in `_metadata.total` on the first page, so one call
+   * with `limit=1` gives an exact count for a 26,000-lead pond as cheaply as
+   * for a twelve-lead one. That is what makes probing every smart list in a
+   * single run affordable.
+   *
+   * Deliberately NOT derived by counting rows: a capped read returns the cap
+   * and looks like a small list, which is the same silent-truncation failure
+   * `paginate` refuses.
+   */
+  async countPeople({ smartListId, pondId } = {}) {
+    const payload = await this.request("GET", "/people", {
+      query: { smartListId, assignedPondId: pondId, includeTrash: false, limit: 1 },
+    });
+    const total = payload?._metadata?.total;
+    if (!Number.isFinite(total)) {
+      const scope = smartListId ? ` for smartListId=${smartListId}` : pondId ? ` for pondId=${pondId}` : "";
+      throw new Error(`FUB /people returned no _metadata.total${scope}`);
+    }
+    return total;
+  }
+
+  /**
    * The email thread for ONE lead since `sinceIso`.
    *
    * FUB refuses `/v1/emails` in bulk, which is why the daily activity pull

@@ -28,6 +28,7 @@ on:
           - "audit"
           - "discover-lead-sources"
           - "inspect-fub-fields"
+          - "inspect-smart-lists"
           - "census"
           - "test-email"
           - "undo"
@@ -96,7 +97,7 @@ jobs:
       - name: Check the task is one we handle
         run: |
           case "$TASK" in
-            audit|discover-lead-sources|inspect-fub-fields|census|test-email|undo) ;;
+            audit|discover-lead-sources|inspect-fub-fields|inspect-smart-lists|census|test-email|undo) ;;
             *) echo "Unknown task '$TASK' — nothing would run." >&2; exit 1 ;;
           esac
           echo "Running task: $TASK"
@@ -134,6 +135,25 @@ jobs:
             echo '## FUB person fields'
             echo '```'
             cat fields.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Reads Follow Up Boss's OWN smart lists — the ones under "WIN THE DAY.
+      # (Battr)" and "Fish the Pond" that agents work every day. Answers whether
+      # `smartListId` filters (so lists can be read instead of reimplemented),
+      # how each agent-side list compares to its pond-side twin, and which
+      # person field is the People-screen "Last Visit" column.
+      - name: Inspect FUB smart lists
+        if: env.TASK == 'inspect-smart-lists'
+        env:
+          FUB_API_KEY: ${{ secrets.FUB_API_KEY }}
+        run: |
+          set -o pipefail
+          node scripts/battr/smartlists.mjs | tee smartlists.txt
+          {
+            echo '## FUB smart lists'
+            echo '```'
+            cat smartlists.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 

@@ -2366,4 +2366,133 @@ check("the suite cannot delete the real audit trail", () => {
   assert.match(engine, /process\.env\.BATTR_LOG_DIR \|\| join\(ROOT, "battr-logs"\)/, "and the engine must honour it");
 });
 
+// ─── Reading FUB's own lists, rather than reimplementing them ───────────────
+//
+// The screenshots of 19 Sep showed the six audit lists living in Follow Up Boss
+// as ordinary smart lists on Mike's account. That makes FUB's own membership
+// readable, and FUB's answer is the answer: it is the list the agent opens.
+// These cover the probe that establishes whether that route works.
+
+await (async () => {
+  const { normalize, baseName, isPondSide } = await import("./smartlists.mjs");
+
+  // The module reads FUB_API_BASE once, at load. So the fixture is stood up
+  // first, the env var set, and the client re-imported behind a cache-busting
+  // query — the same dance the nextLink test above does. Awaiting the HTTP work
+  // out here rather than inside check() keeps the pass tally honest: an async
+  // check body resolves after the total has already been printed.
+  {
+    let calls = 0;
+    let seen = null;
+    const counter = createServer((req, res) => {
+      calls++;
+      seen = new URL(req.url, "http://127.0.0.1").searchParams;
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ people: [{ id: 1 }], _metadata: { total: 26412 } }));
+    });
+    await new Promise((r) => counter.listen(0, "127.0.0.1", r));
+
+    const totalless = createServer((req, res) => {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ people: [] }));
+    });
+    await new Promise((r) => totalless.listen(0, "127.0.0.1", r));
+
+    const previous = process.env.FUB_API_BASE;
+    let counted;
+    let totallessError = null;
+    try {
+      process.env.FUB_API_BASE = `http://127.0.0.1:${counter.address().port}`;
+      const { FubClient: Counting } = await import(`./fub.mjs?count=${counter.address().port}`);
+      counted = await new Counting("k", { dry: true, log: () => {} }).countPeople({ smartListId: 1105 });
+
+      process.env.FUB_API_BASE = `http://127.0.0.1:${totalless.address().port}`;
+      const { FubClient: Totalless } = await import(`./fub.mjs?count=${totalless.address().port}`);
+      await new Totalless("k", { dry: true, log: () => {} })
+        .countPeople({ smartListId: 7 })
+        .catch((err) => {
+          totallessError = err;
+        });
+    } finally {
+      counter.close();
+      totalless.close();
+      if (previous === undefined) delete process.env.FUB_API_BASE;
+      else process.env.FUB_API_BASE = previous;
+    }
+
+    check("a list size is read from the total, not counted by paging", () => {
+      // A 26,000-lead pond must cost the same single call as a twelve-lead
+      // list, or probing every list in one run is unaffordable and nobody runs
+      // it. Counting returned rows instead would also report the cap as the
+      // size — silent truncation wearing a number.
+      assert.equal(counted, 26412);
+      assert.equal(calls, 1, "one request, whatever the list's size");
+      assert.equal(seen.get("limit"), "1", "and it must not pull a page of people");
+      assert.equal(seen.get("smartListId"), "1105", "the list has to actually be selected");
+    });
+
+    check("a count with no total is an error, not a zero", () => {
+      // The quiet failure this guards: a missing total read as 0 makes every
+      // list look empty and the engine look finished.
+      assert.ok(totallessError, "a response without a total must not resolve");
+      assert.match(totallessError.message, /no _metadata\.total/);
+    });
+  }
+
+  check("the agent-side and pond-side halves are told apart", () => {
+    // Two queues, two sets of people working them. Only the agent side can be
+    // swept — sweeping moves a lead INTO a pond, so a lead already in one has
+    // nowhere to go. Reading a pair's sum as the target makes a correct filter
+    // look far short of Battr and invites "fixing" it.
+    for (const name of ["❗Active Leads - Ponds", "🏹 Zillow Important - Ponds", "‼️ YLOPO IMPORTANT - Ponds"]) {
+      assert.ok(isPondSide(name), `${name} is the pond half`);
+    }
+    for (const name of ["❗Active Leads", "🏹 Zillow Important", "💛 Sphere & Past Clients"]) {
+      assert.ok(!isPondSide(name), `${name} is the agent half`);
+    }
+    // "Fish the Pond" is a COLLECTION name, not a list suffix — it must not be
+    // mistaken for the pond half of some pair.
+    assert.ok(!isPondSide("Fish the Pond"), "a collection called Fish the Pond is not a -Ponds list");
+
+    assert.equal(baseName("❗Active Leads"), baseName("❗Active Leads - Ponds"), "the halves pair up");
+    assert.equal(normalize("❗Active Leads"), normalize("Active Leads"), "emoji are decoration, not identity");
+  });
+
+  check("every list the engine audits is agent-side", () => {
+    // The invariant behind the split: our filters carry `notInAPond`, so the
+    // engine never audits — and so can never sweep — a lead that is already in
+    // a pond. If a list ever loses that condition, it starts auditing the queue
+    // swept leads land in, and a lead could be swept twice.
+    const audited = lists.filter((l) => l.is_active && l.audit_type === "contact_list");
+    assert.ok(audited.length >= 6, "there should be lists to check");
+    for (const list of audited) {
+      const conditions = (list.list_filters?.groups ?? []).flat();
+      const excludesPonds = conditions.some((c) => /pond/i.test(String(c.field ?? "")));
+      assert.ok(excludesPonds, `${list.name} must exclude leads already in a pond`);
+      assert.ok(!isPondSide(list.name), `${list.name} must not be a pond-side list`);
+    }
+  });
+
+  check("the smart list probe cannot write to Follow Up Boss", () => {
+    const src = readFileSync(join(HERE, "smartlists.mjs"), "utf8");
+    assert.match(src, /new FubClient\(process\.env\.FUB_API_KEY, \{ dry: true \}\)/, "dry mode, explicitly");
+    for (const write of ["\\.assign\\(", "\\.note\\(", "\\.updateFields\\(", "\\.addTag\\("]) {
+      assert.ok(!new RegExp(write).test(src), `a probe must not call ${write}`);
+    }
+  });
+
+  check("the smart list probe keeps client PII out of the CI log", () => {
+    // Its output goes into a GitHub Actions summary that is readable by anyone
+    // with repo access. List names are Mike's configuration; lead names, emails
+    // and phone numbers are clients'.
+    const src = readFileSync(join(HERE, "smartlists.mjs"), "utf8");
+    for (const field of ["emails", "phones", "addresses", "firstName", "lastName"]) {
+      assert.ok(!new RegExp(`\\b${field}\\b`).test(src), `${field} must never reach the log`);
+    }
+    // It prints per-field DATE COVERAGE — counts and the newest timestamp — and
+    // never a field's value for an identified person.
+    assert.ok(!/console\.log\([^)]*p\[key\]/.test(src), "a raw field value must not be printed");
+  });
+})();
+
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);
