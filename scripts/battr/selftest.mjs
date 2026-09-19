@@ -2495,4 +2495,117 @@ await (async () => {
   });
 })();
 
+// ─── The paused-agent exclusion, which protected nobody for weeks ──────────
+//
+// Battr's rule screen reads "Agent's Assigned FUB Teams DOES NOT CONTAIN ANY
+// [Battr Paused]". We modelled it against `person.assignedUserGroupIds ??
+// person.groupIds`; FUB returns neither, so the field was [] on every lead and
+// "not in that group" was true for everyone. These checks are the guard.
+
+await (async () => {
+  const { resolvePausedOwners, PAUSED_GROUP_MARKER } = await import("./paused.mjs");
+
+  /** A stand-in for FubClient carrying only what the resolver touches. */
+  const fakeFub = (teams) => ({ teams: async () => (typeof teams === "function" ? teams() : teams) });
+
+  const twoTeamsSameName = await resolvePausedOwners(
+    fakeFub([
+      { id: 1, name: "Battr Paused", users: [{ id: 11 }, { id: 12 }] },
+      { id: 2, name: "battr paused", users: [{ id: 13 }] },
+      { id: 3, name: "The Roland Team", users: [{ id: 99 }] },
+    ]),
+    ["Battr Paused"]
+  );
+
+  check("every team of that name is unioned, not just the first", () => {
+    // This account really does carry two teams named "The Roland Team". Taking
+    // the first match would silently drop half a roster, and the agents it
+    // dropped would be the ones who look protected on the rule screen.
+    assert.deepEqual([...twoTeamsSameName.userIds].sort((a, b) => a - b), [11, 12, 13]);
+    assert.ok(twoTeamsSameName.enforceable);
+    assert.deepEqual(twoTeamsSameName.missing, []);
+    assert.ok(!twoTeamsSameName.userIds.has(99), "a different team's members are not paused");
+  });
+
+  const typo = await resolvePausedOwners(fakeFub([{ id: 1, name: "Battr Paused", users: [{ id: 11 }] }]), ["Batter Paused"]);
+
+  check("a team name matching nothing is reported, not read as an empty team", () => {
+    // The whole failure mode in one line: a typo and a genuinely empty team
+    // both protect zero leads, but only one of them is a defect, and the run
+    // has to be able to say which.
+    assert.equal(typo.enforceable, false);
+    assert.deepEqual(typo.missing, ["Batter Paused"]);
+    assert.equal(typo.userIds.size, 0);
+  });
+
+  const emptyTeam = await resolvePausedOwners(fakeFub([{ id: 1, name: "Battr Paused", users: [] }]), ["Battr Paused"]);
+
+  check("an empty paused team is enforceable, just unused", () => {
+    // Kate Frihse was taken off the team on 7 Sep, leaving only Mike — who is
+    // already exempt by name. So this is today's real state, and it must not
+    // read as a broken rule.
+    assert.equal(emptyTeam.enforceable, true, "the team exists, so the rule can fire");
+    assert.equal(emptyTeam.userIds.size, 0, "it just holds nobody");
+    assert.deepEqual(emptyTeam.missing, []);
+  });
+
+  const unreadable = await resolvePausedOwners(
+    { teams: async () => { throw new Error("FUB GET /teams → 403: forbidden"); } },
+    ["Battr Paused"],
+    () => {}
+  );
+
+  check("an unreadable roster fails closed, loudly", () => {
+    assert.equal(unreadable.enforceable, false);
+    assert.deepEqual(unreadable.missing, ["Battr Paused"]);
+  });
+
+  check("the marker lands on a paused agent's leads and nobody else's", () => {
+    const pausedOwnerIds = new Set([11]);
+    const held = normalizeContact(
+      { id: 900, stage: "Lead", created: daysAgo(400), assignedUserId: 11, tags: [] },
+      { lastOutbound: 0 },
+      {},
+      { pausedOwnerIds }
+    );
+    const ordinary = normalizeContact(
+      { id: 901, stage: "Lead", created: daysAgo(400), assignedUserId: 22, tags: [] },
+      { lastOutbound: 0 },
+      {},
+      { pausedOwnerIds }
+    );
+    assert.deepEqual(held.owner_group_ids, [PAUSED_GROUP_MARKER], "the pasted rule JSON matches without being rewritten");
+    assert.deepEqual(ordinary.owner_group_ids, [], "and it does not spray onto everyone");
+  });
+
+  check("with no roster resolved, the exclusion still protects nobody", () => {
+    // The negative control. If this ever passes an empty set and still finds a
+    // marked lead, the marker is coming from somewhere it should not.
+    const c = normalizeContact(
+      { id: 902, stage: "Lead", created: daysAgo(400), assignedUserId: 11, tags: [] },
+      { lastOutbound: 0 },
+      {},
+      { pausedOwnerIds: new Set() }
+    );
+    assert.deepEqual(c.owner_group_ids, []);
+  });
+
+  check("the exclusion is driven by a team NAME, not a Battr-internal id", () => {
+    // 52555 is a Battr id no FUB endpoint returns. Keeping it as the marker is
+    // deliberate — the rule JSON is pasted verbatim from Battr's screen — but
+    // nothing may look it up against Follow Up Boss.
+    assert.ok(Array.isArray(rules.excludeOwnerTeamNames), "the team names are the configuration surface");
+    assert.ok(rules.excludeOwnerTeamNames.length > 0, "and at least one team must be named");
+    assert.equal(PAUSED_GROUP_MARKER, rules.excludeOwnerGroupIds[0], "the marker must match the pasted rule");
+
+    const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+    assert.match(src, /resolvePausedOwners\(fub, rules\.excludeOwnerTeamNames/, "resolved from the roster, once per run");
+    // Resolving per lead would be 54,000 calls to /teams.
+    assert.ok(
+      src.indexOf("resolvePausedOwners(fub") < src.indexOf("people.map((p) =>"),
+      "the roster is resolved before the population is normalized, not inside the loop"
+    );
+  });
+})();
+
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);

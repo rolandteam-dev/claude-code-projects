@@ -157,6 +157,15 @@ export class FubClient {
     return this.paginate("/smartLists");
   }
 
+  /**
+   * The agent roster by team. Battr's sweep rule excludes leads whose OWNER is
+   * on the "Battr Paused" team, and team membership lives here rather than on
+   * the person record — which is why reading it off the lead found nobody.
+   */
+  teams() {
+    return this.paginate("/teams");
+  }
+
   stages() {
     return this.paginate("/stages");
   }
