@@ -104,7 +104,10 @@ export const SEP_8 = {
   at_risk: 23,
   at_risk_new_notes: 13,
   at_risk_already_flagged: 10,
-  neglected_processed: 45,
+  // Was `neglected_processed` — the only night that spelled it differently, and
+  // nothing read it under that name. A cross-check against TIMELINE found it,
+  // which is the point of having two copies reconcile.
+  neglected: 45,
   excluded_lead_bucket: 0,
   excluded_agent_group: 0,
   /** Sources seen across the 23 at-risk rows — all already classified as audited. */
@@ -781,7 +784,115 @@ export const OURS_SEP_17 = {
   blockedOn: "a website-visit timestamp from FUB; lastActivity is not it",
 };
 
-/** The nine observations in order, for anything that wants the trend. */
+/**
+ * FRIDAY 18 SEPTEMBER — the first night both sides can be read against each
+ * other on the SAME DATE, with Battr's own numbers rather than a row typed in
+ * three nights earlier.
+ *
+ * This matters more than another data point. The drift table in our report has
+ * been measuring against Battr's 15 Sep figure of 880, because that was the
+ * last row anyone transcribed. Battr's real totals since then are 796 (17 Sep)
+ * and 790 (18 Sep) — the audit list has been SHRINKING while our comparison
+ * held a stale ceiling. Read against the right night, our population is
+ *
+ *     17 Sep   828 vs 796   +4.0%
+ *     18 Sep   809 vs 790   +2.4%
+ *
+ * not the −8.1% the report printed. The engine was never 8% short; the
+ * baseline was three days old. That is an argument for transcribing Battr's
+ * total every night until it is cancelled, and for the report naming the date
+ * of the row it is comparing against — which it already does, and which is the
+ * only reason this was catchable.
+ */
+export const SEP_18 = {
+  date: "2026-09-18",
+  weekday: "Friday",
+  total: 790,
+  at_risk: 17,
+  at_risk_new_notes: 8,
+  at_risk_already_flagged: 9,
+  neglected: 17,
+  records_moved: 17,
+  records_not_moved: 0,
+  excluded_lead_bucket: 0,
+  excluded_agent_group: 0,
+  assignmentTargets: { Pond: { "Shark Tank": 15, "Money Time": 2 } },
+
+  /**
+   * Ten of the seventeen sweeps: one owner, one source ("Zillow"), consecutive
+   * ids 101130–101141, all stamped At Risk 9/17 and swept 9/18. The same
+   * bulk-arrival shape as 17 Sep, one night later and larger.
+   *
+   * A lead created on 17 Sep cannot be four days without contact by 18 Sep, so
+   * Hot Leads' 2/4 clock cannot be what caught these. The consistent reading is
+   * that Battr treats a NULL last communication as infinitely old rather than
+   * as unknown: a lead that arrives and is never touched is neglected on the
+   * spot, and the one-day gap is the warn-first interlock, not the threshold.
+   *
+   * Worth testing directly before it is relied on — it is a behaviour we would
+   * be copying, and it decides what happens to every lead that arrives
+   * overnight.
+   */
+  bulkArrivalsInSweeps: 10,
+
+  /**
+   * POND ROUTING — the first evidence that is not consistent with overflow.
+   *
+   * 17 sweeps is well under `maxSweepsPerPond: 25`, so nothing overflowed, yet
+   * two leads still went to Money Time. Their sources were LPT Rider and
+   * TheRolandTeam.com; all fifteen Shark Tank leads came from portals and
+   * aggregators (Zillow, Google PPC, Ylopo, zbuyer.com, ISA Transfer, an agent
+   * referral).
+   *
+   * Hypothesis, NOT a rule: "Pond Assignments" routes by lead source or bucket
+   * — direct and organic leads to Money Time, portal leads to Shark Tank —
+   * which would fit the names and fit Money Time holding 134 against Shark
+   * Tank's 26,900.
+   *
+   * Recorded rather than implemented. Pond routing is only ever edited to match
+   * Battr's own rule screen, and that screen has not been read yet.
+   */
+  moneyTimeSources: ["LPT Rider", "TheRolandTeam.com"],
+  sharkTankWasPortalOnly: true,
+};
+
+/**
+ * OUR RUN THE SAME NIGHT (2026-09-18-58c9).
+ *
+ *   audited      809   against Battr's 790   (+2.4%)
+ *   neglected      7   against Battr's  17
+ *   at risk      276   against Battr's  17
+ *
+ * THE AT-RISK GAP IS NOW WELL EVIDENCED, across four nights:
+ *
+ *     Battr   17 (2 Sep) · 32 (17 Sep) · 17 (18 Sep)
+ *     ours   279 (17 Sep) · 276 (18 Sep)
+ *
+ * Battr finds 2% of its audit at risk; we find 34%. A defect would wander with
+ * the population. This does not — it is a different definition applied
+ * consistently, and the definition we know differs is email. Battr judges on
+ * FUB's Last Communication, which counts an emailed lead as worked. We exclude
+ * outbound email deliberately, because one batch send in FUB would otherwise
+ * mark the whole database as worked.
+ *
+ * So 276 is not 17 measured wrongly. It is the number of leads nobody has
+ * CALLED OR TEXTED, and 17 is the number nobody has contacted by any channel
+ * including a bulk email. Both are correct answers to different questions, and
+ * which one the engine should report is Mike's call, not a bug to fix.
+ */
+export const OURS_SEP_18 = {
+  date: "2026-09-18",
+  runId: "2026-09-18-58c9",
+  audited: 809,
+  at_risk: 276,
+  neglected: 7,
+  interlockReadable: true,
+  /** Against Battr's SAME-NIGHT total, not the stale 880 the report used. */
+  populationDriftVsSameNight: 2.4,
+  atRiskGapExplanation: "email counts as a touch for Battr and deliberately does not for us",
+};
+
+/** The observations in order, for anything that wants the trend. */
 export const TIMELINE = [
   { date: "2026-09-02", weekday: "Wed", total: 866, at_risk: 17, neglected: 7 },
   { date: "2026-09-08", weekday: "Tue", total: 903, at_risk: 23, neglected: 45 },
@@ -797,6 +908,9 @@ export const TIMELINE = [
   // sweep, so the drain arithmetic has nothing to say about this pair.
   { date: "2026-09-16", weekday: "Wed", total: 786, at_risk: 19, neglected: 8 },
   { date: "2026-09-17", weekday: "Thu", total: 796, at_risk: 32, neglected: 7 },
+  // The largest sweep since 8 Sep, and ten of the seventeen were leads that had
+  // arrived the previous day and never been touched.
+  { date: "2026-09-18", weekday: "Fri", total: 790, at_risk: 17, neglected: 17 },
 ];
 
 export const observedLists = [

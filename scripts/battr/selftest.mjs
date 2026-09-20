@@ -2608,4 +2608,93 @@ await (async () => {
   });
 })();
 
+// ─── The transcription record, which is only as good as its freshness ──────
+
+await (async () => {
+  const observed = await import("./observed.mjs");
+  const nights = Object.entries(observed)
+    .filter(([name, v]) => /^SEP_\d+$/.test(name) && v && typeof v === "object" && v.date)
+    .map(([, v]) => v);
+
+  check("every sweep is accounted for by a destination", () => {
+    // If the pond breakdown does not add up to the records moved, a sweep went
+    // somewhere nobody wrote down — and pond routing is reconstructed from
+    // exactly these tallies.
+    let checked = 0;
+    for (const night of nights) {
+      if (!night.assignmentTargets || night.records_moved === undefined) continue;
+      const routed = Object.values(night.assignmentTargets)
+        .flatMap((byName) => Object.values(byName))
+        .reduce((a, b) => a + b, 0);
+      assert.equal(routed, night.records_moved, `${night.date}: ${routed} routed vs ${night.records_moved} moved`);
+      checked++;
+    }
+    assert.ok(checked >= 3, `only ${checked} nights carry a pond breakdown`);
+  });
+
+  check("the timeline agrees with the night it was taken from", () => {
+    // Two places hold the same numbers; a typo in one is invisible until
+    // something reconciles against the wrong copy.
+    const byDate = new Map(nights.map((n) => [n.date, n]));
+    let matched = 0;
+    for (const row of observed.TIMELINE) {
+      const night = byDate.get(row.date);
+      if (!night) continue;
+      assert.equal(row.total, night.total, `${row.date} total`);
+      assert.equal(row.at_risk, night.at_risk, `${row.date} at risk`);
+      if (night.neglected === undefined) {
+        // A night with no Neglected email recorded nothing, which is NOT the
+        // same claim as "nothing was swept". Saturday and Sunday are not sweep
+        // days, so Battr sends no such email at all — the timeline's 0 means
+        // nothing moved, and the observation's silence means nobody was told.
+        // Collapsing the two would turn "we did not look" into "we looked and
+        // it was empty".
+        assert.equal(night.neglected_email_sent, false, `${row.date} has no neglected count and no reason given`);
+        assert.equal(row.neglected, 0, `${row.date}: no sweep email means nothing moved`);
+      } else {
+        assert.equal(row.neglected, night.neglected, `${row.date} neglected`);
+      }
+      matched++;
+    }
+    assert.ok(matched >= 5, `only ${matched} timeline rows could be cross-checked`);
+  });
+
+  check("the comparison file agrees with the nights we recorded", () => {
+    // The stale-baseline bug: the drift table compared 18 Sep against Battr's
+    // 15 Sep total of 880 and printed −8.1%, because 880 was the newest row
+    // anyone had transcribed. Battr's actual 18 Sep total was 790 and the real
+    // drift was +2.4%. The engine was never short; the baseline was three days
+    // old. This guards the copy that the report reads.
+    const rows = readFileSync(join(ROOT, "battr-logs", "comparison.csv"), "utf8")
+      .split("\n")
+      .slice(1)
+      .filter(Boolean)
+      .map((line) => line.split(","))
+      .filter((cells) => cells[1] === "battr" && cells[2] === "0");
+
+    const byDate = new Map(nights.map((n) => [n.date, n]));
+    let matched = 0;
+    for (const cells of rows) {
+      const night = byDate.get(cells[0]);
+      if (!night) continue;
+      assert.equal(Number(cells[4]), night.total, `${cells[0]} total in comparison.csv`);
+      assert.equal(Number(cells[6]), night.at_risk, `${cells[0]} at risk in comparison.csv`);
+      if (night.neglected !== undefined) {
+        assert.equal(Number(cells[7]), night.neglected, `${cells[0]} neglected in comparison.csv`);
+      }
+      matched++;
+    }
+    assert.ok(matched >= 2, `only ${matched} Battr rows could be cross-checked against an observation`);
+  });
+
+  check("Battr's audit list is not pinned at its September peak", () => {
+    // 880 was a single Tuesday, not a ceiling. Anything that treats it as the
+    // target reads a shrinking list as our engine falling behind.
+    const latest = observed.TIMELINE[observed.TIMELINE.length - 1];
+    const peak = Math.max(...observed.TIMELINE.map((r) => r.total));
+    assert.ok(latest.total < peak, "the most recent night is below the peak, so the peak is not the target");
+    assert.equal(latest.date, "2026-09-18", "the timeline must carry the most recent transcribed night");
+  });
+})();
+
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);
