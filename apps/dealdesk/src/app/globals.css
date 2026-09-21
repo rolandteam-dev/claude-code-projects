@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens. Deliberately restrained: a deep teal brand, a single warm
+ * accent, and semantic risk colors that read the same in both themes.
+ */
+@theme {
+  --color-canvas: #faf9f6;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #f2f1ec;
+  --color-border: #e3e1d9;
+  --color-border-strong: #cfccc0;
+
+  --color-ink: #14181f;
+  --color-ink-muted: #5b6472;
+  --color-ink-subtle: #8a91a0;
+
+  --color-brand: #12343b;
+  --color-brand-soft: #e6eded;
+  --color-accent: #b08d57;
+
+  --color-risk-critical: #a4291f;
+  --color-risk-critical-soft: #fbeae8;
+  --color-risk-warn: #8a5300;
+  --color-risk-warn-soft: #fdf3e2;
+  --color-risk-ok: #1c6b4f;
+  --color-risk-ok-soft: #e7f2ec;
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-canvas: #0e1116;
+    --color-surface: #161a21;
+    --color-surface-sunken: #1d222b;
+    --color-border: #272d38;
+    --color-border-strong: #39414f;
+
+    --color-ink: #f1f2f4;
+    --color-ink-muted: #a3abb9;
+    --color-ink-subtle: #737d8c;
+
+    --color-brand: #7fb3ac;
+    --color-brand-soft: #16272a;
+    --color-accent: #c9a570;
+
+    --color-risk-critical: #ef8279;
+    --color-risk-critical-soft: #2c1613;
+    --color-risk-warn: #dfa64b;
+    --color-risk-warn-soft: #2a1f0f;
+    --color-risk-ok: #6bbf9a;
+    --color-risk-ok-soft: #10231b;
+  }
+}
+
+html,
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Tabular figures keep money and dates from jittering between rows. */
+.numeric {
+  font-variant-numeric: tabular-nums;
+}

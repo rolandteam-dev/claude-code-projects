@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The DealDesk app has its own eslint config and is linted separately.
+    "apps/**",
   ]),
 ]);
 
