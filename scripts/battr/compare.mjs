@@ -129,6 +129,19 @@ export function drift(rows) {
     const theirs = latest("battr", listId);
     if (!ours || !theirs || !theirs.total) continue;
     const pct = ((ours.total - theirs.total) / theirs.total) * 100;
+    // How far apart the two rows being compared actually are.
+    //
+    // This is the difference between a number and a number you can act on. On
+    // 20 Sep the combined list read −7.8%, which looks like the engine falling
+    // behind; it was our 20 Sep count against Battr's 15 Sep count, and Battr's
+    // list had shrunk from 880 to 777 in between. Same-night, it was +4.4%.
+    //
+    // A drift figure whose two sides are five days apart is measuring the
+    // passage of time, not a disagreement, and the report has to say so where
+    // the number is rather than in a footnote under it.
+    const staleDays = Math.round(
+      (Date.parse(`${ours.date}T00:00:00Z`) - Date.parse(`${theirs.date}T00:00:00Z`)) / 86400000
+    );
     out.push({
       listId,
       listName: ours.listName || theirs.listName,
@@ -137,6 +150,9 @@ export function drift(rows) {
       battr: theirs.total,
       battrDate: theirs.date,
       driftPct: pct,
+      staleDays,
+      /** Same night, or one either side of it — close enough to read as a disagreement. */
+      comparable: Math.abs(staleDays) <= 1,
     });
   }
   return out.sort((a, b) => Math.abs(b.driftPct) - Math.abs(a.driftPct));

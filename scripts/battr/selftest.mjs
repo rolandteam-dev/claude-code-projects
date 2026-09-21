@@ -2366,4 +2366,441 @@ check("the suite cannot delete the real audit trail", () => {
   assert.match(engine, /process\.env\.BATTR_LOG_DIR \|\| join\(ROOT, "battr-logs"\)/, "and the engine must honour it");
 });
 
+// ─── Reading FUB's own lists, rather than reimplementing them ───────────────
+//
+// The screenshots of 19 Sep showed the six audit lists living in Follow Up Boss
+// as ordinary smart lists on Mike's account. That makes FUB's own membership
+// readable, and FUB's answer is the answer: it is the list the agent opens.
+// These cover the probe that establishes whether that route works.
+
+await (async () => {
+  const { normalize, baseName, isPondSide } = await import("./smartlists.mjs");
+
+  // The module reads FUB_API_BASE once, at load. So the fixture is stood up
+  // first, the env var set, and the client re-imported behind a cache-busting
+  // query — the same dance the nextLink test above does. Awaiting the HTTP work
+  // out here rather than inside check() keeps the pass tally honest: an async
+  // check body resolves after the total has already been printed.
+  {
+    let calls = 0;
+    let seen = null;
+    const counter = createServer((req, res) => {
+      calls++;
+      seen = new URL(req.url, "http://127.0.0.1").searchParams;
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ people: [{ id: 1 }], _metadata: { total: 26412 } }));
+    });
+    await new Promise((r) => counter.listen(0, "127.0.0.1", r));
+
+    const totalless = createServer((req, res) => {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ people: [] }));
+    });
+    await new Promise((r) => totalless.listen(0, "127.0.0.1", r));
+
+    const previous = process.env.FUB_API_BASE;
+    let counted;
+    let totallessError = null;
+    try {
+      process.env.FUB_API_BASE = `http://127.0.0.1:${counter.address().port}`;
+      const { FubClient: Counting } = await import(`./fub.mjs?count=${counter.address().port}`);
+      counted = await new Counting("k", { dry: true, log: () => {} }).countPeople({ smartListId: 1105 });
+
+      process.env.FUB_API_BASE = `http://127.0.0.1:${totalless.address().port}`;
+      const { FubClient: Totalless } = await import(`./fub.mjs?count=${totalless.address().port}`);
+      await new Totalless("k", { dry: true, log: () => {} })
+        .countPeople({ smartListId: 7 })
+        .catch((err) => {
+          totallessError = err;
+        });
+    } finally {
+      counter.close();
+      totalless.close();
+      if (previous === undefined) delete process.env.FUB_API_BASE;
+      else process.env.FUB_API_BASE = previous;
+    }
+
+    check("a list size is read from the total, not counted by paging", () => {
+      // A 26,000-lead pond must cost the same single call as a twelve-lead
+      // list, or probing every list in one run is unaffordable and nobody runs
+      // it. Counting returned rows instead would also report the cap as the
+      // size — silent truncation wearing a number.
+      assert.equal(counted, 26412);
+      assert.equal(calls, 1, "one request, whatever the list's size");
+      assert.equal(seen.get("limit"), "1", "and it must not pull a page of people");
+      assert.equal(seen.get("smartListId"), "1105", "the list has to actually be selected");
+    });
+
+    check("a count with no total is an error, not a zero", () => {
+      // The quiet failure this guards: a missing total read as 0 makes every
+      // list look empty and the engine look finished.
+      assert.ok(totallessError, "a response without a total must not resolve");
+      assert.match(totallessError.message, /no _metadata\.total/);
+    });
+  }
+
+  check("the agent-side and pond-side halves are told apart", () => {
+    // Two queues, two sets of people working them. Only the agent side can be
+    // swept — sweeping moves a lead INTO a pond, so a lead already in one has
+    // nowhere to go. Reading a pair's sum as the target makes a correct filter
+    // look far short of Battr and invites "fixing" it.
+    for (const name of ["❗Active Leads - Ponds", "🏹 Zillow Important - Ponds", "‼️ YLOPO IMPORTANT - Ponds"]) {
+      assert.ok(isPondSide(name), `${name} is the pond half`);
+    }
+    for (const name of ["❗Active Leads", "🏹 Zillow Important", "💛 Sphere & Past Clients"]) {
+      assert.ok(!isPondSide(name), `${name} is the agent half`);
+    }
+    // "Fish the Pond" is a COLLECTION name, not a list suffix — it must not be
+    // mistaken for the pond half of some pair.
+    assert.ok(!isPondSide("Fish the Pond"), "a collection called Fish the Pond is not a -Ponds list");
+
+    assert.equal(baseName("❗Active Leads"), baseName("❗Active Leads - Ponds"), "the halves pair up");
+    assert.equal(normalize("❗Active Leads"), normalize("Active Leads"), "emoji are decoration, not identity");
+  });
+
+  check("every list the engine audits is agent-side", () => {
+    // The invariant behind the split: our filters carry `notInAPond`, so the
+    // engine never audits — and so can never sweep — a lead that is already in
+    // a pond. If a list ever loses that condition, it starts auditing the queue
+    // swept leads land in, and a lead could be swept twice.
+    const audited = lists.filter((l) => l.is_active && l.audit_type === "contact_list");
+    assert.ok(audited.length >= 6, "there should be lists to check");
+    for (const list of audited) {
+      const conditions = (list.list_filters?.groups ?? []).flat();
+      const excludesPonds = conditions.some((c) => /pond/i.test(String(c.field ?? "")));
+      assert.ok(excludesPonds, `${list.name} must exclude leads already in a pond`);
+      assert.ok(!isPondSide(list.name), `${list.name} must not be a pond-side list`);
+    }
+  });
+
+  check("the smart list probe cannot write to Follow Up Boss", () => {
+    const src = readFileSync(join(HERE, "smartlists.mjs"), "utf8");
+    assert.match(src, /new FubClient\(process\.env\.FUB_API_KEY, \{ dry: true \}\)/, "dry mode, explicitly");
+    for (const write of ["\\.assign\\(", "\\.note\\(", "\\.updateFields\\(", "\\.addTag\\("]) {
+      assert.ok(!new RegExp(write).test(src), `a probe must not call ${write}`);
+    }
+  });
+
+  check("the smart list probe keeps client PII out of the CI log", () => {
+    // Its output goes into a GitHub Actions summary that is readable by anyone
+    // with repo access. List names are Mike's configuration; lead names, emails
+    // and phone numbers are clients'.
+    const src = readFileSync(join(HERE, "smartlists.mjs"), "utf8");
+    for (const field of ["emails", "phones", "addresses", "firstName", "lastName"]) {
+      assert.ok(!new RegExp(`\\b${field}\\b`).test(src), `${field} must never reach the log`);
+    }
+    // It prints per-field DATE COVERAGE — counts and the newest timestamp — and
+    // never a field's value for an identified person.
+    assert.ok(!/console\.log\([^)]*p\[key\]/.test(src), "a raw field value must not be printed");
+  });
+})();
+
+// ─── The paused-agent exclusion, which protected nobody for weeks ──────────
+//
+// Battr's rule screen reads "Agent's Assigned FUB Teams DOES NOT CONTAIN ANY
+// [Battr Paused]". We modelled it against `person.assignedUserGroupIds ??
+// person.groupIds`; FUB returns neither, so the field was [] on every lead and
+// "not in that group" was true for everyone. These checks are the guard.
+
+await (async () => {
+  const { resolvePausedOwners, PAUSED_GROUP_MARKER } = await import("./paused.mjs");
+
+  /** A stand-in for FubClient carrying only what the resolver touches. */
+  const fakeFub = (teams) => ({ teams: async () => (typeof teams === "function" ? teams() : teams) });
+
+  const twoTeamsSameName = await resolvePausedOwners(
+    fakeFub([
+      { id: 1, name: "Battr Paused", users: [{ id: 11 }, { id: 12 }] },
+      { id: 2, name: "battr paused", users: [{ id: 13 }] },
+      { id: 3, name: "The Roland Team", users: [{ id: 99 }] },
+    ]),
+    ["Battr Paused"]
+  );
+
+  check("every team of that name is unioned, not just the first", () => {
+    // This account really does carry two teams named "The Roland Team". Taking
+    // the first match would silently drop half a roster, and the agents it
+    // dropped would be the ones who look protected on the rule screen.
+    assert.deepEqual([...twoTeamsSameName.userIds].sort((a, b) => a - b), [11, 12, 13]);
+    assert.ok(twoTeamsSameName.enforceable);
+    assert.deepEqual(twoTeamsSameName.missing, []);
+    assert.ok(!twoTeamsSameName.userIds.has(99), "a different team's members are not paused");
+  });
+
+  const typo = await resolvePausedOwners(fakeFub([{ id: 1, name: "Battr Paused", users: [{ id: 11 }] }]), ["Batter Paused"]);
+
+  check("a team name matching nothing is reported, not read as an empty team", () => {
+    // The whole failure mode in one line: a typo and a genuinely empty team
+    // both protect zero leads, but only one of them is a defect, and the run
+    // has to be able to say which.
+    assert.equal(typo.enforceable, false);
+    assert.deepEqual(typo.missing, ["Batter Paused"]);
+    assert.equal(typo.userIds.size, 0);
+  });
+
+  const emptyTeam = await resolvePausedOwners(fakeFub([{ id: 1, name: "Battr Paused", users: [] }]), ["Battr Paused"]);
+
+  check("an empty paused team is enforceable, just unused", () => {
+    // Kate Frihse was taken off the team on 7 Sep, leaving only Mike — who is
+    // already exempt by name. So this is today's real state, and it must not
+    // read as a broken rule.
+    assert.equal(emptyTeam.enforceable, true, "the team exists, so the rule can fire");
+    assert.equal(emptyTeam.userIds.size, 0, "it just holds nobody");
+    assert.deepEqual(emptyTeam.missing, []);
+  });
+
+  const unreadable = await resolvePausedOwners(
+    { teams: async () => { throw new Error("FUB GET /teams → 403: forbidden"); } },
+    ["Battr Paused"],
+    () => {}
+  );
+
+  check("an unreadable roster fails closed, loudly", () => {
+    assert.equal(unreadable.enforceable, false);
+    assert.deepEqual(unreadable.missing, ["Battr Paused"]);
+  });
+
+  check("the marker lands on a paused agent's leads and nobody else's", () => {
+    const pausedOwnerIds = new Set([11]);
+    const held = normalizeContact(
+      { id: 900, stage: "Lead", created: daysAgo(400), assignedUserId: 11, tags: [] },
+      { lastOutbound: 0 },
+      {},
+      { pausedOwnerIds }
+    );
+    const ordinary = normalizeContact(
+      { id: 901, stage: "Lead", created: daysAgo(400), assignedUserId: 22, tags: [] },
+      { lastOutbound: 0 },
+      {},
+      { pausedOwnerIds }
+    );
+    assert.deepEqual(held.owner_group_ids, [PAUSED_GROUP_MARKER], "the pasted rule JSON matches without being rewritten");
+    assert.deepEqual(ordinary.owner_group_ids, [], "and it does not spray onto everyone");
+  });
+
+  check("with no roster resolved, the exclusion still protects nobody", () => {
+    // The negative control. If this ever passes an empty set and still finds a
+    // marked lead, the marker is coming from somewhere it should not.
+    const c = normalizeContact(
+      { id: 902, stage: "Lead", created: daysAgo(400), assignedUserId: 11, tags: [] },
+      { lastOutbound: 0 },
+      {},
+      { pausedOwnerIds: new Set() }
+    );
+    assert.deepEqual(c.owner_group_ids, []);
+  });
+
+  check("the exclusion is driven by a team NAME, not a Battr-internal id", () => {
+    // 52555 is a Battr id no FUB endpoint returns. Keeping it as the marker is
+    // deliberate — the rule JSON is pasted verbatim from Battr's screen — but
+    // nothing may look it up against Follow Up Boss.
+    assert.ok(Array.isArray(rules.excludeOwnerTeamNames), "the team names are the configuration surface");
+    assert.ok(rules.excludeOwnerTeamNames.length > 0, "and at least one team must be named");
+    assert.equal(PAUSED_GROUP_MARKER, rules.excludeOwnerGroupIds[0], "the marker must match the pasted rule");
+
+    const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+    assert.match(src, /resolvePausedOwners\(fub, rules\.excludeOwnerTeamNames/, "resolved from the roster, once per run");
+    // Resolving per lead would be 54,000 calls to /teams.
+    assert.ok(
+      src.indexOf("resolvePausedOwners(fub") < src.indexOf("people.map((p) =>"),
+      "the roster is resolved before the population is normalized, not inside the loop"
+    );
+  });
+})();
+
+// ─── The transcription record, which is only as good as its freshness ──────
+
+await (async () => {
+  const observed = await import("./observed.mjs");
+  const nights = Object.entries(observed)
+    .filter(([name, v]) => /^SEP_\d+$/.test(name) && v && typeof v === "object" && v.date)
+    .map(([, v]) => v);
+
+  check("every sweep is accounted for by a destination", () => {
+    // If the pond breakdown does not add up to the records moved, a sweep went
+    // somewhere nobody wrote down — and pond routing is reconstructed from
+    // exactly these tallies.
+    let checked = 0;
+    for (const night of nights) {
+      if (!night.assignmentTargets || night.records_moved === undefined) continue;
+      const routed = Object.values(night.assignmentTargets)
+        .flatMap((byName) => Object.values(byName))
+        .reduce((a, b) => a + b, 0);
+      assert.equal(routed, night.records_moved, `${night.date}: ${routed} routed vs ${night.records_moved} moved`);
+      checked++;
+    }
+    assert.ok(checked >= 3, `only ${checked} nights carry a pond breakdown`);
+  });
+
+  check("the timeline agrees with the night it was taken from", () => {
+    // Two places hold the same numbers; a typo in one is invisible until
+    // something reconciles against the wrong copy.
+    const byDate = new Map(nights.map((n) => [n.date, n]));
+    let matched = 0;
+    for (const row of observed.TIMELINE) {
+      const night = byDate.get(row.date);
+      if (!night) continue;
+      assert.equal(row.total, night.total, `${row.date} total`);
+      assert.equal(row.at_risk, night.at_risk, `${row.date} at risk`);
+      if (night.neglected === undefined) {
+        // A night with no Neglected email recorded nothing, which is NOT the
+        // same claim as "nothing was swept". Saturday and Sunday are not sweep
+        // days, so Battr sends no such email at all — the timeline's 0 means
+        // nothing moved, and the observation's silence means nobody was told.
+        // Collapsing the two would turn "we did not look" into "we looked and
+        // it was empty".
+        assert.equal(night.neglected_email_sent, false, `${row.date} has no neglected count and no reason given`);
+        assert.equal(row.neglected, 0, `${row.date}: no sweep email means nothing moved`);
+      } else {
+        assert.equal(row.neglected, night.neglected, `${row.date} neglected`);
+      }
+      matched++;
+    }
+    assert.ok(matched >= 5, `only ${matched} timeline rows could be cross-checked`);
+  });
+
+  check("the comparison file agrees with the nights we recorded", () => {
+    // The stale-baseline bug: the drift table compared 18 Sep against Battr's
+    // 15 Sep total of 880 and printed −8.1%, because 880 was the newest row
+    // anyone had transcribed. Battr's actual 18 Sep total was 790 and the real
+    // drift was +2.4%. The engine was never short; the baseline was three days
+    // old. This guards the copy that the report reads.
+    const rows = readFileSync(join(ROOT, "battr-logs", "comparison.csv"), "utf8")
+      .split("\n")
+      .slice(1)
+      .filter(Boolean)
+      .map((line) => line.split(","))
+      .filter((cells) => cells[1] === "battr" && cells[2] === "0");
+
+    const byDate = new Map(nights.map((n) => [n.date, n]));
+    let matched = 0;
+    for (const cells of rows) {
+      const night = byDate.get(cells[0]);
+      if (!night) continue;
+      assert.equal(Number(cells[4]), night.total, `${cells[0]} total in comparison.csv`);
+      assert.equal(Number(cells[6]), night.at_risk, `${cells[0]} at risk in comparison.csv`);
+      if (night.neglected !== undefined) {
+        assert.equal(Number(cells[7]), night.neglected, `${cells[0]} neglected in comparison.csv`);
+      }
+      matched++;
+    }
+    assert.ok(matched >= 2, `only ${matched} Battr rows could be cross-checked against an observation`);
+  });
+
+  check("the warned cohort is followed honestly", () => {
+    // The recovery figure — four of eight warned leads acted on within two
+    // days — is the single most useful number these emails have yielded, and
+    // it is also the easiest to overstate. These assertions are what keep it
+    // from quietly becoming a better story than the evidence supports.
+    const warned = observed.SEP_20.warnedOn18Sep;
+    const still = observed.SEP_20.stillAtRiskOn20Sep;
+    const left = observed.SEP_20.leftTierWithoutSweep;
+
+    assert.equal(warned.length, observed.SEP_18.at_risk_new_notes, "the cohort is exactly that night's new warnings");
+    assert.equal(new Set(warned).size, warned.length, "no lead counted twice");
+    assert.deepEqual(
+      [...still, ...left].sort((a, b) => a - b),
+      [...warned].sort((a, b) => a - b),
+      "every warned lead is accounted for as either still at risk or gone"
+    );
+    assert.equal(still.filter((id) => left.includes(id)).length, 0, "a lead cannot be in both");
+
+    // The load-bearing claim: they left WITHOUT being swept. If any of them is
+    // in the sweep list, "the agent worked it" is not an available reading.
+    const swept = new Set(observed.SEP_18.sweptIds);
+    for (const id of left) {
+      assert.ok(!swept.has(id), `${id} left the at-risk tier by being swept, not by being worked`);
+    }
+    assert.equal(observed.SEP_18.sweptIds.length, observed.SEP_18.records_moved, "the sweep list is complete");
+
+    // And the alternative reading must stay written down. A measurement that
+    // records only its flattering interpretation is not a measurement.
+    assert.match(observed.SEP_20.leftTierReading, /stage change|cannot distinguish/i);
+  });
+
+  check("Money Time is a destination, not an overflow", () => {
+    // 17 sweeps is far below maxSweepsPerPond, yet two leads still went to
+    // Money Time — so the overflow model cannot explain them, and the routing
+    // rule is something else. Recorded, not implemented: pond routing is only
+    // edited to match Battr's own rule screen.
+    const { assignmentTargets, moneyTimeIds, sweptIds } = observed.SEP_18;
+    assert.equal(moneyTimeIds.length, assignmentTargets.Pond["Money Time"], "the ids match the tally");
+    assert.ok(moneyTimeIds.every((id) => sweptIds.includes(id)), "every Money Time lead was swept this night");
+    assert.ok(
+      sweptIds.length < rules.maxSweepsPerPond,
+      `${sweptIds.length} sweeps is below the ${rules.maxSweepsPerPond} cap, so nothing overflowed`
+    );
+  });
+
+  check("Battr's audit list is not pinned at its September peak", () => {
+    // 880 was a single Tuesday, not a ceiling. Anything that treats it as the
+    // target reads a shrinking list as our engine falling behind.
+    const latest = observed.TIMELINE[observed.TIMELINE.length - 1];
+    const peak = Math.max(...observed.TIMELINE.map((r) => r.total));
+    assert.ok(latest.total < peak, "the most recent night is below the peak, so the peak is not the target");
+
+    // Ordering, not a pinned date. The first version of this check asserted the
+    // last row was 2026-09-18 and failed the moment the next night was
+    // transcribed — a test that has to be edited every time the data it guards
+    // is updated trains people to edit it without reading it.
+    const dates = observed.TIMELINE.map((r) => r.date);
+    assert.deepEqual(dates, [...dates].sort(), "the timeline must be in date order");
+    const newestNight = nights.map((n) => n.date).sort().pop();
+    assert.ok(
+      latest.date >= newestNight,
+      `the timeline ends at ${latest.date} but ${newestNight} has been observed — transcribe it or the drift table compares against a stale row`
+    );
+  });
+})();
+
+// ─── A drift figure is only a disagreement when both sides are the same night ──
+
+await (async () => {
+  const { drift } = await import("./compare.mjs");
+
+  const row = (date, source, total) => ({ date, source, listId: 0, listName: "⭐️ Team Leads (combined)", total });
+
+  check("a drift spanning days is marked as not comparable", () => {
+    // The real case, with the real numbers. On 20 Sep the report printed −7.8%
+    // for the combined list and it read as the engine falling behind. It was
+    // our 20 Sep count against Battr's 15 Sep count, and Battr's own list had
+    // gone 880 → 777 in between. The engine had not moved; the baseline had.
+    const [d] = drift([row("2026-09-15", "battr", 880), row("2026-09-20", "ours", 811)]);
+    assert.equal(d.staleDays, 5);
+    assert.equal(d.comparable, false, "five days apart is not a like-for-like comparison");
+    assert.ok(d.driftPct < -7 && d.driftPct > -8, `expected about −7.8%, got ${d.driftPct.toFixed(1)}%`);
+  });
+
+  check("the same night reads as a real disagreement", () => {
+    const [d] = drift([row("2026-09-20", "battr", 777), row("2026-09-20", "ours", 811)]);
+    assert.equal(d.staleDays, 0);
+    assert.equal(d.comparable, true);
+    assert.ok(d.driftPct > 4 && d.driftPct < 5, `expected about +4.4%, got ${d.driftPct.toFixed(1)}%`);
+  });
+
+  check("one night either way still counts as comparable", () => {
+    // The two systems run hours apart and roll the date differently — Battr
+    // stamps the run at ~02:00 UTC, which is the previous evening in Las Vegas.
+    // Demanding an exact date match would mark almost every honest comparison
+    // stale and train people to ignore the marker.
+    const [d] = drift([row("2026-09-19", "battr", 780), row("2026-09-20", "ours", 811)]);
+    assert.equal(d.comparable, true);
+  });
+
+  check("the report marks a stale comparison where the number is", () => {
+    // The footnote explaining stale rows was already in the report on 20 Sep,
+    // under the table, and the −7.8% was still read as a regression. A caveat
+    // that sits below the number it qualifies gets read after the conclusion
+    // has been drawn.
+    const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+    assert.match(src, /d\.comparable \? d\.battrDate/, "the row itself must show the staleness");
+    assert.match(src, /rows compare against a Battr count from a different day/, "and the block must say how many");
+    assert.ok(
+      src.indexOf("rows compare against a Battr count from a different day") <
+        src.indexOf("Worst drift first."),
+      "the warning must come before the old footnote, not after it"
+    );
+  });
+})();
+
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);

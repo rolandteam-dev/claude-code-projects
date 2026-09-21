@@ -190,8 +190,33 @@ export const rules = {
    * Owner groups excluded from audits, sweeps, and alerts. 52555 is the group
    * the live config excludes — the paused-agent group. Leads owned by someone
    * in it are never swept and their owner never gets an alert.
+   *
+   * This id comes from Battr, not from Follow Up Boss, and no FUB endpoint
+   * returns it. It is kept because the rule JSON in lists.mjs is pasted
+   * verbatim from Battr's rule screen and must keep reading the way Battr's
+   * does. What now puts it on a lead is `excludeOwnerTeamNames` below.
    */
   excludeOwnerGroupIds: [52555],
+
+  /**
+   * The FUB TEAMS whose members' leads are exempt, which is how Battr's rule
+   * screen actually words it: "Agent's Assigned FUB Teams DOES NOT CONTAIN ANY
+   * [Battr Paused]".
+   *
+   * Resolved once per run from /v1/teams and stamped onto each lead during
+   * normalization. Before this, the exclusion read a field FUB never returns,
+   * was `[]` on every lead, and therefore protected nobody while looking
+   * enforced.
+   *
+   * A name here that matches no FUB team is reported as unenforceable rather
+   * than read as "nobody is paused" — a typo must not look like an empty team.
+   *
+   * Note (7 Sep 2026): the "Battr Paused" team currently holds only Mike, who
+   * is already exempt by name via `exemptAgents`. So this protects zero line
+   * agents today. It is fixed because it was broken, not because someone is
+   * relying on it — and it needs to work before anyone is put back on the team.
+   */
+  excludeOwnerTeamNames: ["Battr Paused"],
 
   /** Lead sources exempt from the audit ("lead bucket" in Battr's language). */
   exemptSources: [],
