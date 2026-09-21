@@ -2753,4 +2753,54 @@ await (async () => {
   });
 })();
 
+// ─── A drift figure is only a disagreement when both sides are the same night ──
+
+await (async () => {
+  const { drift } = await import("./compare.mjs");
+
+  const row = (date, source, total) => ({ date, source, listId: 0, listName: "⭐️ Team Leads (combined)", total });
+
+  check("a drift spanning days is marked as not comparable", () => {
+    // The real case, with the real numbers. On 20 Sep the report printed −7.8%
+    // for the combined list and it read as the engine falling behind. It was
+    // our 20 Sep count against Battr's 15 Sep count, and Battr's own list had
+    // gone 880 → 777 in between. The engine had not moved; the baseline had.
+    const [d] = drift([row("2026-09-15", "battr", 880), row("2026-09-20", "ours", 811)]);
+    assert.equal(d.staleDays, 5);
+    assert.equal(d.comparable, false, "five days apart is not a like-for-like comparison");
+    assert.ok(d.driftPct < -7 && d.driftPct > -8, `expected about −7.8%, got ${d.driftPct.toFixed(1)}%`);
+  });
+
+  check("the same night reads as a real disagreement", () => {
+    const [d] = drift([row("2026-09-20", "battr", 777), row("2026-09-20", "ours", 811)]);
+    assert.equal(d.staleDays, 0);
+    assert.equal(d.comparable, true);
+    assert.ok(d.driftPct > 4 && d.driftPct < 5, `expected about +4.4%, got ${d.driftPct.toFixed(1)}%`);
+  });
+
+  check("one night either way still counts as comparable", () => {
+    // The two systems run hours apart and roll the date differently — Battr
+    // stamps the run at ~02:00 UTC, which is the previous evening in Las Vegas.
+    // Demanding an exact date match would mark almost every honest comparison
+    // stale and train people to ignore the marker.
+    const [d] = drift([row("2026-09-19", "battr", 780), row("2026-09-20", "ours", 811)]);
+    assert.equal(d.comparable, true);
+  });
+
+  check("the report marks a stale comparison where the number is", () => {
+    // The footnote explaining stale rows was already in the report on 20 Sep,
+    // under the table, and the −7.8% was still read as a regression. A caveat
+    // that sits below the number it qualifies gets read after the conclusion
+    // has been drawn.
+    const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+    assert.match(src, /d\.comparable \? d\.battrDate/, "the row itself must show the staleness");
+    assert.match(src, /rows compare against a Battr count from a different day/, "and the block must say how many");
+    assert.ok(
+      src.indexOf("rows compare against a Battr count from a different day") <
+        src.indexOf("Worst drift first."),
+      "the warning must come before the old footnote, not after it"
+    );
+  });
+})();
+
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);

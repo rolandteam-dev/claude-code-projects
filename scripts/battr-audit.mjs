@@ -360,11 +360,26 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     lines.push("| --- | ---: | ---: | ---: | --- |");
     for (const d of comparisonDrift) {
       const sign = d.driftPct > 0 ? "+" : "";
-      lines.push(
-        `| ${d.listName} | ${d.ours} | ${d.battr} | ${sign}${d.driftPct.toFixed(1)}% | ${d.battrDate} |`
-      );
+      // A drift figure is only a disagreement when both sides are the same
+      // night. Marked inline, not footnoted: the footnote was already there on
+      // 20 Sep and the −7.8% was still read as the engine falling behind.
+      const age = d.comparable ? d.battrDate : `${d.battrDate} ⚠ ${d.staleDays}d older`;
+      const pct = d.comparable ? `${sign}${d.driftPct.toFixed(1)}%` : `(${sign}${d.driftPct.toFixed(1)}%)`;
+      lines.push(`| ${d.listName} | ${d.ours} | ${d.battr} | ${pct} | ${age} |`);
     }
     lines.push("");
+
+    const stale = comparisonDrift.filter((d) => !d.comparable);
+    if (stale.length) {
+      lines.push(
+        `> **${stale.length} of ${comparisonDrift.length} rows compare against a Battr count from a different day**, ` +
+          "shown in brackets. Battr's audit list moves on its own — it ran 880 on 15 Sep and 777 on 20 Sep — so a " +
+          "drift figure spanning several days is measuring that movement, not a disagreement with us. " +
+          "Transcribe the current night before trusting a bracketed number."
+      );
+      lines.push("");
+    }
+
     lines.push(
       "Worst drift first. Battr's rows are typed in by hand from its Aida Audits screen, which has no " +
         "export — so a stale date in the last column means nobody has transcribed lately, not that Battr " +
