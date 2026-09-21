@@ -971,6 +971,41 @@ export const SEP_20 = {
   stampPersists: true,
 };
 
+/**
+ * OUR RUN THE SAME NIGHT (2026-09-20-h4cs).
+ *
+ *   audited      811   against Battr's 777   (+4.4%)
+ *   at risk      276   against Battr's  19
+ *   neglected     12   against a Sunday, when Battr does not sweep at all
+ *
+ * Our at-risk figure has now been 279, 276, 276 on three consecutive readings
+ * while Battr's has been 32, 17, 19. Ours is the steadier of the two, which is
+ * what a threshold applied to a slowly-changing population looks like. Battr's
+ * moves because its number is the tier AFTER same-day nudges have cleared some
+ * of it; ours is the tier before any action, because no action is taken.
+ *
+ * The neglected comparison is not available on a Sunday. Battr sends no
+ * Neglected email on a non-sweep day, so 12 has nothing to sit beside — and
+ * writing 0 in the other column would turn "we did not look" into "we looked
+ * and it was empty".
+ */
+export const OURS_SEP_20 = {
+  date: "2026-09-20",
+  runId: "2026-09-20-h4cs",
+  audited: 811,
+  at_risk: 276,
+  neglected: 12,
+  populationDriftVsSameNight: 4.4,
+  /** Sunday. Battr ran no sweep, so there is no figure to compare 12 against. */
+  neglectedComparable: false,
+  /**
+   * Still carrying the "AN EXCLUSION PROTECTS NOBODY" banner, because the
+   * paused-agent fix is on the feature branch and the nightly runs from main.
+   * The banner goes when the branch lands, not before.
+   */
+  pausedAgentFixLive: false,
+};
+
 /** The observations in order, for anything that wants the trend. */
 export const TIMELINE = [
   { date: "2026-09-02", weekday: "Wed", total: 866, at_risk: 17, neglected: 7 },
