@@ -1006,6 +1006,41 @@ export const OURS_SEP_20 = {
   pausedAgentFixLive: false,
 };
 
+/**
+ * OUR RUN, MONDAY 21 SEPTEMBER (2026-09-21-9bni). 813 audited, 291 at risk,
+ * 12 neglected.
+ *
+ * TWO LISTS NOW LAND EXACTLY: ‼️ YLOPO IMPORTANT at 116 against 116, and
+ * 🎤 AI TEXT REPLIES at 10 against 10. Both were guesses reverse-engineered
+ * from a compliance split six weeks ago and both were wrong; both were
+ * rewritten from Battr's rule screens on 3 Sep. Landing on the number is what
+ * a correctly transcribed rule looks like.
+ *
+ * NOTHING ON THIS BRANCH IS IN THAT RUN. The nightly job runs from main, and
+ * this is the third consecutive night whose report carries the stale 880
+ * baseline (printing −7.6% where the same-night figure is about +4%), the
+ * "AN EXCLUSION PROTECTS NOBODY" banner that the paused-agent fix removes, and
+ * a drift table with no staleness marking. Every one of those is fixed here
+ * and none of it is running. Recording it so the gap between "fixed" and
+ * "live" stays visible in the data rather than only in a chat message.
+ */
+export const OURS_SEP_21 = {
+  date: "2026-09-21",
+  runId: "2026-09-21-9bni",
+  audited: 813,
+  at_risk: 291,
+  neglected: 12,
+  /** Lists matching Battr's transcribed count exactly. */
+  exactMatches: ["‼️ YLOPO IMPORTANT", "🎤 AI TEXT REPLIES"],
+  /**
+   * The report still compares against Battr's 15 Sep total because the rows
+   * transcribed since then live on this branch. Not a new fault — the same one,
+   * still shipping.
+   */
+  comparedAgainstStaleBaseline: true,
+  branchLive: false,
+};
+
 /** The observations in order, for anything that wants the trend. */
 export const TIMELINE = [
   { date: "2026-09-02", weekday: "Wed", total: 866, at_risk: 17, neglected: 7 },
