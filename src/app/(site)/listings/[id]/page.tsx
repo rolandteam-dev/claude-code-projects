@@ -10,6 +10,7 @@ import { ScheduleTour } from "@/components/ScheduleTour";
 import { ListingStickyBar } from "@/components/ListingStickyBar";
 import { ListingShareBar } from "@/components/ListingShareBar";
 import { SaveHomeButton } from "@/components/portal/SaveHomeButton";
+import { ListingViewTracker } from "@/components/buyer/ListingViewTracker";
 import { WhatsNearby } from "@/components/WhatsNearby";
 import { RelocationTaxSavings } from "@/components/RelocationTaxSavings";
 import { breadcrumbSchema } from "@/lib/schema";
@@ -155,9 +156,34 @@ export default async function ListingDetail({ params }: { params: Promise<{ id: 
             <span className="text-[var(--color-ink-soft)]">{l.address.line1}</span>
           </nav>
           <div className="flex items-center gap-3">
+            <ListingViewTracker
+              listingId={l.id}
+              property={{
+                address: l.address.line1,
+                city: l.address.city,
+                state: l.address.state,
+                zip: l.address.postalCode,
+                price: l.listPrice,
+                beds: l.beds,
+                baths: l.baths,
+                mlsNumber: l.mlsNumber,
+                url: absoluteUrl(`/listings/${l.id}`),
+              }}
+            />
             <SaveHomeButton
               id={l.id}
               address={`${l.address.line1}, ${l.address.city}`}
+              property={{
+                address: l.address.line1,
+                city: l.address.city,
+                state: l.address.state,
+                zip: l.address.postalCode,
+                price: l.listPrice,
+                beds: l.beds,
+                baths: l.baths,
+                mlsNumber: l.mlsNumber,
+                url: absoluteUrl(`/listings/${l.id}`),
+              }}
               variant="button"
             />
             <ListingShareBar
