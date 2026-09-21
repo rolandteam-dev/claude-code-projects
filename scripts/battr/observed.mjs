@@ -854,6 +854,21 @@ export const SEP_18 = {
    */
   moneyTimeSources: ["LPT Rider", "TheRolandTeam.com"],
   sharkTankWasPortalOnly: true,
+
+  /**
+   * Every lead swept this night, by FUB person id. Ids, not names — see the
+   * note on SEP_20's cohort for why that distinction is the whole of the
+   * privacy question here.
+   *
+   * Kept so that "the leads warned on 18 Sep were not among the leads swept on
+   * 18 Sep" is something the suite can check rather than something a comment
+   * asserts. The recovery figure depends on it.
+   */
+  sweptIds: [
+    52423, 99391, 81490, 31505, 85524, 101101, 101102,
+    101141, 101140, 101139, 101138, 101137, 101136, 101134, 101133, 101132, 101130,
+  ],
+  moneyTimeIds: [101101, 101102],
 };
 
 /**
@@ -892,6 +907,70 @@ export const OURS_SEP_18 = {
   atRiskGapExplanation: "email counts as a touch for Battr and deliberately does not for us",
 };
 
+/**
+ * SUNDAY 20 SEPTEMBER — an At Risk email with no Neglected email, which is the
+ * weekend shape seen on 12 and 13 Sep and consistent with the rule screen's
+ * "Weekdays Excluding Monday" sweep filter. Nudges every day, sweeps Tue–Fri.
+ *
+ * THE FIRST MEASUREMENT OF WHETHER A NUDGE ACTUALLY WORKS.
+ *
+ * Until now every night has been read on its own. Two nights of per-lead rows
+ * three days apart can be followed as a COHORT, and that is what finally makes
+ * "Battr Recovered" — the state this engine does not model — measurable from
+ * the emails alone.
+ *
+ * Battr warned eight leads on 18 Sep. On 20 Sep, four of those eight are still
+ * in the at-risk tier carrying an At Risk Since of 2026-09-18. The other four
+ * are gone from it.
+ *
+ * They were not swept: 19 and 20 Sep are Saturday and Sunday, sweeps do not run
+ * on either, and none of the four appears in the 18 Sep sweep list. So they
+ * left the at-risk tier by being worked — or by leaving the audit list some
+ * other way, such as a stage change. Both readings are recorded below rather
+ * than one being asserted, because the emails cannot tell them apart.
+ *
+ * Read conservatively, that is FOUR OF EIGHT WARNED LEADS ACTED ON WITHIN TWO
+ * DAYS. That number is the argument for the whole system, and it is the one
+ * Battr's own nightly email never states.
+ */
+export const SEP_20 = {
+  date: "2026-09-20",
+  weekday: "Sunday",
+  total: 777,
+  at_risk: 19,
+  at_risk_new_notes: 7,
+  at_risk_already_flagged: 12,
+  /** Sunday is not a sweep day; Battr sent no Neglected email at all. */
+  neglected_email_sent: false,
+  excluded_lead_bucket: 0,
+  excluded_agent_group: 0,
+
+  /**
+   * FUB person ids, not names. An id is a pointer that means nothing without
+   * access to the CRM, where a name is the client. Kept because a cohort
+   * cannot be followed across nights without them, and following the cohort is
+   * the only way to measure recovery from these emails.
+   */
+  warnedOn18Sep: [63970, 79119, 62608, 72773, 65492, 101034, 101122, 99468],
+  /** Of those eight, still at risk on 20 Sep with the 18 Sep stamp intact. */
+  stillAtRiskOn20Sep: [63970, 79119, 72773, 65492],
+  /**
+   * The other four. Not in the 18 Sep sweep list, and no sweep ran on either
+   * intervening day — so they left the tier without being swept.
+   */
+  leftTierWithoutSweep: [62608, 101034, 101122, 99468],
+  leftTierReading: "worked by the agent, or moved out of the audit list by a stage change — the emails cannot distinguish these",
+
+  /**
+   * The stamp survives across nights, again. Four leads carry At Risk Since
+   * 2026-09-18 three days later, which is the third independent confirmation
+   * that Battr never clears it — so the warn-first interlock asks "was this
+   * lead EVER warned", not "was it warned recently". Our rules already model
+   * it that way.
+   */
+  stampPersists: true,
+};
+
 /** The observations in order, for anything that wants the trend. */
 export const TIMELINE = [
   { date: "2026-09-02", weekday: "Wed", total: 866, at_risk: 17, neglected: 7 },
@@ -911,6 +990,9 @@ export const TIMELINE = [
   // The largest sweep since 8 Sep, and ten of the seventeen were leads that had
   // arrived the previous day and never been touched.
   { date: "2026-09-18", weekday: "Fri", total: 790, at_risk: 17, neglected: 17 },
+  // 19 Sep (Sat) not captured, though eight leads carry its stamp. Sunday's
+  // `neglected: 0` is the day filter again — nothing was allowed to move.
+  { date: "2026-09-20", weekday: "Sun", total: 777, at_risk: 19, neglected: 0 },
 ];
 
 export const observedLists = [

@@ -2687,13 +2687,69 @@ await (async () => {
     assert.ok(matched >= 2, `only ${matched} Battr rows could be cross-checked against an observation`);
   });
 
+  check("the warned cohort is followed honestly", () => {
+    // The recovery figure — four of eight warned leads acted on within two
+    // days — is the single most useful number these emails have yielded, and
+    // it is also the easiest to overstate. These assertions are what keep it
+    // from quietly becoming a better story than the evidence supports.
+    const warned = observed.SEP_20.warnedOn18Sep;
+    const still = observed.SEP_20.stillAtRiskOn20Sep;
+    const left = observed.SEP_20.leftTierWithoutSweep;
+
+    assert.equal(warned.length, observed.SEP_18.at_risk_new_notes, "the cohort is exactly that night's new warnings");
+    assert.equal(new Set(warned).size, warned.length, "no lead counted twice");
+    assert.deepEqual(
+      [...still, ...left].sort((a, b) => a - b),
+      [...warned].sort((a, b) => a - b),
+      "every warned lead is accounted for as either still at risk or gone"
+    );
+    assert.equal(still.filter((id) => left.includes(id)).length, 0, "a lead cannot be in both");
+
+    // The load-bearing claim: they left WITHOUT being swept. If any of them is
+    // in the sweep list, "the agent worked it" is not an available reading.
+    const swept = new Set(observed.SEP_18.sweptIds);
+    for (const id of left) {
+      assert.ok(!swept.has(id), `${id} left the at-risk tier by being swept, not by being worked`);
+    }
+    assert.equal(observed.SEP_18.sweptIds.length, observed.SEP_18.records_moved, "the sweep list is complete");
+
+    // And the alternative reading must stay written down. A measurement that
+    // records only its flattering interpretation is not a measurement.
+    assert.match(observed.SEP_20.leftTierReading, /stage change|cannot distinguish/i);
+  });
+
+  check("Money Time is a destination, not an overflow", () => {
+    // 17 sweeps is far below maxSweepsPerPond, yet two leads still went to
+    // Money Time — so the overflow model cannot explain them, and the routing
+    // rule is something else. Recorded, not implemented: pond routing is only
+    // edited to match Battr's own rule screen.
+    const { assignmentTargets, moneyTimeIds, sweptIds } = observed.SEP_18;
+    assert.equal(moneyTimeIds.length, assignmentTargets.Pond["Money Time"], "the ids match the tally");
+    assert.ok(moneyTimeIds.every((id) => sweptIds.includes(id)), "every Money Time lead was swept this night");
+    assert.ok(
+      sweptIds.length < rules.maxSweepsPerPond,
+      `${sweptIds.length} sweeps is below the ${rules.maxSweepsPerPond} cap, so nothing overflowed`
+    );
+  });
+
   check("Battr's audit list is not pinned at its September peak", () => {
     // 880 was a single Tuesday, not a ceiling. Anything that treats it as the
     // target reads a shrinking list as our engine falling behind.
     const latest = observed.TIMELINE[observed.TIMELINE.length - 1];
     const peak = Math.max(...observed.TIMELINE.map((r) => r.total));
     assert.ok(latest.total < peak, "the most recent night is below the peak, so the peak is not the target");
-    assert.equal(latest.date, "2026-09-18", "the timeline must carry the most recent transcribed night");
+
+    // Ordering, not a pinned date. The first version of this check asserted the
+    // last row was 2026-09-18 and failed the moment the next night was
+    // transcribed — a test that has to be edited every time the data it guards
+    // is updated trains people to edit it without reading it.
+    const dates = observed.TIMELINE.map((r) => r.date);
+    assert.deepEqual(dates, [...dates].sort(), "the timeline must be in date order");
+    const newestNight = nights.map((n) => n.date).sort().pop();
+    assert.ok(
+      latest.date >= newestNight,
+      `the timeline ends at ${latest.date} but ${newestNight} has been observed — transcribe it or the drift table compares against a stale row`
+    );
   });
 })();
 
