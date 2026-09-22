@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { fubHeaders } from "@/lib/homeowners/fubMap";
+import { notifyAssignedAgent } from "@/lib/homeowners/agentAlert";
 
 export const runtime = "nodejs";
 
@@ -96,6 +97,22 @@ export async function POST(req: Request) {
     if (!res.ok) {
       const detail = (await res.text()).slice(0, 300);
       return NextResponse.json({ ok: false, error: `CRM error ${res.status}`, detail }, { status: 502, headers: CORS });
+    }
+    // Hot-intent lead → email the assigned agent directly (off by default; see
+    // agentAlert). Awaited but isolated so a notify failure never fails the lead.
+    try {
+      await notifyAssignedAgent({
+        firstName,
+        lastName,
+        email: data.email,
+        phone: data.phone,
+        address,
+        type: body.type,
+        tags,
+        message: body.message,
+      });
+    } catch {
+      // never block the lead on the alert
     }
     return NextResponse.json({ ok: true, queued: true }, { headers: CORS });
   } catch {
