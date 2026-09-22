@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { homeownerStore } from "@/lib/homeowners/store";
 import { valueHome } from "@/lib/homeowners/nvValue";
 import { sendValueEmail } from "@/lib/homeowners/email";
+import { isEligible } from "@/lib/homeowners/eligibility";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -32,14 +33,27 @@ async function run(req: Request) {
   const days = Number(url.searchParams.get("days") ?? 14);
   const dryRun = url.searchParams.get("dryRun") === "1";
 
+  // Batch cap: never run all ~34k due rows inside a 60s function (it would time
+  // out and blast a brand-new sending domain). ?limit= wins, else
+  // HOMEOWNER_DIGEST_BATCH, else 50; hard max 1000.
+  const limitRaw = Number(url.searchParams.get("limit") ?? process.env.HOMEOWNER_DIGEST_BATCH ?? 50);
+  const limit = Math.min(Math.max(Number.isFinite(limitRaw) ? Math.trunc(limitRaw) : 50, 0), 1000);
+
   const store = homeownerStore();
   const due = await store.listDueForEmail(Number.isFinite(days) ? days : 14);
+
+  // Enforce eligibility at send time so rows already in the table (out-of-state
+  // / junk email) can never be mailed, independent of import-time filtering.
+  const eligibleList = due.filter((h) => isEligible({ email: h.email, state: h.state, zip: h.zip }));
+  const skippedIneligible = due.length - eligibleList.length;
+  const batch = eligibleList.slice(0, limit);
+  const remaining = Math.max(0, eligibleList.length - batch.length);
 
   let refreshed = 0;
   let emailed = 0;
   const errors: string[] = [];
 
-  for (const h of due) {
+  for (const h of batch) {
     try {
       const { estimate: est, facts } = await valueHome(h);
       if (facts && !dryRun) await store.updateFacts(h.token, facts);
@@ -66,8 +80,13 @@ async function run(req: Request) {
   return NextResponse.json({
     ok: true,
     due: due.length,
+    eligible: eligibleList.length,
+    skippedIneligible,
+    limit,
+    attempted: batch.length,
     refreshed,
     emailed,
+    remaining,
     dryRun,
     errors: errors.slice(0, 10),
   });

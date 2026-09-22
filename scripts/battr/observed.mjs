@@ -104,7 +104,10 @@ export const SEP_8 = {
   at_risk: 23,
   at_risk_new_notes: 13,
   at_risk_already_flagged: 10,
-  neglected_processed: 45,
+  // Was `neglected_processed` — the only night that spelled it differently, and
+  // nothing read it under that name. A cross-check against TIMELINE found it,
+  // which is the point of having two copies reconcile.
+  neglected: 45,
   excluded_lead_bucket: 0,
   excluded_agent_group: 0,
   /** Sources seen across the 23 at-risk rows — all already classified as audited. */
@@ -683,7 +686,362 @@ export const SEP_16 = {
   bulkMoveObserved: true,
 };
 
-/** The eight observations in order, for anything that wants the trend. */
+/**
+ * A NINTH observation, Thu 17 Sep 2026 — the first night our own run can be set
+ * against Battr's with the interlock readable on both sides.
+ *
+ *   Total records in audit    796
+ *   At Risk records            32   (10 carried, 22 new)
+ *   Neglected records           7   (all 7 to Shark Tank)
+ *
+ * TWENTY-TWO NEW WARNINGS, AND TEN OF THEM ARE ONE BLOCK. Ten of the new
+ * at-risk rows share an owner, the source "Zillow", consecutive FUB ids, and
+ * `Previous Status: None` — several with no name at all. Consecutive ids mean
+ * they were created together; `Previous Status: None` means they were not in
+ * the audit list on the previous run. A sync or import dropped a batch in and
+ * they crossed the warn line before anyone touched them.
+ *
+ * Worth knowing before reading 22 as an accountability signal: it is 12 leads
+ * going quiet and 10 leads arriving unworked, which are different problems.
+ *
+ * A THIRD RE-SWEEP. One of the seven swept tonight was also swept on 16 Sep,
+ * carrying the same 9/10 stamp — the third night running that a lead has been
+ * claimed back out of a pond and taken again without being contacted. Same
+ * agent as the two on 16 Sep.
+ */
+export const SEP_17 = {
+  date: "2026-09-17",
+  weekday: "Thursday",
+  total: 796,
+  at_risk: 32,
+  at_risk_new_notes: 22,
+  at_risk_already_flagged: 10,
+  neglected: 7,
+  records_moved: 7,
+  records_not_moved: 0,
+  excluded_lead_bucket: 0,
+  excluded_agent_group: 0,
+  assignmentTargets: { Pond: { "Shark Tank": 7 } },
+  /** Ten of the 22 new warnings: one owner, one source, consecutive ids, no prior status. */
+  bulkArrivalsInNewWarnings: 10,
+  reSweptFromPreviousNight: 1,
+};
+
+/**
+ * OUR RUN THE SAME NIGHT (2026-09-17-qmti), for the record that matters.
+ *
+ *   audited      828   against Battr's 796   (+4.0%)
+ *   neglected     18   against Battr's   7
+ *   at risk      279   against Battr's  32
+ *
+ * THE INTERLOCK IS READABLE. `fields: allFields` landed and the "not one
+ * contact carries the stamp" block is gone from the report. Neglected moved
+ * 0 → 18, which is the first time that number has meant anything.
+ *
+ * THE AT-RISK GAP IS THE EMAIL RULE, not a defect — most likely. Battr judges
+ * on FUB's own Last Communication, which counts email. We exclude outbound
+ * email by policy, because one FUB batch send would mark the database as
+ * worked. A lead whose only recent contact is an email therefore reads as
+ * worked to Battr and untouched to us. That is the divergence this project
+ * chose on day one, and 279 against 32 is roughly its size.
+ *
+ * Stated as the leading explanation rather than a finding: it has not been
+ * measured directly, and the way to measure it is to count leads whose only
+ * activity in the window is email.
+ */
+export const OURS_SEP_17 = {
+  date: "2026-09-17",
+  runId: "2026-09-17-qmti",
+  audited: 828,
+  at_risk: 279,
+  neglected: 18,
+  interlockReadable: true,
+  /** Six of eight lists inside 6%. Two left, both the same root cause. */
+  drift: {
+    "💛 Sphere & Past Clients": 0.1,
+    "🗓️ CLEAN UP": -3.3,
+    "‼️ YLOPO IMPORTANT": -3.4,
+    "📖 Current & Upcoming Clients": 3.5,
+    "⭐️ Team Leads (combined)": -5.9,
+    "🎤 AI TEXT REPLIES": 10.0,
+    "🏹 Zillow Important": 218.2,
+    "❗Active Leads": -100.0,
+  },
+  /**
+   * BOTH REMAINING MISSES ARE ONE MISSING FIELD. Battr's rules for these two
+   * say "site activity"; we have no website-visit timestamp from FUB, only
+   * `lastActivity`, which counts everything.
+   *
+   * Active Leads used lastActivity and came back 8,083 against 131. Removing
+   * that fallback took it to 0 — wrong in the other direction, but visibly and
+   * honestly wrong rather than a sixty-fold overcount wearing a plausible
+   * number. Zillow Important still reads lastActivity and sits at +218%, which
+   * is the same error at a third the scale.
+   *
+   * The field list we have was read WITHOUT allFields, so it is not the whole
+   * record. A fresh inspect run is the thing that settles it.
+   */
+  blockedOn: "a website-visit timestamp from FUB; lastActivity is not it",
+};
+
+/**
+ * FRIDAY 18 SEPTEMBER — the first night both sides can be read against each
+ * other on the SAME DATE, with Battr's own numbers rather than a row typed in
+ * three nights earlier.
+ *
+ * This matters more than another data point. The drift table in our report has
+ * been measuring against Battr's 15 Sep figure of 880, because that was the
+ * last row anyone transcribed. Battr's real totals since then are 796 (17 Sep)
+ * and 790 (18 Sep) — the audit list has been SHRINKING while our comparison
+ * held a stale ceiling. Read against the right night, our population is
+ *
+ *     17 Sep   828 vs 796   +4.0%
+ *     18 Sep   809 vs 790   +2.4%
+ *
+ * not the −8.1% the report printed. The engine was never 8% short; the
+ * baseline was three days old. That is an argument for transcribing Battr's
+ * total every night until it is cancelled, and for the report naming the date
+ * of the row it is comparing against — which it already does, and which is the
+ * only reason this was catchable.
+ */
+export const SEP_18 = {
+  date: "2026-09-18",
+  weekday: "Friday",
+  total: 790,
+  at_risk: 17,
+  at_risk_new_notes: 8,
+  at_risk_already_flagged: 9,
+  neglected: 17,
+  records_moved: 17,
+  records_not_moved: 0,
+  excluded_lead_bucket: 0,
+  excluded_agent_group: 0,
+  assignmentTargets: { Pond: { "Shark Tank": 15, "Money Time": 2 } },
+
+  /**
+   * Ten of the seventeen sweeps: one owner, one source ("Zillow"), consecutive
+   * ids 101130–101141, all stamped At Risk 9/17 and swept 9/18. The same
+   * bulk-arrival shape as 17 Sep, one night later and larger.
+   *
+   * A lead created on 17 Sep cannot be four days without contact by 18 Sep, so
+   * Hot Leads' 2/4 clock cannot be what caught these. The consistent reading is
+   * that Battr treats a NULL last communication as infinitely old rather than
+   * as unknown: a lead that arrives and is never touched is neglected on the
+   * spot, and the one-day gap is the warn-first interlock, not the threshold.
+   *
+   * Worth testing directly before it is relied on — it is a behaviour we would
+   * be copying, and it decides what happens to every lead that arrives
+   * overnight.
+   */
+  bulkArrivalsInSweeps: 10,
+
+  /**
+   * POND ROUTING — the first evidence that is not consistent with overflow.
+   *
+   * 17 sweeps is well under `maxSweepsPerPond: 25`, so nothing overflowed, yet
+   * two leads still went to Money Time. Their sources were LPT Rider and
+   * TheRolandTeam.com; all fifteen Shark Tank leads came from portals and
+   * aggregators (Zillow, Google PPC, Ylopo, zbuyer.com, ISA Transfer, an agent
+   * referral).
+   *
+   * Hypothesis, NOT a rule: "Pond Assignments" routes by lead source or bucket
+   * — direct and organic leads to Money Time, portal leads to Shark Tank —
+   * which would fit the names and fit Money Time holding 134 against Shark
+   * Tank's 26,900.
+   *
+   * Recorded rather than implemented. Pond routing is only ever edited to match
+   * Battr's own rule screen, and that screen has not been read yet.
+   */
+  moneyTimeSources: ["LPT Rider", "TheRolandTeam.com"],
+  sharkTankWasPortalOnly: true,
+
+  /**
+   * Every lead swept this night, by FUB person id. Ids, not names — see the
+   * note on SEP_20's cohort for why that distinction is the whole of the
+   * privacy question here.
+   *
+   * Kept so that "the leads warned on 18 Sep were not among the leads swept on
+   * 18 Sep" is something the suite can check rather than something a comment
+   * asserts. The recovery figure depends on it.
+   */
+  sweptIds: [
+    52423, 99391, 81490, 31505, 85524, 101101, 101102,
+    101141, 101140, 101139, 101138, 101137, 101136, 101134, 101133, 101132, 101130,
+  ],
+  moneyTimeIds: [101101, 101102],
+};
+
+/**
+ * OUR RUN THE SAME NIGHT (2026-09-18-58c9).
+ *
+ *   audited      809   against Battr's 790   (+2.4%)
+ *   neglected      7   against Battr's  17
+ *   at risk      276   against Battr's  17
+ *
+ * THE AT-RISK GAP IS NOW WELL EVIDENCED, across four nights:
+ *
+ *     Battr   17 (2 Sep) · 32 (17 Sep) · 17 (18 Sep)
+ *     ours   279 (17 Sep) · 276 (18 Sep)
+ *
+ * Battr finds 2% of its audit at risk; we find 34%. A defect would wander with
+ * the population. This does not — it is a different definition applied
+ * consistently, and the definition we know differs is email. Battr judges on
+ * FUB's Last Communication, which counts an emailed lead as worked. We exclude
+ * outbound email deliberately, because one batch send in FUB would otherwise
+ * mark the whole database as worked.
+ *
+ * So 276 is not 17 measured wrongly. It is the number of leads nobody has
+ * CALLED OR TEXTED, and 17 is the number nobody has contacted by any channel
+ * including a bulk email. Both are correct answers to different questions, and
+ * which one the engine should report is Mike's call, not a bug to fix.
+ */
+export const OURS_SEP_18 = {
+  date: "2026-09-18",
+  runId: "2026-09-18-58c9",
+  audited: 809,
+  at_risk: 276,
+  neglected: 7,
+  interlockReadable: true,
+  /** Against Battr's SAME-NIGHT total, not the stale 880 the report used. */
+  populationDriftVsSameNight: 2.4,
+  atRiskGapExplanation: "email counts as a touch for Battr and deliberately does not for us",
+};
+
+/**
+ * SUNDAY 20 SEPTEMBER — an At Risk email with no Neglected email, which is the
+ * weekend shape seen on 12 and 13 Sep and consistent with the rule screen's
+ * "Weekdays Excluding Monday" sweep filter. Nudges every day, sweeps Tue–Fri.
+ *
+ * THE FIRST MEASUREMENT OF WHETHER A NUDGE ACTUALLY WORKS.
+ *
+ * Until now every night has been read on its own. Two nights of per-lead rows
+ * three days apart can be followed as a COHORT, and that is what finally makes
+ * "Battr Recovered" — the state this engine does not model — measurable from
+ * the emails alone.
+ *
+ * Battr warned eight leads on 18 Sep. On 20 Sep, four of those eight are still
+ * in the at-risk tier carrying an At Risk Since of 2026-09-18. The other four
+ * are gone from it.
+ *
+ * They were not swept: 19 and 20 Sep are Saturday and Sunday, sweeps do not run
+ * on either, and none of the four appears in the 18 Sep sweep list. So they
+ * left the at-risk tier by being worked — or by leaving the audit list some
+ * other way, such as a stage change. Both readings are recorded below rather
+ * than one being asserted, because the emails cannot tell them apart.
+ *
+ * Read conservatively, that is FOUR OF EIGHT WARNED LEADS ACTED ON WITHIN TWO
+ * DAYS. That number is the argument for the whole system, and it is the one
+ * Battr's own nightly email never states.
+ */
+export const SEP_20 = {
+  date: "2026-09-20",
+  weekday: "Sunday",
+  total: 777,
+  at_risk: 19,
+  at_risk_new_notes: 7,
+  at_risk_already_flagged: 12,
+  /** Sunday is not a sweep day; Battr sent no Neglected email at all. */
+  neglected_email_sent: false,
+  excluded_lead_bucket: 0,
+  excluded_agent_group: 0,
+
+  /**
+   * FUB person ids, not names. An id is a pointer that means nothing without
+   * access to the CRM, where a name is the client. Kept because a cohort
+   * cannot be followed across nights without them, and following the cohort is
+   * the only way to measure recovery from these emails.
+   */
+  warnedOn18Sep: [63970, 79119, 62608, 72773, 65492, 101034, 101122, 99468],
+  /** Of those eight, still at risk on 20 Sep with the 18 Sep stamp intact. */
+  stillAtRiskOn20Sep: [63970, 79119, 72773, 65492],
+  /**
+   * The other four. Not in the 18 Sep sweep list, and no sweep ran on either
+   * intervening day — so they left the tier without being swept.
+   */
+  leftTierWithoutSweep: [62608, 101034, 101122, 99468],
+  leftTierReading: "worked by the agent, or moved out of the audit list by a stage change — the emails cannot distinguish these",
+
+  /**
+   * The stamp survives across nights, again. Four leads carry At Risk Since
+   * 2026-09-18 three days later, which is the third independent confirmation
+   * that Battr never clears it — so the warn-first interlock asks "was this
+   * lead EVER warned", not "was it warned recently". Our rules already model
+   * it that way.
+   */
+  stampPersists: true,
+};
+
+/**
+ * OUR RUN THE SAME NIGHT (2026-09-20-h4cs).
+ *
+ *   audited      811   against Battr's 777   (+4.4%)
+ *   at risk      276   against Battr's  19
+ *   neglected     12   against a Sunday, when Battr does not sweep at all
+ *
+ * Our at-risk figure has now been 279, 276, 276 on three consecutive readings
+ * while Battr's has been 32, 17, 19. Ours is the steadier of the two, which is
+ * what a threshold applied to a slowly-changing population looks like. Battr's
+ * moves because its number is the tier AFTER same-day nudges have cleared some
+ * of it; ours is the tier before any action, because no action is taken.
+ *
+ * The neglected comparison is not available on a Sunday. Battr sends no
+ * Neglected email on a non-sweep day, so 12 has nothing to sit beside — and
+ * writing 0 in the other column would turn "we did not look" into "we looked
+ * and it was empty".
+ */
+export const OURS_SEP_20 = {
+  date: "2026-09-20",
+  runId: "2026-09-20-h4cs",
+  audited: 811,
+  at_risk: 276,
+  neglected: 12,
+  populationDriftVsSameNight: 4.4,
+  /** Sunday. Battr ran no sweep, so there is no figure to compare 12 against. */
+  neglectedComparable: false,
+  /**
+   * Still carrying the "AN EXCLUSION PROTECTS NOBODY" banner, because the
+   * paused-agent fix is on the feature branch and the nightly runs from main.
+   * The banner goes when the branch lands, not before.
+   */
+  pausedAgentFixLive: false,
+};
+
+/**
+ * OUR RUN, MONDAY 21 SEPTEMBER (2026-09-21-9bni). 813 audited, 291 at risk,
+ * 12 neglected.
+ *
+ * TWO LISTS NOW LAND EXACTLY: ‼️ YLOPO IMPORTANT at 116 against 116, and
+ * 🎤 AI TEXT REPLIES at 10 against 10. Both were guesses reverse-engineered
+ * from a compliance split six weeks ago and both were wrong; both were
+ * rewritten from Battr's rule screens on 3 Sep. Landing on the number is what
+ * a correctly transcribed rule looks like.
+ *
+ * NOTHING ON THIS BRANCH IS IN THAT RUN. The nightly job runs from main, and
+ * this is the third consecutive night whose report carries the stale 880
+ * baseline (printing −7.6% where the same-night figure is about +4%), the
+ * "AN EXCLUSION PROTECTS NOBODY" banner that the paused-agent fix removes, and
+ * a drift table with no staleness marking. Every one of those is fixed here
+ * and none of it is running. Recording it so the gap between "fixed" and
+ * "live" stays visible in the data rather than only in a chat message.
+ */
+export const OURS_SEP_21 = {
+  date: "2026-09-21",
+  runId: "2026-09-21-9bni",
+  audited: 813,
+  at_risk: 291,
+  neglected: 12,
+  /** Lists matching Battr's transcribed count exactly. */
+  exactMatches: ["‼️ YLOPO IMPORTANT", "🎤 AI TEXT REPLIES"],
+  /**
+   * The report still compares against Battr's 15 Sep total because the rows
+   * transcribed since then live on this branch. Not a new fault — the same one,
+   * still shipping.
+   */
+  comparedAgainstStaleBaseline: true,
+  branchLive: false,
+};
+
+/** The observations in order, for anything that wants the trend. */
 export const TIMELINE = [
   { date: "2026-09-02", weekday: "Wed", total: 866, at_risk: 17, neglected: 7 },
   { date: "2026-09-08", weekday: "Tue", total: 903, at_risk: 23, neglected: 45 },
@@ -698,6 +1056,13 @@ export const TIMELINE = [
   // A new pond appeared and ~86 leads left the list by some route other than a
   // sweep, so the drain arithmetic has nothing to say about this pair.
   { date: "2026-09-16", weekday: "Wed", total: 786, at_risk: 19, neglected: 8 },
+  { date: "2026-09-17", weekday: "Thu", total: 796, at_risk: 32, neglected: 7 },
+  // The largest sweep since 8 Sep, and ten of the seventeen were leads that had
+  // arrived the previous day and never been touched.
+  { date: "2026-09-18", weekday: "Fri", total: 790, at_risk: 17, neglected: 17 },
+  // 19 Sep (Sat) not captured, though eight leads carry its stamp. Sunday's
+  // `neglected: 0` is the day filter again — nothing was allowed to move.
+  { date: "2026-09-20", weekday: "Sun", total: 777, at_risk: 19, neglected: 0 },
 ];
 
 export const observedLists = [

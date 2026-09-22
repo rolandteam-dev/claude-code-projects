@@ -26,6 +26,7 @@ import { FubClient } from "./battr/fub.mjs";
 import { rules } from "./battr/rules.mjs";
 import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, isExemptAgent, lower, hasAny, daysBetween, readInboundEmails, findUnansweredInbound, runReportOnlyLists, foldTouches } from "./battr/classify.mjs";
 import { normalizeContact } from "./battr/contact.mjs";
+import { resolvePausedOwners } from "./battr/paused.mjs";
 import { isDayAllowed } from "./battr/schedule.mjs";
 import { lists, reportOnlyLists } from "./battr/lists.mjs";
 import { bucketName, isSourceAudited } from "./battr/sources.mjs";
@@ -143,7 +144,7 @@ async function replyReprieve(fub, personId, sinceIso, diag) {
 
 // ---------------------------------------------------------------------- report
 
-function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], touchIncomplete = [], unenforceable = [], comparisonDrift = [] }) {
+function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], touchIncomplete = [], unenforceable = [], comparisonDrift = [], passedOver = { beforeList: 0, pausedAgents: 0, pausedLeads: 0 } }) {
   const byAgent = new Map();
   for (const r of results) {
     if (r.status === "excluded" || !r.owner) continue;
@@ -229,7 +230,21 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
   lines.push(
     `- Neglected: **${actions.neglected.length}** (${actions.swept.length} swept, ${actions.heldBack.length} held back)`
   );
-  lines.push(`- Excluded: ${results.filter((r) => r.status === "excluded").length}`);
+  // Both halves, because they moved between each other once already and the
+  // total is the only thing that stayed honest through it.
+  const excludedAfterList = results.filter((r) => r.status === "excluded").length;
+  lines.push(
+    `- Excluded: **${excludedAfterList + passedOver.beforeList}** ` +
+      `(${passedOver.beforeList} never entered the audit list, ${excludedAfterList} removed after it)`
+  );
+  if (passedOver.pausedAgents) {
+    // Reported, not logged. The last two times a number like this went to
+    // stderr only, it took days to notice it was wrong.
+    lines.push(
+      `- Paused agents: **${passedOver.pausedAgents}** on \`${rules.excludeOwnerTeamNames.join(", ")}\`, ` +
+        `holding ${passedOver.pausedLeads} lead(s) back from nudges and sweeps`
+    );
+  }
 
   // A bound cap means the run did NOT do what the rules say it should — it did
   // less, deliberately. That is the brake working, but it has to be visible:
@@ -359,11 +374,26 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     lines.push("| --- | ---: | ---: | ---: | --- |");
     for (const d of comparisonDrift) {
       const sign = d.driftPct > 0 ? "+" : "";
-      lines.push(
-        `| ${d.listName} | ${d.ours} | ${d.battr} | ${sign}${d.driftPct.toFixed(1)}% | ${d.battrDate} |`
-      );
+      // A drift figure is only a disagreement when both sides are the same
+      // night. Marked inline, not footnoted: the footnote was already there on
+      // 20 Sep and the −7.8% was still read as the engine falling behind.
+      const age = d.comparable ? d.battrDate : `${d.battrDate} ⚠ ${d.staleDays}d older`;
+      const pct = d.comparable ? `${sign}${d.driftPct.toFixed(1)}%` : `(${sign}${d.driftPct.toFixed(1)}%)`;
+      lines.push(`| ${d.listName} | ${d.ours} | ${d.battr} | ${pct} | ${age} |`);
     }
     lines.push("");
+
+    const stale = comparisonDrift.filter((d) => !d.comparable);
+    if (stale.length) {
+      lines.push(
+        `> **${stale.length} of ${comparisonDrift.length} rows compare against a Battr count from a different day**, ` +
+          "shown in brackets. Battr's audit list moves on its own — it ran 880 on 15 Sep and 777 on 20 Sep — so a " +
+          "drift figure spanning several days is measuring that movement, not a disagreement with us. " +
+          "Transcribe the current night before trusting a bracketed number."
+      );
+      lines.push("");
+    }
+
     lines.push(
       "Worst drift first. Battr's rows are typed in by hand from its Aida Audits screen, which has no " +
         "export — so a stale date in the last column means nobody has transcribed lately, not that Battr " +
@@ -598,9 +628,39 @@ async function main() {
   // Rules that are configured but cannot fire against this account's data.
   // Collected during classification, surfaced at the top of the report.
   const unenforceable = [];
+
+  /**
+   * Leads the combined list never admitted, and why.
+   *
+   * These used to be invisible and then, worse, misleadingly visible. Before
+   * the paused-agent fix, a lead owned by an exempt agent entered the list and
+   * was marked "excluded" after the union, so the report's Excluded line
+   * counted it. After the fix the same lead carries the paused marker and is
+   * filtered at MEMBERSHIP, so it never reaches that line: the 22 Sep run
+   * printed "Excluded: 10" where the night before printed 823, while auditing
+   * exactly the same 813 leads.
+   *
+   * Nothing had changed about who was protected. The number that said so had
+   * simply stopped counting most of them, which is the kind of silent drop this
+   * report exists to prevent.
+   */
+  const passedOver = { beforeList: 0, pausedAgents: 0, pausedLeads: 0 };
+
+  // Who is on a paused team. Roster data, resolved ONCE from /v1/teams rather
+  // than read off each lead — Follow Up Boss returns no team membership on a
+  // person, which is why this exclusion protected nobody for as long as it did.
+  const paused = await resolvePausedOwners(fub, rules.excludeOwnerTeamNames, log);
+  log(
+    paused.enforceable
+      ? `  paused teams: ${paused.matched.join(", ")} → ${paused.userIds.size} agent(s)`
+      : `  paused teams: NOT RESOLVED (${rules.excludeOwnerTeamNames.join(", ") || "none configured"})`
+  );
+
   const classifyPopulation = ({ quiet = false } = {}) => {
     const say = quiet ? () => {} : log;
-    contacts = people.map((p) => normalizeContact(p, touchIndex.get(p.id), fields));
+    contacts = people.map((p) =>
+      normalizeContact(p, touchIndex.get(p.id), fields, { pausedOwnerIds: paused.userIds })
+    );
 
     let results;
     if (rules.mode === "lists") {
@@ -664,22 +724,30 @@ async function main() {
         say(`  ${stamped} contacts carry an At Risk Since stamp — the interlock is readable.`);
       }
 
-      if (
-        rules.excludeOwnerGroupIds.length &&
-        !contacts.some((c) => (c.owner_group_ids ?? []).length) &&
-        !unenforceable.some((u) => u.rule.startsWith("Owner-group"))
-      ) {
+      // Three distinct states, and collapsing them is what hid this for weeks.
+      // "Nobody is on the paused team" and "the exclusion cannot fire" both
+      // produce zero protected leads, but only the second is a defect.
+      const markedLeads = contacts.filter((c) => (c.owner_group_ids ?? []).length).length;
+      if (!paused.enforceable && !unenforceable.some((u) => u.rule.startsWith("Owner-group"))) {
         unenforceable.push({
-          rule: `Owner-group exclusion (group ${rules.excludeOwnerGroupIds.join(", ")} — "Battr Paused")`,
-          why:
-            "Follow Up Boss returns neither `assignedUserGroupIds` nor `groupIds` on a person, confirmed against " +
-            "the live account. Every contact carries an empty array, so “not in that group” is true for " +
-            "everyone and the condition excludes nobody.",
+          rule: `Owner-group exclusion (“${rules.excludeOwnerTeamNames.join(", ") || "none configured"}”)`,
+          why: paused.missing.length
+            ? `No Follow Up Boss team is named ${paused.missing.map((n) => `“${n}”`).join(" or ")}. ` +
+              "A team name that matches nothing protects nobody, and it reads on the rule screen exactly " +
+              "like a team that is simply empty."
+            : "No paused team is configured, so no agent's leads are held back by team membership.",
         });
+      } else if (paused.enforceable) {
+        say(
+          paused.userIds.size
+            ? `  paused-agent exclusion ENFORCED: ${paused.userIds.size} agent(s), ${markedLeads} lead(s) held back`
+            : `  paused-agent exclusion is enforceable but the team is empty — it holds back nobody today. ` +
+              `That is a roster fact, not a fault; add an agent to “${paused.matched.join(", ")}” to use it.`
+        );
       }
-      if (!contacts.some((c) => (c.owner_group_ids ?? []).length)) {
-        say(`  WARNING: no contact carries owner_group_ids — the owner-group exclusion (${rules.excludeOwnerGroupIds.join(", ")}) is NOT being enforced. Exempt those agents by name in rules.exemptAgents instead.`);
-      }
+      passedOver.beforeList = run.excluded.length;
+      passedOver.pausedAgents = paused.userIds.size;
+      passedOver.pausedLeads = markedLeads;
       say(`  ${run.records.length} in the combined list, ${run.excluded.length} excluded by bucket/group`);
 
       // Two exclusions applied after the union, both surfaced as "excluded" in the
@@ -1052,7 +1120,7 @@ async function main() {
   mkdirSync(LOG_DIR, { recursive: true });
   if (sweepLog.sweeps.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
 
-  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete, unenforceable, comparisonDrift });
+  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete, unenforceable, comparisonDrift, passedOver });
   const reportPath = await deliverReport(markdown, { runId, dry });
 
   console.log(markdown);

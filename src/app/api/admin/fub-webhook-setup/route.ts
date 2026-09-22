@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { site } from "@/lib/site";
+import { homeownerBrand } from "@/lib/homeowners/brand";
 import { FUB_BASE, fubHeaders } from "@/lib/homeowners/fubMap";
 
 export const runtime = "nodejs";
@@ -40,7 +40,17 @@ export async function GET(req: Request) {
   }
 
   const headers = fubHeaders(key, { "Content-Type": "application/json" });
-  const targetUrl = `${site.url.replace(/\/$/, "")}/api/webhooks/fub?secret=${encodeURIComponent(secret)}`;
+  // Register the webhook against the homeowner origin (HOMEOWNER_BASE_URL, with
+  // a safe fallback to site.url), NOT the marketing site — the receiver lives on
+  // the Roland Team host.
+  const targetUrl = `${homeownerBrand.baseUrl.replace(/\/$/, "")}/api/webhooks/fub?secret=${encodeURIComponent(secret)}`;
+  const currentOrigin = (() => {
+    try {
+      return new URL(targetUrl).origin;
+    } catch {
+      return "";
+    }
+  })();
   const action = (params.get("action") || "list").toLowerCase();
 
   // Current webhooks
@@ -56,12 +66,32 @@ export async function GET(req: Request) {
   const mine = existing.filter((w) => typeof w?.url === "string" && w.url.includes("/api/webhooks/fub"));
 
   if (action === "list") {
+    const registered = mine.map((w) => {
+      let matchesCurrentTarget = false;
+      try {
+        matchesCurrentTarget = !!currentOrigin && new URL(String(w.url)).origin === currentOrigin;
+      } catch {
+        matchesCurrentTarget = false;
+      }
+      return {
+        id: w.id,
+        event: w.event,
+        url: mask(String(w.url ?? "")),
+        status: w.status,
+        matchesCurrentTarget,
+      };
+    });
+    const anyMismatch = registered.some((r) => !r.matchesCurrentTarget);
     return NextResponse.json({
       ok: true,
       action,
       targetUrl: mask(targetUrl),
-      registered: mine.map((w) => ({ id: w.id, event: w.event, url: mask(String(w.url ?? "")), status: w.status })),
-      note: mine.length ? "Webhooks are registered." : "None registered yet — add &action=install to set them up.",
+      registered,
+      note: !mine.length
+        ? "None registered yet — add &action=install to set them up."
+        : anyMismatch
+          ? "Some registered webhooks point at a different origin than the current target. Run &action=uninstall then &action=install to re-point them."
+          : "Webhooks are registered.",
     });
   }
 

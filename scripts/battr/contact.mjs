@@ -13,6 +13,10 @@
 import { bucketForSource } from "./sources.mjs";
 import { rules } from "./rules.mjs";
 import { TIMEFRAME_IDS } from "./lists.mjs";
+import { PAUSED_GROUP_MARKER } from "./paused.mjs";
+
+/** Shared so the default never becomes a per-call allocation in a 54k loop. */
+const EMPTY_SET = new Set();
 
 /** Resolve FUB's numeric timeframe id to the band name the nurture lists match on. */
 const resolveTimeframe = (person) => {
@@ -28,7 +32,12 @@ const first = (...values) => values.find((v) => v !== undefined && v !== null &&
  * @param touch    { lastOutbound, lastInbound } epoch ms from the activity index
  * @param stamps   custom-field API names we resolved, e.g. { atRiskSince: 'customBattrAtRiskSince' }
  */
-export function normalizeContact(person, touch, stamps = {}, { inboundCountsAsTouch = rules.inboundCountsAsTouch } = {}) {
+export function normalizeContact(
+  person,
+  touch,
+  stamps = {},
+  { inboundCountsAsTouch = rules.inboundCountsAsTouch, pausedOwnerIds = EMPTY_SET } = {}
+) {
   const tags = Array.isArray(person.tags) ? person.tags : [];
 
   // "Last communication" is a CALL or a TEXT, in either direction.
@@ -63,7 +72,23 @@ export function normalizeContact(person, touch, stamps = {}, { inboundCountsAsTo
     owner_user_id: person.assignedUserId ?? null,
     owner_name: person.assignedTo ?? null,
     crm_pond_id: first(person.assignedPondId, person.pondId, null) ?? null,
-    owner_group_ids: person.assignedUserGroupIds ?? person.groupIds ?? [],
+    /**
+     * NOT read from the person. Follow Up Boss returns neither
+     * `assignedUserGroupIds` nor `groupIds`, so this was `[]` on every lead and
+     * `[] DOES NOT CONTAIN ANY [52555]` was true for everybody — the exclusion
+     * matched nobody while Battr's rule screen showed it active.
+     *
+     * Team membership belongs to the AGENT. `pausedOwnerIds` is resolved once
+     * per run from /v1/teams and the marker is stamped here, so the rule JSON
+     * pasted from Battr keeps matching without being rewritten to fit us.
+     *
+     * The FUB fields are still read first on the chance an account does return
+     * them; on this one they never do.
+     */
+    owner_group_ids:
+      person.assignedUserGroupIds ??
+      person.groupIds ??
+      (pausedOwnerIds.has(person.assignedUserId) ? [PAUSED_GROUP_MARKER] : []),
 
     // pipeline
     crm_stage_exid: first(person.stageId, person.stage_id, null) ?? null,
