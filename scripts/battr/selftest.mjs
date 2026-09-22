@@ -2346,6 +2346,23 @@ try {
   check("the report offers an undo command", () => {
     assert.match(stdout, /--undo=/);
   });
+
+  check("the excluded count says where the exclusions happened", () => {
+    // The 22 Sep regression. Before the paused-agent fix, a lead owned by an
+    // exempt agent entered the combined list and was marked excluded after the
+    // union, so the Excluded line counted it. After the fix the same lead
+    // carries the paused marker and is filtered at membership, so it never
+    // reaches that line — the run printed "Excluded: 10" where the night
+    // before printed 823, while auditing exactly the same 813 leads.
+    //
+    // Nothing had changed about who was protected. The number that said so had
+    // stopped counting most of them. A single figure that can halve because a
+    // lead was filtered one step earlier is not reporting an exclusion, it is
+    // reporting an implementation detail.
+    assert.match(stdout, /- Excluded: \*\*\d+\*\*/, "the total must be the bold number");
+    assert.match(stdout, /never entered the audit list/, "and it must break down by where");
+    assert.match(stdout, /removed after it/);
+  });
 } finally {
   server.close();
   // Only ever the scratch directory. Removing ROOT/battr-logs here destroyed the

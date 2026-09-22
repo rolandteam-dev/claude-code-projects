@@ -144,7 +144,7 @@ async function replyReprieve(fub, personId, sinceIso, diag) {
 
 // ---------------------------------------------------------------------- report
 
-function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], touchIncomplete = [], unenforceable = [], comparisonDrift = [] }) {
+function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], touchIncomplete = [], unenforceable = [], comparisonDrift = [], passedOver = { beforeList: 0, pausedAgents: 0, pausedLeads: 0 } }) {
   const byAgent = new Map();
   for (const r of results) {
     if (r.status === "excluded" || !r.owner) continue;
@@ -230,7 +230,21 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
   lines.push(
     `- Neglected: **${actions.neglected.length}** (${actions.swept.length} swept, ${actions.heldBack.length} held back)`
   );
-  lines.push(`- Excluded: ${results.filter((r) => r.status === "excluded").length}`);
+  // Both halves, because they moved between each other once already and the
+  // total is the only thing that stayed honest through it.
+  const excludedAfterList = results.filter((r) => r.status === "excluded").length;
+  lines.push(
+    `- Excluded: **${excludedAfterList + passedOver.beforeList}** ` +
+      `(${passedOver.beforeList} never entered the audit list, ${excludedAfterList} removed after it)`
+  );
+  if (passedOver.pausedAgents) {
+    // Reported, not logged. The last two times a number like this went to
+    // stderr only, it took days to notice it was wrong.
+    lines.push(
+      `- Paused agents: **${passedOver.pausedAgents}** on \`${rules.excludeOwnerTeamNames.join(", ")}\`, ` +
+        `holding ${passedOver.pausedLeads} lead(s) back from nudges and sweeps`
+    );
+  }
 
   // A bound cap means the run did NOT do what the rules say it should — it did
   // less, deliberately. That is the brake working, but it has to be visible:
@@ -615,6 +629,23 @@ async function main() {
   // Collected during classification, surfaced at the top of the report.
   const unenforceable = [];
 
+  /**
+   * Leads the combined list never admitted, and why.
+   *
+   * These used to be invisible and then, worse, misleadingly visible. Before
+   * the paused-agent fix, a lead owned by an exempt agent entered the list and
+   * was marked "excluded" after the union, so the report's Excluded line
+   * counted it. After the fix the same lead carries the paused marker and is
+   * filtered at MEMBERSHIP, so it never reaches that line: the 22 Sep run
+   * printed "Excluded: 10" where the night before printed 823, while auditing
+   * exactly the same 813 leads.
+   *
+   * Nothing had changed about who was protected. The number that said so had
+   * simply stopped counting most of them, which is the kind of silent drop this
+   * report exists to prevent.
+   */
+  const passedOver = { beforeList: 0, pausedAgents: 0, pausedLeads: 0 };
+
   // Who is on a paused team. Roster data, resolved ONCE from /v1/teams rather
   // than read off each lead — Follow Up Boss returns no team membership on a
   // person, which is why this exclusion protected nobody for as long as it did.
@@ -714,6 +745,9 @@ async function main() {
               `That is a roster fact, not a fault; add an agent to “${paused.matched.join(", ")}” to use it.`
         );
       }
+      passedOver.beforeList = run.excluded.length;
+      passedOver.pausedAgents = paused.userIds.size;
+      passedOver.pausedLeads = markedLeads;
       say(`  ${run.records.length} in the combined list, ${run.excluded.length} excluded by bucket/group`);
 
       // Two exclusions applied after the union, both surfaced as "excluded" in the
@@ -1086,7 +1120,7 @@ async function main() {
   mkdirSync(LOG_DIR, { recursive: true });
   if (sweepLog.sweeps.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
 
-  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete, unenforceable, comparisonDrift });
+  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete, unenforceable, comparisonDrift, passedOver });
   const reportPath = await deliverReport(markdown, { runId, dry });
 
   console.log(markdown);
