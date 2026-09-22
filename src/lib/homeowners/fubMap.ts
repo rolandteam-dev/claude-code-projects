@@ -9,6 +9,7 @@
  */
 import { createHmac } from "crypto";
 import type { Homeowner } from "./store";
+import { isEligible } from "./eligibility";
 
 export const FUB_BASE = "https://api.followupboss.com";
 
@@ -49,19 +50,24 @@ export function pickAddress(person: any): { street: string; city: string; state:
   return {
     street,
     city: (a.city || "").trim(),
-    state: (a.state || "NV").trim(),
+    // Do NOT default a missing state to "NV" — that invented Nevada addresses
+    // for out-of-state contacts. Eligibility is judged on ZIP, not state.
+    state: (a.state || "").trim(),
     zip: (a.code || a.zip || "").trim(),
   };
 }
 
 /**
  * Map a FUB person record to a Homeowner. Returns null when the contact has no
- * usable home address or no email — the two things the dashboard + email need.
+ * usable home address, or fails eligibility (invalid/unmailable email, or a
+ * non-Nevada / unknown location) — so both the bulk importer and the real-time
+ * webhook keep the store to real Nevada addresses.
  */
 export function personToHomeowner(person: any): Homeowner | null {
   const addr = pickAddress(person);
+  if (!addr) return null;
   const email = person?.emails?.[0]?.value ?? "";
-  if (!addr || !email) return null;
+  if (!isEligible({ email, state: addr.state, zip: addr.zip })) return null;
   const now = new Date().toISOString();
   return {
     id: `fub-${person.id}`,
