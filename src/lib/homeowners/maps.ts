@@ -1,14 +1,21 @@
 /**
- * Google Maps helpers for the homeowner dashboard — both env-gated on
- * GOOGLE_MAPS_API_KEY so they degrade to nothing when unconfigured.
+ * Google Maps helpers for the homeowner dashboard — env-gated so each degrades
+ * to nothing when unconfigured. They use DIFFERENT keys on purpose:
  *
  *  • staticMapUrl() — a Static Maps image of the home + nearby sold comps
- *    (lettered pins, matching the comp cards). Rendered as a plain <img>.
- *  • googleReviews() — the team's Google Business rating + a few reviews via
- *    the Places Details API (needs GOOGLE_PLACE_ID too).
+ *    (lettered pins, matching the comp cards). Rendered as a plain <img>, so its
+ *    key (GOOGLE_MAPS_API_KEY) is visible in the browser and MUST be locked down
+ *    with an HTTP-referrer restriction.
+ *  • googleReviews() — the team's Google Business rating + a few reviews via the
+ *    Places Details API (needs GOOGLE_PLACE_ID too). This runs SERVER-SIDE from
+ *    Vercel and sends no Referer header, so a referrer-restricted key returns
+ *    nothing and the reviews silently disappear. Give it its own unrestricted
+ *    (or IP-restricted) key via GOOGLE_PLACES_API_KEY; it falls back to
+ *    GOOGLE_MAPS_API_KEY when that isn't set.
  *
- * Restrict the Maps key by HTTP referrer in Google Cloud — it appears in the
- * map image URL (as every Static/Embed Maps key does).
+ * Note: this calls the LEGACY endpoint (maps.googleapis.com/maps/api/place/
+ * details/json), so the key needs the classic "Places API" enabled — NOT only
+ * "Places API (New)".
  */
 import type { Comp } from "@/lib/idx/market";
 
@@ -49,7 +56,9 @@ export type GoogleReviews = {
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export async function googleReviews(): Promise<GoogleReviews> {
-  const key = process.env.GOOGLE_MAPS_API_KEY;
+  // Server-side call: prefer a key WITHOUT a referrer restriction (Vercel sends
+  // no Referer), falling back to the Maps key for single-key setups.
+  const key = process.env.GOOGLE_PLACES_API_KEY || process.env.GOOGLE_MAPS_API_KEY;
   const placeId = process.env.GOOGLE_PLACE_ID;
   if (!key || !placeId) return null;
   try {
