@@ -52,6 +52,7 @@ organically for community/neighborhood and buyer/seller search terms.
 - `GOOGLE_MAPS_API_KEY` — powers the homeowner dashboard's Recent Sales map (Static Maps, browser `<img>`). Restrict it by HTTP referrer — it appears in the map image URL. The map hides when unset.
 - `GOOGLE_PLACES_API_KEY` — server-side key for the Google reviews module (Places Details, legacy endpoint — enable the classic **"Places API"**, not only "Places API (New)"). Because the call runs from Vercel with no Referer, this key must NOT be referrer-restricted (leave unrestricted or IP-restrict it). Falls back to `GOOGLE_MAPS_API_KEY` when unset, but a referrer-restricted Maps key will make reviews silently return null — hence the split.
 - `GOOGLE_PLACE_ID` — the team's Google Business place id; with a Places key, drives the Contact Agent / Google reviews module (rating + recent reviews). Find it via Google's Place ID finder.
+- `BUYING_VIDEO_ID` — YouTube video id for the homeowner dashboard's "Buying a Home" module (just the id, e.g. `DGQMJufo4l8`, not the full URL). Defaults to a sensible value; set this to swap the video without a code change.
 
 ## Roadmap (next)
 - Client Portal on real auth + a database (hubs that follow a client across devices; per-agent dashboard access)

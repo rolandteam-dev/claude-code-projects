@@ -123,7 +123,7 @@ export default async function DashboardPage({
       beds={h.beds}
       baths={h.baths}
       sqft={h.sqft}
-      buyingVideoId="Ef2qDo5_1Q4"
+      buyingVideoId={process.env.BUYING_VIDEO_ID || "DGQMJufo4l8"}
       currentValue={latest.value}
       low={latest.low}
       high={latest.high}
