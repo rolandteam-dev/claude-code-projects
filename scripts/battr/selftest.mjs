@@ -2722,13 +2722,41 @@ await (async () => {
     );
     assert.equal(still.filter((id) => left.includes(id)).length, 0, "a lead cannot be in both");
 
-    // The load-bearing claim: they left WITHOUT being swept. If any of them is
-    // in the sweep list, "the agent worked it" is not an available reading.
-    const swept = new Set(observed.SEP_18.sweptIds);
-    for (const id of left) {
-      assert.ok(!swept.has(id), `${id} left the at-risk tier by being swept, not by being worked`);
+    // The load-bearing claim: they left WITHOUT being swept.
+    //
+    // The first version of this checked only SEP_18's sweep list, and passed
+    // while the claim was wrong. Lead 101122 was swept four nights later, on
+    // 22 Sep, still carrying its 18 Sep stamp — it had aged from at-risk into
+    // neglected and waited out three non-sweep days. A cohort claim has to be
+    // checked against EVERY sweep we know about, not the one night it was
+    // written on, or it only ever confirms itself.
+    const everSwept = new Map();
+    for (const night of nights) {
+      for (const id of night.sweptIds ?? []) if (!everSwept.has(id)) everSwept.set(id, night.date);
     }
-    assert.equal(observed.SEP_18.sweptIds.length, observed.SEP_18.records_moved, "the sweep list is complete");
+    const laterSwept = new Set(observed.SEP_20.laterSwept ?? []);
+    for (const id of left) {
+      if (everSwept.has(id)) {
+        assert.ok(
+          laterSwept.has(id),
+          `${id} was swept on ${everSwept.get(id)} but is not recorded in SEP_20.laterSwept — ` +
+            "the recovery figure is counting a lead that aged through instead"
+        );
+      }
+    }
+
+    // And the headline must move when the evidence does.
+    assert.equal(
+      observed.SEP_20.recoveredUpperBound,
+      left.length - laterSwept.size,
+      "the recovery bound must exclude every lead later found in a sweep list"
+    );
+    assert.ok(/aged past|neglected tier/i.test(observed.SEP_20.leftTierReading), "and ageing out must be one of the readings");
+
+    for (const night of nights) {
+      if (night.sweptIds === undefined || night.records_moved === undefined) continue;
+      assert.equal(night.sweptIds.length, night.records_moved, `${night.date}: the sweep list is complete`);
+    }
 
     // And the alternative reading must stay written down. A measurement that
     // records only its flattering interpretation is not a measurement.
@@ -2736,17 +2764,52 @@ await (async () => {
   });
 
   check("Money Time is a destination, not an overflow", () => {
-    // 17 sweeps is far below maxSweepsPerPond, yet two leads still went to
-    // Money Time — so the overflow model cannot explain them, and the routing
-    // rule is something else. Recorded, not implemented: pond routing is only
-    // edited to match Battr's own rule screen.
-    const { assignmentTargets, moneyTimeIds, sweptIds } = observed.SEP_18;
-    assert.equal(moneyTimeIds.length, assignmentTargets.Pond["Money Time"], "the ids match the tally");
-    assert.ok(moneyTimeIds.every((id) => sweptIds.includes(id)), "every Money Time lead was swept this night");
+    // Sweeps stayed far below maxSweepsPerPond on every night we have, yet
+    // Money Time still took leads. The overflow model cannot explain that.
+    let checked = 0;
+    for (const night of nights) {
+      const { assignmentTargets, moneyTimeIds, sweptIds } = night;
+      if (!assignmentTargets?.Pond?.["Money Time"]) continue;
+      // Earlier nights were transcribed as tallies only, before per-lead ids
+      // were worth keeping. Their cap assertion still holds; the id crosscheck
+      // simply has nothing to check.
+      if (!moneyTimeIds || !sweptIds) {
+        assert.ok(
+          Object.values(assignmentTargets.Pond).reduce((a, b) => a + b, 0) < rules.maxSweepsPerPond,
+          `${night.date}: sweeps stayed under the ${rules.maxSweepsPerPond} cap`
+        );
+        continue;
+      }
+      assert.equal(moneyTimeIds.length, assignmentTargets.Pond["Money Time"], `${night.date}: ids match the tally`);
+      assert.ok(moneyTimeIds.every((id) => sweptIds.includes(id)), `${night.date}: every Money Time lead was swept`);
+      assert.ok(
+        sweptIds.length < rules.maxSweepsPerPond,
+        `${night.date}: ${sweptIds.length} sweeps is below the ${rules.maxSweepsPerPond} cap, so nothing overflowed`
+      );
+      checked++;
+    }
+    assert.ok(checked >= 2, `only ${checked} nights sent anything to Money Time`);
+  });
+
+  check("pond routing is not explained by lead source", () => {
+    // Proposed 20 Sep from a single night — direct and organic to Money Time,
+    // portals to Shark Tank — and refuted on 22 Sep, when Money Time took a
+    // Zillow Preferred lead on a night Shark Tank took Zillow Preferred too.
+    //
+    // Nothing was implemented on the hypothesis, which is the only reason it
+    // cost a comment rather than a rollback. This check exists so the idea
+    // cannot quietly return: pond routing waits on Battr's rule screen.
+    assert.equal(observed.SEP_22.pondRoutingBySourceRefuted, true);
+    assert.equal(observed.SEP_22.sharkTankWasPortalOnly, false, "the 18 Sep pattern did not hold");
     assert.ok(
-      sweptIds.length < rules.maxSweepsPerPond,
-      `${sweptIds.length} sweeps is below the ${rules.maxSweepsPerPond} cap, so nothing overflowed`
+      observed.SEP_22.moneyTimeSources.some((src) => /zillow/i.test(src)),
+      "a portal source reached Money Time, which is what breaks the rule"
     );
+
+    // And the config must still route by name, not by anything inferred.
+    const src = readFileSync(join(HERE, "rules.mjs"), "utf8");
+    assert.match(src, /sweepPond: "Shark Tank"/);
+    assert.ok(!/moneyTimeSources|routeBySource/.test(src), "no source-based routing may have been wired in");
   });
 
   check("Battr's audit list is not pinned at its September peak", () => {
