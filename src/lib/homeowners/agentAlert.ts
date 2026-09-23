@@ -77,8 +77,11 @@ const esc = (s: string) => s.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;
  * Email the assigned agent about a hot lead. Never throws. Returns
  * {sent:false, reason} when disabled/unconfigured so the caller degrades safely.
  */
-export async function notifyAssignedAgent(lead: AgentAlertLead): Promise<{ sent: boolean; reason?: string }> {
-  if (!isHotSignal(lead.tags)) return { sent: false, reason: "not_hot" };
+export async function notifyAssignedAgent(
+  lead: AgentAlertLead,
+  opts?: { force?: boolean; signal?: string },
+): Promise<{ sent: boolean; reason?: string }> {
+  if (!opts?.force && !isHotSignal(lead.tags)) return { sent: false, reason: "not_hot" };
 
   const override = (process.env.AGENT_ALERT_TO ?? "").trim();
   const enabled = process.env.AGENT_ALERTS_ENABLED === "true";
@@ -93,6 +96,7 @@ export async function notifyAssignedAgent(lead: AgentAlertLead): Promise<{ sent:
 
   const name = [lead.firstName, lead.lastName].filter(Boolean).join(" ").trim() || "A homeowner";
   const signal =
+    opts?.signal ??
     lead.tags.find((t) => hotTags().map((x) => x.toLowerCase()).includes(t.toLowerCase())) ??
     lead.type ??
     "Dashboard action";
