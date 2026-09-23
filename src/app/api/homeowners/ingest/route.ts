@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ingestHomeowner, type IngestInput } from "@/lib/homeowners/ingest";
 import { sendWelcomeEmail } from "@/lib/homeowners/email";
 import { sendHomeownerActivity } from "@/lib/homeowners/fubActivity";
+import { notifyAssignedAgent } from "@/lib/homeowners/agentAlert";
 
 export const runtime = "nodejs";
 
@@ -28,6 +29,26 @@ export async function POST(req: Request) {
     // The request itself is the seller signal — it must reach the CRM even when
     // email is switched off, which is why this is not tied to the send above.
     await sendHomeownerActivity("home-value-request", homeowner);
+    // Speed-to-lead: a brand-new home-value signup is a strong seller signal —
+    // alert the assigned agent (or team fallback) directly. force:true because
+    // the signup's own tags aren't in the hot-click set. Off unless enabled.
+    try {
+      await notifyAssignedAgent(
+        {
+          firstName: homeowner.firstName,
+          lastName: homeowner.lastName,
+          email: homeowner.email,
+          phone: homeowner.phone,
+          address: `${homeowner.address}, ${homeowner.city}, ${homeowner.state} ${homeowner.zip}`.trim(),
+          type: "Seller Inquiry",
+          tags: ["Home Value Request"],
+          message: "Just requested their home value on the dashboard — brand-new lead. Call fast.",
+        },
+        { force: true, signal: "New Home-Value Lead" },
+      );
+    } catch {
+      // never fail the signup on the alert
+    }
     // Best-effort welcome email; never fail the request if email isn't configured.
     const email = await sendWelcomeEmail(homeowner);
     return NextResponse.json({ ok: true, token, url, emailed: email.sent });
