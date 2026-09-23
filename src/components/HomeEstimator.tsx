@@ -116,6 +116,73 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
     }
   }
 
+  const trackBox = (
+    <div className="mt-5 rounded-[12px] border border-[var(--color-line)] bg-[var(--color-sand)] p-4">
+      {trackStatus === "done" ? (
+        <div className="text-center">
+          <div className="font-serif text-[1.15rem] text-[var(--color-ink)]">Your dashboard is ready ✦</div>
+          <p className="mt-1 font-sans text-[0.82rem] text-[var(--color-ink-soft)]">
+            We&apos;ll email you value updates as the market moves. Check your inbox for the link.
+          </p>
+          {dashUrl && (
+            <a href={dashUrl} target="_blank" rel="noreferrer" className="btn mt-3 inline-block">
+              View my home dashboard →
+            </a>
+          )}
+        </div>
+      ) : (
+        <form onSubmit={saveTracking}>
+          <div className="font-sans text-[0.92rem] font-semibold text-[var(--color-ink)]">
+            {estimate ? "Track this home's value — free" : "Get your private home dashboard — free"}
+          </div>
+          <p className="mt-1 font-sans text-[0.78rem] text-[var(--color-ink-soft)]">
+            {estimate
+              ? "Get a private dashboard and value updates as the market moves."
+              : "We'll set up your dashboard and our team will prepare your valuation by hand."}
+          </p>
+          <div className="mt-3 space-y-2">
+            {!f.address.trim() && (
+              <input
+                className={field}
+                placeholder="Street address"
+                value={track.address}
+                onChange={(e) => setTrack((p) => ({ ...p, address: e.target.value }))}
+                aria-label="Street address"
+              />
+            )}
+            <input
+              className={field}
+              placeholder="Your name"
+              value={track.name}
+              onChange={(e) => setTrack((p) => ({ ...p, name: e.target.value }))}
+              aria-label="Your name"
+            />
+            <input
+              className={field}
+              type="email"
+              placeholder="Email"
+              value={track.email}
+              onChange={(e) => setTrack((p) => ({ ...p, email: e.target.value }))}
+              aria-label="Email"
+              required
+            />
+            {trackStatus === "error" && (
+              <div className="font-sans text-[0.76rem] text-[#b4433a]">
+                Please add your email and street address.
+              </div>
+            )}
+            <button type="submit" disabled={trackStatus === "sending"} className="btn w-full disabled:opacity-60">
+              {trackStatus === "sending" ? "Setting up…" : estimate ? "Track my home value" : "Create my dashboard"}
+            </button>
+            <p className="text-center font-sans text-[0.62rem] text-[var(--color-muted)]">
+              Periodic value updates from {site.name}. Unsubscribe anytime.
+            </p>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+
   if (status === "done" && estimate) {
     return (
       <div className="rounded-[14px] bg-white p-7 text-[var(--color-ink)] shadow-[var(--shadow-soft)]">
@@ -135,68 +202,7 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
         </a>
 
         {/* Track this home → private homeowner dashboard + value updates */}
-        <div className="mt-5 rounded-[12px] border border-[var(--color-line)] bg-[var(--color-sand)] p-4">
-          {trackStatus === "done" ? (
-            <div className="text-center">
-              <div className="font-serif text-[1.15rem] text-[var(--color-ink)]">Your dashboard is ready ✦</div>
-              <p className="mt-1 font-sans text-[0.82rem] text-[var(--color-ink-soft)]">
-                We&apos;ll email you value updates as the market moves. Check your inbox for the link.
-              </p>
-              {dashUrl && (
-                <a href={dashUrl} target="_blank" rel="noreferrer" className="btn mt-3 inline-block">
-                  View my home dashboard →
-                </a>
-              )}
-            </div>
-          ) : (
-            <form onSubmit={saveTracking}>
-              <div className="font-sans text-[0.92rem] font-semibold text-[var(--color-ink)]">
-                Track this home&apos;s value — free
-              </div>
-              <p className="mt-1 font-sans text-[0.78rem] text-[var(--color-ink-soft)]">
-                Get a private dashboard and value updates as the market moves.
-              </p>
-              <div className="mt-3 space-y-2">
-                {!f.address.trim() && (
-                  <input
-                    className={field}
-                    placeholder="Street address"
-                    value={track.address}
-                    onChange={(e) => setTrack((p) => ({ ...p, address: e.target.value }))}
-                    aria-label="Street address"
-                  />
-                )}
-                <input
-                  className={field}
-                  placeholder="Your name"
-                  value={track.name}
-                  onChange={(e) => setTrack((p) => ({ ...p, name: e.target.value }))}
-                  aria-label="Your name"
-                />
-                <input
-                  className={field}
-                  type="email"
-                  placeholder="Email"
-                  value={track.email}
-                  onChange={(e) => setTrack((p) => ({ ...p, email: e.target.value }))}
-                  aria-label="Email"
-                  required
-                />
-                {trackStatus === "error" && (
-                  <div className="font-sans text-[0.76rem] text-[#b4433a]">
-                    Please add your email and street address.
-                  </div>
-                )}
-                <button type="submit" disabled={trackStatus === "sending"} className="btn w-full disabled:opacity-60">
-                  {trackStatus === "sending" ? "Setting up…" : "Track my home value"}
-                </button>
-                <p className="text-center font-sans text-[0.62rem] text-[var(--color-muted)]">
-                  Periodic value updates from {site.name}. Unsubscribe anytime.
-                </p>
-              </div>
-            </form>
-          )}
-        </div>
+        {trackBox}
 
         <button
           type="button"
@@ -228,6 +234,11 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
         <a href="#request-cma" className={`btn mt-5 w-full${showCmaButton ? "" : " hidden"}`}>
           Request a free CMA →
         </a>
+
+        {/* Even without an instant number, still capture the lead + create the
+            dashboard — the team values luxury/unique homes by hand. */}
+        {trackBox}
+
         <button
           type="button"
           onClick={() => setStatus("idle")}
