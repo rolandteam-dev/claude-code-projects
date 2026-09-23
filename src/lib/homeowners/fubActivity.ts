@@ -18,6 +18,7 @@ import type { Homeowner } from "./store";
 
 export type HomeownerActivity =
   | "dashboard-view"
+  | "repeat-viewer"
   | "home-value-request"
   | "unsubscribe"
   | "email-open"
@@ -40,6 +41,14 @@ const ACTIVITY: Record<
     source: "Home Value Dashboard",
     tags: ["Homeowner Activity", "Dashboard View"],
     label: "Viewed their home value dashboard",
+  },
+  "repeat-viewer": {
+    // A warmer signal than a single view — treat as seller intent so it can
+    // drive the agents' seller filters and a proactive-call task.
+    type: "Seller Inquiry",
+    source: "Home Value Dashboard",
+    tags: ["Homeowner Activity", "Repeat Viewer"],
+    label: "Checked their home value on 3+ days in the last week — actively watching",
   },
   "home-value-request": {
     type: "Seller Inquiry",
