@@ -21,6 +21,8 @@ export type FubLead = {
   type?: string;
   source?: string;
   tags?: string[];
+  /** Custom FUB fields to set on the person, keyed by FUB API field name. */
+  customFields?: Record<string, string>;
 };
 
 export async function sendFubLead(lead: FubLead): Promise<{ sent: boolean; reason?: string }> {
@@ -43,6 +45,8 @@ export async function sendFubLead(lead: FubLead): Promise<{ sent: boolean; reaso
         ? [{ type: "home", street, city: lead.city, state: lead.state, code: lead.zip }]
         : undefined,
       tags: lead.tags?.length ? [...new Set(lead.tags.filter(Boolean))] : undefined,
+      // FUB custom fields are set as top-level person keys (e.g. customHomeDashboard).
+      ...(lead.customFields ?? {}),
     },
   };
 
