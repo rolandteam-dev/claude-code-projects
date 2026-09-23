@@ -28,6 +28,7 @@ import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, isExe
 import { normalizeContact } from "./battr/contact.mjs";
 import { resolvePausedOwners } from "./battr/paused.mjs";
 import { pondForLead } from "./battr/ponds.mjs";
+import { foldEmailTouches, describeEmailOrigin } from "./battr/communication.mjs";
 import { isDayAllowed } from "./battr/schedule.mjs";
 import { lists, reportOnlyLists } from "./battr/lists.mjs";
 import { bucketName, isSourceAudited } from "./battr/sources.mjs";
@@ -820,6 +821,79 @@ async function main() {
           (failed ? `, ${failed} FAILED — touch index still incomplete` : "") +
           ` — at risk ${before.atRisk} → ${after.atRisk}, neglected ${before.neglected} → ${after.neglected}`
       );
+    }
+  }
+
+  // 4c. EMAIL, WHICH BATTR COUNTS AND WE DID NOT
+  //
+  // Battr's playbook counts a manual email as working a lead and ignores an
+  // automated one. We excluded the channel outright, because a FUB batch send
+  // is one click for five hundred leads — right reasoning, too blunt a fix,
+  // and it cost 281 at risk against Battr's 15 on 22 Sep.
+  //
+  // Same shape as the text backfill above and safe for the same reason:
+  // folding only moves last-touch forward, so an email found here can move a
+  // lead from neglected toward compliant and never the other way.
+  //
+  // The new risk is different. A text either exists or does not; an email has
+  // to be JUDGED, and if its origin cannot be read then counting it reopens
+  // the blast hole and ignoring it sweeps a lead the agent wrote to. So an
+  // unreadable origin marks the touch index incomplete, which turns sweeps off
+  // for the run — the same brake the missing text channel pulls.
+  let emailBackfill = null;
+  if (rules.emailCountsAsTouch) {
+    const candidates = results.filter((r) => r.status === "at_risk" || r.status === "neglected");
+    if (candidates.length > rules.maxEmailBackfill) {
+      log(`  email backfill SKIPPED: ${candidates.length} actionable leads exceeds maxEmailBackfill (${rules.maxEmailBackfill}).`);
+      emailBackfill = { attempted: candidates.length, complete: false, reason: "over the cap" };
+      touchIncomplete.push({ channel: "emails", reason: `backfill skipped — ${candidates.length} leads over the cap` });
+    } else {
+      log(`  backfilling emails for ${candidates.length} actionable leads (manual only — automated does not count)...`);
+      const before = { atRisk: results.filter((r) => r.status === "at_risk").length, neglected: results.filter((r) => r.status === "neglected").length };
+      const tally = { manual: 0, automated: 0, unknown: 0 };
+      let failed = 0;
+      let sample = [];
+      for (const cand of candidates) {
+        try {
+          const rows = await fub.emailsForPerson(cand.id, since);
+          if (sample.length < 40) sample = sample.concat(rows).slice(0, 40);
+          const t = foldEmailTouches(touchIndex, rows);
+          tally.manual += t.manual;
+          tally.automated += t.automated;
+          tally.unknown += t.unknown;
+        } catch (err) {
+          failed++;
+          log(`  email backfill failed for one lead: ${err.message}`);
+        }
+      }
+      results = classifyPopulation({ quiet: true });
+      const after = { atRisk: results.filter((r) => r.status === "at_risk").length, neglected: results.filter((r) => r.status === "neglected").length };
+      emailBackfill = {
+        attempted: candidates.length,
+        ...tally,
+        failed,
+        complete: failed === 0 && tally.unknown === 0,
+        before,
+        after,
+        origin: describeEmailOrigin(sample),
+      };
+      log(
+        `  email backfill: ${tally.manual} manual, ${tally.automated} automated, ${tally.unknown} undetermined` +
+          (failed ? `, ${failed} FAILED` : "") +
+          ` — at risk ${before.atRisk} → ${after.atRisk}, neglected ${before.neglected} → ${after.neglected}`
+      );
+      if (tally.unknown) {
+        touchIncomplete.push({
+          channel: "emails",
+          reason:
+            `${tally.unknown} email(s) carried no field identifying them as manual or automated. ` +
+            `Counting them would let one batch send mark a lead as worked; ignoring them would sweep a lead an ` +
+            `agent wrote to. Origin fields actually present: ${JSON.stringify(emailBackfill.origin.fields)}`,
+        });
+      }
+      if (failed) {
+        touchIncomplete.push({ channel: "emails", reason: `${failed} lead(s) whose email thread could not be read` });
+      }
     }
   }
 

@@ -274,6 +274,48 @@ export const rules = {
   inboundCountsAsTouch: true,
 
   /**
+   * A MANUAL email counts as working a lead. An automated one does not.
+   *
+   * READ OFF BATTR'S PLAYBOOK, 23 Sep 2026: "Logged phone call (inbound or
+   * outbound), Logged text message, Logged email, Stage updated to a more
+   * advanced stage, Timeframe updated in FUB … Automated emails do NOT count —
+   * only manual activity resets the clock."
+   *
+   * This reverses the policy this engine started with, and the reversal is
+   * worth stating plainly rather than editing quietly. Email was excluded
+   * because a Follow Up Boss batch send is one click for five hundred leads,
+   * so counting it would let a single blast mark the database as worked. The
+   * reasoning was right. The conclusion — exclude the whole channel — was too
+   * blunt, because Battr already draws the line we actually wanted, between an
+   * agent writing to a lead and a machine doing it.
+   *
+   * What the blunt version cost: 281 at risk against Battr's 15 on 22 Sep. A
+   * lead an agent emailed by hand read to us as untouched.
+   *
+   * An email whose origin cannot be determined is NOT counted and NOT ignored.
+   * It marks the touch index incomplete, which turns sweeps off for the run.
+   * Counting it would reopen the batch-email hole; ignoring it would sweep a
+   * lead the agent really did write to.
+   */
+  emailCountsAsTouch: true,
+
+  /**
+   * Stage and timeframe updates count too, per the same page. Neither is a
+   * message, so neither appears in any communication endpoint — they are read
+   * from timestamps on the person record, and if FUB carries no such
+   * timestamp the run reports that rather than pretending the rule is live.
+   */
+  stageOrTimeframeUpdateCountsAsTouch: true,
+
+  /**
+   * Ceiling on per-lead email lookups in the touch backfill. Same shape and
+   * same reason as maxTextBackfill: FUB will not serve /v1/emails in bulk, so
+   * the actionable shortlist is fetched one lead at a time, and a run that
+   * would need thousands of calls is abandoned rather than half-done.
+   */
+  maxEmailBackfill: 1000,
+
+  /**
    * Days after an inbound call or text with no outbound reply before the lead
    * is listed under "Inbound, never answered" in the report. Reporting only —
    * these leads are never swept for it.

@@ -36,27 +36,40 @@ export const leadBuckets = [
  * classified; unmapped now means genuinely new.
  */
 export const sourceBuckets = {
+  /**
+   * DELIBERATE DIVERGENCE FROM BATTR, on Mike's instruction, 23 Sep 2026.
+   *
+   * Battr's own generated exclusion list has both of these under "Lead Sources
+   * With Battr Action Exclusions" — Battr never nudges or sweeps them. Mike's
+   * call is that they should be swept, and these are his leads and his agents.
+   *
+   * Recorded here rather than folded in silently, because the brief for this
+   * engine is "exactly like Battr" and this is now a known, chosen difference
+   * rather than a parity bug. Anyone reconciling our neglected count against
+   * Battr's should expect it to run HIGHER for this reason, and should not go
+   * looking for a defect to explain the gap.
+   *
+   * The size of it: on 4 Sep, `my +plus leads` alone accounted for 35 of 55
+   * neglected leads. This is not a rounding difference — it is most of a
+   * night's sweeps.
+   */
+  "my +plus leads": 2,
+  "Steve Hawks": 7,
+
   // ── 82: never swept ───────────────────────────────────────────────────────
   //
   // CONFIRMED 23 Sep 2026 against Battr's own "Lead Sources With Battr Action
   // Exclusions" page, generated from the live configuration. Before that this
   // list was reverse-engineered, and it had two sources in the wrong place:
   //
-  //   my +plus leads   was bucket 2 (audited). On 4 Sep it was 35 of the 55
-  //                    neglected leads — the single largest source of sweeps
-  //                    in a system that was never meant to sweep it.
-  //   Steve Hawks      was bucket 7 (audited).
-  //
-  // Both are now 82. Expect the neglected count to fall; that is the fix
-  // working, not a regression.
+  //   my +plus leads   Battr excludes it. WE SWEEP IT ANYWAY — see below.
+  //   Steve Hawks      Battr excludes it. WE SWEEP IT ANYWAY — see below.
   //
   // The fifteen "Schneider …" sources were absent entirely. They were already
   // excluded in practice, by unmappedPolicy: "exclude" — but a source that is
   // protected only because nobody named it is protected by an accident that a
   // future edit to that policy silently undoes. Named, they are protected on
   // purpose.
-  "my +plus leads": 82,
-  "Steve Hawks": 82,
   "Schneider Branded Website": 82,
   "Schneider Company": 82,
   "Schneider Facebook": 82,

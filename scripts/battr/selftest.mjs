@@ -1812,10 +1812,9 @@ check("inbound phone and the remaining vendors are swept", () => {
   // sources looked like lead flow. Battr's live configuration says it is
   // excluded, so it moved to the never-swept bucket and out of this check.
   // Our reading was the thing that was wrong, not Battr's.
-  for (const src of ["Direct Call", "Inbound Call", "Sierra", "Revaluate", "LPT Rider"]) {
+  for (const src of ["my +plus leads", "Direct Call", "Inbound Call", "Sierra", "Revaluate", "LPT Rider"]) {
     assert.equal(isSourceAudited(src), true, `${src} should be in scope`);
   }
-  assert.equal(isSourceAudited("my +plus leads"), false, "moved 23 Sep to match Battr's exclusion list");
 });
 
 check("stray double spaces in a FUB source string still match", () => {
@@ -2948,20 +2947,38 @@ check("every source Battr excludes is excluded here", () => {
     "Schneider Real Geeks", "Schneider Realtor.com", "Schneider Unspecified", "Schneider Ylopo",
     "Schneider Ylopo Seller", "Schneider zBuyer", "Schneider Zillow", "SOI", "Sphere", "Steve Hawks",
   ];
+  // Two of them we deliberately DO sweep, on Mike's instruction of 23 Sep.
+  // Listed by name so the divergence is a decision someone made, not a gap
+  // someone left — and so that reverting it is one line, not an archaeology
+  // exercise.
+  const SWEPT_ANYWAY = ["my +plus leads", "Steve Hawks"];
+
   for (const source of BATTR_EXCLUDES) {
+    if (SWEPT_ANYWAY.includes(source)) {
+      assert.equal(isSourceAudited(source), true, `${source} is swept by our choice, against Battr's config`);
+      continue;
+    }
     assert.equal(bucketForSource(source), 82, `${source} must map to the never-swept bucket`);
     assert.equal(isSourceAudited(source), false, `${source} must not be audited`);
   }
+
+  // And the divergence must be stated where the decision lives.
+  const src = readFileSync(join(HERE, "sources.mjs"), "utf8");
+  assert.match(src, /DELIBERATE DIVERGENCE FROM BATTR/, "a chosen difference must say it is chosen");
+  assert.match(src, /35 of 55/, "and must carry the size of it, or it reads as a detail");
 });
 
-check("the two sources that were audited by mistake are named", () => {
-  // These are the ones the fix actually moves, and the only ones whose numbers
-  // change. `my +plus leads` was 35 of 55 neglected leads on 4 Sep — the
-  // largest single source of sweeps in a system that was never meant to touch
-  // it. Naming them in a test means a revert has to delete an assertion about
-  // a specific business decision, not just flip a number.
+check("our neglected count runs high against Battr, and on purpose", () => {
+  // `my +plus leads` and `Steve Hawks` are on Battr's exclusion list and we
+  // sweep them anyway. That is a decision, not a defect, and it means the one
+  // number this project is judged on — neglected — is expected to sit ABOVE
+  // Battr's rather than converge on it.
+  //
+  // Worth pinning: the next person to see our 17 against Battr's 16 and go
+  // hunting for the extra lead should find this first.
   for (const source of ["my +plus leads", "Steve Hawks"]) {
-    assert.equal(isSourceAudited(source), false, `${source} is excluded per Battr's live config`);
+    assert.equal(isSourceAudited(source), true, `${source} is swept on Mike's instruction`);
+    assert.notEqual(bucketForSource(source), 82, `${source} must not be in the never-swept bucket`);
   }
 });
 
@@ -2985,5 +3002,113 @@ check("the sweeping sources are still swept", () => {
     assert.equal(isSourceAudited(source), true, `${source} must still be audited`);
   }
 });
+
+// ─── What counts as working a lead, per Battr's playbook ───────────────────
+
+await (async () => {
+  const { emailOrigin, foldEmailTouches, describeEmailOrigin, profileTouchAt, STAGE_UPDATED_FIELDS } =
+    await import("./communication.mjs");
+
+  const when = (days) => new Date(Date.now() - days * DAY_MS).toISOString();
+
+  check("an action-plan email does not count as working the lead", () => {
+    // The whole reason email was excluded for three weeks: a FUB batch send is
+    // one click for five hundred leads. Battr's line is manual vs automated,
+    // not email vs no email — and an automated send still carries the agent's
+    // user id, so "has a userId" alone cannot mean hand-written.
+    assert.equal(emailOrigin({ userId: 7, actionPlanId: 22 }), "automated", "automation wins over a sender id");
+    assert.equal(emailOrigin({ userId: 7, campaignOrigin: "drip" }), "automated");
+    assert.equal(emailOrigin({ emailTemplateId: 3 }), "automated");
+    assert.equal(emailOrigin({ userId: 7 }), "manual", "an agent typed this one");
+    assert.equal(emailOrigin({}), "unknown", "and an unreadable row is never guessed at");
+    assert.equal(emailOrigin({ userId: null, actionPlanId: "" }), "unknown", "empty is not present");
+  });
+
+  check("only manual email moves the clock, and only forward", () => {
+    const index = new Map();
+    const tally = foldEmailTouches(index, [
+      { personId: 1, created: when(2), userId: 9 },                    // manual, 2 days ago
+      { personId: 1, created: when(0), actionPlanId: 4, userId: 9 },   // automated, today
+      { personId: 2, created: when(1) },                               // unknown
+    ]);
+    assert.deepEqual(tally, { manual: 1, automated: 1, unknown: 1 });
+
+    // Lead 1's clock reads the MANUAL email, not the newer automated one.
+    const lead1 = index.get(1);
+    const age = Math.round((Date.now() - lead1.lastOutbound) / DAY_MS);
+    assert.equal(age, 2, "the blast must not reset the clock to today");
+    assert.ok(!index.has(2), "an undetermined row touches nothing");
+  });
+
+  check("folding email is monotonic, like every other channel", () => {
+    // The property that makes a backfill safe to run before the sweep decision:
+    // it can move a lead toward compliant and never toward neglected.
+    const index = new Map([[1, { lastOutbound: Date.parse(when(1)), lastInbound: 0 }]]);
+    const beforeMs = index.get(1).lastOutbound;
+    foldEmailTouches(index, [{ personId: 1, created: when(30), userId: 9 }]);
+    assert.equal(index.get(1).lastOutbound, beforeMs, "an older email must not move last-touch backwards");
+  });
+
+  check("an inbound email is a reply, not outreach", () => {
+    const index = new Map();
+    foldEmailTouches(index, [{ personId: 5, created: when(1), userId: 9, isIncoming: true }]);
+    assert.equal(index.get(5).lastOutbound, 0, "the agent did not do this");
+    assert.ok(index.get(5).lastInbound > 0, "but the lead is alive and it counts");
+  });
+
+  check("the origin diagnostic reports field names and counts, never content", () => {
+    const d = describeEmailOrigin([{ userId: 1, subject: "x" }, { actionPlanId: 2 }, {}]);
+    assert.equal(d.rows, 3);
+    assert.deepEqual(d.fields, { actionPlanId: 1, userId: 1 });
+    const src = readFileSync(join(HERE, "communication.mjs"), "utf8");
+    assert.ok(!/row\.subject|row\.body|row\.to\b/.test(src), "no message content may reach the diagnostic");
+  });
+
+  check("a stage or timeframe update is working the lead", () => {
+    // Battr counts both. Neither is a message, so neither appears in any
+    // communication endpoint — they are timestamps on the person record.
+    assert.ok(profileTouchAt({ stageUpdated: when(1) }, STAGE_UPDATED_FIELDS) > 0);
+    assert.equal(profileTouchAt({ stageUpdated: "not a date" }, STAGE_UPDATED_FIELDS), null);
+    assert.equal(profileTouchAt({}, STAGE_UPDATED_FIELDS), null, "absent is null, not zero");
+
+    // And it reaches the classifier: a lead with no calls and no texts, whose
+    // agent advanced the stage yesterday, is not neglected.
+    const advanced = normalizeContact(
+      { id: 700, stage: "Spoke with Customer", created: daysAgo(400), assignedUserId: 5, tags: [], stageUpdated: when(1) },
+      { lastOutbound: 0, lastInbound: 0 }
+    );
+    assert.ok(advanced.last_communication_at, "the stage advance is the touch");
+    const untouched = normalizeContact(
+      { id: 701, stage: "Spoke with Customer", created: daysAgo(400), assignedUserId: 5, tags: [] },
+      { lastOutbound: 0, lastInbound: 0 }
+    );
+    assert.equal(untouched.last_communication_at, null, "and a lead with neither is still untouched");
+  });
+
+  check("an email we cannot classify turns sweeps off rather than picking a side", () => {
+    // The one genuinely dangerous outcome. Counting an unreadable row reopens
+    // the batch-email hole; ignoring it sweeps a lead the agent wrote to. The
+    // engine does neither — it marks the touch index incomplete, which is the
+    // same brake the missing text channel pulls.
+    const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+    assert.match(src, /if \(tally\.unknown\) \{/, "an undetermined origin must be acted on");
+    const block = src.slice(src.indexOf("if (tally.unknown) {"), src.indexOf("if (failed) {"));
+    assert.match(block, /touchIncomplete\.push/, "and the action is to mark the index incomplete");
+    assert.match(block, /manual or automated/, "and to say what could not be read");
+    assert.match(block, /Origin fields actually present/, "with the evidence needed to narrow the field list");
+  });
+
+  check("the policy reversal is written down where the policy lives", () => {
+    // Email was excluded here from day one for a stated reason. Reversing that
+    // silently would leave the next person unable to tell a decision from a
+    // drift.
+    const src = readFileSync(join(HERE, "rules.mjs"), "utf8");
+    assert.equal(rules.emailCountsAsTouch, true);
+    assert.equal(rules.stageOrTimeframeUpdateCountsAsTouch, true);
+    const block = src.slice(src.indexOf("emailCountsAsTouch") - 2000, src.indexOf("emailCountsAsTouch"));
+    assert.match(block, /Automated emails do NOT count/, "it must quote the rule it now follows");
+    assert.match(block, /281 at risk against Battr's 15/, "and carry what the old policy cost");
+  });
+})();
 
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);
