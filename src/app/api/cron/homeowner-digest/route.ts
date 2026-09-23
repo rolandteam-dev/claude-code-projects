@@ -44,8 +44,18 @@ async function run(req: Request) {
 
   // Enforce eligibility at send time so rows already in the table (out-of-state
   // / junk email) can never be mailed, independent of import-time filtering.
-  const eligibleList = due.filter((h) => isEligible({ email: h.email, state: h.state, zip: h.zip }));
+  let eligibleList = due.filter((h) => isEligible({ email: h.email, state: h.state, zip: h.zip }));
   const skippedIneligible = due.length - eligibleList.length;
+
+  // Segment targeting for a safe warm-up: send to your warmest people first.
+  //   ?source=home-value,fub  — only these record sources (comma-separated)
+  //   ?engaged=1              — only homeowners who have opened their dashboard
+  const sourceParam = (url.searchParams.get("source") ?? "").trim();
+  const sources = sourceParam ? new Set(sourceParam.split(",").map((s) => s.trim()).filter(Boolean)) : null;
+  const engagedOnly = url.searchParams.get("engaged") === "1";
+  if (sources) eligibleList = eligibleList.filter((h) => sources.has(h.source));
+  if (engagedOnly) eligibleList = eligibleList.filter((h) => (h.views?.length ?? 0) > 0);
+
   const batch = eligibleList.slice(0, limit);
   const remaining = Math.max(0, eligibleList.length - batch.length);
 
@@ -82,6 +92,7 @@ async function run(req: Request) {
     due: due.length,
     eligible: eligibleList.length,
     skippedIneligible,
+    segment: { source: sourceParam || null, engagedOnly },
     limit,
     attempted: batch.length,
     refreshed,
