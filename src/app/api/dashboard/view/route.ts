@@ -1,8 +1,20 @@
 import { NextResponse } from "next/server";
 import { homeownerStore } from "@/lib/homeowners/store";
 import { isFirstToday, sendHomeownerActivity } from "@/lib/homeowners/fubActivity";
+import { notifyAssignedAgent } from "@/lib/homeowners/agentAlert";
 
 export const runtime = "nodejs";
+
+/** Distinct calendar days (UTC) with a view inside the last `windowDays`. */
+function distinctViewDays(views: string[] | undefined, windowDays: number): Set<string> {
+  const cutoff = Date.now() - windowDays * 86_400_000;
+  const days = new Set<string>();
+  for (const v of views ?? []) {
+    const t = Date.parse(v);
+    if (Number.isFinite(t) && t >= cutoff) days.add(v.slice(0, 10));
+  }
+  return days;
+}
 
 /**
  * Logs a homeowner dashboard view — the raw engagement signal behind the
@@ -29,6 +41,29 @@ export async function POST(req: Request) {
     await store.recordView(token);
     if (homeowner && firstViewToday) {
       await sendHomeownerActivity("dashboard-view", homeowner);
+
+      // Repeat viewer: fire ONCE when they cross 3 distinct viewing days in the
+      // last 7 (counting today). Distinct days — not raw loads — so refreshes
+      // don't inflate it. Only checked on the first view of the day, and only at
+      // exactly 3, so it can't re-fire on later visits.
+      const days = distinctViewDays(homeowner.views, 7);
+      days.add(new Date().toISOString().slice(0, 10)); // ensure today is counted (driver-agnostic)
+      if (days.size === 3) {
+        await sendHomeownerActivity("repeat-viewer", homeowner);
+        await notifyAssignedAgent(
+          {
+            firstName: homeowner.firstName,
+            lastName: homeowner.lastName,
+            email: homeowner.email,
+            phone: homeowner.phone,
+            address: `${homeowner.address}, ${homeowner.city}, ${homeowner.state} ${homeowner.zip}`.trim(),
+            type: "Seller Inquiry",
+            tags: ["Repeat Viewer"],
+            message: "Checked their home value on 3+ days in the last week — actively watching. Worth a proactive call.",
+          },
+          { force: true, signal: "Repeat Viewer — Checking Value" },
+        );
+      }
     }
   } catch {
     // Never let engagement logging break the page.
