@@ -19,6 +19,21 @@ import { latestEstimate, appreciation, type Homeowner } from "./store";
 const money = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/** Readable message from a Resend error object / thrown value (avoids "[object Object]"). */
+function errMsg(e: unknown): string {
+  if (!e) return "unknown error";
+  if (typeof e === "string") return e;
+  const m = (e as any)?.message ?? (e as any)?.error?.message ?? (e as any)?.name;
+  if (typeof m === "string" && m) return m;
+  try {
+    return JSON.stringify(e);
+  } catch {
+    return String(e);
+  }
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 function html(h: Homeowner): string {
   const latest = latestEstimate(h)!;
   const appr = appreciation(h);
@@ -142,10 +157,10 @@ export async function sendWelcomeEmail(h: Homeowner): Promise<{ sent: boolean; r
       html: welcomeHtml(h),
       replyTo: homeownerBrand.email,
     });
-    if (error) return { sent: false, reason: String(error) };
+    if (error) return { sent: false, reason: errMsg(error) };
     return { sent: true };
   } catch (e) {
-    return { sent: false, reason: String(e) };
+    return { sent: false, reason: errMsg(e) };
   }
 }
 
@@ -188,10 +203,10 @@ export async function sendCashOfferEmail(to: {
       html,
       replyTo: homeownerBrand.email,
     });
-    if (error) return { sent: false, reason: String(error) };
+    if (error) return { sent: false, reason: errMsg(error) };
     return { sent: true };
   } catch (e) {
-    return { sent: false, reason: String(e) };
+    return { sent: false, reason: errMsg(e) };
   }
 }
 
@@ -210,9 +225,9 @@ export async function sendValueEmail(h: Homeowner): Promise<{ sent: boolean; rea
       html: html(h),
       replyTo: homeownerBrand.email,
     });
-    if (error) return { sent: false, reason: String(error) };
+    if (error) return { sent: false, reason: errMsg(error) };
     return { sent: true };
   } catch (e) {
-    return { sent: false, reason: String(e) };
+    return { sent: false, reason: errMsg(e) };
   }
 }

@@ -25,6 +25,19 @@ export async function GET(req: Request) {
   if (!email || !address) {
     return NextResponse.json({ ok: false, error: "email and address are required" }, { status: 400 });
   }
+  // Guard against pasting the template with the CAPS placeholders left in.
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || /_EMAIL|PLACEHOLDER|^BRUCE_/i.test(email)) {
+    return NextResponse.json(
+      { ok: false, error: "That email looks like a placeholder. Replace BRUCE_EMAIL / BRUCE_STREET_ADDRESS etc. with the person's real details." },
+      { status: 400 },
+    );
+  }
+  if (/_ADDRESS|PLACEHOLDER/i.test(address)) {
+    return NextResponse.json(
+      { ok: false, error: "That address looks like a placeholder. Fill in the real street address." },
+      { status: 400 },
+    );
+  }
 
   try {
     const { token, url, homeowner } = await ingestHomeowner({
