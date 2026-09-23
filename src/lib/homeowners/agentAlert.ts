@@ -18,7 +18,7 @@ import { Resend } from "resend";
 import { homeownerBrand } from "./brand";
 import { FUB_BASE, fubHeaders } from "./fubMap";
 
-const DEFAULT_HOT_TAGS = ["Requested CMA", "Cash Offer", "List With Us", "Equity Calculator"];
+const DEFAULT_HOT_TAGS = ["Requested CMA", "Cash Offer", "List With Us", "Equity Calculator", "Buyer Lead"];
 
 function hotTags(): string[] {
   const raw = (process.env.AGENT_ALERT_TAGS ?? "").trim();
