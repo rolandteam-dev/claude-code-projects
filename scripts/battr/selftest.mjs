@@ -28,6 +28,7 @@ import { buildAgentDigests, deliverDigests, renderDigestText, digestSubject } fr
 import { describeError, fromAddress, mailConfigured } from "./email.mjs";
 import { parseCsv, findColumn, mapRows } from "./import-atbats.mjs";
 import { bucketForSource, bucketName, isSourceAudited, leadBuckets, unmappedPolicy } from "./sources.mjs";
+import { pondForLead, ageInDays } from "./ponds.mjs";
 import { FubClient } from "./fub.mjs";
 import { appendComparisons, readComparisons, drift } from "./compare.mjs";
 import { rules } from "./rules.mjs";
@@ -604,15 +605,55 @@ check("an unusable touch signal WITHHOLDS the agent digests", () => {
   assert.match(src, /what: "agent alerts"/, "and the withholding is recorded as a skip, not silent");
 });
 
-check("the pond split is marked as the unconfirmed guess it is", () => {
-  // Battr's 10 Sep neglected email routed all four sweeps to Pond / Shark Tank
-  // and none to Money Time. Our 25-lead split was inferred from older mail, not
-  // read off a rule screen, and on a 45-sweep Tuesday it would send 20 leads
-  // somewhere Battr does not.
-  const src = readFileSync(join(HERE, "rules.mjs"), "utf8");
-  assert.match(src, /UNCONFIRMED/, "the pond split must stay flagged until the 8 Sep email confirms it");
-  assert.equal(rules.maxSweepsPerPond, 25, "unchanged — changing pond routing moves leads to a different agent's queue");
-  assert.equal(rules.sweepPond, "Shark Tank");
+check("sweeps route by lead age, as Battr's rule screen says", () => {
+  // "Pond Assignments", read off the screen 23 Sep 2026:
+  //     Money Time (Leads No More than 10 Days Old)   Created Days Ago < 11
+  //     Shark Tank (>10 Days)                         Created Days Ago > 10
+  // Confirmed in words by Battr's account manager the same day.
+  assert.deepEqual(rules.sweepPondRules, [
+    { pond: "Money Time", maxCreatedDaysAgo: 10 },
+    { pond: "Shark Tank", minCreatedDaysAgo: 11 },
+  ]);
+
+  const at = (days) => Date.now() - days * 86400000;
+  for (const [days, expected] of [[0, "Money Time"], [1, "Money Time"], [10, "Money Time"], [11, "Shark Tank"], [400, "Shark Tank"]]) {
+    assert.equal(pondForLead(new Date(at(days)).toISOString(), rules).pondName, expected, `${days}d old`);
+  }
+
+  // The boundary is the whole point: "no more than 10 days old" includes day
+  // 10 and excludes day 11. Off by one here puts a fresh lead in the pond of
+  // 26,900 stale ones, where nobody will look at it again.
+  assert.equal(pondForLead(new Date(at(10)).toISOString(), rules).pondName, "Money Time");
+  assert.equal(pondForLead(new Date(at(11)).toISOString(), rules).pondName, "Shark Tank");
+});
+
+check("lead age counts whole elapsed days, and never runs negative", () => {
+  // The rule reads "Created Days Ago", so a lead created 10 days and 23 hours
+  // ago is 10 days old, not 11 — flooring, not rounding. Rounding would push
+  // leads across the boundary a day early and into the wrong pond.
+  const now = Date.parse("2026-09-23T12:00:00Z");
+  assert.equal(ageInDays("2026-09-23T11:00:00Z", now), 0, "an hour old is day 0");
+  assert.equal(ageInDays("2026-09-13T13:00:00Z", now), 9, "10 days minus an hour is still day 9");
+  assert.equal(ageInDays("2026-09-13T11:00:00Z", now), 10, "10 days and an hour is day 10");
+  assert.equal(ageInDays("2026-09-12T11:00:00Z", now), 11, "and 11 days crosses into Shark Tank");
+
+  // FUB has returned future-dated records before. A negative age must not wrap
+  // into a huge number and route a brand-new lead to the stale pond.
+  assert.equal(ageInDays("2026-09-24T12:00:00Z", now), 0, "a future date clamps to 0");
+  assert.equal(pondForLead("2026-09-24T12:00:00Z", rules, now).pondName, "Money Time");
+});
+
+check("a lead with no readable creation date is not assumed to be new", () => {
+  // An age rule cannot match a lead with no age. Guessing "new" would route a
+  // stale lead into the pond reserved for fresh ones, which is the one
+  // direction this mistake actually costs something.
+  for (const bad of [null, undefined, "", "not a date"]) {
+    const routed = pondForLead(bad, rules);
+    assert.equal(routed.pondName, rules.sweepPond, `${JSON.stringify(bad)} falls back`);
+    assert.equal(routed.ageDays, null);
+    assert.match(routed.fallback, /no readable created date/, "and says why, rather than looking deliberate");
+  }
+  assert.equal(rules.sweepPond, "Shark Tank", "the fallback is the pond stale leads already go to");
 });
 
 check("a bound sweep cap is reported in the summary, not buried", () => {
@@ -1417,32 +1458,36 @@ check("an unreadable interlock stamp is loud, not a quiet zero", () => {
   }
 });
 
-check("the count-based pond model is refuted, and recorded as refuted", () => {
-  // 15 Sep swept 19 leads — comfortably under the 25 at which maxSweepsPerPond
-  // overflows — and still sent one to Money Time. So the split is not by count,
-  // and no value of the threshold fixes it. This check exists so the model
-  // cannot drift back to looking deliberate while it is known to be wrong.
-  const targets = SEP_15.assignmentTargets.Pond;
-  assert.equal(targets["Money Time"], 1, "the night that refutes the model");
-  assert.ok(
-    SEP_15.neglected < rules.maxSweepsPerPond,
-    `${SEP_15.neglected} sweeps is below the ${rules.maxSweepsPerPond} overflow point, so our model sends all of them ` +
-      `to ${rules.sweepPond} — Battr did not`
-  );
+check("both inferred pond models are gone, not just annotated", () => {
+  // Two models died here and both were mine. Overflow — Shark Tank until it
+  // fills, then Money Time — refuted 15 Sep by a 19-sweep night that sent one
+  // lead to Money Time well under the cap. Source — direct to Money Time,
+  // portals to Shark Tank — refuted 22 Sep when Money Time took a Zillow
+  // Preferred lead. Both were plausible readings of Battr's outcomes; neither
+  // was the rule.
+  //
+  // Annotating a wrong model as wrong was the right call while the screen was
+  // unread. Now that it has been read, the model has to be GONE, or the next
+  // person finds two explanations and picks one.
+  const src = readFileSync(join(ROOT, "scripts", "battr", "rules.mjs"), "utf8");
+  assert.ok(!/overflowPond/.test(src), "the overflow pond setting must be removed, not deprecated");
+  assert.match(src, /READ OFF BATTR'S RULE SCREEN/, "and the replacement must say where it came from");
 
-  // The earlier nights, where everything did go to Shark Tank.
+  const engine = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.ok(!/usingOverflow/.test(engine), "and the engine must not still branch on it");
+  assert.match(engine, /pondForLead\(/, "routing goes through the one tested function");
+
+  // The cap survives as a brake, but it may only HOLD a sweep, never redirect
+  // it — redirecting was the overflow model.
+  assert.equal(rules.maxSweepsPerPond, 25, "unchanged — raising it widens what can be swept");
+  assert.match(engine, /per-pond cap reached/, "the cap holds the lead back");
+
+  // Every night on record still has to be explicable by the age rule, or the
+  // screen has been misread.
+  assert.equal(SEP_15.assignmentTargets.Pond["Money Time"], 1, "15 Sep sent one lead to Money Time");
   for (const night of [SEP_10, SEP_11]) {
     assert.deepEqual(Object.keys(night.assignmentTargets.Pond), ["Shark Tank"], `${night.date}`);
   }
-
-  // The rule is deliberately NOT corrected — pond routing is only ever edited
-  // from Battr's own rule screen, and assignment rule set 41 has not been read.
-  // What is required is that the file says so, in the file someone editing the
-  // routing would be reading.
-  const src = readFileSync(join(ROOT, "scripts", "battr", "rules.mjs"), "utf8");
-  const block = src.slice(src.indexOf("Where neglected leads land"), src.indexOf("sweepPond:"));
-  assert.match(block, /REFUTED/, "a model known to be wrong must say so where it is defined");
-  assert.match(block, /NOT CHANGED, deliberately/, "and must say why it was left alone");
 });
 
 check("every modelled list carries Battr's observed numbers to check itself against", () => {
@@ -1763,6 +1808,10 @@ check("self-sourced prospecting is protected", () => {
 });
 
 check("inbound phone and the remaining vendors are swept", () => {
+  // `my +plus leads` was in this list until 23 Sep, on our own reading of which
+  // sources looked like lead flow. Battr's live configuration says it is
+  // excluded, so it moved to the never-swept bucket and out of this check.
+  // Our reading was the thing that was wrong, not Battr's.
   for (const src of ["my +plus leads", "Direct Call", "Inbound Call", "Sierra", "Revaluate", "LPT Rider"]) {
     assert.equal(isSourceAudited(src), true, `${src} should be in scope`);
   }
@@ -2722,13 +2771,41 @@ await (async () => {
     );
     assert.equal(still.filter((id) => left.includes(id)).length, 0, "a lead cannot be in both");
 
-    // The load-bearing claim: they left WITHOUT being swept. If any of them is
-    // in the sweep list, "the agent worked it" is not an available reading.
-    const swept = new Set(observed.SEP_18.sweptIds);
-    for (const id of left) {
-      assert.ok(!swept.has(id), `${id} left the at-risk tier by being swept, not by being worked`);
+    // The load-bearing claim: they left WITHOUT being swept.
+    //
+    // The first version of this checked only SEP_18's sweep list, and passed
+    // while the claim was wrong. Lead 101122 was swept four nights later, on
+    // 22 Sep, still carrying its 18 Sep stamp — it had aged from at-risk into
+    // neglected and waited out three non-sweep days. A cohort claim has to be
+    // checked against EVERY sweep we know about, not the one night it was
+    // written on, or it only ever confirms itself.
+    const everSwept = new Map();
+    for (const night of nights) {
+      for (const id of night.sweptIds ?? []) if (!everSwept.has(id)) everSwept.set(id, night.date);
     }
-    assert.equal(observed.SEP_18.sweptIds.length, observed.SEP_18.records_moved, "the sweep list is complete");
+    const laterSwept = new Set(observed.SEP_20.laterSwept ?? []);
+    for (const id of left) {
+      if (everSwept.has(id)) {
+        assert.ok(
+          laterSwept.has(id),
+          `${id} was swept on ${everSwept.get(id)} but is not recorded in SEP_20.laterSwept — ` +
+            "the recovery figure is counting a lead that aged through instead"
+        );
+      }
+    }
+
+    // And the headline must move when the evidence does.
+    assert.equal(
+      observed.SEP_20.recoveredUpperBound,
+      left.length - laterSwept.size,
+      "the recovery bound must exclude every lead later found in a sweep list"
+    );
+    assert.ok(/aged past|neglected tier/i.test(observed.SEP_20.leftTierReading), "and ageing out must be one of the readings");
+
+    for (const night of nights) {
+      if (night.sweptIds === undefined || night.records_moved === undefined) continue;
+      assert.equal(night.sweptIds.length, night.records_moved, `${night.date}: the sweep list is complete`);
+    }
 
     // And the alternative reading must stay written down. A measurement that
     // records only its flattering interpretation is not a measurement.
@@ -2736,17 +2813,52 @@ await (async () => {
   });
 
   check("Money Time is a destination, not an overflow", () => {
-    // 17 sweeps is far below maxSweepsPerPond, yet two leads still went to
-    // Money Time — so the overflow model cannot explain them, and the routing
-    // rule is something else. Recorded, not implemented: pond routing is only
-    // edited to match Battr's own rule screen.
-    const { assignmentTargets, moneyTimeIds, sweptIds } = observed.SEP_18;
-    assert.equal(moneyTimeIds.length, assignmentTargets.Pond["Money Time"], "the ids match the tally");
-    assert.ok(moneyTimeIds.every((id) => sweptIds.includes(id)), "every Money Time lead was swept this night");
+    // Sweeps stayed far below maxSweepsPerPond on every night we have, yet
+    // Money Time still took leads. The overflow model cannot explain that.
+    let checked = 0;
+    for (const night of nights) {
+      const { assignmentTargets, moneyTimeIds, sweptIds } = night;
+      if (!assignmentTargets?.Pond?.["Money Time"]) continue;
+      // Earlier nights were transcribed as tallies only, before per-lead ids
+      // were worth keeping. Their cap assertion still holds; the id crosscheck
+      // simply has nothing to check.
+      if (!moneyTimeIds || !sweptIds) {
+        assert.ok(
+          Object.values(assignmentTargets.Pond).reduce((a, b) => a + b, 0) < rules.maxSweepsPerPond,
+          `${night.date}: sweeps stayed under the ${rules.maxSweepsPerPond} cap`
+        );
+        continue;
+      }
+      assert.equal(moneyTimeIds.length, assignmentTargets.Pond["Money Time"], `${night.date}: ids match the tally`);
+      assert.ok(moneyTimeIds.every((id) => sweptIds.includes(id)), `${night.date}: every Money Time lead was swept`);
+      assert.ok(
+        sweptIds.length < rules.maxSweepsPerPond,
+        `${night.date}: ${sweptIds.length} sweeps is below the ${rules.maxSweepsPerPond} cap, so nothing overflowed`
+      );
+      checked++;
+    }
+    assert.ok(checked >= 2, `only ${checked} nights sent anything to Money Time`);
+  });
+
+  check("pond routing is not explained by lead source", () => {
+    // Proposed 20 Sep from a single night — direct and organic to Money Time,
+    // portals to Shark Tank — and refuted on 22 Sep, when Money Time took a
+    // Zillow Preferred lead on a night Shark Tank took Zillow Preferred too.
+    //
+    // Nothing was implemented on the hypothesis, which is the only reason it
+    // cost a comment rather than a rollback. This check exists so the idea
+    // cannot quietly return: pond routing waits on Battr's rule screen.
+    assert.equal(observed.SEP_22.pondRoutingBySourceRefuted, true);
+    assert.equal(observed.SEP_22.sharkTankWasPortalOnly, false, "the 18 Sep pattern did not hold");
     assert.ok(
-      sweptIds.length < rules.maxSweepsPerPond,
-      `${sweptIds.length} sweeps is below the ${rules.maxSweepsPerPond} cap, so nothing overflowed`
+      observed.SEP_22.moneyTimeSources.some((src) => /zillow/i.test(src)),
+      "a portal source reached Money Time, which is what breaks the rule"
     );
+
+    // And the config must still route by name, not by anything inferred.
+    const src = readFileSync(join(HERE, "rules.mjs"), "utf8");
+    assert.match(src, /sweepPond: "Shark Tank"/);
+    assert.ok(!/moneyTimeSources|routeBySource/.test(src), "no source-based routing may have been wired in");
   });
 
   check("Battr's audit list is not pinned at its September peak", () => {
@@ -2817,6 +2929,185 @@ await (async () => {
         src.indexOf("Worst drift first."),
       "the warning must come before the old footnote, not after it"
     );
+  });
+})();
+
+// ─── Battr's own exclusion list, no longer reverse-engineered ──────────────
+
+check("every source Battr excludes is excluded here", () => {
+  // Transcribed 23 Sep 2026 from the "Lead Sources With Battr Action
+  // Exclusions" page of Battr's playbook, which is generated from the live
+  // configuration. Pinned as data so a future edit to sources.mjs has to
+  // disagree with Battr explicitly rather than by omission.
+  const BATTR_EXCLUDES = [
+    "<unspecified>", "Import", "Imported", "Lender", "Mojo", "Mojo FSBO", "my +plus leads",
+    "Open House", "Open House (Ylopo)", "Recruiting", "Redx", "Referral",
+    "Schneider Branded Website", "Schneider Company", "Schneider Facebook", "Schneider Google LSA",
+    "Schneider Lender", "Schneider Open House", "Schneider Open House (Ylopo)", "Schneider PPC",
+    "Schneider Real Geeks", "Schneider Realtor.com", "Schneider Unspecified", "Schneider Ylopo",
+    "Schneider Ylopo Seller", "Schneider zBuyer", "Schneider Zillow", "SOI", "Sphere", "Steve Hawks",
+  ];
+  // Two of them we deliberately DO sweep, on Mike's instruction of 23 Sep.
+  // Listed by name so the divergence is a decision someone made, not a gap
+  // someone left — and so that reverting it is one line, not an archaeology
+  // exercise.
+  const SWEPT_ANYWAY = ["my +plus leads", "Steve Hawks"];
+
+  for (const source of BATTR_EXCLUDES) {
+    if (SWEPT_ANYWAY.includes(source)) {
+      assert.equal(isSourceAudited(source), true, `${source} is swept by our choice, against Battr's config`);
+      continue;
+    }
+    assert.equal(bucketForSource(source), 82, `${source} must map to the never-swept bucket`);
+    assert.equal(isSourceAudited(source), false, `${source} must not be audited`);
+  }
+
+  // And the divergence must be stated where the decision lives.
+  const src = readFileSync(join(HERE, "sources.mjs"), "utf8");
+  assert.match(src, /DELIBERATE DIVERGENCE FROM BATTR/, "a chosen difference must say it is chosen");
+  assert.match(src, /35 of 55/, "and must carry the size of it, or it reads as a detail");
+});
+
+check("our neglected count runs high against Battr, and on purpose", () => {
+  // `my +plus leads` and `Steve Hawks` are on Battr's exclusion list and we
+  // sweep them anyway. That is a decision, not a defect, and it means the one
+  // number this project is judged on — neglected — is expected to sit ABOVE
+  // Battr's rather than converge on it.
+  //
+  // Worth pinning: the next person to see our 17 against Battr's 16 and go
+  // hunting for the extra lead should find this first.
+  for (const source of ["my +plus leads", "Steve Hawks"]) {
+    assert.equal(isSourceAudited(source), true, `${source} is swept on Mike's instruction`);
+    assert.notEqual(bucketForSource(source), 82, `${source} must not be in the never-swept bucket`);
+  }
+});
+
+check("protecting a source by accident is not the same as protecting it", () => {
+  // The fifteen "Schneider …" sources were excluded only because nobody had
+  // named them, via unmappedPolicy: "exclude". That is protection by accident,
+  // and an edit to the policy would have silently removed it from all fifteen
+  // at once. They are now named.
+  const src = readFileSync(join(HERE, "sources.mjs"), "utf8");
+  for (const source of ["Schneider Zillow", "Schneider PPC", "Schneider Realtor.com"]) {
+    assert.ok(src.includes(`"${source}": 82`), `${source} must be listed explicitly, not left to the fallback`);
+  }
+  // And the fallback stays, for the source nobody has seen yet.
+  assert.equal(unmappedPolicy, "exclude", "an unknown source is still never swept");
+});
+
+check("the sweeping sources are still swept", () => {
+  // The guard on the other side: this change must not quietly widen the
+  // exclusion list into the portals the audit exists to police.
+  for (const source of ["Zillow Preferred", "Ylopo", "zbuyer.com", "Google PPC", "TheRolandTeam.com"]) {
+    assert.equal(isSourceAudited(source), true, `${source} must still be audited`);
+  }
+});
+
+// ─── What counts as working a lead, per Battr's playbook ───────────────────
+
+await (async () => {
+  const { emailOrigin, foldEmailTouches, describeEmailOrigin, profileTouchAt, STAGE_UPDATED_FIELDS } =
+    await import("./communication.mjs");
+
+  const when = (days) => new Date(Date.now() - days * DAY_MS).toISOString();
+
+  check("an action-plan email does not count as working the lead", () => {
+    // The whole reason email was excluded for three weeks: a FUB batch send is
+    // one click for five hundred leads. Battr's line is manual vs automated,
+    // not email vs no email — and an automated send still carries the agent's
+    // user id, so "has a userId" alone cannot mean hand-written.
+    assert.equal(emailOrigin({ userId: 7, actionPlanId: 22 }), "automated", "automation wins over a sender id");
+    assert.equal(emailOrigin({ userId: 7, campaignOrigin: "drip" }), "automated");
+    assert.equal(emailOrigin({ emailTemplateId: 3 }), "automated");
+    assert.equal(emailOrigin({ userId: 7 }), "manual", "an agent typed this one");
+    assert.equal(emailOrigin({}), "unknown", "and an unreadable row is never guessed at");
+    assert.equal(emailOrigin({ userId: null, actionPlanId: "" }), "unknown", "empty is not present");
+  });
+
+  check("only manual email moves the clock, and only forward", () => {
+    const index = new Map();
+    const tally = foldEmailTouches(index, [
+      { personId: 1, created: when(2), userId: 9 },                    // manual, 2 days ago
+      { personId: 1, created: when(0), actionPlanId: 4, userId: 9 },   // automated, today
+      { personId: 2, created: when(1) },                               // unknown
+    ]);
+    assert.deepEqual(tally, { manual: 1, automated: 1, unknown: 1 });
+
+    // Lead 1's clock reads the MANUAL email, not the newer automated one.
+    const lead1 = index.get(1);
+    const age = Math.round((Date.now() - lead1.lastOutbound) / DAY_MS);
+    assert.equal(age, 2, "the blast must not reset the clock to today");
+    assert.ok(!index.has(2), "an undetermined row touches nothing");
+  });
+
+  check("folding email is monotonic, like every other channel", () => {
+    // The property that makes a backfill safe to run before the sweep decision:
+    // it can move a lead toward compliant and never toward neglected.
+    const index = new Map([[1, { lastOutbound: Date.parse(when(1)), lastInbound: 0 }]]);
+    const beforeMs = index.get(1).lastOutbound;
+    foldEmailTouches(index, [{ personId: 1, created: when(30), userId: 9 }]);
+    assert.equal(index.get(1).lastOutbound, beforeMs, "an older email must not move last-touch backwards");
+  });
+
+  check("an inbound email is a reply, not outreach", () => {
+    const index = new Map();
+    foldEmailTouches(index, [{ personId: 5, created: when(1), userId: 9, isIncoming: true }]);
+    assert.equal(index.get(5).lastOutbound, 0, "the agent did not do this");
+    assert.ok(index.get(5).lastInbound > 0, "but the lead is alive and it counts");
+  });
+
+  check("the origin diagnostic reports field names and counts, never content", () => {
+    const d = describeEmailOrigin([{ userId: 1, subject: "x" }, { actionPlanId: 2 }, {}]);
+    assert.equal(d.rows, 3);
+    assert.deepEqual(d.fields, { actionPlanId: 1, userId: 1 });
+    const src = readFileSync(join(HERE, "communication.mjs"), "utf8");
+    assert.ok(!/row\.subject|row\.body|row\.to\b/.test(src), "no message content may reach the diagnostic");
+  });
+
+  check("a stage or timeframe update is working the lead", () => {
+    // Battr counts both. Neither is a message, so neither appears in any
+    // communication endpoint — they are timestamps on the person record.
+    assert.ok(profileTouchAt({ stageUpdated: when(1) }, STAGE_UPDATED_FIELDS) > 0);
+    assert.equal(profileTouchAt({ stageUpdated: "not a date" }, STAGE_UPDATED_FIELDS), null);
+    assert.equal(profileTouchAt({}, STAGE_UPDATED_FIELDS), null, "absent is null, not zero");
+
+    // And it reaches the classifier: a lead with no calls and no texts, whose
+    // agent advanced the stage yesterday, is not neglected.
+    const advanced = normalizeContact(
+      { id: 700, stage: "Spoke with Customer", created: daysAgo(400), assignedUserId: 5, tags: [], stageUpdated: when(1) },
+      { lastOutbound: 0, lastInbound: 0 }
+    );
+    assert.ok(advanced.last_communication_at, "the stage advance is the touch");
+    const untouched = normalizeContact(
+      { id: 701, stage: "Spoke with Customer", created: daysAgo(400), assignedUserId: 5, tags: [] },
+      { lastOutbound: 0, lastInbound: 0 }
+    );
+    assert.equal(untouched.last_communication_at, null, "and a lead with neither is still untouched");
+  });
+
+  check("an email we cannot classify turns sweeps off rather than picking a side", () => {
+    // The one genuinely dangerous outcome. Counting an unreadable row reopens
+    // the batch-email hole; ignoring it sweeps a lead the agent wrote to. The
+    // engine does neither — it marks the touch index incomplete, which is the
+    // same brake the missing text channel pulls.
+    const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+    assert.match(src, /if \(tally\.unknown\) \{/, "an undetermined origin must be acted on");
+    const block = src.slice(src.indexOf("if (tally.unknown) {"), src.indexOf("if (failed) {"));
+    assert.match(block, /touchIncomplete\.push/, "and the action is to mark the index incomplete");
+    assert.match(block, /manual or automated/, "and to say what could not be read");
+    assert.match(block, /Origin fields actually present/, "with the evidence needed to narrow the field list");
+  });
+
+  check("the policy reversal is written down where the policy lives", () => {
+    // Email was excluded here from day one for a stated reason. Reversing that
+    // silently would leave the next person unable to tell a decision from a
+    // drift.
+    const src = readFileSync(join(HERE, "rules.mjs"), "utf8");
+    assert.equal(rules.emailCountsAsTouch, true);
+    assert.equal(rules.stageOrTimeframeUpdateCountsAsTouch, true);
+    const block = src.slice(src.indexOf("emailCountsAsTouch") - 2000, src.indexOf("emailCountsAsTouch"));
+    assert.match(block, /Automated emails do NOT count/, "it must quote the rule it now follows");
+    assert.match(block, /281 at risk against Battr's 15/, "and carry what the old policy cost");
   });
 })();
 

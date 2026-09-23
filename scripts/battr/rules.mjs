@@ -103,45 +103,59 @@ export const rules = {
 
   // ------------------------------------------------------------- sweep targets
   /**
-   * Where neglected leads land.
+   * Where neglected leads land. READ OFF BATTR'S RULE SCREEN, 23 Sep 2026.
    *
-   * UNCONFIRMED, and the one departure from Battr most likely to be wrong.
+   * "Pond Assignments" — 2 rules, evaluated top to bottom:
    *
-   * Battr's neglected email of 10 Sep 2026 carries an `Assignment Target Type`
-   * and `Assignment Target Name` for every lead it moved. All four that night
-   * read **Pond / Shark Tank**. Not one went to Money Time.
+   *     1. Money Time (Leads No More than 10 Days Old)   Created Days Ago < 11
+   *     2. Shark Tank (>10 Days)                         Created Days Ago > 10
    *
-   * The 25-lead split below was inferred from Money Time appearing in older
-   * audit mail; it was never read off Battr's rule screen, and Battr's own
-   * config resolves the target through an assignment rule set (id 41) rather
-   * than a fixed pond. If Battr sent all 45 of Tuesday 8 Sep's sweeps to Shark
-   * Tank, then on a Tuesday this would route 20 leads to a pond Battr never
-   * sends them to — leads that are then in the wrong agent's queue.
+   * Confirmed in words by Battr's account manager the same day: "routing to
+   * the Money Time pond if the lead is between 1 and 10 days old, and to the
+   * Shark Tank pond if the lead is more than 10 days old."
    *
-   * REFUTED, 15 Sep 2026. That night swept 19 leads — well under the 25 this
-   * model overflows at, so every one of them should have gone to Shark Tank.
-   * Eighteen did. ONE went to Money Time.
+   * It is LEAD AGE. Nothing else. That matches Mike's own description of the
+   * ponds — Shark Tank is where the team keeps leads aged 10+ days and
+   * prospects out of collectively — and it explains the pond sizes, 134 in
+   * Money Time against 26,900 in Shark Tank.
    *
-   * So the split is not by count, and this rule is wrong in kind rather than
-   * in its number. Raising or lowering 25 cannot fix a model that is measuring
-   * the wrong thing.
+   * TWO MODELS DIED HERE, and both were mine.
    *
-   * What decides it is still unknown. The Money Time lead shares its owner with
-   * two leads that went to Shark Tank the same night, and its source with
-   * eleven of them, so it is neither of those. Battr resolves the target
-   * through assignment rule set 41, which is the screen that would say.
+   * The first was overflow: Shark Tank until it fills, then Money Time. It
+   * survived weeks because most sweeps do go to Shark Tank, and it was refuted
+   * on 15 Sep by a 19-sweep night that sent one lead to Money Time well under
+   * the cap. The second was source: direct and organic to Money Time, portals
+   * to Shark Tank, proposed on 20 Sep from a single night and refuted on
+   * 22 Sep when Money Time took a Zillow Preferred lead.
    *
-   * NOT CHANGED, deliberately — pond routing is only ever edited to match
-   * Battr's own rule screen, and that screen has not been read. Recorded as a
-   * known-wrong model rather than quietly left looking deliberate. The practical
-   * size of the error: on a night like 15 Sep we would put one lead in the right
-   * pond that Battr puts in the other; on a 45-sweep Tuesday we would send 20
-   * leads to Money Time where the observed rate is closer to one in twenty.
-   *
-   * See SEP_15 in observed.mjs.
+   * Both were plausible readings of the outcomes. Neither was the rule. Every
+   * list transcribed from a Battr screen has landed within a few percent; every
+   * rule inferred from outcomes has been wrong. That is the lesson worth more
+   * than the fix.
+   */
+  sweepPondRules: [
+    { pond: "Money Time", maxCreatedDaysAgo: 10 },
+    { pond: "Shark Tank", minCreatedDaysAgo: 11 },
+  ],
+
+  /**
+   * The destination when a lead matches no rule above — which the two rules as
+   * written cannot produce, since they partition on age. Kept so a future edit
+   * that leaves a gap fails loudly into the pond leads already mostly go to,
+   * rather than silently holding every sweep.
    */
   sweepPond: "Shark Tank",
-  overflowPond: "Money Time",
+
+  /**
+   * OURS, not Battr's. Battr has no per-pond cap — a sweep goes wherever the
+   * age rule says, however many there are.
+   *
+   * It stays because it is the only brake on a threshold typo emptying a
+   * pipeline in one night, and the largest night ever observed was 45. It is
+   * no longer part of ROUTING: it can hold a sweep back, never redirect it to
+   * a different pond. Redirecting was the overflow model, and that model is
+   * dead.
+   */
   maxSweepsPerPond: 25,
 
   // ------------------------------------------------------------ what to ignore
@@ -258,6 +272,48 @@ export const rules = {
    * puts it in its own section of the report, by name, every night.
    */
   inboundCountsAsTouch: true,
+
+  /**
+   * A MANUAL email counts as working a lead. An automated one does not.
+   *
+   * READ OFF BATTR'S PLAYBOOK, 23 Sep 2026: "Logged phone call (inbound or
+   * outbound), Logged text message, Logged email, Stage updated to a more
+   * advanced stage, Timeframe updated in FUB … Automated emails do NOT count —
+   * only manual activity resets the clock."
+   *
+   * This reverses the policy this engine started with, and the reversal is
+   * worth stating plainly rather than editing quietly. Email was excluded
+   * because a Follow Up Boss batch send is one click for five hundred leads,
+   * so counting it would let a single blast mark the database as worked. The
+   * reasoning was right. The conclusion — exclude the whole channel — was too
+   * blunt, because Battr already draws the line we actually wanted, between an
+   * agent writing to a lead and a machine doing it.
+   *
+   * What the blunt version cost: 281 at risk against Battr's 15 on 22 Sep. A
+   * lead an agent emailed by hand read to us as untouched.
+   *
+   * An email whose origin cannot be determined is NOT counted and NOT ignored.
+   * It marks the touch index incomplete, which turns sweeps off for the run.
+   * Counting it would reopen the batch-email hole; ignoring it would sweep a
+   * lead the agent really did write to.
+   */
+  emailCountsAsTouch: true,
+
+  /**
+   * Stage and timeframe updates count too, per the same page. Neither is a
+   * message, so neither appears in any communication endpoint — they are read
+   * from timestamps on the person record, and if FUB carries no such
+   * timestamp the run reports that rather than pretending the rule is live.
+   */
+  stageOrTimeframeUpdateCountsAsTouch: true,
+
+  /**
+   * Ceiling on per-lead email lookups in the touch backfill. Same shape and
+   * same reason as maxTextBackfill: FUB will not serve /v1/emails in bulk, so
+   * the actionable shortlist is fetched one lead at a time, and a run that
+   * would need thousands of calls is abandoned rather than half-done.
+   */
+  maxEmailBackfill: 1000,
 
   /**
    * Days after an inbound call or text with no outbound reply before the lead

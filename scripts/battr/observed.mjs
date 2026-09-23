@@ -959,7 +959,24 @@ export const SEP_20 = {
    * intervening day — so they left the tier without being swept.
    */
   leftTierWithoutSweep: [62608, 101034, 101122, 99468],
-  leftTierReading: "worked by the agent, or moved out of the audit list by a stage change — the emails cannot distinguish these",
+  /**
+   * CORRECTED 22 Sep. This originally read "worked by the agent, or moved out
+   * of the audit list by a stage change", and both readings were too kind.
+   *
+   * A lead also leaves the at-risk tier by AGEING PAST the neglected threshold
+   * — a mechanism confirmed on 12 Sep and which I failed to carry into these
+   * two readings. 101122 did exactly that: absent from the at-risk list on
+   * 20 Sep, swept to Money Time on 22 Sep still carrying its 18 Sep stamp. It
+   * was never worked. It sat in the neglected tier through Saturday, Sunday
+   * and Monday, none of which are sweep days, and went on the first Tuesday.
+   */
+  leftTierReading:
+    "worked by the agent, moved out of the audit list by a stage change, or aged past the at-risk " +
+    "threshold into the neglected tier — the emails cannot distinguish these",
+  /** Confirmed swept later, so NOT recovered. See SEP_22. */
+  laterSwept: [101122],
+  /** The upper bound on recovery from this cohort, once 101122 is removed. */
+  recoveredUpperBound: 3,
 
   /**
    * The stamp survives across nights, again. Four leads carry At Risk Since
@@ -1041,6 +1058,113 @@ export const OURS_SEP_21 = {
   branchLive: false,
 };
 
+/**
+ * TUESDAY 22 SEPTEMBER. 780 audited, 15 at risk (2 new, 13 already flagged),
+ * 16 neglected, all 16 moved, nothing held back.
+ *
+ * Our run the same night found 17 neglected against this 16 — the closest that
+ * number has ever been, on the one tier that actually takes leads off agents.
+ *
+ * TWO THINGS THIS NIGHT OVERTURNS.
+ *
+ * 1. POND ROUTING IS NOT BY SOURCE. On 18 Sep the two Money Time leads came
+ *    from LPT Rider and TheRolandTeam.com while all fifteen Shark Tank leads
+ *    came from portals, and the obvious reading was "direct and organic to
+ *    Money Time, portals to Shark Tank". Tonight Money Time took a Zillow
+ *    Preferred lead and a Noah Cash Offer lead, while Shark Tank took Zillow
+ *    Preferred, Zillow.com, Trulia, Ylopo, Google PPC, zBuyer, ISA Transfer,
+ *    TheRolandTeam.com and a Direct Call. Every axis available in these emails
+ *    — source, owner, At Risk Since, id range — now appears on both sides.
+ *
+ *    The hypothesis is REFUTED, not weakened. Nothing was implemented on it,
+ *    which is the only reason this costs a comment rather than a rollback, and
+ *    it is the argument for waiting on the "Pond Assignments" rule screen
+ *    instead of inferring the rule from outcomes.
+ *
+ * 2. "FOUR OF EIGHT WARNED LEADS WERE ACTED ON" WAS TOO HIGH. Lead 101122 was
+ *    one of the four I recorded on 20 Sep as having left the at-risk tier
+ *    without being swept. It was swept tonight, to Money Time, carrying its
+ *    original 18 Sep stamp.
+ *
+ *    It never recovered. It aged out of the at-risk tier into the neglected
+ *    one — a mechanism this project confirmed on 12 Sep and which I then left
+ *    out of the two readings I wrote down on 20 Sep. Sweeps do not run Sat,
+ *    Sun or Mon, so it sat neglected for four days with nowhere to go, and the
+ *    first sweep day that came round took it.
+ *
+ *    The honest count is THREE of eight, and even that is an upper bound: the
+ *    remaining three were not swept on the only sweep day available, so they
+ *    are not sitting in the neglected tier, but "worked by the agent" and
+ *    "left the audit list some other way" still cannot be told apart from an
+ *    email.
+ */
+export const SEP_22 = {
+  date: "2026-09-22",
+  weekday: "Tuesday",
+  total: 780,
+  at_risk: 15,
+  at_risk_new_notes: 2,
+  at_risk_already_flagged: 13,
+  neglected: 16,
+  records_moved: 16,
+  records_not_moved: 0,
+  excluded_lead_bucket: 0,
+  excluded_agent_group: 0,
+  assignmentTargets: { Pond: { "Shark Tank": 14, "Money Time": 2 } },
+  sweptIds: [
+    75704, 70734, 63970, 50545, 44659, 74408, 79119, 44882,
+    72773, 65492, 74825, 64791, 47673, 98505, 101122, 101129,
+  ],
+  moneyTimeIds: [101122, 101129],
+
+  /**
+   * Both sides of the pond split, for anyone tempted to re-derive the rule from
+   * source. Zillow Preferred appears in BOTH lists on the same night.
+   */
+  moneyTimeSources: ["Zillow Preferred", "Noah Cash Offer"],
+  sharkTankWasPortalOnly: false,
+  pondRoutingBySourceRefuted: true,
+
+  /** Of the eight warned on 18 Sep, this one aged through and was swept here. */
+  sweptFrom18SepWarnCohort: [101122],
+};
+
+/**
+ * OUR RUN THE SAME NIGHT (2026-09-22-wjlc). 813 audited, 281 at risk,
+ * 17 neglected.
+ *
+ *   population    813 vs 780   +4.2%
+ *   NEGLECTED      17 vs  16   the closest this number has ever been
+ *
+ * Neglected is the tier that actually takes a lead off an agent. Getting it
+ * within one is worth more than any of the report-only lists matching exactly.
+ *
+ * First run on the merged engine, and all three fixes are visible: the
+ * "AN EXCLUSION PROTECTS NOBODY" banner is gone, every drift row is marked
+ * with the age of the Battr figure it compares against, and the combined list
+ * reads +4.6% against 777 rather than −7.6% against a five-day-old 880.
+ *
+ * One number moved that should not have: Excluded went 823 → 10. Not a safety
+ * change — both nights audited exactly 813 leads across the same 23 agents
+ * with identical per-agent counts. Leads owned by an exempt agent used to
+ * enter the list and be marked excluded afterwards; they now carry the paused
+ * marker and are filtered at membership, so the count never sees them. Fixed
+ * by reporting both halves.
+ */
+export const OURS_SEP_22 = {
+  date: "2026-09-22",
+  runId: "2026-09-22-wjlc",
+  audited: 813,
+  at_risk: 281,
+  neglected: 17,
+  populationDriftVsSameNight: 4.2,
+  /** 17 against 16. The tier that moves leads is effectively matched. */
+  neglectedDriftVsSameNight: 6.3,
+  firstRunOnMergedEngine: true,
+  bannerGone: true,
+  staleMarkingLive: true,
+};
+
 /** The observations in order, for anything that wants the trend. */
 export const TIMELINE = [
   { date: "2026-09-02", weekday: "Wed", total: 866, at_risk: 17, neglected: 7 },
@@ -1063,6 +1187,9 @@ export const TIMELINE = [
   // 19 Sep (Sat) not captured, though eight leads carry its stamp. Sunday's
   // `neglected: 0` is the day filter again — nothing was allowed to move.
   { date: "2026-09-20", weekday: "Sun", total: 777, at_risk: 19, neglected: 0 },
+  // 21 Sep (Mon) not captured — Monday is excluded from sweeps by the rule
+  // screen, so the backlog from Sat/Sun/Mon all clears on this Tuesday.
+  { date: "2026-09-22", weekday: "Tue", total: 780, at_risk: 15, neglected: 16 },
 ];
 
 export const observedLists = [

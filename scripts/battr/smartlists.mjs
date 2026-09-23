@@ -160,17 +160,20 @@ async function main() {
       } catch {
         size = "—";
       }
-      const role =
-        normalize(pond.name) === normalize(rules.sweepPond)
-          ? "<- sweepPond"
-          : normalize(pond.name) === normalize(rules.overflowPond)
-            ? "<- overflowPond"
-            : "";
+      // Pond Assignments routes by lead age, so a pond's role is the age band
+      // it takes, not a fixed "primary / overflow" pair.
+      const rule = (rules.sweepPondRules ?? []).find((r) => normalize(r.pond) === normalize(pond.name));
+      const role = rule
+        ? rule.maxCreatedDaysAgo !== undefined
+          ? `<- leads ${rule.maxCreatedDaysAgo}d old or newer`
+          : `<- leads older than ${rule.minCreatedDaysAgo - 1}d`
+        : "";
       console.log(`${String(pond.id).padStart(8)}  ${String(pond.name).slice(0, 34).padEnd(34)} ${size.padStart(8)}   ${role}`);
     }
-    for (const [setting, name] of [["sweepPond", rules.sweepPond], ["overflowPond", rules.overflowPond]]) {
+    const routed = [...(rules.sweepPondRules ?? []).map((r) => r.pond), rules.sweepPond];
+    for (const name of new Set(routed)) {
       if (!ponds.some((p) => normalize(p.name) === normalize(name))) {
-        console.log(`\n*** rules.${setting} = ${JSON.stringify(name)} matches NO pond. A sweep would route nowhere.`);
+        console.log(`\n*** ${JSON.stringify(name)} is a routing target but matches NO pond. Those sweeps go nowhere.`);
       }
     }
   } catch (err) {

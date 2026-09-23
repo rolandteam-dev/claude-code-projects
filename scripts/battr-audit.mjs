@@ -27,6 +27,8 @@ import { rules } from "./battr/rules.mjs";
 import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, isExemptAgent, lower, hasAny, daysBetween, readInboundEmails, findUnansweredInbound, runReportOnlyLists, foldTouches } from "./battr/classify.mjs";
 import { normalizeContact } from "./battr/contact.mjs";
 import { resolvePausedOwners } from "./battr/paused.mjs";
+import { pondForLead } from "./battr/ponds.mjs";
+import { foldEmailTouches, describeEmailOrigin } from "./battr/communication.mjs";
 import { isDayAllowed } from "./battr/schedule.mjs";
 import { lists, reportOnlyLists } from "./battr/lists.mjs";
 import { bucketName, isSourceAudited } from "./battr/sources.mjs";
@@ -587,7 +589,6 @@ async function main() {
 
   const pondByName = (name) => ponds.find((p) => lower(p.name) === lower(name));
   const primaryPond = pondByName(rules.sweepPond);
-  const overflowPond = pondByName(rules.overflowPond);
   if (!primaryPond && !dry) throw new Error(`Sweep pond "${rules.sweepPond}" not found in FUB.`);
 
   // 2. population
@@ -823,6 +824,79 @@ async function main() {
     }
   }
 
+  // 4c. EMAIL, WHICH BATTR COUNTS AND WE DID NOT
+  //
+  // Battr's playbook counts a manual email as working a lead and ignores an
+  // automated one. We excluded the channel outright, because a FUB batch send
+  // is one click for five hundred leads — right reasoning, too blunt a fix,
+  // and it cost 281 at risk against Battr's 15 on 22 Sep.
+  //
+  // Same shape as the text backfill above and safe for the same reason:
+  // folding only moves last-touch forward, so an email found here can move a
+  // lead from neglected toward compliant and never the other way.
+  //
+  // The new risk is different. A text either exists or does not; an email has
+  // to be JUDGED, and if its origin cannot be read then counting it reopens
+  // the blast hole and ignoring it sweeps a lead the agent wrote to. So an
+  // unreadable origin marks the touch index incomplete, which turns sweeps off
+  // for the run — the same brake the missing text channel pulls.
+  let emailBackfill = null;
+  if (rules.emailCountsAsTouch) {
+    const candidates = results.filter((r) => r.status === "at_risk" || r.status === "neglected");
+    if (candidates.length > rules.maxEmailBackfill) {
+      log(`  email backfill SKIPPED: ${candidates.length} actionable leads exceeds maxEmailBackfill (${rules.maxEmailBackfill}).`);
+      emailBackfill = { attempted: candidates.length, complete: false, reason: "over the cap" };
+      touchIncomplete.push({ channel: "emails", reason: `backfill skipped — ${candidates.length} leads over the cap` });
+    } else {
+      log(`  backfilling emails for ${candidates.length} actionable leads (manual only — automated does not count)...`);
+      const before = { atRisk: results.filter((r) => r.status === "at_risk").length, neglected: results.filter((r) => r.status === "neglected").length };
+      const tally = { manual: 0, automated: 0, unknown: 0 };
+      let failed = 0;
+      let sample = [];
+      for (const cand of candidates) {
+        try {
+          const rows = await fub.emailsForPerson(cand.id, since);
+          if (sample.length < 40) sample = sample.concat(rows).slice(0, 40);
+          const t = foldEmailTouches(touchIndex, rows);
+          tally.manual += t.manual;
+          tally.automated += t.automated;
+          tally.unknown += t.unknown;
+        } catch (err) {
+          failed++;
+          log(`  email backfill failed for one lead: ${err.message}`);
+        }
+      }
+      results = classifyPopulation({ quiet: true });
+      const after = { atRisk: results.filter((r) => r.status === "at_risk").length, neglected: results.filter((r) => r.status === "neglected").length };
+      emailBackfill = {
+        attempted: candidates.length,
+        ...tally,
+        failed,
+        complete: failed === 0 && tally.unknown === 0,
+        before,
+        after,
+        origin: describeEmailOrigin(sample),
+      };
+      log(
+        `  email backfill: ${tally.manual} manual, ${tally.automated} automated, ${tally.unknown} undetermined` +
+          (failed ? `, ${failed} FAILED` : "") +
+          ` — at risk ${before.atRisk} → ${after.atRisk}, neglected ${before.neglected} → ${after.neglected}`
+      );
+      if (tally.unknown) {
+        touchIncomplete.push({
+          channel: "emails",
+          reason:
+            `${tally.unknown} email(s) carried no field identifying them as manual or automated. ` +
+            `Counting them would let one batch send mark a lead as worked; ignoring them would sweep a lead an ` +
+            `agent wrote to. Origin fields actually present: ${JSON.stringify(emailBackfill.origin.fields)}`,
+        });
+      }
+      if (failed) {
+        touchIncomplete.push({ channel: "emails", reason: `${failed} lead(s) whose email thread could not be read` });
+      }
+    }
+  }
+
   const atRisk = results.filter((r) => r.status === "at_risk");
   const neglected = results.filter((r) => r.status === "neglected");
   log(`  ${atRisk.length} at risk, ${neglected.length} neglected`);
@@ -890,7 +964,8 @@ async function main() {
   if ((args.stage === "both" || args.stage === "neglected") && sweepsAllowedToday) {
     const cap = args.maxSweeps ?? rules.maxSweepsPerRun;
     const replyWindow = new Date(Date.now() - rules.inboundEmailWindowDays * DAY_MS).toISOString();
-    let primaryCount = 0;
+    /** Sweeps issued to each pond this run, for the cap below. */
+    const sweptPerPond = new Map();
 
     for (const lead of neglected) {
       if (actions.swept.length >= cap) {
@@ -940,12 +1015,26 @@ async function main() {
         }
       }
 
-      // Primary pond fills first, then overflow — matching the observed
-      // Shark Tank majority / Money Time minority split.
-      const usingOverflow = primaryCount >= rules.maxSweepsPerPond && overflowPond;
-      const pond = usingOverflow ? overflowPond : primaryPond;
+      // Battr's "Pond Assignments" rule set, read off the screen on 23 Sep:
+      // 10 days old or newer to Money Time, older to Shark Tank. Lead age, and
+      // nothing else.
+      const routed = pondForLead(lead.contact?.crm_created_at ?? lead.contact?._raw?.created, rules);
+      const pond = pondByName(routed.pondName);
       if (!pond) {
-        actions.heldBack.push({ ...lead, holdReason: "no sweep pond resolved" });
+        actions.heldBack.push({ ...lead, holdReason: `sweep pond "${routed.pondName}" not found in FUB` });
+        continue;
+      }
+
+      // The cap is ours, not Battr's, and it now HOLDS rather than redirects.
+      // Redirecting a lead to a different pond once a count was hit was the
+      // overflow model, and that model is dead — sending a stale lead into the
+      // pond reserved for fresh ones would be worse than not moving it tonight.
+      const alreadyToThisPond = sweptPerPond.get(pond.id) ?? 0;
+      if (alreadyToThisPond >= rules.maxSweepsPerPond) {
+        actions.heldBack.push({
+          ...lead,
+          holdReason: `per-pond cap reached (${rules.maxSweepsPerPond} to ${pond.name} this run)`,
+        });
         continue;
       }
 
@@ -972,7 +1061,7 @@ async function main() {
         });
         actions.swept.push(record);
         sweepLog.sweeps.push(record);
-        if (!usingOverflow) primaryCount++;
+        sweptPerPond.set(pond.id, (sweptPerPond.get(pond.id) ?? 0) + 1);
       } catch (err) {
         log(`  sweep failed for ${lead.name} (#${lead.id}): ${err.message}`);
         actions.heldBack.push({ ...lead, holdReason: `sweep failed: ${err.message}` });

@@ -14,6 +14,7 @@ import { bucketForSource } from "./sources.mjs";
 import { rules } from "./rules.mjs";
 import { TIMEFRAME_IDS } from "./lists.mjs";
 import { PAUSED_GROUP_MARKER } from "./paused.mjs";
+import { profileTouchAt, STAGE_UPDATED_FIELDS, TIMEFRAME_UPDATED_FIELDS } from "./communication.mjs";
 
 /** Shared so the default never becomes a per-call allocation in a 54k loop. */
 const EMPTY_SET = new Set();
@@ -57,7 +58,19 @@ export function normalizeContact(
   // and is never called back is caught by the report's unanswered-inbound
   // section instead — visible, rather than swept or hidden.
   const inbound = inboundCountsAsTouch ? (touch?.lastInbound ?? 0) : 0;
-  const lastTouchMs = Math.max(touch?.lastOutbound ?? 0, inbound);
+
+  // Battr counts a stage advance and a timeframe change as working the lead,
+  // and neither is a message — they live on the person record, not in any
+  // communication endpoint. A null here means FUB carries no such timestamp on
+  // this account, which the run reports rather than treating as "never".
+  const profileTouch = rules.stageOrTimeframeUpdateCountsAsTouch
+    ? Math.max(
+        profileTouchAt(person, STAGE_UPDATED_FIELDS) ?? 0,
+        profileTouchAt(person, TIMEFRAME_UPDATED_FIELDS) ?? 0
+      )
+    : 0;
+
+  const lastTouchMs = Math.max(touch?.lastOutbound ?? 0, inbound, profileTouch);
   const lastCommunication = lastTouchMs ? new Date(lastTouchMs).toISOString() : null;
 
   const atRiskSinceKey = stamps.atRiskSince || "customBattrAtRiskSince";
