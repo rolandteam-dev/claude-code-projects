@@ -14,6 +14,7 @@
  * through the home-value funnel never have one.
  */
 import { sendFubLead } from "@/lib/fub";
+import { dashboardUrl } from "./brand";
 import type { Homeowner } from "./store";
 
 export type HomeownerActivity =
@@ -96,6 +97,11 @@ export async function sendHomeownerActivity(
 ): Promise<{ sent: boolean; reason?: string }> {
   if (!who.email) return { sent: false, reason: "missing_email" };
   const a = ACTIVITY[activity];
+  // Write the private dashboard link into a FUB custom field (if configured +
+  // we have the token), so agents can jump straight to the lead's dashboard.
+  const dashField = process.env.FUB_DASHBOARD_FIELD;
+  const customFields =
+    dashField && who.token ? { [dashField]: dashboardUrl(who.token) } : undefined;
   try {
     return await sendFubLead({
       firstName: who.firstName,
@@ -110,6 +116,7 @@ export async function sendHomeownerActivity(
       source: a.source,
       tags: a.tags,
       message: [a.label, extra].filter(Boolean).join("\n"),
+      customFields,
     });
   } catch (e) {
     return { sent: false, reason: String(e) };
