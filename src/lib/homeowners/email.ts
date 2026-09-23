@@ -41,6 +41,7 @@ function html(h: Homeowner): string {
       <div style="font-size:40px;line-height:1.1;color:#8a6d2b;font-weight:700;">${money(latest.value)}</div>
       ${latest.low && latest.high ? `<p style="margin:6px 0 0;color:#5a5a5a;font-size:14px;">Likely range ${money(latest.low)} – ${money(latest.high)}</p>` : ""}
       ${apprLine}
+      <p style="margin:14px 0 0;font-size:13px;color:#6a6a6a;">This is an automated estimate and can differ from your home's true market value — reply and we'll prepare a precise, professional valuation.</p>
       <a href="${url}" style="display:inline-block;margin-top:22px;background:#8a6d2b;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:600;font-size:15px;">
         View my full home dashboard
       </a>
