@@ -18,8 +18,13 @@ const label = "mb-1 block font-sans text-[0.66rem] font-semibold uppercase track
  * Instant comp-based home value estimator. Posts ZIP + beds + sqft to
  * /api/home-estimate (Repliers sold comps) and shows a low/mid/high range —
  * no email required to see the number. Routes to a full human CMA afterward.
+ *
+ * `showCmaButton` (default true) toggles the "Get my precise CMA →" link, which
+ * scrolls to the page's #request-cma section. The embeddable version turns it
+ * off (there's no CMA section there) so the flow is a single clean path:
+ * estimate → track this home → dashboard.
  */
-export function HomeEstimator() {
+export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolean } = {}) {
   const [f, setF] = useState({
     address: "",
     zip: "",
@@ -125,7 +130,7 @@ export function HomeEstimator() {
           Based on <strong>{estimate.compCount}</strong> sold comps in {f.zip} over the past 6 months · median{" "}
           {fmt(estimate.ppsfMedian)}/sqft.
         </div>
-        <a href="#request-cma" className="btn mt-5 w-full">
+        <a href="#request-cma" className={`btn mt-5 w-full${showCmaButton ? "" : " hidden"}`}>
           Get my precise CMA →
         </a>
 
@@ -220,7 +225,7 @@ export function HomeEstimator() {
           defensible instant range — which is common for unique or luxury properties. {site.founder.split(" ")[0]}&apos;s
           team will pull the full comp set and prepare a precise CMA.
         </p>
-        <a href="#request-cma" className="btn mt-5 w-full">
+        <a href="#request-cma" className={`btn mt-5 w-full${showCmaButton ? "" : " hidden"}`}>
           Request a free CMA →
         </a>
         <button
