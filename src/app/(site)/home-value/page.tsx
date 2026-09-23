@@ -5,6 +5,7 @@ import { HeroBg } from "@/components/HeroBg";
 import { heroImages } from "@/lib/heroImages";
 import { breadcrumbSchema, faqSchema } from "@/lib/schema";
 import { HomeEstimator } from "@/components/HomeEstimator";
+import { LeadForm } from "@/components/LeadForm";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -137,12 +138,14 @@ export default function HomeValuePage() {
               <li>✓ Backed by {site.stats[2].value} five-star reviews</li>
             </ul>
           </div>
-          <div className="rounded-[14px] bg-white p-3 shadow-[var(--shadow-soft)]">
-            <iframe
-              src={site.homeValueWidgetUrl}
-              title="Request your free home valuation (CMA)"
-              className="h-[560px] w-full rounded-[10px] border-0"
-              loading="lazy"
+          <div className="rounded-[14px] bg-white p-7 shadow-[var(--shadow-soft)]">
+            <div className="mb-4 font-serif text-[1.2rem] text-[var(--color-ink)]">Request your free CMA</div>
+            <LeadForm
+              type="Seller Inquiry"
+              tags={["Seller Lead", "Home Value Page", "Requested CMA"]}
+              source="Home Value Page"
+              showAddress
+              submitLabel="Request My Free CMA"
             />
           </div>
         </Container>
