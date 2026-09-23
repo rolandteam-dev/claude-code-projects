@@ -28,6 +28,7 @@ import { buildAgentDigests, deliverDigests, renderDigestText, digestSubject } fr
 import { describeError, fromAddress, mailConfigured } from "./email.mjs";
 import { parseCsv, findColumn, mapRows } from "./import-atbats.mjs";
 import { bucketForSource, bucketName, isSourceAudited, leadBuckets, unmappedPolicy } from "./sources.mjs";
+import { pondForLead, ageInDays } from "./ponds.mjs";
 import { FubClient } from "./fub.mjs";
 import { appendComparisons, readComparisons, drift } from "./compare.mjs";
 import { rules } from "./rules.mjs";
@@ -604,15 +605,55 @@ check("an unusable touch signal WITHHOLDS the agent digests", () => {
   assert.match(src, /what: "agent alerts"/, "and the withholding is recorded as a skip, not silent");
 });
 
-check("the pond split is marked as the unconfirmed guess it is", () => {
-  // Battr's 10 Sep neglected email routed all four sweeps to Pond / Shark Tank
-  // and none to Money Time. Our 25-lead split was inferred from older mail, not
-  // read off a rule screen, and on a 45-sweep Tuesday it would send 20 leads
-  // somewhere Battr does not.
-  const src = readFileSync(join(HERE, "rules.mjs"), "utf8");
-  assert.match(src, /UNCONFIRMED/, "the pond split must stay flagged until the 8 Sep email confirms it");
-  assert.equal(rules.maxSweepsPerPond, 25, "unchanged — changing pond routing moves leads to a different agent's queue");
-  assert.equal(rules.sweepPond, "Shark Tank");
+check("sweeps route by lead age, as Battr's rule screen says", () => {
+  // "Pond Assignments", read off the screen 23 Sep 2026:
+  //     Money Time (Leads No More than 10 Days Old)   Created Days Ago < 11
+  //     Shark Tank (>10 Days)                         Created Days Ago > 10
+  // Confirmed in words by Battr's account manager the same day.
+  assert.deepEqual(rules.sweepPondRules, [
+    { pond: "Money Time", maxCreatedDaysAgo: 10 },
+    { pond: "Shark Tank", minCreatedDaysAgo: 11 },
+  ]);
+
+  const at = (days) => Date.now() - days * 86400000;
+  for (const [days, expected] of [[0, "Money Time"], [1, "Money Time"], [10, "Money Time"], [11, "Shark Tank"], [400, "Shark Tank"]]) {
+    assert.equal(pondForLead(new Date(at(days)).toISOString(), rules).pondName, expected, `${days}d old`);
+  }
+
+  // The boundary is the whole point: "no more than 10 days old" includes day
+  // 10 and excludes day 11. Off by one here puts a fresh lead in the pond of
+  // 26,900 stale ones, where nobody will look at it again.
+  assert.equal(pondForLead(new Date(at(10)).toISOString(), rules).pondName, "Money Time");
+  assert.equal(pondForLead(new Date(at(11)).toISOString(), rules).pondName, "Shark Tank");
+});
+
+check("lead age counts whole elapsed days, and never runs negative", () => {
+  // The rule reads "Created Days Ago", so a lead created 10 days and 23 hours
+  // ago is 10 days old, not 11 — flooring, not rounding. Rounding would push
+  // leads across the boundary a day early and into the wrong pond.
+  const now = Date.parse("2026-09-23T12:00:00Z");
+  assert.equal(ageInDays("2026-09-23T11:00:00Z", now), 0, "an hour old is day 0");
+  assert.equal(ageInDays("2026-09-13T13:00:00Z", now), 9, "10 days minus an hour is still day 9");
+  assert.equal(ageInDays("2026-09-13T11:00:00Z", now), 10, "10 days and an hour is day 10");
+  assert.equal(ageInDays("2026-09-12T11:00:00Z", now), 11, "and 11 days crosses into Shark Tank");
+
+  // FUB has returned future-dated records before. A negative age must not wrap
+  // into a huge number and route a brand-new lead to the stale pond.
+  assert.equal(ageInDays("2026-09-24T12:00:00Z", now), 0, "a future date clamps to 0");
+  assert.equal(pondForLead("2026-09-24T12:00:00Z", rules, now).pondName, "Money Time");
+});
+
+check("a lead with no readable creation date is not assumed to be new", () => {
+  // An age rule cannot match a lead with no age. Guessing "new" would route a
+  // stale lead into the pond reserved for fresh ones, which is the one
+  // direction this mistake actually costs something.
+  for (const bad of [null, undefined, "", "not a date"]) {
+    const routed = pondForLead(bad, rules);
+    assert.equal(routed.pondName, rules.sweepPond, `${JSON.stringify(bad)} falls back`);
+    assert.equal(routed.ageDays, null);
+    assert.match(routed.fallback, /no readable created date/, "and says why, rather than looking deliberate");
+  }
+  assert.equal(rules.sweepPond, "Shark Tank", "the fallback is the pond stale leads already go to");
 });
 
 check("a bound sweep cap is reported in the summary, not buried", () => {
@@ -1417,32 +1458,36 @@ check("an unreadable interlock stamp is loud, not a quiet zero", () => {
   }
 });
 
-check("the count-based pond model is refuted, and recorded as refuted", () => {
-  // 15 Sep swept 19 leads — comfortably under the 25 at which maxSweepsPerPond
-  // overflows — and still sent one to Money Time. So the split is not by count,
-  // and no value of the threshold fixes it. This check exists so the model
-  // cannot drift back to looking deliberate while it is known to be wrong.
-  const targets = SEP_15.assignmentTargets.Pond;
-  assert.equal(targets["Money Time"], 1, "the night that refutes the model");
-  assert.ok(
-    SEP_15.neglected < rules.maxSweepsPerPond,
-    `${SEP_15.neglected} sweeps is below the ${rules.maxSweepsPerPond} overflow point, so our model sends all of them ` +
-      `to ${rules.sweepPond} — Battr did not`
-  );
+check("both inferred pond models are gone, not just annotated", () => {
+  // Two models died here and both were mine. Overflow — Shark Tank until it
+  // fills, then Money Time — refuted 15 Sep by a 19-sweep night that sent one
+  // lead to Money Time well under the cap. Source — direct to Money Time,
+  // portals to Shark Tank — refuted 22 Sep when Money Time took a Zillow
+  // Preferred lead. Both were plausible readings of Battr's outcomes; neither
+  // was the rule.
+  //
+  // Annotating a wrong model as wrong was the right call while the screen was
+  // unread. Now that it has been read, the model has to be GONE, or the next
+  // person finds two explanations and picks one.
+  const src = readFileSync(join(ROOT, "scripts", "battr", "rules.mjs"), "utf8");
+  assert.ok(!/overflowPond/.test(src), "the overflow pond setting must be removed, not deprecated");
+  assert.match(src, /READ OFF BATTR'S RULE SCREEN/, "and the replacement must say where it came from");
 
-  // The earlier nights, where everything did go to Shark Tank.
+  const engine = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.ok(!/usingOverflow/.test(engine), "and the engine must not still branch on it");
+  assert.match(engine, /pondForLead\(/, "routing goes through the one tested function");
+
+  // The cap survives as a brake, but it may only HOLD a sweep, never redirect
+  // it — redirecting was the overflow model.
+  assert.equal(rules.maxSweepsPerPond, 25, "unchanged — raising it widens what can be swept");
+  assert.match(engine, /per-pond cap reached/, "the cap holds the lead back");
+
+  // Every night on record still has to be explicable by the age rule, or the
+  // screen has been misread.
+  assert.equal(SEP_15.assignmentTargets.Pond["Money Time"], 1, "15 Sep sent one lead to Money Time");
   for (const night of [SEP_10, SEP_11]) {
     assert.deepEqual(Object.keys(night.assignmentTargets.Pond), ["Shark Tank"], `${night.date}`);
   }
-
-  // The rule is deliberately NOT corrected — pond routing is only ever edited
-  // from Battr's own rule screen, and assignment rule set 41 has not been read.
-  // What is required is that the file says so, in the file someone editing the
-  // routing would be reading.
-  const src = readFileSync(join(ROOT, "scripts", "battr", "rules.mjs"), "utf8");
-  const block = src.slice(src.indexOf("Where neglected leads land"), src.indexOf("sweepPond:"));
-  assert.match(block, /REFUTED/, "a model known to be wrong must say so where it is defined");
-  assert.match(block, /NOT CHANGED, deliberately/, "and must say why it was left alone");
 });
 
 check("every modelled list carries Battr's observed numbers to check itself against", () => {
@@ -1763,9 +1808,14 @@ check("self-sourced prospecting is protected", () => {
 });
 
 check("inbound phone and the remaining vendors are swept", () => {
-  for (const src of ["my +plus leads", "Direct Call", "Inbound Call", "Sierra", "Revaluate", "LPT Rider"]) {
+  // `my +plus leads` was in this list until 23 Sep, on our own reading of which
+  // sources looked like lead flow. Battr's live configuration says it is
+  // excluded, so it moved to the never-swept bucket and out of this check.
+  // Our reading was the thing that was wrong, not Battr's.
+  for (const src of ["Direct Call", "Inbound Call", "Sierra", "Revaluate", "LPT Rider"]) {
     assert.equal(isSourceAudited(src), true, `${src} should be in scope`);
   }
+  assert.equal(isSourceAudited("my +plus leads"), false, "moved 23 Sep to match Battr's exclusion list");
 });
 
 check("stray double spaces in a FUB source string still match", () => {
@@ -2882,5 +2932,58 @@ await (async () => {
     );
   });
 })();
+
+// ─── Battr's own exclusion list, no longer reverse-engineered ──────────────
+
+check("every source Battr excludes is excluded here", () => {
+  // Transcribed 23 Sep 2026 from the "Lead Sources With Battr Action
+  // Exclusions" page of Battr's playbook, which is generated from the live
+  // configuration. Pinned as data so a future edit to sources.mjs has to
+  // disagree with Battr explicitly rather than by omission.
+  const BATTR_EXCLUDES = [
+    "<unspecified>", "Import", "Imported", "Lender", "Mojo", "Mojo FSBO", "my +plus leads",
+    "Open House", "Open House (Ylopo)", "Recruiting", "Redx", "Referral",
+    "Schneider Branded Website", "Schneider Company", "Schneider Facebook", "Schneider Google LSA",
+    "Schneider Lender", "Schneider Open House", "Schneider Open House (Ylopo)", "Schneider PPC",
+    "Schneider Real Geeks", "Schneider Realtor.com", "Schneider Unspecified", "Schneider Ylopo",
+    "Schneider Ylopo Seller", "Schneider zBuyer", "Schneider Zillow", "SOI", "Sphere", "Steve Hawks",
+  ];
+  for (const source of BATTR_EXCLUDES) {
+    assert.equal(bucketForSource(source), 82, `${source} must map to the never-swept bucket`);
+    assert.equal(isSourceAudited(source), false, `${source} must not be audited`);
+  }
+});
+
+check("the two sources that were audited by mistake are named", () => {
+  // These are the ones the fix actually moves, and the only ones whose numbers
+  // change. `my +plus leads` was 35 of 55 neglected leads on 4 Sep — the
+  // largest single source of sweeps in a system that was never meant to touch
+  // it. Naming them in a test means a revert has to delete an assertion about
+  // a specific business decision, not just flip a number.
+  for (const source of ["my +plus leads", "Steve Hawks"]) {
+    assert.equal(isSourceAudited(source), false, `${source} is excluded per Battr's live config`);
+  }
+});
+
+check("protecting a source by accident is not the same as protecting it", () => {
+  // The fifteen "Schneider …" sources were excluded only because nobody had
+  // named them, via unmappedPolicy: "exclude". That is protection by accident,
+  // and an edit to the policy would have silently removed it from all fifteen
+  // at once. They are now named.
+  const src = readFileSync(join(HERE, "sources.mjs"), "utf8");
+  for (const source of ["Schneider Zillow", "Schneider PPC", "Schneider Realtor.com"]) {
+    assert.ok(src.includes(`"${source}": 82`), `${source} must be listed explicitly, not left to the fallback`);
+  }
+  // And the fallback stays, for the source nobody has seen yet.
+  assert.equal(unmappedPolicy, "exclude", "an unknown source is still never swept");
+});
+
+check("the sweeping sources are still swept", () => {
+  // The guard on the other side: this change must not quietly widen the
+  // exclusion list into the portals the audit exists to police.
+  for (const source of ["Zillow Preferred", "Ylopo", "zbuyer.com", "Google PPC", "TheRolandTeam.com"]) {
+    assert.equal(isSourceAudited(source), true, `${source} must still be audited`);
+  }
+});
 
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);

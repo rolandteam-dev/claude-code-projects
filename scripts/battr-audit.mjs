@@ -27,6 +27,7 @@ import { rules } from "./battr/rules.mjs";
 import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, isExemptAgent, lower, hasAny, daysBetween, readInboundEmails, findUnansweredInbound, runReportOnlyLists, foldTouches } from "./battr/classify.mjs";
 import { normalizeContact } from "./battr/contact.mjs";
 import { resolvePausedOwners } from "./battr/paused.mjs";
+import { pondForLead } from "./battr/ponds.mjs";
 import { isDayAllowed } from "./battr/schedule.mjs";
 import { lists, reportOnlyLists } from "./battr/lists.mjs";
 import { bucketName, isSourceAudited } from "./battr/sources.mjs";
@@ -587,7 +588,6 @@ async function main() {
 
   const pondByName = (name) => ponds.find((p) => lower(p.name) === lower(name));
   const primaryPond = pondByName(rules.sweepPond);
-  const overflowPond = pondByName(rules.overflowPond);
   if (!primaryPond && !dry) throw new Error(`Sweep pond "${rules.sweepPond}" not found in FUB.`);
 
   // 2. population
@@ -890,7 +890,8 @@ async function main() {
   if ((args.stage === "both" || args.stage === "neglected") && sweepsAllowedToday) {
     const cap = args.maxSweeps ?? rules.maxSweepsPerRun;
     const replyWindow = new Date(Date.now() - rules.inboundEmailWindowDays * DAY_MS).toISOString();
-    let primaryCount = 0;
+    /** Sweeps issued to each pond this run, for the cap below. */
+    const sweptPerPond = new Map();
 
     for (const lead of neglected) {
       if (actions.swept.length >= cap) {
@@ -940,12 +941,26 @@ async function main() {
         }
       }
 
-      // Primary pond fills first, then overflow — matching the observed
-      // Shark Tank majority / Money Time minority split.
-      const usingOverflow = primaryCount >= rules.maxSweepsPerPond && overflowPond;
-      const pond = usingOverflow ? overflowPond : primaryPond;
+      // Battr's "Pond Assignments" rule set, read off the screen on 23 Sep:
+      // 10 days old or newer to Money Time, older to Shark Tank. Lead age, and
+      // nothing else.
+      const routed = pondForLead(lead.contact?.crm_created_at ?? lead.contact?._raw?.created, rules);
+      const pond = pondByName(routed.pondName);
       if (!pond) {
-        actions.heldBack.push({ ...lead, holdReason: "no sweep pond resolved" });
+        actions.heldBack.push({ ...lead, holdReason: `sweep pond "${routed.pondName}" not found in FUB` });
+        continue;
+      }
+
+      // The cap is ours, not Battr's, and it now HOLDS rather than redirects.
+      // Redirecting a lead to a different pond once a count was hit was the
+      // overflow model, and that model is dead — sending a stale lead into the
+      // pond reserved for fresh ones would be worse than not moving it tonight.
+      const alreadyToThisPond = sweptPerPond.get(pond.id) ?? 0;
+      if (alreadyToThisPond >= rules.maxSweepsPerPond) {
+        actions.heldBack.push({
+          ...lead,
+          holdReason: `per-pond cap reached (${rules.maxSweepsPerPond} to ${pond.name} this run)`,
+        });
         continue;
       }
 
@@ -972,7 +987,7 @@ async function main() {
         });
         actions.swept.push(record);
         sweepLog.sweeps.push(record);
-        if (!usingOverflow) primaryCount++;
+        sweptPerPond.set(pond.id, (sweptPerPond.get(pond.id) ?? 0) + 1);
       } catch (err) {
         log(`  sweep failed for ${lead.name} (#${lead.id}): ${err.message}`);
         actions.heldBack.push({ ...lead, holdReason: `sweep failed: ${err.message}` });

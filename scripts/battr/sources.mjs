@@ -37,6 +37,41 @@ export const leadBuckets = [
  */
 export const sourceBuckets = {
   // ── 82: never swept ───────────────────────────────────────────────────────
+  //
+  // CONFIRMED 23 Sep 2026 against Battr's own "Lead Sources With Battr Action
+  // Exclusions" page, generated from the live configuration. Before that this
+  // list was reverse-engineered, and it had two sources in the wrong place:
+  //
+  //   my +plus leads   was bucket 2 (audited). On 4 Sep it was 35 of the 55
+  //                    neglected leads — the single largest source of sweeps
+  //                    in a system that was never meant to sweep it.
+  //   Steve Hawks      was bucket 7 (audited).
+  //
+  // Both are now 82. Expect the neglected count to fall; that is the fix
+  // working, not a regression.
+  //
+  // The fifteen "Schneider …" sources were absent entirely. They were already
+  // excluded in practice, by unmappedPolicy: "exclude" — but a source that is
+  // protected only because nobody named it is protected by an accident that a
+  // future edit to that policy silently undoes. Named, they are protected on
+  // purpose.
+  "my +plus leads": 82,
+  "Steve Hawks": 82,
+  "Schneider Branded Website": 82,
+  "Schneider Company": 82,
+  "Schneider Facebook": 82,
+  "Schneider Google LSA": 82,
+  "Schneider Lender": 82,
+  "Schneider Open House": 82,
+  "Schneider Open House (Ylopo)": 82,
+  "Schneider PPC": 82,
+  "Schneider Real Geeks": 82,
+  "Schneider Realtor.com": 82,
+  "Schneider Unspecified": 82,
+  "Schneider Ylopo": 82,
+  "Schneider Ylopo Seller": 82,
+  "Schneider zBuyer": 82,
+  "Schneider Zillow": 82,
   // Relationship business and records nobody can work. Taking these from an
   // agent on a day counter is how a sweep system loses the room.
   SOI: 82,
@@ -109,7 +144,6 @@ export const sourceBuckets = {
   "Real Geeks": 2,
   "Lead Findr": 2,
   // Swept per Mike, 2026-09-01.
-  "my +plus leads": 2,
   Sierra: 2,
   "Lexy Lead": 2,
   Quali: 2,
@@ -195,7 +229,6 @@ export const sourceBuckets = {
   "The Roland Team": 7,
   "Andrew the Home Buyer": 7,
   "Charles Power": 7,
-  "Steve Hawks": 7,
   "Jeff Petrick": 7,
   "ISA Transfer": 7,
   Company: 7,
