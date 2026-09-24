@@ -59,8 +59,8 @@ export interface HomeownerStore {
   list(limit?: number): Promise<Homeowner[]>;
   /** Total tracked homeowners. */
   count(): Promise<number>;
-  /** records whose last email is older than `intervalDays` (or never sent) and still subscribed */
-  listDueForEmail(intervalDays: number): Promise<Homeowner[]>;
+  /** records whose last email is older than `intervalDays` (or never sent) and still subscribed, engaged contacts first; `limit` caps the working set */
+  listDueForEmail(intervalDays: number, limit?: number): Promise<Homeowner[]>;
   upsert(h: Homeowner): Promise<Homeowner>;
   /** Bulk contact upsert for imports — preserves estimates/views/subscribed on conflict. */
   upsertContacts(records: Homeowner[]): Promise<void>;
@@ -126,11 +126,20 @@ const memoryStore: HomeownerStore = {
   async count() {
     return mem.size;
   },
-  async listDueForEmail(intervalDays) {
+  async listDueForEmail(intervalDays, limit) {
     const cutoff = Date.now() - intervalDays * 86_400_000;
-    return [...mem.values()].filter(
+    const due = [...mem.values()].filter(
       (h) => h.subscribed && (!h.lastEmailedAt || new Date(h.lastEmailedAt).getTime() < cutoff)
     );
+    // Engaged contacts (any dashboard view) first, then most-recently-updated —
+    // warm-up reputation is built by mailing openers/clickers first.
+    due.sort((a, b) => {
+      const ea = (a.views?.length ?? 0) > 0 ? 1 : 0;
+      const eb = (b.views?.length ?? 0) > 0 ? 1 : 0;
+      if (ea !== eb) return eb - ea;
+      return a.updatedAt < b.updatedAt ? 1 : -1;
+    });
+    return limit && limit > 0 ? due.slice(0, limit) : due;
   },
   async upsert(h) {
     mem.set(h.token, { ...h, updatedAt: now() });

@@ -45,11 +45,33 @@ export type EstimateResponse =
   | { ok: true; estimate: EstimateResult }
   | { ok: false; reason: "not_configured" | "insufficient_comps" | "invalid_input" | "upstream_error" };
 
-function mapClassParam(t?: string): string | undefined {
+type StyleWant = "detached" | "attached" | null;
+
+/** What product the subject is, for comp-style matching. */
+export function styleWantFor(t?: string): StyleWant {
   const s = (t ?? "").toLowerCase();
-  if (s.includes("condo")) return "CondoProperty";
-  if (s.includes("single") || s.includes("town") || s.includes("multi")) return "ResidentialProperty";
-  return undefined; // land / unknown → don't over-constrain
+  if (s.includes("condo")) return "attached";
+  if (s.includes("town")) return "attached";
+  if (s.includes("single") || s.includes("multi") || s.includes("detached")) return "detached";
+  return null; // land / unknown → no style constraint
+}
+
+const ATTACHED_RE = /(condo|condominium|attached|town\s?home|town\s?house|apartment|high[-\s]?rise|mid[-\s]?rise|\bloft\b|co-?op)/;
+const DETACHED_RE = /(single[-\s]?family|detached|\bsfr\b)/;
+
+/**
+ * Keep a comp unless it POSITIVELY reads as the wrong product (fail-open).
+ *
+ * The GLVAR feed files many DETACHED homes that sit in an HOA/PUD under
+ * CondoProperty, so the `class` field is not detached-vs-attached and can't be
+ * used as a server filter (doing so returned zero comps across ~half the
+ * valley). Instead we pull all comps and read each row's own style text, only
+ * dropping one when it clearly is the wrong kind. No style text → keep.
+ */
+export function matchesStyle(want: StyleWant, styleText: string): boolean {
+  if (!want || !styleText) return true;
+  if (want === "detached") return !ATTACHED_RE.test(styleText);
+  return !DETACHED_RE.test(styleText);
 }
 
 /** Linear-interpolated percentile over an ascending-sorted array. */
@@ -75,6 +97,19 @@ const num = (...vals: any[]): number => {
   }
   return 0;
 };
+
+/** All style-ish text on a row, lowercased — field names vary by MLS, so read many. */
+export function styleTextOf(r: any): string {
+  const d = r?.details ?? {};
+  return [
+    d.propertyType, d.propertySubType, d.subType, d.style, d.propertyStyle,
+    d.architecturalStyle, d.type, d.homeType, d.ownershipType, d.ownership,
+    d.class, r?.class, d.description,
+  ]
+    .filter((x) => typeof x === "string" && x)
+    .join(" · ")
+    .toLowerCase();
+}
 
 /** ISO date (YYYY-MM-DD) for the comp-window cutoff, MONTHS_BACK months ago. */
 function cutoffISO(): string {
@@ -108,8 +143,10 @@ export async function estimateHomeValue(input: EstimateInput): Promise<EstimateR
   p.set("maxBeds", String(beds + 1));
   p.set("minSqft", String(minSqft));
   p.set("maxSqft", String(maxSqft));
-  const cls = mapClassParam(input.propertyType);
-  if (cls) p.set("class", cls);
+  // Do NOT filter by `class` server-side: on GLVAR, detached homes in an HOA/PUD
+  // are filed under CondoProperty, so a class filter returns an empty bucket
+  // across most of the valley. We pull all comps and classify in-app instead.
+  const want = styleWantFor(input.propertyType);
   p.set("resultsPerPage", "100");
   p.set("sortBy", "soldDateDesc");
   p.set("fields", "mlsNumber,soldPrice,soldDate,lastStatus,class,address,details");
@@ -143,6 +180,10 @@ export async function estimateHomeValue(input: EstimateInput): Promise<EstimateR
     if (soldPrice <= 0 || rowSqft <= 0) continue;
     if (rowSqft < minSqft || rowSqft > maxSqft) continue;
     if (rowBeds > 0 && Math.abs(rowBeds - beds) > 1) continue;
+
+    // Fail-open style gate: drop a comp only when it positively reads as the
+    // wrong product (e.g. a true condo when valuing a detached home).
+    if (!matchesStyle(want, styleTextOf(r))) continue;
 
     const soldDate = String(r.soldDate ?? r.lastStatusUpdate ?? "").slice(0, 10);
     if (soldDate && Number.isFinite(cutoffTs) && Date.parse(soldDate) < cutoffTs) continue;
