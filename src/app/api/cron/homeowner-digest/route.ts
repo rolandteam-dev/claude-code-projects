@@ -40,12 +40,6 @@ async function run(req: Request) {
   const limit = Math.min(Math.max(Number.isFinite(limitRaw) ? Math.trunc(limitRaw) : 50, 0), 1000);
 
   const store = homeownerStore();
-  const due = await store.listDueForEmail(Number.isFinite(days) ? days : 14);
-
-  // Enforce eligibility at send time so rows already in the table (out-of-state
-  // / junk email) can never be mailed, independent of import-time filtering.
-  let eligibleList = due.filter((h) => isEligible({ email: h.email, state: h.state, zip: h.zip }));
-  const skippedIneligible = due.length - eligibleList.length;
 
   // Segment targeting for a safe warm-up: send to your warmest people first.
   //   ?source=home-value,fub  — only these record sources (comma-separated)
@@ -53,6 +47,19 @@ async function run(req: Request) {
   const sourceParam = (url.searchParams.get("source") ?? "").trim();
   const sources = sourceParam ? new Set(sourceParam.split(",").map((s) => s.trim()).filter(Boolean)) : null;
   const engagedOnly = url.searchParams.get("engaged") === "1";
+  const hasSegment = !!sources || engagedOnly;
+
+  // Push the batch cap into the query so we don't load ~22k eligible rows just to
+  // send 50 (SQL also orders engaged-first + filters obvious ineligibles). When
+  // a segment filter is active, over-fetch a bounded working set so the in-app
+  // filter can still fill the batch.
+  const fetchLimit = hasSegment ? Math.min(2000, Math.max(limit * 20, 500)) : limit;
+  const due = await store.listDueForEmail(Number.isFinite(days) ? days : 14, fetchLimit);
+
+  // Enforce eligibility at send time so rows already in the table (out-of-state
+  // / junk email) can never be mailed, independent of import-time filtering.
+  let eligibleList = due.filter((h) => isEligible({ email: h.email, state: h.state, zip: h.zip }));
+  const skippedIneligible = due.length - eligibleList.length;
   if (sources) eligibleList = eligibleList.filter((h) => sources.has(h.source));
   if (engagedOnly) eligibleList = eligibleList.filter((h) => (h.views?.length ?? 0) > 0);
 

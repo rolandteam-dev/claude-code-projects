@@ -102,13 +102,35 @@ export const postgresStore: HomeownerStore = {
     return (rows[0]?.n as number) ?? 0;
   },
 
-  async listDueForEmail(intervalDays) {
+  async listDueForEmail(intervalDays, limit) {
     await ensureSchema();
-    const rows = await sql()`
-      SELECT * FROM homeowners
-      WHERE subscribed = true
-        AND (last_emailed_at IS NULL OR last_emailed_at < now() - (${intervalDays} * interval '1 day'))
-    `;
+    // Push the obvious eligibility filters (NV ZIP, non-placeholder email) and
+    // an engaged-first ordering into SQL, and cap with LIMIT so a warm-up run
+    // doesn't load all ~22k eligible rows to send 50. The in-app isEligible()
+    // check in the digest is still the final gate.
+    const rows =
+      limit && limit > 0
+        ? await sql()`
+            SELECT * FROM homeowners
+            WHERE subscribed = true
+              AND (last_emailed_at IS NULL OR last_emailed_at < now() - (${intervalDays} * interval '1 day'))
+              AND zip ~ '^89[0-9]{3}$'
+              AND email LIKE '%@%.%'
+              AND email NOT LIKE 'noemail-%'
+              AND email NOT LIKE '%@notvalidemail.com'
+            ORDER BY (jsonb_array_length(COALESCE(views, '[]'::jsonb)) > 0) DESC, updated_at DESC
+            LIMIT ${limit}
+          `
+        : await sql()`
+            SELECT * FROM homeowners
+            WHERE subscribed = true
+              AND (last_emailed_at IS NULL OR last_emailed_at < now() - (${intervalDays} * interval '1 day'))
+              AND zip ~ '^89[0-9]{3}$'
+              AND email LIKE '%@%.%'
+              AND email NOT LIKE 'noemail-%'
+              AND email NOT LIKE '%@notvalidemail.com'
+            ORDER BY (jsonb_array_length(COALESCE(views, '[]'::jsonb)) > 0) DESC, updated_at DESC
+          `;
     return rows.map(rowToHomeowner);
   },
 

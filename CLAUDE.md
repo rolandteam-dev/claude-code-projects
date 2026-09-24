@@ -56,6 +56,11 @@ organically for community/neighborhood and buyer/seller search terms.
 - `BUYING_VIDEO_ID` — YouTube video id for the homeowner dashboard's "Buying a Home" module (just the id, e.g. `DGQMJufo4l8`, not the full URL). Defaults to a sensible value; set this to swap the video without a code change.
 - `FUB_DASHBOARD_FIELD` — FUB custom-field API key that receives each homeowner's private dashboard link. When set, every homeowner activity event (`src/lib/homeowners/fubActivity.ts`) writes `home.therolandteam.com/dashboard/<token>` into that field, so agents can click straight to the lead's dashboard from the FUB contact. Create the field in FUB → Admin → Custom Fields, find its exact API key via the read-only `/api/admin/fub-custom-fields?key=ADMIN_TOKEN` endpoint, and set it here. Unset = link not written.
 
+## Gotchas (Repliers / estimator)
+- **`class` is NOT detached-vs-attached on GLVAR.** Detached homes in an HOA/PUD are filed under `CondoProperty`, so filtering the comp query by `class=ResidentialProperty` (for "Single Family") returned an empty bucket across ~half the valley (Summerlin, Anthem, Green Valley, Southern Highlands, Mountain's Edge). `src/lib/idx/estimate.ts` no longer sends `class`; it pulls all comps and classifies each in-app (`styleWantFor` / `styleTextOf` / `matchesStyle`), **failing open** — a comp is dropped only when its own style text positively reads as attached. The style field names vary by MLS; `/api/admin/estimate-test?...&comps=1` dumps the `byStyle` map + sample `details` to find the real ones.
+- **Repliers `status` takes a single value.** `status=A,U` 400s — use one (`U` for sold comps).
+- **The `/estimates` (AVM) POST requires a `details` object** (beds/baths/sqft); omitting it 400s.
+
 ## Roadmap (next)
 - Client Portal on real auth + a database (hubs that follow a client across devices; per-agent dashboard access)
 - Live IDX/MLS listing search integration
