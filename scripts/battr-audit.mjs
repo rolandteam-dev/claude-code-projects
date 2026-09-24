@@ -146,7 +146,7 @@ async function replyReprieve(fub, personId, sinceIso, diag) {
 
 // ---------------------------------------------------------------------- report
 
-function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], touchIncomplete = [], unenforceable = [], comparisonDrift = [], passedOver = { beforeList: 0, pausedAgents: 0, pausedLeads: 0 } }) {
+function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], touchIncomplete = [], unenforceable = [], comparisonDrift = [], passedOver = { beforeList: 0, pausedAgents: 0, pausedLeads: 0 }, emailBackfill = null }) {
   const byAgent = new Map();
   for (const r of results) {
     if (r.status === "excluded" || !r.owner) continue;
@@ -239,6 +239,27 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     `- Excluded: **${excludedAfterList + passedOver.beforeList}** ` +
       `(${passedOver.beforeList} never entered the audit list, ${excludedAfterList} removed after it)`
   );
+  if (emailBackfill && emailBackfill.manual !== undefined) {
+    // Reported, not logged. The point of this pass is to learn which field
+    // Follow Up Boss uses to mark an email as machine-sent, and the answer
+    // going to stderr is the fourth time on this project a load-bearing number
+    // has gone somewhere nobody reads.
+    const { manual, automated, unknown, origin } = emailBackfill;
+    lines.push(
+      `- Email counted as work: **${manual} manual**, ${automated} automated (ignored), ${unknown} undetermined`
+    );
+    const fields = Object.keys(origin?.fields ?? {});
+    lines.push(
+      `  - origin fields present on the sample: ${fields.length ? `\`${fields.join("`, `")}\`` : "**none — FUB marks these rows no way we can read**"}`
+    );
+    if (unknown) {
+      lines.push(
+        `  - ${unknown} email(s) could not be classified, so sweeps are held. Counting them would let one batch ` +
+          `send mark a lead as worked; ignoring them would sweep a lead an agent wrote to by hand.`
+      );
+    }
+  }
+
   if (passedOver.pausedAgents) {
     // Reported, not logged. The last two times a number like this went to
     // stderr only, it took days to notice it was wrong.
@@ -923,8 +944,19 @@ async function main() {
   // (`rules.sweepOnBackfilledTexts`) rather than switching itself on. Until
   // then the counts in the report are correct and nothing moves — which is the
   // state that makes the report comparable to Battr's nightly emails.
-  const touchComplete = touchIncomplete.length === 0 || textBackfill?.complete === true;
-  const touchUsable = touchIncomplete.length === 0 || (textBackfill?.complete === true && rules.sweepOnBackfilledTexts === true);
+  // EVERY backfill has to be complete, not just the text one.
+  //
+  // This read `textBackfill?.complete === true` alone, which meant an email
+  // pass that could not tell a manual send from an action-plan send pushed its
+  // gap onto `touchIncomplete` and was then overruled by texts having gone
+  // fine. The brake the email pass exists to pull did not reach the pedal.
+  //
+  // It cost nothing tonight because sweeps are off for an unrelated reason —
+  // which is exactly how a fault like this survives to the day the flag flips.
+  const backfills = [textBackfill, emailBackfill].filter(Boolean);
+  const backfillsComplete = backfills.length > 0 && backfills.every((b) => b.complete === true);
+  const touchComplete = touchIncomplete.length === 0 || backfillsComplete;
+  const touchUsable = touchIncomplete.length === 0 || (backfillsComplete && rules.sweepOnBackfilledTexts === true);
   const touchReason = touchComplete
     ? "last-touch complete via per-person backfill, but rules.sweepOnBackfilledTexts is off"
     : "last-touch incomplete";
@@ -1209,7 +1241,7 @@ async function main() {
   mkdirSync(LOG_DIR, { recursive: true });
   if (sweepLog.sweeps.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
 
-  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete, unenforceable, comparisonDrift, passedOver });
+  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete, unenforceable, comparisonDrift, passedOver, emailBackfill });
   const reportPath = await deliverReport(markdown, { runId, dry });
 
   console.log(markdown);
