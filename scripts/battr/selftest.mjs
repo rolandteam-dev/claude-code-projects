@@ -511,9 +511,24 @@ check("an unusable touch signal holds the NUDGE, not just the sweep", () => {
   const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
   assert.match(
     src,
-    /const touchUsable =\s*touchIncomplete\.length === 0 \|\|\s*\(textBackfill\?\.complete === true && rules\.sweepOnBackfilledTexts === true\);/,
+    /const touchUsable =\s*touchIncomplete\.length === 0 \|\| \(backfillsComplete && rules\.sweepOnBackfilledTexts === true\);/,
     "acting is allowed only with no gaps at all, or a COMPLETE backfill plus an explicit opt-in"
   );
+
+  // EVERY backfill, not just the text one. This read `textBackfill?.complete`
+  // alone until 24 Sep, which meant an email pass that could not tell a manual
+  // send from an action-plan send pushed its gap onto `touchIncomplete` and was
+  // then overruled by texts having gone fine. The brake did not reach the
+  // pedal. It cost nothing on the night it shipped, because sweeps were off for
+  // an unrelated reason — which is how a fault like that survives to the day
+  // the flag flips.
+  assert.match(src, /const backfills = \[textBackfill, emailBackfill\]\.filter\(Boolean\);/, "both passes are considered");
+  assert.match(
+    src,
+    /backfills\.every\(\(b\) => b\.complete === true\)/,
+    "one incomplete backfill must be enough to hold every action"
+  );
+  assert.ok(!/textBackfill\?\.complete === true \|\|/.test(src), "no path may treat texts alone as sufficient");
   assert.match(
     src,
     /const nudgesAllowedToday = isDayAllowed\(rules\.nudgeDayFilter[^)]*\)[^;]*&& touchUsable;/,
@@ -3110,5 +3125,26 @@ await (async () => {
     assert.match(block, /281 at risk against Battr's 15/, "and carry what the old policy cost");
   });
 })();
+
+check("the email origin finding reaches the report, not the run log", () => {
+  // The whole point of the email pass is to learn which field Follow Up Boss
+  // uses to mark a message as machine-sent. On the night it shipped, that
+  // answer went to stderr — the fourth time on this project a load-bearing
+  // number has gone somewhere nobody reads, after the owner-group warning, the
+  // At Risk Since stamp and the paused-agent count.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /passedOver, emailBackfill \}\);/, "the tally must be handed to the report");
+  assert.match(src, /emailBackfill = null \}\) \{/, "and the report must accept it");
+  assert.match(src, /Email counted as work/, "and print it");
+  assert.match(src, /origin fields present on the sample/, "with the field names, which is the finding");
+  assert.match(src, /none — FUB marks these rows no way we can read/, "including the answer that no field exists");
+
+  // It belongs with the counts it changed, above the paused-agent line, not
+  // appended somewhere after the reader has moved on.
+  assert.ok(
+    src.indexOf("Email counted as work") < src.indexOf("Paused agents:"),
+    "it sits with the Summary counts"
+  );
+});
 
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);
