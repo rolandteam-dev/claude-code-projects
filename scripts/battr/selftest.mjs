@@ -32,7 +32,7 @@ import { pondForLead, ageInDays } from "./ponds.mjs";
 import { FubClient } from "./fub.mjs";
 import { appendComparisons, readComparisons, drift } from "./compare.mjs";
 import { rules } from "./rules.mjs";
-import { TIMELINE, SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, SEP_15, SEP_16, FUB_FIELDS, SOURCE_COUNTS, observedLists } from "./observed.mjs";
+import { TIMELINE, SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, SEP_15, SEP_16, SEP_17, SEP_18, SEP_20, SEP_22, SEP_24, FUB_FIELDS, SOURCE_COUNTS, observedLists } from "./observed.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
@@ -1110,11 +1110,43 @@ check("the day filter plus the three-day spread explain every observed night", (
   );
 });
 
+/**
+ * Every night we have transcribed, in one place.
+ *
+ * The churn check indexes over this rather than over the seven nights with a
+ * full export, because a night has to be IN the index to declare itself an
+ * exception — and 24 Sep, the one night that needed to, was not.
+ */
+const allNights = [SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, SEP_15, SEP_16, SEP_17, SEP_18, SEP_20, SEP_22, SEP_24];
+
+check("a discontinuity has to carry its own evidence", () => {
+  // `unexplainedDiscontinuity` switches off the churn bound for a night, so it
+  // is exactly the flag someone reaches for to make a failing test pass. It
+  // therefore has to cost something: the size of the drop and what it dropped
+  // from, recorded on the night itself.
+  //
+  // 24 Sep is the first to use it. Battr's audit list went 766 to 430 in one
+  // night after eight nights inside two percent, while ours moved 799 to 803.
+  const flagged = allNights.filter((n) => n.unexplainedDiscontinuity);
+  for (const night of flagged) {
+    assert.equal(typeof night.populationDropPct, "number", `${night.date} must record how far it moved`);
+    assert.equal(typeof night.populationDropFrom, "number", `${night.date} must record what it moved from`);
+    assert.ok(Math.abs(night.populationDropPct) > 10, `${night.date}: the exemption is for real breaks, not noise`);
+  }
+
+  // And it must stay rare. A bound that half the nights are exempt from is not
+  // a bound.
+  assert.ok(flagged.length <= 2, `${flagged.length} nights are exempt — the churn check is being worn away`);
+});
+
 check("every observed night reconciles with the self-draining population", () => {
   // Derived, not a literal: adding a night's export without adding it to the
   // timeline (or the reverse) fails here instead of needing a number bumped.
   const fullNights = [SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, SEP_15, SEP_16];
-  const byDate = Object.fromEntries(fullNights.map((n) => [n.date, n]));
+  // Indexed over EVERY recorded night, not just the seven with a full export.
+  // The churn skip below consults this, and a night that is missing from it
+  // cannot declare its own discontinuity — which is how 24 Sep first failed.
+  const byDate = Object.fromEntries(allNights.map((n) => [n.date, n]));
   for (const night of fullNights) {
     assert.ok(
       TIMELINE.some((t) => t.date === night.date),
@@ -1156,7 +1188,8 @@ check("every observed night reconciles with the self-draining population", () =>
     // A night somebody moved leads in bulk has an explanation the arithmetic
     // cannot see. Skipping it by name keeps the bound tight for every other
     // night; widening the tolerance to absorb it would not.
-    if (byDate[cur.date]?.bulkMoveObserved || byDate[prev.date]?.bulkMoveObserved) continue;
+    const exempt = (d) => byDate[d]?.bulkMoveObserved || byDate[d]?.unexplainedDiscontinuity;
+    if (exempt(cur.date) || exempt(prev.date)) continue;
 
     pairsChecked++;
     const churn = Math.abs(cur.total - (prev.total - prev.neglected));
