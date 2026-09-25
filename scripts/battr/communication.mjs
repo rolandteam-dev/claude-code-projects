@@ -73,14 +73,27 @@ export function emailOrigin(row) {
  * last-touch forward. Returns the tally so the caller can refuse to sweep on a
  * pass that could not classify what it read.
  */
-export function foldEmailTouches(index, rows = []) {
-  const tally = { manual: 0, automated: 0, unknown: 0 };
+export function foldEmailTouches(index, rows = [], { personId: knownPersonId = null } = {}) {
+  const tally = { manual: 0, automated: 0, unknown: 0, skipped: 0 };
   for (const row of rows) {
-    const personId = row.personId ?? row.person?.id;
-    const created = row.created ?? row.createdAt;
-    if (!personId || !created) continue;
+    // The id is KNOWN — these rows came back from /emails?personId=N. Relying
+    // on the row to repeat it is what made the first version of this pass a
+    // silent no-op: on 24 Sep it reported "0 manual, 0 automated, 0
+    // undetermined" while the very next line listed four origin fields found
+    // on the sample. Rows were read; every one of them was dropped here.
+    const personId = row.personId ?? row.person?.id ?? knownPersonId;
+    // FUB is not consistent about the timestamp key across endpoints, and a
+    // missing one fails exactly as quietly as a missing id.
+    const created = row.created ?? row.createdAt ?? row.sent ?? row.sentAt ?? row.date;
+    if (!personId || !created) {
+      tally.skipped++;
+      continue;
+    }
     const at = new Date(created).getTime();
-    if (!Number.isFinite(at)) continue;
+    if (!Number.isFinite(at)) {
+      tally.skipped++;
+      continue;
+    }
 
     const origin = emailOrigin(row);
     tally[origin]++;

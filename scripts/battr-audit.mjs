@@ -246,7 +246,8 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     // has gone somewhere nobody reads.
     const { manual, automated, unknown, origin } = emailBackfill;
     lines.push(
-      `- Email counted as work: **${manual} manual**, ${automated} automated (ignored), ${unknown} undetermined`
+      `- Email counted as work: **${manual} manual**, ${automated} automated (ignored), ${unknown} undetermined` +
+        (emailBackfill.rows !== undefined ? ` — of ${emailBackfill.rows} row(s) read, ${emailBackfill.skipped ?? 0} unusable` : "")
     );
     const fields = Object.keys(origin?.fields ?? {});
     lines.push(
@@ -871,17 +872,19 @@ async function main() {
     } else {
       log(`  backfilling emails for ${candidates.length} actionable leads (manual only — automated does not count)...`);
       const before = { atRisk: results.filter((r) => r.status === "at_risk").length, neglected: results.filter((r) => r.status === "neglected").length };
-      const tally = { manual: 0, automated: 0, unknown: 0 };
+      const tally = { manual: 0, automated: 0, unknown: 0, skipped: 0, rows: 0 };
       let failed = 0;
       let sample = [];
       for (const cand of candidates) {
         try {
           const rows = await fub.emailsForPerson(cand.id, since);
           if (sample.length < 40) sample = sample.concat(rows).slice(0, 40);
-          const t = foldEmailTouches(touchIndex, rows);
+          const t = foldEmailTouches(touchIndex, rows, { personId: cand.id });
           tally.manual += t.manual;
           tally.automated += t.automated;
           tally.unknown += t.unknown;
+          tally.skipped += t.skipped;
+          tally.rows += rows.length;
         } catch (err) {
           failed++;
           log(`  email backfill failed for one lead: ${err.message}`);
@@ -903,6 +906,18 @@ async function main() {
           (failed ? `, ${failed} FAILED` : "") +
           ` — at risk ${before.atRisk} → ${after.atRisk}, neglected ${before.neglected} → ${after.neglected}`
       );
+      // Rows read and none usable is the failure this pass has already had
+      // once: it reports zeroes that read exactly like "nobody emailed anyone".
+      // It is a shape problem with the rows, and it must say so.
+      if (tally.rows && tally.manual + tally.automated + tally.unknown === 0) {
+        touchIncomplete.push({
+          channel: "emails",
+          reason:
+            `${tally.rows} email row(s) were read and NONE could be used — every one lacked a person id or a ` +
+            `timestamp we recognise. This is a row-shape problem, not an empty inbox. ` +
+            `Fields seen: ${JSON.stringify(emailBackfill.origin.fields)}`,
+        });
+      }
       if (tally.unknown) {
         touchIncomplete.push({
           channel: "emails",
