@@ -70,8 +70,9 @@ const DETACHED_RE = /(single[-\s]?family|detached|\bsfr\b)/;
  */
 export function matchesStyle(want: StyleWant, styleText: string): boolean {
   if (!want || !styleText) return true;
-  if (want === "detached") return !ATTACHED_RE.test(styleText);
-  return !DETACHED_RE.test(styleText);
+  const t = styleText.toLowerCase();
+  if (want === "detached") return !ATTACHED_RE.test(t);
+  return !DETACHED_RE.test(t);
 }
 
 /** Linear-interpolated percentile over an ascending-sorted array. */
@@ -98,17 +99,20 @@ const num = (...vals: any[]): number => {
   return 0;
 };
 
-/** All style-ish text on a row, lowercased — field names vary by MLS, so read many. */
-export function styleTextOf(r: any): string {
-  const d = r?.details ?? {};
-  return [
-    d.propertyType, d.propertySubType, d.subType, d.style, d.propertyStyle,
-    d.architecturalStyle, d.type, d.homeType, d.ownershipType, d.ownership,
-    d.class, r?.class, d.description,
-  ]
-    .filter((x) => typeof x === "string" && x)
-    .join(" · ")
-    .toLowerCase();
+/**
+ * Structured style text on a row (GLVAR: `details.style`, e.g. "Single Family
+ * Residence" / "Condominium" / "Townhouse"). ONLY the structured style fields —
+ * NOT `class` (CondoProperty even for detached HOA homes), NOT
+ * `details.propertyType` (the constant "Residential"), and NOT
+ * `details.description` (free-text remarks like "detached casita" or "near the
+ * townhomes" that carry no property-type signal). Reading any of those
+ * reintroduced the original bug one layer down. Empty string → fail open (kept).
+ */
+export function styleTextOf(row: any): string {
+  const d = row?.details ?? {};
+  return [d.style, d.propertySubType, d.subType]
+    .filter((v) => typeof v === "string" && v.trim())
+    .join(" ");
 }
 
 /** ISO date (YYYY-MM-DD) for the comp-window cutoff, MONTHS_BACK months ago. */
