@@ -1165,6 +1165,102 @@ export const OURS_SEP_22 = {
   staleMarkingLive: true,
 };
 
+/**
+ * THURSDAY 24 SEPTEMBER — BATTR'S AUDIT LIST HALVED OVERNIGHT.
+ *
+ *     15 Sep  880
+ *     16 Sep  786   -10.7%
+ *     17 Sep  796    +1.3%
+ *     18 Sep  790    -0.8%
+ *     20 Sep  777    -1.6%
+ *     22 Sep  780    +0.4%
+ *     23 Sep  766    -1.8%
+ *     24 Sep  430   -43.9%   <-- this
+ *
+ * Eight nights of drift inside two percent, then a 336-lead drop in one day.
+ *
+ * OURS DID NOT MOVE: 813 on 22 Sep, 799 on 23rd, 803 on 24th. So whatever
+ * this is, it happened on Battr's side of the comparison, to Battr's list,
+ * and not to the Follow Up Boss database both systems read. That is the one
+ * thing these emails can establish on their own, and it is worth establishing
+ * before anybody goes looking for a defect in this engine.
+ *
+ * The at-risk shape changed with it: 18 new notes in a night that had been
+ * running 2 to 7. A list that shrinks by 44% while WARNING three times as
+ * many people is not the same list with fewer leads in it — its membership
+ * changed. Different leads are in it now.
+ *
+ * CAUSES NOT DISTINGUISHABLE FROM AN EMAIL. A member list could have been
+ * edited, a threshold changed, or a bulk stage or pond move in FUB could have
+ * emptied part of the population. Battr's own numbers rule out one of them:
+ * "Excluded due to lead bucket: 0" and "Excluded due to agent group: 0", the
+ * same as every other night, so nothing was newly excluded by those filters.
+ *
+ * WHAT IT MEANS FOR THE COMPARISON. The combined-list drift goes from +4.8%
+ * against 23 Sep to +86.7% against 24 Sep, and neither number is now evidence
+ * about this engine. Until the cause is known, the population comparison is
+ * measuring a change in Battr, and the honest reading of tonight's report is
+ * that the row is uninterpretable rather than bad.
+ *
+ * Context worth recording alongside it, as sequence and not as cause: Mike
+ * asked Battr for a full account of everything running on the account on
+ * 23 Sep, said he was deciding on renewal, and got the playbook back the same
+ * day. The list halved the following night. That is a coincidence in time and
+ * nothing more unless Battr says otherwise — which is a question for Gabby,
+ * not an inference to make here.
+ */
+export const SEP_24 = {
+  date: "2026-09-24",
+  weekday: "Thursday",
+  total: 430,
+  at_risk: 20,
+  at_risk_new_notes: 18,
+  at_risk_already_flagged: 2,
+  neglected: 3,
+  records_moved: 3,
+  records_not_moved: 0,
+  excluded_lead_bucket: 0,
+  excluded_agent_group: 0,
+  assignmentTargets: { Pond: { "Shark Tank": 3 } },
+  sweptIds: [97413, 62624, 101049],
+
+  /** The discontinuity, flagged as data rather than left to be noticed. */
+  populationDropPct: -43.9,
+  populationDropFrom: 766,
+  unexplainedDiscontinuity: true,
+  /** A list that shrinks 44% while warning 3x as many leads has changed membership. */
+  newNotesSpike: true,
+};
+
+/**
+ * OUR RUN THE SAME NIGHT (2026-09-24-sq7n). 803 audited, 204 at risk,
+ * 10 neglected. Stable against 799 the night before.
+ *
+ * AND THE EMAIL PASS DID NOTHING, which this run is how we found out:
+ *
+ *     - Email counted as work: 0 manual, 0 automated, 0 undetermined
+ *       - origin fields present on the sample: actionPlanId, campaignOrigin,
+ *         emailTemplateId, userId
+ *
+ * Rows came back carrying all four origin fields and not one was counted —
+ * every row was dropped for lacking a person id that the caller already knew,
+ * because it had just asked /emails?personId=N for them. Fixed on 25 Sep.
+ *
+ * So 204 against Battr's 20 is not evidence about the email policy either.
+ * The change meant to close that gap has not yet run.
+ */
+export const OURS_SEP_24 = {
+  date: "2026-09-24",
+  runId: "2026-09-24-sq7n",
+  audited: 803,
+  at_risk: 204,
+  neglected: 10,
+  /** Uninterpretable: Battr's side of it moved 44% for reasons unknown. */
+  populationDriftVsSameNight: 86.7,
+  comparisonUsable: false,
+  emailPassWasNoOp: true,
+};
+
 /** The observations in order, for anything that wants the trend. */
 export const TIMELINE = [
   { date: "2026-09-02", weekday: "Wed", total: 866, at_risk: 17, neglected: 7 },
@@ -1190,6 +1286,11 @@ export const TIMELINE = [
   // 21 Sep (Mon) not captured — Monday is excluded from sweeps by the rule
   // screen, so the backlog from Sat/Sun/Mon all clears on this Tuesday.
   { date: "2026-09-22", weekday: "Tue", total: 780, at_risk: 15, neglected: 16 },
+  { date: "2026-09-23", weekday: "Wed", total: 766, at_risk: 14, neglected: 4 },
+  // -43.9% in one night after eight nights inside two percent. Ours did not
+  // move. See SEP_24 — the population comparison is not evidence until the
+  // cause is known.
+  { date: "2026-09-24", weekday: "Thu", total: 430, at_risk: 20, neglected: 3 },
 ];
 
 export const observedLists = [
