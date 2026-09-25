@@ -3046,13 +3046,55 @@ await (async () => {
       { personId: 1, created: when(0), actionPlanId: 4, userId: 9 },   // automated, today
       { personId: 2, created: when(1) },                               // unknown
     ]);
-    assert.deepEqual(tally, { manual: 1, automated: 1, unknown: 1 });
+    assert.deepEqual(tally, { manual: 1, automated: 1, unknown: 1, skipped: 0 });
 
     // Lead 1's clock reads the MANUAL email, not the newer automated one.
     const lead1 = index.get(1);
     const age = Math.round((Date.now() - lead1.lastOutbound) / DAY_MS);
     assert.equal(age, 2, "the blast must not reset the clock to today");
     assert.ok(!index.has(2), "an undetermined row touches nothing");
+  });
+
+  check("the person id comes from the query, not from hoping the row repeats it", () => {
+    // The 24 Sep silent no-op. The report read "0 manual, 0 automated, 0
+    // undetermined" and the very next line listed four origin fields found on
+    // the sample — rows were read, and every one was dropped for lacking a
+    // personId that the caller already knew, because it had just asked
+    // /emails?personId=N for them.
+    //
+    // Zeroes that mean "nobody emailed anyone" and zeroes that mean "we threw
+    // it all away" look identical in a report. That is the failure, not the
+    // missing field.
+    const index = new Map();
+    const rows = [{ created: when(1), userId: 9 }, { created: when(3), actionPlanId: 2 }];
+
+    const blind = foldEmailTouches(new Map(), rows);
+    assert.deepEqual(blind, { manual: 0, automated: 0, unknown: 0, skipped: 2 }, "without the id, everything is skipped");
+
+    const told = foldEmailTouches(index, rows, { personId: 42 });
+    assert.equal(told.manual, 1);
+    assert.equal(told.automated, 1);
+    assert.equal(told.skipped, 0);
+    assert.ok(index.get(42).lastOutbound > 0, "and the touch lands on the lead we asked about");
+  });
+
+  check("a timestamp under another name is still a timestamp", () => {
+    // FUB is not consistent about this key across endpoints, and a missing one
+    // fails exactly as quietly as a missing id.
+    for (const key of ["created", "createdAt", "sent", "sentAt", "date"]) {
+      const t = foldEmailTouches(new Map(), [{ [key]: when(1), userId: 9 }], { personId: 7 });
+      assert.equal(t.manual, 1, `${key} must be recognised`);
+      assert.equal(t.skipped, 0);
+    }
+    const none = foldEmailTouches(new Map(), [{ userId: 9 }], { personId: 7 });
+    assert.equal(none.skipped, 1, "and a row with no timestamp at all is counted as skipped, not ignored");
+  });
+
+  check("rows read but none usable is reported as a defect, not an empty inbox", () => {
+    const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+    assert.match(src, /tally\.rows && tally\.manual \+ tally\.automated \+ tally\.unknown === 0/, "the case must be detected");
+    assert.match(src, /row-shape problem, not an empty inbox/, "and named for what it is");
+    assert.match(src, /of \$\{emailBackfill\.rows\} row\(s\) read/, "and the report must show how many rows were read");
   });
 
   check("folding email is monotonic, like every other channel", () => {
