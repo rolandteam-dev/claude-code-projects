@@ -32,7 +32,7 @@ import { pondForLead, ageInDays } from "./ponds.mjs";
 import { FubClient } from "./fub.mjs";
 import { appendComparisons, readComparisons, drift } from "./compare.mjs";
 import { rules } from "./rules.mjs";
-import { OURS_SEP_25, TIMELINE, SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, SEP_15, SEP_16, SEP_17, SEP_18, SEP_20, SEP_22, SEP_24, FUB_FIELDS, SOURCE_COUNTS, observedLists } from "./observed.mjs";
+import { OURS_SEP_25, SEP_25, TIMELINE, SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, SEP_15, SEP_16, SEP_17, SEP_18, SEP_20, SEP_22, SEP_24, FUB_FIELDS, SOURCE_COUNTS, observedLists } from "./observed.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
@@ -3248,6 +3248,41 @@ check("most email in this database is machine-sent, which is why the line exists
   assert.equal(email.unusable, 0, "and nothing was silently dropped — the 24 Sep fault");
   assert.ok(automatedSharePct > 80, `${automatedSharePct}% automated — a blanket email rule would be worthless`);
   assert.ok(at_risk < atRiskBeforeEmailPass, "counting manual work must reduce who looks neglected");
+});
+
+check("the 24 Sep collapse was not a reconfiguration", () => {
+  // A list that is reconfigured stays reconfigured. This one halved for one
+  // night and came back to 769 — three above where it started. That rules out
+  // the explanation everyone reaches for first, and it is the reason the
+  // discontinuity exemption on 24 Sep is recorded as unexplained rather than
+  // as "they changed the rules".
+  assert.equal(SEP_24.total, 430);
+  assert.equal(SEP_25.recoveredFrom, 430);
+  assert.ok(SEP_25.total > SEP_24.total * 1.7, "the list came back, so nothing was permanently narrowed");
+  assert.ok(Math.abs(SEP_25.total - 766) < 20, "and it came back to roughly where it was on 23 Sep");
+});
+
+check("the state Battr owns is the state that went missing", () => {
+  // Of seven leads Battr itself warned on 23 Sep, four report `Previous
+  // Status: None` on 25 Sep and two report `At Risk`. Partial, not uniform —
+  // a reset would have taken all of them.
+  //
+  // The split runs along ownership. `At Risk Since` is a custom field on the
+  // FUB contact and survived on every lead. `Previous Status` is Battr's own
+  // and is gone on two thirds.
+  assert.ok(SEP_25.previousStatusLost.length > SEP_25.previousStatusKept.length, "most lost it");
+  assert.equal(SEP_25.stateLossPartial, true, "partial loss, not a clean reset");
+  assert.equal(
+    new Set([...SEP_25.previousStatusLost, ...SEP_25.previousStatusKept]).size,
+    SEP_25.previousStatusLost.length + SEP_25.previousStatusKept.length,
+    "no lead is counted in both"
+  );
+
+  // Why this engine would have come through it: the interlock reads the stamp
+  // off the FUB contact rather than keeping its own copy. If that ever changes
+  // to a local store, this check is where the cost shows up.
+  const src = readFileSync(join(HERE, "contact.mjs"), "utf8");
+  assert.match(src, /customBattrAtRiskSince: person\[atRiskSinceKey\]/, "the warning stamp is read from FUB, not held here");
 });
 
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);
