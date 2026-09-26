@@ -1307,6 +1307,90 @@ export const OURS_SEP_25 = {
   comparisonUsable: false,
 };
 
+/**
+ * FRIDAY 25 SEPTEMBER — THE LIST CAME BACK, AND THE STATE DID NOT.
+ *
+ *     23 Sep  766
+ *     24 Sep  430   -43.9%
+ *     25 Sep  769   back to where it was
+ *
+ * So the 24 Sep collapse was not a configuration change. A list that is
+ * reconfigured stays reconfigured; this one halved for one night and returned
+ * to 769, three above where it started. That rules out the explanation
+ * everyone would reach for first.
+ *
+ * WHAT REPLACES IT IS WORSE, AND THE PER-LEAD ROWS SHOW IT.
+ *
+ * Battr's at-risk email carries a `Previous Status` for every record. On
+ * 25 Sep it reads "None" for leads that demonstrably had one. Of the seven
+ * leads Battr itself warned on 23 Sep:
+ *
+ *     Roel Briones             prev=None     At Risk Since=2026-09-23
+ *     Miranda Lam              prev=None     At Risk Since=2026-09-23
+ *     Maria Masongsong Chacon  prev=None     At Risk Since=2026-09-23
+ *     Sara Avalos              prev=None     At Risk Since=2026-09-23
+ *     Norma Holloway           prev=At Risk  At Risk Since=2026-09-23
+ *     Emilio De Leon Rivera    prev=At Risk  At Risk Since=2026-09-23
+ *
+ * Four of six lost it. Two kept it. That is not a reset — a reset is uniform.
+ * It is partial loss.
+ *
+ * AND THE SPLIT IS ALONG THE LINE OF WHO OWNS THE DATA. `At Risk Since`
+ * survived on every single lead, because it is a custom field on the FUB
+ * contact. `Previous Status` is Battr's own record of what it thought about
+ * that lead, and on two thirds of them it is gone.
+ *
+ * The same shape explains 24 Sep without needing anything else: a list that
+ * shrinks 44% while issuing 18 new warnings — nearly three times its normal
+ * night — is a system that has forgotten which leads it had already warned.
+ *
+ * WHAT THIS IS NOT. It is not proof of what happened inside Battr, and no
+ * email can be. It is evidence that Battr's own per-lead state is not
+ * reliably durable, and that the parts of this system that live in Follow Up
+ * Boss came through it intact while the parts that live in Battr did not.
+ *
+ * WHAT IT MEANS FOR US. Two things, and they point the same way.
+ *
+ * First, our warn-first interlock reads `customBattrAtRiskSince` from the FUB
+ * contact rather than keeping its own copy. That was chosen so the rule JSON
+ * pasted from Battr would match without being rewritten. It also means this
+ * engine would have come through 24 Sep with its warning history intact.
+ *
+ * Second: At Bats. That history lives inside Battr, exactly like
+ * `Previous Status` does, and it is the one thing on this project that cannot
+ * be rebuilt from Follow Up Boss afterwards. The argument for exporting it
+ * before the renewal was already the strongest on the list; this is the week
+ * that showed why.
+ */
+export const SEP_25 = {
+  date: "2026-09-25",
+  weekday: "Friday",
+  total: 769,
+  at_risk: 35,
+  at_risk_new_notes: 13,
+  at_risk_already_flagged: 22,
+  neglected: 3,
+  records_moved: 3,
+  records_not_moved: 0,
+  excluded_lead_bucket: 0,
+  excluded_agent_group: 0,
+  assignmentTargets: { Pond: { "Shark Tank": 3 } },
+  sweptIds: [98561, 70515, 86007],
+
+  /** 430 was a one-night dip, not a new configuration. */
+  recoveredFrom: 430,
+  recoveredTo: 769,
+
+  /**
+   * Leads Battr warned on 23 Sep whose `Previous Status` reads "None" on
+   * 25 Sep. Their `At Risk Since` survived — that field lives in FUB.
+   */
+  previousStatusLost: [58451, 99947, 43933, 100479],
+  previousStatusKept: [40330, 99644],
+  /** Partial, not uniform: a reset would have taken all six. */
+  stateLossPartial: true,
+};
+
 /** The observations in order, for anything that wants the trend. */
 export const TIMELINE = [
   { date: "2026-09-02", weekday: "Wed", total: 866, at_risk: 17, neglected: 7 },
@@ -1337,6 +1421,9 @@ export const TIMELINE = [
   // move. See SEP_24 — the population comparison is not evidence until the
   // cause is known.
   { date: "2026-09-24", weekday: "Thu", total: 430, at_risk: 20, neglected: 3 },
+  // Back to 769 the next night, which is what rules out a config change and
+  // leaves partial state loss as the reading. See SEP_25.
+  { date: "2026-09-25", weekday: "Fri", total: 769, at_risk: 35, neglected: 3 },
 ];
 
 export const observedLists = [
