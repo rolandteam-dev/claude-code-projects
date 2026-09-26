@@ -25,6 +25,15 @@
   --color-gold: #9a7b3f;
   --color-gold-2: #c2a36b;
   --color-gold-3: #d8bd84;
+  /* Gold dark enough to pass 4.5:1 as small text on white (eyebrows, numerals) */
+  --color-gold-deep: #7d6533;
+
+  /* Guide landing page neutrals: secondary text that passes on white AND sand,
+     a softer hairline, and the ivory used for the light book cover */
+  --color-muted-2: #596170;
+  --color-line-soft: #ece8e0;
+  --color-ivory: #fbf9f4;
+  --color-ivory-2: #c9c4b8;
 
   --font-serif: "Cormorant Garamond", Georgia, "Times New Roman", Cambria, serif;
   --font-sans: "Helvetica Neue", Arial, system-ui, sans-serif;
