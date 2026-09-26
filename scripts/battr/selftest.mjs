@@ -32,7 +32,7 @@ import { pondForLead, ageInDays } from "./ponds.mjs";
 import { FubClient } from "./fub.mjs";
 import { appendComparisons, readComparisons, drift } from "./compare.mjs";
 import { rules } from "./rules.mjs";
-import { TIMELINE, SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, SEP_15, SEP_16, SEP_17, SEP_18, SEP_20, SEP_22, SEP_24, FUB_FIELDS, SOURCE_COUNTS, observedLists } from "./observed.mjs";
+import { OURS_SEP_25, TIMELINE, SEP_8, SEP_10, SEP_11, SEP_12, SEP_13, SEP_15, SEP_16, SEP_17, SEP_18, SEP_20, SEP_22, SEP_24, FUB_FIELDS, SOURCE_COUNTS, observedLists } from "./observed.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..", "..");
@@ -3220,6 +3220,34 @@ check("the email origin finding reaches the report, not the run log", () => {
     src.indexOf("Email counted as work") < src.indexOf("Paused agents:"),
     "it sits with the Summary counts"
   );
+});
+
+check("the email tally says what it moved, not just what it read", () => {
+  // "1311 manual, 6746 automated" is the finding; "at risk 204 -> 161" is the
+  // consequence, and it is the next question anyone reads the first line and
+  // asks. Both belong on the page.
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /it moved at risk \$\{before\.atRisk\} → \$\{after\.atRisk\}/);
+  assert.ok(
+    src.indexOf("it moved at risk") > src.indexOf("Email counted as work"),
+    "the effect reads under the tally that caused it"
+  );
+});
+
+check("most email in this database is machine-sent, which is why the line exists", () => {
+  // 25 Sep, the first clean read: 6,746 of 8,057 emails on the actionable
+  // shortlist were automated. Had this engine simply started counting "email",
+  // those blasts would have marked their leads as worked — the exact objection
+  // that kept email out of the touch index for three weeks.
+  //
+  // Pinned as data because it is the evidence for a policy, and a policy whose
+  // evidence lives only in a chat message gets re-argued.
+  const { email, automatedSharePct, at_risk, atRiskBeforeEmailPass } = OURS_SEP_25;
+  assert.equal(email.manual + email.automated + email.undetermined, email.rows, "every row is accounted for");
+  assert.equal(email.undetermined, 0, "nothing was guessed at");
+  assert.equal(email.unusable, 0, "and nothing was silently dropped — the 24 Sep fault");
+  assert.ok(automatedSharePct > 80, `${automatedSharePct}% automated — a blanket email rule would be worthless`);
+  assert.ok(at_risk < atRiskBeforeEmailPass, "counting manual work must reduce who looks neglected");
 });
 
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);

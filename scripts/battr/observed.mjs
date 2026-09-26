@@ -1261,6 +1261,52 @@ export const OURS_SEP_24 = {
   emailPassWasNoOp: true,
 };
 
+/**
+ * OUR RUN, FRIDAY 25 SEPTEMBER (2026-09-25-9pay) — THE EMAIL PASS WORKS.
+ *
+ *     Email counted as work: 1311 manual, 6746 automated (ignored),
+ *     0 undetermined — of 8057 rows read, 0 unusable
+ *
+ * Every row read, every row classified, nothing thrown away and nothing
+ * guessed at. The previous night read the same shape of data and folded
+ * literally none of it.
+ *
+ * AND THE SPLIT IS THE WHOLE ARGUMENT. 84% of the email on the actionable
+ * shortlist is machine-sent — 6,746 messages from action plans, campaigns and
+ * templates against 1,311 an agent actually wrote. If this engine had simply
+ * started counting "email", those 6,746 blasts would have marked their leads
+ * as worked, which is exactly the objection that kept email out of the touch
+ * index for three weeks.
+ *
+ * So the original instinct was right and the original fix was too blunt. The
+ * line Battr draws — manual counts, automated does not — is the one worth
+ * having, and it needed the distinction to be readable before it was safe.
+ *
+ * At risk fell 204 → 161, a fifth. Neglected 13.
+ *
+ * WHAT THIS STILL DOES NOT SETTLE. 161 against Battr's 20 is not a comparison
+ * any more: Battr's audit list halved on 24 Sep for reasons nobody has
+ * explained, so its at-risk count is drawn from a population less than half
+ * the size of ours. Until that is understood, the at-risk gap has no
+ * denominator and the honest position is that it is unmeasured, not that it
+ * is large.
+ */
+export const OURS_SEP_25 = {
+  date: "2026-09-25",
+  runId: "2026-09-25-9pay",
+  audited: 804,
+  at_risk: 161,
+  neglected: 13,
+
+  email: { rows: 8057, manual: 1311, automated: 6746, undetermined: 0, unusable: 0 },
+  /** The number that justifies the manual/automated line rather than a blanket rule. */
+  automatedSharePct: 83.7,
+  atRiskBeforeEmailPass: 204,
+
+  /** Battr's side halved on 24 Sep, so the population comparison has no denominator. */
+  comparisonUsable: false,
+};
+
 /** The observations in order, for anything that wants the trend. */
 export const TIMELINE = [
   { date: "2026-09-02", weekday: "Wed", total: 866, at_risk: 17, neglected: 7 },

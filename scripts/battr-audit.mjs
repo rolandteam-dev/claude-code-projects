@@ -253,6 +253,12 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     lines.push(
       `  - origin fields present on the sample: ${fields.length ? `\`${fields.join("`, `")}\`` : "**none — FUB marks these rows no way we can read**"}`
     );
+    if (emailBackfill.before && emailBackfill.after) {
+      const { before, after } = emailBackfill;
+      lines.push(
+        `  - it moved at risk ${before.atRisk} → ${after.atRisk} and neglected ${before.neglected} → ${after.neglected}`
+      );
+    }
     if (unknown) {
       lines.push(
         `  - ${unknown} email(s) could not be classified, so sweeps are held. Counting them would let one batch ` +
