@@ -14,7 +14,20 @@ export function ListingCard({ l }: { l: Listing }) {
     // interactive control nested inside an anchor is invalid and swallows clicks.
     <div className="relative">
       <div className="absolute right-3 top-3 z-20">
-        <SaveHomeButton id={l.id} address={`${l.address.line1}, ${l.address.city}`} />
+        <SaveHomeButton
+          id={l.id}
+          address={`${l.address.line1}, ${l.address.city}`}
+          property={{
+            address: l.address.line1,
+            city: l.address.city,
+            state: l.address.state,
+            zip: l.address.postalCode,
+            price: l.listPrice,
+            beds: l.beds,
+            baths: l.baths,
+            mlsNumber: l.mlsNumber,
+          }}
+        />
       </div>
 
       <Link
