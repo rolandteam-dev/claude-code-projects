@@ -9,12 +9,14 @@ import { NextResponse, type NextRequest } from "next/server";
  *   app host        → the client product (hub + the tools it links to)
  *   marketing hosts → the marketing site; the client product is not reachable
  *   homeowner host  → untouched, exactly as today
+ *   guide host      → the relocation-guide landing page only ("/" is the page)
  *
  * Hostnames come from the environment so they can differ per deployment:
  *
  *   APP_HOST         e.g. app.therolandteam.com
  *   MARKETING_HOSTS  comma-separated, e.g. rolandluxury.com,www.rolandluxury.com
  *   HOMEOWNER_HOST   e.g. home.therolandteam.com
+ *   GUIDE_HOST       e.g. guide.therolandteam.com
  *
  * FAIL-OPEN BY DESIGN: an unrecognised host — a preview deployment, localhost,
  * or any hostname not named in those variables — gets the whole app, exactly as
@@ -43,6 +45,13 @@ const PRODUCT_TOOLS = [
 /** Internal + per-recipient routes: reachable on every host, unchanged. */
 const ALWAYS_ALLOWED = ["/admin", "/dashboard"];
 
+/**
+ * The relocation-guide landing page (linked from YouTube). On its own host the
+ * root IS the page and nothing else is served, so the short link stays
+ * guide.therolandteam.com with no path.
+ */
+const GUIDE_ROOT = "/guide";
+
 function hostsFrom(value: string | undefined): string[] {
   return (value ?? "")
     .split(",")
@@ -65,6 +74,7 @@ export function middleware(req: NextRequest) {
   const appHost = (process.env.APP_HOST ?? "").trim().toLowerCase();
   const marketingHosts = hostsFrom(process.env.MARKETING_HOSTS);
   const homeownerHost = (process.env.HOMEOWNER_HOST ?? "").trim().toLowerCase();
+  const guideHost = (process.env.GUIDE_HOST ?? "").trim().toLowerCase();
 
   // Strip any port so localhost:3000 and a bare hostname compare equal.
   const host = (req.headers.get("host") ?? "").toLowerCase().split(":")[0];
@@ -72,6 +82,17 @@ export function middleware(req: NextRequest) {
 
   // The homeowner host keeps today's behaviour exactly.
   if (homeownerHost && host === homeownerHost) return NextResponse.next();
+
+  if (guideHost && host === guideHost) {
+    // "/" is the guide page and "/thank-you" its confirmation; the query
+    // string (?s=, ?v=, ?first=) rides along on the rewrite.
+    if (pathname === "/" || pathname === "/thank-you") {
+      const url = req.nextUrl.clone();
+      url.pathname = `${GUIDE_ROOT}${pathname === "/" ? "" : pathname}`;
+      return NextResponse.rewrite(url);
+    }
+    return startsWithPath(pathname, GUIDE_ROOT) ? NextResponse.next() : notFound(req);
+  }
 
   if (ALWAYS_ALLOWED.some((base) => startsWithPath(pathname, base))) {
     return NextResponse.next();
