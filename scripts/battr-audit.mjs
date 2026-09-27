@@ -52,6 +52,7 @@ import {
   exclusionCounts,
 } from "./battr/battr-emails.mjs";
 import { appendComparisons, readComparisons, drift } from "./battr/compare.mjs";
+import { explainAtRisk, renderGapSection } from "./battr/gap.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 /**
@@ -153,7 +154,7 @@ async function replyReprieve(fub, personId, sinceIso, diag) {
 
 // ---------------------------------------------------------------------- report
 
-function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], touchIncomplete = [], unenforceable = [], comparisonDrift = [], passedOver = { beforeList: 0, pausedAgents: 0, pausedLeads: 0 }, emailBackfill = null }) {
+function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], touchIncomplete = [], unenforceable = [], comparisonDrift = [], gap = null, passedOver = { beforeList: 0, pausedAgents: 0, pausedLeads: 0 }, emailBackfill = null }) {
   const byAgent = new Map();
   for (const r of results) {
     if (r.status === "excluded" || !r.owner) continue;
@@ -302,6 +303,8 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     lines.push(`- **${s.count} ${s.what} skipped today** — ${s.reason}`);
   }
   lines.push("");
+
+  if (gap) lines.push(...renderGapSection(gap, { battrAtRisk: gap.battrAtRisk, battrDate: gap.battrDate }));
 
   lines.push("## Agent scoreboard (worst first)");
   lines.push("");
@@ -946,6 +949,8 @@ async function main() {
   // unreadable origin marks the touch index incomplete, which turns sweeps off
   // for the run — the same brake the missing text channel pulls.
   let emailBackfill = null;
+  /** Person id → last AUTOMATED email. Never a touch; measured for the gap section. */
+  const automatedAt = new Map();
   if (rules.emailCountsAsTouch) {
     const candidates = results.filter((r) => r.status === "at_risk" || r.status === "neglected");
     if (candidates.length > rules.maxEmailBackfill) {
@@ -962,7 +967,7 @@ async function main() {
         try {
           const rows = await fub.emailsForPerson(cand.id, since);
           if (sample.length < 40) sample = sample.concat(rows).slice(0, 40);
-          const t = foldEmailTouches(touchIndex, rows, { personId: cand.id });
+          const t = foldEmailTouches(touchIndex, rows, { personId: cand.id, automated: automatedAt });
           tally.manual += t.manual;
           tally.automated += t.automated;
           tally.unknown += t.unknown;
@@ -1306,6 +1311,20 @@ async function main() {
     log(`  could not read the comparison history: ${err.message}`);
   }
 
+  // Why we flag more than Battr. Report-only: it reads what the run already
+  // decided and changes nobody's status.
+  let gap = null;
+  try {
+    const explained = explainAtRisk({ results, peopleById, automatedAt });
+    const lastBattr = readComparisons(COMPARISON_PATH)
+      .filter((r) => r.source === "battr" && r.listId === 0 && r.at_risk !== null)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .pop();
+    gap = { ...explained, battrAtRisk: lastBattr?.at_risk ?? null, battrDate: lastBattr?.date ?? null };
+  } catch (err) {
+    log(`  could not explain the at-risk gap: ${err.message}`);
+  }
+
   const unanswered = findUnansweredInbound(results, rules.unansweredInboundDays);
   if (unanswered.length) log(`  ${unanswered.length} leads reached out with no call or text back`);
 
@@ -1339,7 +1358,7 @@ async function main() {
   mkdirSync(LOG_DIR, { recursive: true });
   if (sweepLog.sweeps.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
 
-  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete, unenforceable, comparisonDrift, passedOver, emailBackfill });
+  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete, unenforceable, comparisonDrift, gap, passedOver, emailBackfill });
   const stageEmails = buildStageEmails({
     runId,
     dry,

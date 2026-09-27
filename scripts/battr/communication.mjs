@@ -73,7 +73,7 @@ export function emailOrigin(row) {
  * last-touch forward. Returns the tally so the caller can refuse to sweep on a
  * pass that could not classify what it read.
  */
-export function foldEmailTouches(index, rows = [], { personId: knownPersonId = null } = {}) {
+export function foldEmailTouches(index, rows = [], { personId: knownPersonId = null, automated = null } = {}) {
   const tally = { manual: 0, automated: 0, unknown: 0, skipped: 0 };
   for (const row of rows) {
     // The id is KNOWN — these rows came back from /emails?personId=N. Relying
@@ -97,6 +97,12 @@ export function foldEmailTouches(index, rows = [], { personId: knownPersonId = n
 
     const origin = emailOrigin(row);
     tally[origin]++;
+    // Automated sends never touch the index — they are not work. They are
+    // recorded on the side only so the report can measure how much of the gap
+    // with Battr they would explain (gap.mjs).
+    if (origin === "automated" && automated && row.isIncoming !== true) {
+      automated.set(personId, Math.max(automated.get(personId) ?? 0, at));
+    }
     if (origin !== "manual") continue;
 
     const inbound = row.isIncoming === true || row.direction === "inbound";

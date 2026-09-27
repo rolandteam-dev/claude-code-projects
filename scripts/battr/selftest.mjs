@@ -3389,4 +3389,80 @@ check("the state Battr owns is the state that went missing", () => {
   });
 }
 
+
+// ─── Why we flag more than Battr ──────────────────────────────────────────────
+{
+  const G = await import("./gap.mjs");
+  const { lists: allLists } = await import("./lists.mjs");
+  const { foldEmailTouches: fold } = await import("./communication.mjs");
+  const NOW = Date.parse("2026-09-27T12:00:00Z");
+  const ago = (d) => new Date(NOW - d * 86_400_000).toISOString();
+  const warm = allLists.find((l) => l.name.includes("Warm Back Up"));
+
+  check("gap: reads each list's own at-risk window off the rule JSON", () => {
+    assert.equal(G.atRiskDaysOf(warm), 10);
+    assert.equal(G.atRiskDaysOf(allLists.find((l) => l.name.includes("Hot Leads"))), 2);
+    assert.equal(G.atRiskDaysOf(allLists.find((l) => l.name.includes("Quarterly"))), 93);
+    assert.equal(G.atRiskDaysOf({}), null);
+  });
+
+  check("gap: every at-risk lead is tested against each explanation, inside its own window", () => {
+    const rec = (id, owner, source = "Zillow Preferred") => ({ id, owner, source, status: "at_risk", source_list_ids: [warm.id] });
+    const results = [
+      rec(1, "Agent A"),                    // automated email 3 days ago → explained
+      rec(2, "Agent A"),                    // automated email 20 days ago → outside a 10-day window
+      rec(3, "Agent B"),                    // record edited yesterday
+      rec(4, "Agent B", "my +plus leads"),  // divergent source
+      rec(5, "Agent B"),                    // nothing
+      { id: 6, owner: "Agent C", status: "compliant", source_list_ids: [warm.id] },
+    ];
+    const peopleById = new Map([
+      [1, { id: 1, updated: ago(30) }], [2, { id: 2, updated: ago(30) }], [3, { id: 3, updated: ago(1) }],
+      [4, { id: 4, updated: ago(30) }], [5, { id: 5, updated: ago(30) }], [6, { id: 6 }],
+    ]);
+    const automatedAt = new Map([[1, NOW - 3 * 86_400_000], [2, NOW - 20 * 86_400_000]]);
+    const g = G.explainAtRisk({ results, peopleById, automatedAt, now: NOW });
+    assert.equal(g.total, 5, "compliant leads are not counted");
+    assert.deepEqual(g.signals, { automatedEmail: 1, recordEdited: 1, divergentSource: 1, unexplained: 2 });
+    assert.deepEqual(g.byAgent.map((a) => [a.agent, a.atRisk, a.unexplained]), [["Agent B", 3, 1], ["Agent A", 2, 1]]);
+    assert.equal(g.byList[0].days, 10);
+    assert.deepEqual(g.profileFields, { people: 6, stageField: 0, timeframeField: 0 });
+  });
+
+  check("gap: the report section says when the stage/timeframe rule reads nothing", () => {
+    const g = G.explainAtRisk({
+      results: [{ id: 1, owner: "A", source: "S", status: "at_risk", source_list_ids: [warm.id] }],
+      peopleById: new Map([[1, { id: 1 }]]),
+      now: NOW,
+    });
+    const md = G.renderGapSection(g, { battrAtRisk: 19, battrDate: "2026-09-26" }).join("\n");
+    assert.match(md, /## Why our at-risk count is higher than Battr's/);
+    assert.match(md, /against Battr's \*\*19\*\* \(2026-09-26\)/);
+    assert.match(md, /The stage\/timeframe rule is reading nothing/);
+    assert.deepEqual(G.renderGapSection({ total: 0 }), [], "nothing to explain, no section");
+  });
+
+  check("gap: automated email is measured on the side and never counted as work", () => {
+    const index = new Map();
+    const automated = new Map();
+    const t = fold(index, [
+      { created: ago(2), actionPlanId: 7 },
+      { created: ago(5), userId: 3 },
+    ], { personId: 42, automated });
+    assert.equal(t.automated, 1);
+    assert.equal(automated.get(42), NOW - 2 * 86_400_000, "the automated send is recorded for the gap section");
+    assert.equal(index.get(42).lastOutbound, NOW - 5 * 86_400_000, "only the manual send moved last-touch");
+    const plain = new Map();
+    fold(plain, [{ created: ago(2), actionPlanId: 7 }], { personId: 43 });
+    assert.equal(plain.has(43), false, "without the side map an automated send leaves no trace at all");
+  });
+
+  check("gap: the engine measures the gap and puts it in the report", () => {
+    const src = readFileSync(join(HERE, "..", "battr-audit.mjs"), "utf8");
+    assert.match(src, /foldEmailTouches\(touchIndex, rows, \{ personId: cand\.id, automated: automatedAt \}\)/);
+    assert.match(src, /explainAtRisk\(\{ results, peopleById, automatedAt \}\)/);
+    assert.match(src, /renderGapSection\(gap/);
+  });
+}
+
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);
