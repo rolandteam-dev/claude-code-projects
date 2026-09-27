@@ -44,6 +44,13 @@ import {
 } from "./battr/atbats.mjs";
 import { buildAgentDigests, deliverDigests, renderAtBatsSection } from "./battr/alerts.mjs";
 import { sendMail, mailConfigured } from "./battr/email.mjs";
+import {
+  atRiskRows,
+  neglectedRows,
+  renderAtRiskEmail,
+  renderNeglectedEmail,
+  exclusionCounts,
+} from "./battr/battr-emails.mjs";
 import { appendComparisons, readComparisons, drift } from "./battr/compare.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -488,7 +495,7 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
  * Deliver the report. Always writes the file and the CI job summary; email and
  * Slack are opt-in via env so the script has no hard dependency on either.
  */
-async function deliverReport(markdown, { runId, dry }) {
+async function deliverReport(markdown, { runId, dry, stageEmails = [] }) {
   mkdirSync(LOG_DIR, { recursive: true });
   const path = join(LOG_DIR, `${runId}-report.md`);
   writeFileSync(path, markdown);
@@ -500,6 +507,17 @@ async function deliverReport(markdown, { runId, dry }) {
   const subject = `Battr audit — ${ptDate()}${dry ? " (dry run)" : ""}`;
 
   if (mailConfigured() && process.env.BATTR_REPORT_TO) {
+    // Battr's layout first — one message per stage, the ones Mike reads — then
+    // the full diagnostic report. An empty stage sends nothing, as a quiet
+    // night should.
+    for (const message of stageEmails) {
+      try {
+        await sendMail({ to: process.env.BATTR_REPORT_TO, ...message });
+      } catch (err) {
+        // The subject carries a count, never a lead name, so it is safe to log.
+        console.error(`  stage email failed (${message.subject}): ${err.message}`);
+      }
+    }
     try {
       await sendMail({ to: process.env.BATTR_REPORT_TO, subject, text: markdown });
     } catch (err) {
@@ -524,6 +542,65 @@ async function deliverReport(markdown, { runId, dry }) {
   }
 
   return path;
+}
+
+/**
+ * The two Battr-layout emails for tonight: At Risk and Neglected.
+ *
+ * Reads only what the run already decided — who is at risk, who was nudged,
+ * who was swept or held and why — and never re-decides it, so these cannot
+ * drift from the report or from what was written to Follow Up Boss.
+ */
+function buildStageEmails({ runId, dry, results, actions, stage, nudgesRan, sweepsRan, stampOf }) {
+  const audited = results.filter((r) => r.status !== "excluded").length;
+  const excluded = exclusionCounts(results);
+  const skipReason = (what) => actions.skipped.find((s) => s.what === what)?.reason ?? "";
+  const repo = process.env.GITHUB_REPOSITORY;
+  const reportUrl = repo
+    ? `${process.env.GITHUB_SERVER_URL || "https://github.com"}/${repo}/blob/${process.env.GITHUB_REF_NAME || "main"}/battr-logs/${runId}-report.md`
+    : "";
+  const footer =
+    `Run ${runId} — sent by The Roland Team's own lead audit, not by Battr.` +
+    (reportUrl ? ` Full report: ${reportUrl}` : "");
+
+  const messages = [];
+  const nudgesHeld = !nudgesRan || !(stage === "both" || stage === "at-risk");
+  if (actions.atRisk.length) {
+    const rows = atRiskRows({ atRisk: actions.atRisk, nudged: actions.nudged, stampOf, dry, held: nudgesHeld });
+    messages.push(
+      renderAtRiskEmail({
+        audited,
+        rows,
+        excluded,
+        dry,
+        heldReason: nudgesHeld ? skipReason("nudges") || "the at-risk stage was not selected for this run" : "",
+        footer,
+      })
+    );
+  }
+  const sweepsHeld = !sweepsRan || !(stage === "both" || stage === "neglected");
+  if (actions.neglected.length) {
+    const rows = neglectedRows({
+      neglected: actions.neglected,
+      swept: actions.swept,
+      heldBack: actions.heldBack,
+      pondOf: (lead) => pondForLead(lead.contact?.crm_created_at ?? lead.contact?._raw?.created, rules).pondName,
+      stampOf,
+      dry,
+      held: sweepsHeld,
+    });
+    messages.push(
+      renderNeglectedEmail({
+        audited,
+        rows,
+        excluded,
+        dry,
+        heldReason: sweepsHeld ? skipReason("sweeps") || "the neglected stage was not selected for this run" : "",
+        footer,
+      })
+    );
+  }
+  return messages;
 }
 
 // ------------------------------------------------------------------------ undo
@@ -1263,7 +1340,17 @@ async function main() {
   if (sweepLog.sweeps.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
 
   const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete, unenforceable, comparisonDrift, passedOver, emailBackfill });
-  const reportPath = await deliverReport(markdown, { runId, dry });
+  const stageEmails = buildStageEmails({
+    runId,
+    dry,
+    results,
+    actions,
+    stage: args.stage,
+    nudgesRan: nudgesAllowedToday,
+    sweepsRan: sweepsAllowedToday,
+    stampOf: (id) => (fields.atRiskSince ? peopleById.get(id)?.[fields.atRiskSince] : null) || null,
+  });
+  const reportPath = await deliverReport(markdown, { runId, dry, stageEmails });
 
   console.log(markdown);
   log(`\n  report → ${reportPath}`);
