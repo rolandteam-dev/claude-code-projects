@@ -55,8 +55,8 @@ export const combinedGuidePdfUrl =
 
 /** Contact details shown on the guide pages. One place to change them. */
 export const guideContact = {
-  phoneDisplay: "(702) 830-9366",
-  phoneHref: "tel:+17028309366",
+  phoneDisplay: "(702) 830-7568",
+  phoneHref: "tel:+17028307568",
   email: "mike@therolandteam.com",
   bookingUrl: "https://scheduler.zoom.us/mike-roland-l0cm4c/mike-roland-real-estate-consultation",
   privacyUrl: "https://therolandteam.com/privacy-policy",
