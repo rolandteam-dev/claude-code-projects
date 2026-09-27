@@ -19,6 +19,10 @@ tell Follow Up Boss where the lead came from.
 | "Your Las Vegas guides" email | `src/lib/guides/email.ts` |
 | Host routing | `src/middleware.ts` (`GUIDE_HOST`) |
 
+## The form
+
+One "Name" field, email, phone (optional), consent. The name is split server-side: the first word becomes the FUB first name, everything after it the last name ("Mary Ann Smith" -> Mary / Ann Smith; a lone "Sarah" -> Sarah with no last name). The thank-you screen and the email greet by first name.
+
 ## How a lead is sourced
 
 The form posts `channel`, `video`, `ref` and the page URL, all read from the
@@ -64,7 +68,7 @@ file.
 
 ## Testing
 
-- `curl -X POST localhost:3000/api/guide/request -H 'content-type: application/json' -d '{"firstName":"Test","email":"you@example.com","consent":true,"channel":"yt","video":"DGQMJufo4l8"}'`
+- `curl -X POST localhost:3000/api/guide/request -H 'content-type: application/json' -d '{"name":"Test Person","email":"you@example.com","consent":true,"channel":"yt","video":"DGQMJufo4l8"}'`
   returns `{"ok":true,"crm":…,"email":…}`. Without `FUB_API_KEY` the lead is
   not stored (`crm:false`, `crmReason:"not_configured"`); without
   `RESEND_API_KEY` the email is skipped. The page still opens the guides.

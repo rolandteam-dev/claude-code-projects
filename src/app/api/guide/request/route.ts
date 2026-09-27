@@ -18,7 +18,9 @@ export const runtime = "nodejs";
  * visitor.
  */
 type Input = {
-  firstName?: string;
+  name?: string; // full name from the form's single Name field
+  firstName?: string; // still accepted (older clients, direct API use)
+  lastName?: string;
   email?: string;
   phone?: string;
   consent?: boolean;
@@ -43,10 +45,19 @@ export async function POST(req: Request) {
   // Bots fill the hidden field; people never see it. Pretend it worked.
   if (clean(d.company, 200)) return NextResponse.json({ ok: true, crm: false, email: false });
 
-  const firstName = clean(d.firstName, 80);
+  // One "Name" field on the form: first word is the first name, the rest is
+  // the last name ("Mary Ann Smith" -> Mary / Ann Smith; "Sarah" -> Sarah / "").
+  // Explicit firstName/lastName win when a caller sends them.
+  let firstName = clean(d.firstName, 80);
+  let lastName = clean(d.lastName, 80);
+  if (!firstName) {
+    const words = clean(d.name, 160).split(/\s+/).filter(Boolean);
+    firstName = words[0] ?? "";
+    lastName = lastName || words.slice(1).join(" ");
+  }
   const email = clean(d.email, 200).toLowerCase();
   const phone = clean(d.phone, 40);
-  if (!firstName) return NextResponse.json({ ok: false, error: "A first name is required." }, { status: 400 });
+  if (!firstName) return NextResponse.json({ ok: false, error: "A name is required." }, { status: 400 });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ ok: false, error: "A valid email is required." }, { status: 400 });
   }
@@ -72,6 +83,7 @@ export async function POST(req: Request) {
 
   const crm = await sendFubLead({
     firstName,
+    lastName: lastName || undefined,
     email,
     phone: phone || undefined,
     type: "Registration",

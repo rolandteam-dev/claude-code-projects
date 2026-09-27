@@ -1,8 +1,10 @@
 "use client";
 
 /**
- * The one form on guide.therolandteam.com: first name, email, phone
- * (optional), consent. Posts to /api/guide/request, which drops the lead into
+ * The one form on guide.therolandteam.com: name, email, phone (optional),
+ * consent. One "Name" field instead of first + last: same friction as a
+ * first-name box, and most people type both names. The API splits it (first
+ * word = first name, the rest = last name) so FUB gets a full record. Posts to /api/guide/request, which drops the lead into
  * Follow Up Boss with the channel as its Source (YouTube unless the link said
  * otherwise) and emails the guide links, then sends the visitor to the
  * thank-you screen where both guides open immediately.
@@ -23,7 +25,7 @@ const label = "font-sans text-[13px] font-semibold tracking-[0.04em] text-muted-
 export function GuideForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const [firstName, setFirstName] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [consent, setConsent] = useState(false);
@@ -35,13 +37,14 @@ export function GuideForm() {
   // so the confirmation lives at "/thank-you" there and "/guide/thank-you"
   // everywhere else.
   const atRoot = typeof window !== "undefined" && window.location.pathname === "/";
-  const thankYouHref = `${atRoot ? "" : "/guide"}/thank-you${firstName.trim() ? `?first=${encodeURIComponent(firstName.trim())}` : ""}`;
+  const firstWord = name.trim().split(/\s+/)[0] ?? "";
+  const thankYouHref = `${atRoot ? "" : "/guide"}/thank-you${firstWord ? `?first=${encodeURIComponent(firstWord)}` : ""}`;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const fn = firstName.trim();
+    const nm = name.trim();
     const em = email.trim();
-    if (!fn) return fail("Add your first name so we know who to send them to.");
+    if (!nm) return fail("Add your name so we know who to send them to.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return fail("That email does not look right.");
     if (!consent) return fail("Please check the consent box so we can send the guides.");
 
@@ -52,7 +55,7 @@ export function GuideForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          firstName: fn,
+          name: nm,
           email: em,
           phone: phone.trim(),
           consent: true,
@@ -85,17 +88,17 @@ export function GuideForm() {
     >
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:gap-3.5">
         <div className="flex flex-col gap-2 md:flex-1">
-          <label htmlFor="guide-first" className={label}>
-            First name
+          <label htmlFor="guide-name" className={label}>
+            Name
           </label>
           <input
-            id="guide-first"
-            name="firstName"
+            id="guide-name"
+            name="name"
             type="text"
-            autoComplete="given-name"
-            placeholder="Sarah"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
+            autoComplete="name"
+            placeholder="Sarah Johnson"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             className={field}
             required
           />
