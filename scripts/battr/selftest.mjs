@@ -3285,4 +3285,108 @@ check("the state Battr owns is the state that went missing", () => {
   assert.match(src, /customBattrAtRiskSince: person\[atRiskSinceKey\]/, "the warning stamp is read from FUB, not held here");
 });
 
+
+// ─── Battr-layout stage emails ────────────────────────────────────────────────
+{
+  const E = await import("./battr-emails.mjs");
+  const lead = (id, owner, source = "Zillow Preferred") => ({ id, name: `Lead ${id}`, owner, source });
+  const stamps = new Map([[2, "2026-09-25"], [5, "2026-09-21"]]);
+  const stampOf = (id) => stamps.get(id) ?? null;
+
+  check("stage emails: subject and summary use Battr's own wording", () => {
+    const rows = E.atRiskRows({ atRisk: [lead(1, "A"), lead(2, "B")], nudged: [lead(1, "A")], stampOf, dry: false, held: false });
+    const m = E.renderAtRiskEmail({ audited: 768, rows, excluded: { bucket: 0, group: 0 }, dry: false });
+    assert.equal(m.subject, "🥣 Success - 1 At Risk records processed from ⭐️ Team Leads (Nudges & Sweeps)");
+    for (const line of [
+      "Total records in audit:</strong> 768",
+      "At Risk records:</strong> 2",
+      "Already processed in previous audit:</strong> 1",
+      "New notes created:</strong> 1",
+      "Excluded due to lead bucket:</strong> 0",
+      "Excluded due to agent group:</strong> 0",
+      "Records to be Processed (showing first 2 of 2)",
+      "Compliance Status:</strong> At Risk",
+    ]) assert.ok(m.html.includes(line), `missing: ${line}`);
+    assert.ok(m.text.includes(" * New notes created: 1"));
+  });
+
+  check("stage emails: at-risk rows match Battr's columns, new rows bold and first", () => {
+    const rows = E.atRiskRows({ atRisk: [lead(2, "B"), lead(1, "A")], nudged: [lead(1, "A")], stampOf, dry: false, held: false });
+    assert.deepEqual(rows.map((r) => r.id), [1, 2], "new first");
+    assert.deepEqual(
+      [rows[0].previousStatus, rows[0].atRiskSince, rows[0].action],
+      ["compliant", "None", E.NOTE_CREATED]
+    );
+    assert.deepEqual(
+      [rows[1].previousStatus, rows[1].atRiskSince, rows[1].action],
+      ["At Risk", "2026-09-25", E.ALREADY_TAKEN]
+    );
+    const m = E.renderAtRiskEmail({ audited: 2, rows, excluded: { bucket: 0, group: 0 }, dry: false });
+    const heads = [...m.html.matchAll(/<th[^>]*>([^<]+)<\/th>/g)].map((x) => x[1]);
+    assert.deepEqual(heads, ["Name", "Owner", "Source", "FUB ID", "Status", "Previous Status", "At Risk Since", "Action Status"]);
+    assert.ok(m.html.includes('href="https://therolandteam1.followupboss.com/2/people/view/1"'), "FUB ID links to the lead");
+    assert.equal((m.html.match(/font-weight: bold;/g) ?? []).length, 1, "only the new row is bold");
+  });
+
+  check("stage emails: neglected rows carry pond and Battr's date format", () => {
+    const swept = [{ personId: 5, pondName: "Shark Tank", atRiskSince: "2026-09-21" }];
+    const heldBack = [{ ...lead(6, "C"), holdReason: "never warned — interlock held the sweep" }];
+    const rows = E.neglectedRows({
+      neglected: [lead(6, "C"), lead(5, "B")], swept, heldBack,
+      pondOf: () => "Money Time", stampOf, dry: false, held: false,
+    });
+    assert.deepEqual(rows.map((r) => [r.id, r.targetName, r.atRiskSince, r.status]), [
+      [5, "Shark Tank", "9/21/2026", E.SWEPT],
+      [6, "Money Time", "None", "Not moved — never warned — interlock held the sweep"],
+    ]);
+    const m = E.renderNeglectedEmail({ audited: 769, rows, excluded: { bucket: 0, group: 0 }, dry: false });
+    assert.equal(m.subject, "🥣 Success - 2 Neglected records processed from ⭐️ Team Leads (Nudges & Sweeps)");
+    for (const line of ["Neglected records:</strong> 2", "Records moved:</strong> 1", "Records not moved:</strong> 1"])
+      assert.ok(m.html.includes(line), `missing: ${line}`);
+    const heads = [...m.html.matchAll(/<th[^>]*>([^<]+)<\/th>/g)].map((x) => x[1]);
+    assert.deepEqual(heads, ["Name", "Owner", "Source", "FUB ID", "Assignment Target Type", "Assignment Target Name", "At Risk Since", "Status"]);
+  });
+
+  check("stage emails: a dry run never claims a write, and a held night says why", () => {
+    const at = E.atRiskRows({ atRisk: [lead(1, "A")], nudged: [lead(1, "A")], stampOf, dry: true, held: false });
+    const m = E.renderAtRiskEmail({ audited: 1, rows: at, excluded: { bucket: 0, group: 0 }, dry: true });
+    assert.ok(m.subject.startsWith("🧪 Dry run - "), "dry run in the subject");
+    assert.ok(!m.subject.includes("Success"), "a dry run is not reported as a success");
+    assert.ok(!m.html.includes(E.NOTE_CREATED), "no 'Note created in FUB' on a night nothing was written");
+    assert.ok(m.html.includes("nothing was written to Follow Up Boss"));
+
+    const sw = E.neglectedRows({
+      neglected: [lead(5, "B")], swept: [{ personId: 5, pondName: "Shark Tank" }], heldBack: [],
+      pondOf: () => "Shark Tank", stampOf, dry: true, held: false,
+    });
+    const n = E.renderNeglectedEmail({ audited: 1, rows: sw, excluded: { bucket: 0, group: 0 }, dry: true });
+    assert.ok(!n.html.includes(E.SWEPT), "no 'Successfully swept' on a dry run");
+
+    const held = E.atRiskRows({ atRisk: [lead(1, "A")], nudged: [], stampOf, dry: true, held: true });
+    const h = E.renderAtRiskEmail({ audited: 1, rows: held, excluded: { bucket: 0, group: 0 }, dry: true, heldReason: "sweepOnBackfilledTexts is off" });
+    assert.match(h.html, /Held tonight:<\/strong> sweepOnBackfilledTexts is off/);
+    assert.match(held[0].action, /held tonight/);
+    assert.ok(h.html.includes("New notes held back:</strong> 1"), "held notes are counted, not dropped");
+  });
+
+  check("stage emails: lead names are escaped, and the engine hands them over", () => {
+    const rows = E.atRiskRows({ atRisk: [{ id: 9, name: "<b>x</b> & co", owner: "A", source: "S" }], nudged: [], stampOf, dry: true, held: true });
+    const m = E.renderAtRiskEmail({ audited: 1, rows, excluded: { bucket: 0, group: 0 }, dry: true });
+    assert.ok(m.html.includes("&lt;b&gt;x&lt;/b&gt; &amp; co") && !m.html.includes("<b>x</b>"));
+    assert.equal(E.usDate("2026-09-21"), "9/21/2026");
+    assert.equal(E.isoDay("2026-09-25T00:00:00Z"), "2026-09-25");
+    assert.deepEqual(
+      E.exclusionCounts([
+        { status: "excluded", reason: "protected source (Opcity)" },
+        { status: "excluded", reason: "exempt agent (Adin Roland)" },
+        { status: "at_risk" },
+      ]),
+      { bucket: 1, group: 1 }
+    );
+    const src = readFileSync(join(HERE, "..", "battr-audit.mjs"), "utf8");
+    assert.match(src, /deliverReport\(markdown, \{ runId, dry, stageEmails \}\)/, "the engine sends them");
+    assert.match(src, /stage email failed \(\$\{message\.subject\}\)/, "a failure logs the subject (a count), never a lead name");
+  });
+}
+
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);

@@ -8,6 +8,7 @@
  *
  *   1. a sample agent digest — what an agent will get
  *   2. a sample nightly report — what Mike will get
+ *   3. sample At Risk and Neglected emails in Battr's own layout
  *
  * Both are clearly marked as tests and built from invented leads, never from
  * the live database. Nothing is read from Follow Up Boss and no FUB key is
@@ -19,6 +20,44 @@
  */
 import { sendMail, mailConfigured, fromAddress } from "./email.mjs";
 import { renderDigestText, renderDigestHtml, digestSubject, ADMIN_MESSAGE } from "./alerts.mjs";
+import { atRiskRows, neglectedRows, renderAtRiskEmail, renderNeglectedEmail } from "./battr-emails.mjs";
+
+/** Invented leads for the Battr-layout samples. The ids link nowhere real. */
+const SAMPLE_STAGE_LEADS = [
+  { id: 1, name: "TEST — Ben Ortiz", owner: "Sample Agent", source: "Zillow Preferred" },
+  { id: 2, name: "TEST — Priya Raman", owner: "Another Agent", source: "Ylopo" },
+  { id: 3, name: "TEST — Marcus Ellery", owner: "Sample Agent", source: "TheRolandTeam.com" },
+];
+
+function sampleStageEmails() {
+  const stamps = new Map([[2, "2026-09-25"], [3, "2026-09-21"]]);
+  const stampOf = (id) => stamps.get(id) ?? null;
+  const [ben, priya, marcus] = SAMPLE_STAGE_LEADS;
+  const excluded = { bucket: 0, group: 0 };
+  const atRisk = renderAtRiskEmail({
+    audited: 768,
+    rows: atRiskRows({ atRisk: [ben, priya], nudged: [ben], stampOf, dry: false, held: false }),
+    excluded,
+    dry: false,
+    footer: "TEST MESSAGE — no lead in this email is real.",
+  });
+  const neglected = renderNeglectedEmail({
+    audited: 768,
+    rows: neglectedRows({
+      neglected: [marcus],
+      swept: [{ personId: 3, pondName: "Shark Tank", atRiskSince: "2026-09-21" }],
+      heldBack: [],
+      pondOf: () => "Shark Tank",
+      stampOf,
+      dry: false,
+      held: false,
+    }),
+    excluded,
+    dry: false,
+    footer: "TEST MESSAGE — no lead in this email is real.",
+  });
+  return [atRisk, neglected].map((m) => ({ ...m, subject: `[TEST] ${m.subject}` }));
+}
 
 /** Invented leads. Nothing here touches the real database. */
 const SAMPLE_DIGEST = {
@@ -89,7 +128,7 @@ async function main() {
     throw new Error("No recipient. Set BATTR_TEST_EMAIL_TO (or BATTR_REPORT_TO) and run again.");
   }
 
-  console.log("1/2  sending the sample AGENT digest — this is what an agent receives...");
+  console.log("1/3  sending the sample AGENT digest — this is what an agent receives...");
   await sendMail({
     to,
     subject: `[TEST] ${digestSubject(SAMPLE_DIGEST)}`,
@@ -98,11 +137,15 @@ async function main() {
   });
   console.log("     sent.");
 
-  console.log("2/2  sending the sample NIGHTLY REPORT — this is what Mike receives...");
+  console.log("2/3  sending the sample NIGHTLY REPORT — this is what Mike receives...");
   await sendMail({ to, subject: "[TEST] Battr audit — nightly report", text: SAMPLE_REPORT });
   console.log("     sent.");
 
-  console.log(`\nBoth messages went to ${to}. If they arrive, the setup is done.`);
+  console.log("3/3  sending sample At Risk and Neglected emails in Battr's layout...");
+  for (const message of sampleStageEmails()) await sendMail({ to, ...message });
+  console.log("     sent.");
+
+  console.log(`\nAll four messages went to ${to}. If they arrive, the setup is done.`);
   console.log(`They are addressed from ${fromAddress()} — check the spam folder before assuming a failure.\n`);
   console.log(`Admin line the agent digest leads with: "${ADMIN_MESSAGE}"`);
 }
