@@ -3617,4 +3617,40 @@ check("the state Battr owns is the state that went missing", () => {
   });
 }
 
+
+// ─── A late-started run belongs to the evening it was scheduled for ──────────
+{
+  const S = await import("./schedule.mjs");
+  const { ptDate: pt } = await import("./classify.mjs");
+
+  check("audit day: Monday 7 PM's run, started by GitHub at 1 AM Tuesday, is still Monday's", () => {
+    // 2026-09-29 08:20 UTC = Tue 1:20 AM PDT — the real start time of a Monday-night run.
+    const lateStart = new Date("2026-09-29T08:20:00Z");
+    assert.equal(S.weekdayIn(lateStart), "Tuesday", "the wall clock is wrong about which night this is");
+    assert.equal(S.weekdayIn(S.auditDate(lateStart)), "Monday");
+    assert.equal(pt(S.auditDate(lateStart)), "2026-09-28");
+    assert.equal(S.isDayAllowed("Weekdays Excluding Monday", S.auditDate(lateStart)), false, "no sweep on Monday night, as Battr");
+  });
+
+  check("audit day: Friday night's late run still sweeps, Saturday's does not", () => {
+    const friLate = new Date("2026-10-03T08:00:00Z"); // Sat 1 AM PDT
+    const satLate = new Date("2026-10-04T08:00:00Z"); // Sun 1 AM PDT
+    assert.equal(S.isDayAllowed("Weekdays Excluding Monday", S.auditDate(friLate)), true);
+    assert.equal(S.isDayAllowed("Weekdays Excluding Monday", S.auditDate(satLate)), false);
+  });
+
+  check("audit day: an on-time 7 PM run and a daytime manual run keep their own day", () => {
+    assert.equal(pt(S.auditDate(new Date("2026-09-29T02:00:00Z"))), "2026-09-28", "7 PM PDT Monday");
+    assert.equal(pt(S.auditDate(new Date("2026-09-28T17:00:00Z"))), "2026-09-28", "10 AM PDT Monday");
+  });
+
+  check("audit day: the engine reads the audit evening for every date and day filter", () => {
+    const src = readFileSync(join(HERE, "..", "battr-audit.mjs"), "utf8");
+    assert.match(src, /const AUDIT_DAY = auditDate\(\);/);
+    assert.doesNotMatch(src, /ptDate\(\)/, "no date is taken from the wall clock");
+    assert.doesNotMatch(src, /isDayAllowed\([^)]*new Date\(\)/, "no day filter reads the wall clock");
+    assert.equal((src.match(/isDayAllowed\(rules\.\w+DayFilter, AUDIT_DAY/g) ?? []).length, 2);
+  });
+}
+
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);
