@@ -10,6 +10,7 @@ import { NextResponse, type NextRequest } from "next/server";
  *   marketing hosts → the marketing site; the client product is not reachable
  *   homeowner host  → untouched, exactly as today
  *   guide host      → the relocation-guide landing page only ("/" is the page)
+ *   rebate host     → the new-construction rebate page only ("/" is the page)
  *
  * Hostnames come from the environment so they can differ per deployment:
  *
@@ -17,6 +18,7 @@ import { NextResponse, type NextRequest } from "next/server";
  *   MARKETING_HOSTS  comma-separated, e.g. rolandluxury.com,www.rolandluxury.com
  *   HOMEOWNER_HOST   e.g. home.therolandteam.com
  *   GUIDE_HOST       e.g. guide.therolandteam.com
+ *   REBATE_HOST      e.g. rebate.therolandteam.com
  *
  * FAIL-OPEN BY DESIGN: an unrecognised host — a preview deployment, localhost,
  * or any hostname not named in those variables — gets the whole app, exactly as
@@ -52,6 +54,14 @@ const ALWAYS_ALLOWED = ["/admin", "/dashboard"];
  */
 const GUIDE_ROOT = "/guide";
 
+/**
+ * The new-construction rebate landing page (linked from the new-construction
+ * video). Same idea as the guide host: "/" is the page, "/thank-you" and
+ * "/terms" are its subpages, nothing else is served.
+ */
+const REBATE_ROOT = "/rebate";
+const REBATE_SUBPAGES = ["/thank-you", "/terms"];
+
 function hostsFrom(value: string | undefined): string[] {
   return (value ?? "")
     .split(",")
@@ -75,6 +85,7 @@ export function middleware(req: NextRequest) {
   const marketingHosts = hostsFrom(process.env.MARKETING_HOSTS);
   const homeownerHost = (process.env.HOMEOWNER_HOST ?? "").trim().toLowerCase();
   const guideHost = (process.env.GUIDE_HOST ?? "").trim().toLowerCase();
+  const rebateHost = (process.env.REBATE_HOST ?? "").trim().toLowerCase();
 
   // Strip any port so localhost:3000 and a bare hostname compare equal.
   const host = (req.headers.get("host") ?? "").toLowerCase().split(":")[0];
@@ -92,6 +103,18 @@ export function middleware(req: NextRequest) {
       return NextResponse.rewrite(url);
     }
     return startsWithPath(pathname, GUIDE_ROOT) ? NextResponse.next() : notFound(req);
+  }
+
+  if (rebateHost && host === rebateHost) {
+    // "/" is the rebate page; "/thank-you" and "/terms" its subpages. The
+    // query string (?s=, ?v=, ?first=) rides along on the rewrite. The long
+    // "/rebate/..." paths the pages link to internally are served as-is.
+    if (pathname === "/" || REBATE_SUBPAGES.includes(pathname)) {
+      const url = req.nextUrl.clone();
+      url.pathname = `${REBATE_ROOT}${pathname === "/" ? "" : pathname}`;
+      return NextResponse.rewrite(url);
+    }
+    return startsWithPath(pathname, REBATE_ROOT) ? NextResponse.next() : notFound(req);
   }
 
   if (ALWAYS_ALLOWED.some((base) => startsWithPath(pathname, base))) {
