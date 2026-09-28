@@ -107,8 +107,13 @@ export function foldEmailTouches(index, rows = [], { personId: knownPersonId = n
 
     const inbound = row.isIncoming === true || row.direction === "inbound";
     const entry = index.get(personId) ?? { lastOutbound: 0, lastInbound: 0 };
-    if (inbound) entry.lastInbound = Math.max(entry.lastInbound, at);
-    else entry.lastOutbound = Math.max(entry.lastOutbound, at);
+    if (inbound) {
+      if (at > entry.lastInbound) entry.inVia = "email";
+      entry.lastInbound = Math.max(entry.lastInbound, at);
+    } else {
+      if (at > entry.lastOutbound) entry.outVia = "email";
+      entry.lastOutbound = Math.max(entry.lastOutbound, at);
+    }
     index.set(personId, entry);
   }
   return tally;

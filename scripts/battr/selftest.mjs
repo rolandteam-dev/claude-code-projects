@@ -3426,7 +3426,7 @@ check("the state Battr owns is the state that went missing", () => {
     assert.deepEqual(g.signals, { automatedEmail: 1, recordEdited: 1, divergentSource: 1, unexplained: 2 });
     assert.deepEqual(g.byAgent.map((a) => [a.agent, a.atRisk, a.unexplained]), [["Agent B", 3, 1], ["Agent A", 2, 1]]);
     assert.equal(g.byList[0].days, 10);
-    assert.deepEqual(g.profileFields, { people: 6, stageField: 0, timeframeField: 0 });
+    assert.deepEqual(g.profileFields, { people: 6, stageField: 0, timeframeField: 0, fieldNames: {} });
   });
 
   check("gap: the report section says when the stage/timeframe rule reads nothing", () => {
@@ -3460,7 +3460,7 @@ check("the state Battr owns is the state that went missing", () => {
   check("gap: the engine measures the gap and puts it in the report", () => {
     const src = readFileSync(join(HERE, "..", "battr-audit.mjs"), "utf8");
     assert.match(src, /foldEmailTouches\(touchIndex, rows, \{ personId: cand\.id, automated: automatedAt \}\)/);
-    assert.match(src, /explainAtRisk\(\{ results, peopleById, automatedAt \}\)/);
+    assert.match(src, /explainAtRisk\(\{\s*results,\s*peopleById,\s*automatedAt,\s*touchIndex,/);
     assert.match(src, /renderGapSection\(gap/);
   });
 }
@@ -3508,6 +3508,78 @@ check("the state Battr owns is the state that went missing", () => {
     assert.notEqual(seen, null, "the fixture lead must be a Quarterly Nurture member");
     assert.equal(seen, "compliant", "a 60-day-old call satisfies a 93-day window");
     assert.equal(blind, "at_risk", "without it, the same lead reads as never contacted — the bug");
+  });
+}
+
+
+// ─── Battr's own stamps as the answer key ─────────────────────────────────────
+{
+  const G = await import("./gap.mjs");
+  const { lists: allLists } = await import("./lists.mjs");
+  const NOW = Date.parse("2026-09-28T08:00:00Z");
+  const DAYMS = 86_400_000;
+  const warm = allLists.find((l) => l.name.includes("Warm Back Up"));
+
+  check("battr stamps: the control group separates leads Battr agrees on from leads only we flag", () => {
+    const rec = (id, source = "Zillow Preferred") => ({ id, owner: "A", source, status: "at_risk", source_list_ids: [warm.id] });
+    const results = [rec(1), rec(2), rec(3, "my +plus leads")];
+    const peopleById = new Map([
+      [1, { id: 1, customBattrAtRiskSince: "2026-09-26" }],
+      [2, { id: 2 }],
+      [3, { id: 3 }],
+    ]);
+    const automatedAt = new Map([[1, NOW - 2 * DAYMS], [2, NOW - 2 * DAYMS]]);
+    const g = G.explainAtRisk({ results, peopleById, automatedAt, now: NOW });
+    assert.deepEqual(g.split.battrAgrees, { leads: 1, automatedEmail: 1, divergentSource: 0 });
+    assert.deepEqual(g.split.onlyUs, { leads: 2, automatedEmail: 1, divergentSource: 1 });
+    const md = G.renderGapSection(g).join("\n");
+    assert.match(md, /Battr stamped them too \(Battr agrees\) \| 1 \| 1 \(100%\)/);
+  });
+
+  check("battr stamps: a lead Battr flagged that we call worked names the touch we counted", () => {
+    const results = [
+      { id: 10, owner: "A", status: "compliant", source_list_ids: [warm.id] },
+      { id: 11, owner: "B", status: "at_risk", source_list_ids: [warm.id] },
+    ];
+    const peopleById = new Map([
+      [10, { id: 10, assignedTo: "A", customBattrAtRiskSince: "2026-09-27" }],
+      [11, { id: 11, assignedTo: "B", customBattrAtRiskSince: "2026-09-26" }],
+      [12, { id: 12, assignedTo: "C", customBattrAtRiskSince: "2026-09-10" }], // too old to be tonight's
+      [13, { id: 13, assignedTo: "D", customBattrAtRiskSince: "2026-09-27" }], // not on our list at all
+    ]);
+    const touchIndex = new Map([[10, { lastOutbound: NOW - 1 * DAYMS, outVia: "email", lastInbound: 0 }]]);
+    const g = G.explainAtRisk({ results, peopleById, touchIndex, now: NOW });
+    assert.deepEqual(
+      g.battrFlagged.map((r) => [r.id, r.status, r.via, r.daysAgo]),
+      [[10, "compliant", "email out", 1], [13, "not on our list", "nothing in 100 days", null], [11, "at_risk", "nothing in 100 days", null]]
+    );
+    const md = G.renderBattrFlagged(g).join("\n");
+    assert.match(md, /Battr stamped \*\*3\*\* lead\(s\)\. We agree on \*\*1\*\*/);
+    assert.match(md, /\| 10 \| A \| 2026-09-27 \| compliant \| email out, 1d ago \|/);
+    assert.ok(!/name/i.test(md.replace(/names?/gi, "")), "no lead name column");
+  });
+
+  check("battr stamps: the channel that set the latest touch is remembered, and only the latest", () => {
+    const idx = new Map();
+    foldTouches(idx, [{ personId: 1, created: new Date(NOW - 5 * DAYMS).toISOString() }], "call");
+    foldTouches(idx, [{ personId: 1, created: new Date(NOW - 9 * DAYMS).toISOString() }], "text");
+    assert.equal(idx.get(1).outVia, "call", "an older text does not relabel a newer call");
+    foldTouches(idx, [{ personId: 1, created: new Date(NOW - 1 * DAYMS).toISOString() }], "text");
+    assert.equal(idx.get(1).outVia, "text");
+    assert.equal(G.lastTouchOf(idx.get(1), {}).via, "text out");
+    assert.equal(G.lastTouchOf(undefined, { timeframeUpdated: new Date(NOW).toISOString() }).via, "timeframe change");
+  });
+
+  check("battr stamps: the report names which stage/timeframe field actually exists", () => {
+    const g = G.explainAtRisk({
+      results: [{ id: 1, owner: "A", source: "S", status: "at_risk", source_list_ids: [warm.id] }],
+      peopleById: new Map([[1, { id: 1, timeframeUpdated: "2026-09-01T00:00:00Z" }]]),
+      now: NOW,
+    });
+    assert.deepEqual(g.profileFields.fieldNames, { timeframeUpdated: 1 });
+    const md = G.renderGapSection(g).join("\n");
+    assert.match(md, /`timeframeUpdated` 1/);
+    assert.match(md, /Stage changes are invisible to us/);
   });
 }
 

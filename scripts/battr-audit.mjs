@@ -918,7 +918,7 @@ async function main() {
         try {
           const texts = await fub.textsForPerson(cand.id, since);
           rows += texts.length;
-          foldTouches(touchIndex, texts);
+          foldTouches(touchIndex, texts, "text");
         } catch (err) {
           // One lead's thread failing leaves the index incomplete for that
           // lead, and there is no way to tell a "no texts" from a "could not
@@ -1321,7 +1321,13 @@ async function main() {
   // decided and changes nobody's status.
   let gap = null;
   try {
-    const explained = explainAtRisk({ results, peopleById, automatedAt });
+    const explained = explainAtRisk({
+      results,
+      peopleById,
+      automatedAt,
+      touchIndex,
+      stampKey: fields.atRiskSince || "customBattrAtRiskSince",
+    });
     const lastBattr = readComparisons(COMPARISON_PATH)
       .filter((r) => r.source === "battr" && r.listId === 0 && r.at_risk !== null)
       .sort((a, b) => a.date.localeCompare(b.date))

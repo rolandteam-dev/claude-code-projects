@@ -46,17 +46,52 @@ const within = (at, days, now) => Number.isFinite(at) && at > 0 && days !== null
 const ms = (value) => (value ? new Date(value).getTime() : NaN);
 
 /**
+ * What set a lead's latest touch, as we see it: the channel and when.
+ * Diagnostic only — the classifier never reads this.
+ */
+export function lastTouchOf(entry, person = {}) {
+  const candidates = [
+    [entry?.lastOutbound, `${entry?.outVia ?? "outbound"} out`],
+    [entry?.lastInbound, `${entry?.inVia ?? "inbound"} in`],
+    [profileTouchAt(person, STAGE_UPDATED_FIELDS), "stage change"],
+    [profileTouchAt(person, TIMEFRAME_UPDATED_FIELDS), "timeframe change"],
+  ].filter(([at]) => Number.isFinite(at) && at > 0);
+  if (!candidates.length) return { at: null, via: "nothing in 100 days" };
+  const [at, via] = candidates.reduce((best, c) => (c[0] > best[0] ? c : best));
+  return { at, via };
+}
+
+/**
  * @param {object} p
  * @param {object[]} p.results                   classified records (combined list)
  * @param {Map<number, object>} p.peopleById     raw FUB person payloads
  * @param {Map<number, number>} p.automatedAt    person id → last automated email (ms)
+ * @param {Map<number, object>} [p.touchIndex]   person id → { lastOutbound, outVia, … }
+ * @param {string} [p.stampKey]                  the field Battr writes its At Risk Since date to
+ * @param {number} [p.recentDays]                how far back a Battr stamp counts as "tonight's"
  * @param {number} [p.now]
  */
-export function explainAtRisk({ results, peopleById, automatedAt = new Map(), now = Date.now() }) {
+export function explainAtRisk({
+  results,
+  peopleById,
+  automatedAt = new Map(),
+  touchIndex = new Map(),
+  stampKey = "customBattrAtRiskSince",
+  recentDays = 3,
+  now = Date.now(),
+}) {
   const atRisk = results.filter((r) => r.status === "at_risk");
   const signals = { automatedEmail: 0, recordEdited: 0, divergentSource: 0, unexplained: 0 };
   const byList = new Map();
   const byAgent = new Map();
+  // The control group. A lead carrying Battr's stamp is one Battr ALSO calls
+  // at risk, so whatever is common among those leads cannot be what Battr
+  // counts as work. If automated email is as common there as among the leads
+  // only we flag, automated email is not the difference.
+  const split = {
+    battrAgrees: { leads: 0, automatedEmail: 0, divergentSource: 0 },
+    onlyUs: { leads: 0, automatedEmail: 0, divergentSource: 0 },
+  };
 
   for (const r of atRisk) {
     const person = peopleById.get(r.id) ?? r.contact?._raw ?? {};
@@ -75,6 +110,11 @@ export function explainAtRisk({ results, peopleById, automatedAt = new Map(), no
     };
     hit.unexplained = !hit.automatedEmail && !hit.recordEdited && !hit.divergentSource;
 
+    const side = person[stampKey] ? split.battrAgrees : split.onlyUs;
+    side.leads++;
+    if (hit.automatedEmail) side.automatedEmail++;
+    if (hit.divergentSource) side.divergentSource++;
+
     const agent = r.owner ?? "(unassigned)";
     const agentRow = byAgent.get(agent) ?? { agent, atRisk: 0, automatedEmail: 0, recordEdited: 0, divergentSource: 0, unexplained: 0 };
     agentRow.atRisk++;
@@ -87,21 +127,53 @@ export function explainAtRisk({ results, peopleById, automatedAt = new Map(), no
     byAgent.set(agent, agentRow);
   }
 
-  // Whether the stage/timeframe rule can fire at all. A zero here means the
-  // rule is switched on and reads fields this account never sends.
+  // Whether the stage/timeframe rule can fire at all, and on which field. A
+  // zero means the rule is switched on and reads a field this account never sends.
   let stageField = 0;
   let timeframeField = 0;
+  const fieldNames = {};
   for (const person of peopleById.values()) {
     if (profileTouchAt(person, STAGE_UPDATED_FIELDS) !== null) stageField++;
     if (profileTouchAt(person, TIMEFRAME_UPDATED_FIELDS) !== null) timeframeField++;
+    for (const f of [...STAGE_UPDATED_FIELDS, ...TIMEFRAME_UPDATED_FIELDS]) {
+      if (person[f] !== undefined && person[f] !== null && person[f] !== "") fieldNames[f] = (fieldNames[f] ?? 0) + 1;
+    }
   }
+
+  // The other direction: leads Battr stamped in the last few nights. Battr
+  // writes that stamp itself, so this is Battr's own verdict read straight off
+  // Follow Up Boss — no forwarding of emails needed. Where we call such a lead
+  // worked, the channel that set our last touch is what we count and Battr
+  // does not.
+  const resultsById = new Map(results.map((r) => [r.id, r]));
+  const battrFlagged = [];
+  for (const person of peopleById.values()) {
+    const stampAt = ms(person[stampKey]);
+    if (!Number.isFinite(stampAt) || now - stampAt > recentDays * DAY) continue;
+    const r = resultsById.get(person.id);
+    const status = r ? r.status : "not on our list";
+    const touch = lastTouchOf(touchIndex.get(person.id), person);
+    battrFlagged.push({
+      id: person.id,
+      owner: person.assignedTo ?? r?.owner ?? "",
+      stamped: String(person[stampKey]).slice(0, 10),
+      status,
+      via: touch.via,
+      daysAgo: touch.at ? Math.floor((now - touch.at) / DAY) : null,
+      reason: r?.reason ?? null,
+    });
+  }
+  battrFlagged.sort((a, b) => b.stamped.localeCompare(a.stamped) || a.id - b.id);
 
   return {
     total: atRisk.length,
     signals,
+    split,
     byList: [...byList.values()].sort((a, b) => b.count - a.count),
     byAgent: [...byAgent.values()].sort((a, b) => b.atRisk - a.atRisk),
-    profileFields: { people: peopleById.size, stageField, timeframeField },
+    profileFields: { people: peopleById.size, stageField, timeframeField, fieldNames },
+    battrFlagged,
+    recentDays,
   };
 }
 
@@ -126,14 +198,34 @@ export function renderGapSection(gap, { battrAtRisk = null, battrDate = null } =
     `| **None of the above** — Battr should be flagging these too | **${gap.signals.unexplained}** | ${pct(gap.signals.unexplained)} |`,
     "",
   ];
-  const { people, stageField, timeframeField } = gap.profileFields;
+  const { people, stageField, timeframeField, fieldNames = {} } = gap.profileFields;
+  const named = Object.entries(fieldNames).map(([f, n]) => `\`${f}\` ${n}`).join(", ");
   lines.push(
     stageField + timeframeField === 0
       ? `- **The stage/timeframe rule is reading nothing.** Of ${people} FUB records pulled, none carries a stage-changed ` +
           `or timeframe-changed timestamp under any name we look for. Battr counts those changes as work; we currently cannot see them.`
-      : `- Stage/timeframe timestamps found on ${stageField} / ${timeframeField} of ${people} FUB records.`,
+      : `- Stage-change timestamps on **${stageField}**, timeframe-change timestamps on **${timeframeField}**, of ${people} FUB records` +
+          (named ? ` (${named})` : "") +
+          (stageField === 0 ? `. **Stage changes are invisible to us** — FUB sends no stage-changed date on the record.` : "."),
     ""
   );
+
+  // The control group — the test that tells the hypotheses apart.
+  const { battrAgrees: a, onlyUs: o } = gap.split ?? {};
+  if (a && o) {
+    const rate = (n, d) => (d ? `${Math.round((n / d) * 100)}%` : "—");
+    lines.push(
+      `| At-risk leads | Leads | Automated email in window | Divergent source |`,
+      `| --- | ---: | ---: | ---: |`,
+      `| Battr stamped them too (Battr agrees) | ${a.leads} | ${a.automatedEmail} (${rate(a.automatedEmail, a.leads)}) | ${a.divergentSource} |`,
+      `| Only we flag them | ${o.leads} | ${o.automatedEmail} (${rate(o.automatedEmail, o.leads)}) | ${o.divergentSource} |`,
+      "",
+      `If automated email is about as common in the first row as the second, Battr does NOT count it as work and it is ` +
+        `not the difference. If the first row is near zero, Battr is counting action-plan email despite its playbook.`,
+      ""
+    );
+  }
+
   lines.push(`| Agent | At risk | Automated email | Record edited | Divergent source | Unexplained |`);
   lines.push(`| --- | ---: | ---: | ---: | ---: | ---: |`);
   for (const a of gap.byAgent.slice(0, 12)) {
@@ -141,6 +233,41 @@ export function renderGapSection(gap, { battrAtRisk = null, battrDate = null } =
   }
   lines.push("", `| Judged by list | Window | At risk |`, `| --- | ---: | ---: |`);
   for (const l of gap.byList) lines.push(`| ${l.list} | ${l.days ?? "?"}d | ${l.count} |`);
+  lines.push("");
+  lines.push(...renderBattrFlagged(gap));
+  return lines;
+}
+
+/**
+ * Leads Battr stamped in the last few nights, and what we make of each.
+ * FUB ids and agent names only — the id links to the lead for anyone with
+ * access, and no lead name is printed.
+ */
+export function renderBattrFlagged(gap) {
+  const rows = gap?.battrFlagged ?? [];
+  if (!rows.length) return [];
+  const byStatus = {};
+  for (const r of rows) byStatus[r.status] = (byStatus[r.status] ?? 0) + 1;
+  const agree = (byStatus.at_risk ?? 0) + (byStatus.neglected ?? 0);
+  const lines = [
+    `### Leads Battr flagged in the last ${gap.recentDays} days — do we agree?`,
+    "",
+    `Battr stamped **${rows.length}** lead(s). We agree on **${agree}** ` +
+      `(${byStatus.at_risk ?? 0} at risk, ${byStatus.neglected ?? 0} neglected); ` +
+      Object.entries(byStatus)
+        .filter(([s]) => s !== "at_risk" && s !== "neglected")
+        .map(([s, n]) => `${n} ${s.replace("_", " ")}`)
+        .join(", ") +
+      `. For a lead we call worked, "our last touch" is the thing we count that Battr does not.`,
+    "",
+    `| FUB ID | Agent | Battr stamped | Our verdict | Our last touch |`,
+    `| ---: | --- | --- | --- | --- |`,
+  ];
+  for (const r of rows) {
+    const verdict = r.status === "excluded" && r.reason ? `excluded — ${r.reason}` : r.status.replace("_", " ");
+    const touch = r.daysAgo === null ? r.via : `${r.via}, ${r.daysAgo}d ago`;
+    lines.push(`| ${r.id} | ${r.owner} | ${r.stamped} | ${verdict} | ${touch} |`);
+  }
   lines.push("");
   return lines;
 }
