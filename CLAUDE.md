@@ -23,6 +23,7 @@ organically for community/neighborhood and buyer/seller search terms.
 - `src/content/portal.ts` — Client Portal journeys (buyer/seller stages + tasks) and vendor categories
 - `src/lib/portal/` — portal state (`store.ts`, browser-local), CRM engagement events (`track.ts`), progress math
 - `src/components/portal/`, `src/app/(homeowner)/portal/` — the client hub (dashboard, journey, saved, numbers, pros). Roland Team-branded and noindex, like the homeowner dashboards; reached by invite link, not the marketing nav.
+- `src/lib/buyer/` — buyer write-back: sealed link identity (`identity.ts`), FUB activity events (`activity.ts`), browser tracking (`track.ts`). `/api/admin/buyer-link` mints campaign links; `/api/buyer/event` receives them.
 - `src/app/admin/clients` — internal portal dashboard (roster from FUB, hub-link builder, signal playbook); `src/lib/portal/roster.ts` is its server-side FUB read
 - `src/app/sitemap.ts`, `src/app/robots.ts` — auto-generated
 - `legacy/` — the old standalone HTML pages (pre-rebuild), kept for reference
@@ -43,6 +44,7 @@ organically for community/neighborhood and buyer/seller search terms.
 - `FUB_API_KEY` — Follow Up Boss; stores leads and portal engagement. Without it forms/portal still work, nothing is stored.
 - `FUB_X_SYSTEM` / `FUB_X_SYSTEM_KEY` — FUB registered-system identity. Optional for most calls, **required** to register webhooks (`/api/admin/fub-webhook-setup`) — FUB 403s webhook registration with "X-System-Key header missing" otherwise. Request a system name + key from Follow Up Boss and set both; every FUB call then sends them.
 - `ADMIN_TOKEN` — required for `/admin/sellers` and `/admin/clients`; gates all client data served to them. Also gates the read-only `/api/admin/audit-homeowners?key=…` endpoint, which buckets the homeowner store by eligibility (eligible / invalid-email / out-of-state / unknown-location) and reports counts, samples, and the top out-of-state states — it writes nothing.
+- `BUYER_LINK_SECRET` — signs the `?c=` identity token on campaign links, so a contact's listing views and saves land on their Follow Up Boss record. Falls back to `CRON_SECRET` if unset; with neither, `/api/admin/buyer-link` 503s and buyer activity stays anonymous. **Rotating it invalidates every link already mailed out.**
 - `HOMEOWNER_EMAIL_ENABLED` — must be exactly `"true"` or **no homeowner email sends at all** (welcome, cash offer, weekly digest). Off by default; see `docs/homeowner-engine-setup.md`.
 - `HOMEOWNER_DIGEST_BATCH` — how many due homeowners `/api/cron/homeowner-digest` mails per run (default 50, hard max 1000; `?limit=` overrides per request). The digest also re-checks eligibility at send time, so ineligible rows already in the table are never mailed. Keep this modest to protect a young sending domain.
 - `HOMEOWNER_BASE_URL` — the Roland Team host. Homeowner dashboards, portal invite links, and email links are all absolute against it — and `/api/admin/fub-webhook-setup` now registers the FUB webhook against this origin too (falling back to `site.url`), so the receiver is on the Roland Team host, not the marketing site.

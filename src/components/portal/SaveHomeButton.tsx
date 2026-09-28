@@ -2,6 +2,8 @@
 
 import { usePortal } from "@/lib/portal/store";
 import { trackPortal } from "@/lib/portal/track";
+import { trackListingSave } from "@/lib/buyer/track";
+import type { PropertyRef } from "@/lib/buyer/activity";
 
 /**
  * Heart toggle shown on listing cards and listing detail pages.
@@ -9,14 +11,22 @@ import { trackPortal } from "@/lib/portal/track";
  * Saving is the highest-signal thing a client does on the site, so it posts to
  * the CRM with the address — that's what turns "someone browsed" into "call
  * Jane about 123 Quail Run".
+ *
+ * Two routes to the CRM, and exactly one runs per save so an agent never sees
+ * the same save twice: a client with a hub reports through the portal (which
+ * carries their journey context), and a visitor identified only by a campaign
+ * link reports as buyer activity.
  */
 export function SaveHomeButton({
   id,
   address,
+  property,
   variant = "icon",
 }: {
   id: string;
   address: string;
+  /** Listing detail for the CRM event. Without it the event still fires, with less context. */
+  property?: PropertyRef;
   variant?: "icon" | "button";
 }) {
   const { state, toggleSaved, ready } = usePortal();
@@ -27,7 +37,13 @@ export function SaveHomeButton({
     e.preventDefault();
     e.stopPropagation();
     toggleSaved(id);
-    if (!saved) trackPortal("portal.saved-home", address);
+    if (saved) return; // un-saving is a correction, not a signal
+    if (state.profile) {
+      trackPortal("portal.saved-home", address);
+    } else {
+      // No hub — only a campaign-link identity can attribute this.
+      trackListingSave(property ?? { address });
+    }
   }
 
   const label = saved ? "Saved — remove from your hub" : "Save this home to your hub";
