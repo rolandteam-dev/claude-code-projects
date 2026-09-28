@@ -81,7 +81,7 @@ export function explainAtRisk({
   now = Date.now(),
 }) {
   const atRisk = results.filter((r) => r.status === "at_risk");
-  const signals = { automatedEmail: 0, recordEdited: 0, divergentSource: 0, unexplained: 0 };
+  const signals = { automatedEmail: 0, recordEdited: 0, divergentSource: 0, unexplained: 0, byRule: 0 };
   const byList = new Map();
   const byAgent = new Map();
   // The control group. A lead carrying Battr's stamp is one Battr ALSO calls
@@ -109,6 +109,9 @@ export function explainAtRisk({
       divergentSource: DIVERGENT_SOURCES.includes(r.source),
     };
     hit.unexplained = !hit.automatedEmail && !hit.recordEdited && !hit.divergentSource;
+    // Expected by a rule Mike chose: a drip is not work (rules.automatedEmailCountsAsTouch),
+    // and the two divergent sources are swept on purpose.
+    hit.byRule = hit.automatedEmail || hit.divergentSource;
 
     const side = person[stampKey] ? split.battrAgrees : split.onlyUs;
     side.leads++;
@@ -116,7 +119,7 @@ export function explainAtRisk({
     if (hit.divergentSource) side.divergentSource++;
 
     const agent = r.owner ?? "(unassigned)";
-    const agentRow = byAgent.get(agent) ?? { agent, atRisk: 0, automatedEmail: 0, recordEdited: 0, divergentSource: 0, unexplained: 0 };
+    const agentRow = byAgent.get(agent) ?? { agent, atRisk: 0, automatedEmail: 0, recordEdited: 0, divergentSource: 0, unexplained: 0, byRule: 0 };
     agentRow.atRisk++;
     for (const k of Object.keys(signals)) {
       if (hit[k]) {
@@ -192,10 +195,14 @@ export function renderGapSection(gap, { battrAtRisk = null, battrDate = null } =
     "",
     `| Explanation | Leads | Share |`,
     `| --- | ---: | ---: |`,
-    `| An automated email went out inside the window (Battr says these don't count) | ${gap.signals.automatedEmail} | ${pct(gap.signals.automatedEmail)} |`,
+    `| An automated (drip) email went out inside the window — not work, by your rule of 28 Sep | ${gap.signals.automatedEmail} | ${pct(gap.signals.automatedEmail)} |`,
     `| The FUB record was edited inside the window (upper bound on a stage/timeframe change) | ${gap.signals.recordEdited} | ${pct(gap.signals.recordEdited)} |`,
     `| From \`my +plus leads\` or \`Steve Hawks\` — swept by choice, excluded by Battr | ${gap.signals.divergentSource} | ${pct(gap.signals.divergentSource)} |`,
     `| **None of the above** — Battr should be flagging these too | **${gap.signals.unexplained}** | ${pct(gap.signals.unexplained)} |`,
+    "",
+    `**${gap.signals.byRule ?? 0} of ${gap.total}** are expected differences — a drip-only lead or a divergent source, both by ` +
+      `your choice. **${gap.total - (gap.signals.byRule ?? 0)}** are not explained by a rule you set; that is the number that has ` +
+      `to reach about Battr's before going live.`,
     "",
   ];
   const { people, stageField, timeframeField, fieldNames = {} } = gap.profileFields;

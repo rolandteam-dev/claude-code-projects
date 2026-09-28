@@ -312,6 +312,23 @@ export const rules = {
   emailCountsAsTouch: true,
 
   /**
+   * AUTOMATED EMAIL IS NEVER WORK. Mike's decision, 28 Sep 2026:
+   *   "Stay strict: agents who let drips do the work get flagged."
+   *
+   * Battr's playbook says the same ("Automated emails do NOT count"), but on
+   * 28 Sep more than half our at-risk leads had an action-plan email inside
+   * their window and Battr flagged almost none of them — so Battr may count
+   * drips in practice. If the control group in the nightly report confirms
+   * that, THIS IS A DELIBERATE DIVERGENCE FROM BATTR, like the two sources in
+   * sources.mjs: leads on a drip with no call or text will be flagged here and
+   * not there, and that is the point. Do not "fix" the gap by flipping this.
+   *
+   * Enforced in communication.mjs (foldEmailTouches folds manual email only)
+   * and pinned by the self-test.
+   */
+  automatedEmailCountsAsTouch: false,
+
+  /**
    * Stage and timeframe updates count too, per the same page. Neither is a
    * message, so neither appears in any communication endpoint — they are read
    * from timestamps on the person record, and if FUB carries no such
