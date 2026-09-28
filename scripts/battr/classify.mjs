@@ -46,9 +46,9 @@ export const hasAny = (list, values) => {
  */
 export function buildTouchIndex({ calls = [], texts = [], emails = [] }) {
   const index = new Map();
-  foldTouches(index, calls);
-  foldTouches(index, texts);
-  foldTouches(index, emails);
+  foldTouches(index, calls, "call");
+  foldTouches(index, texts, "text");
+  foldTouches(index, emails, "email");
   return index;
 }
 
@@ -62,7 +62,7 @@ export function buildTouchIndex({ calls = [], texts = [], emails = [] }) {
  * way. That property is what makes the backfill safe to run before the sweep
  * decision, and a test asserts it.
  */
-export function foldTouches(index, rows = []) {
+export function foldTouches(index, rows = [], via = null) {
   for (const row of rows) {
     const personId = row.personId ?? row.person?.id;
     const created = row.created ?? row.createdAt;
@@ -73,8 +73,15 @@ export function foldTouches(index, rows = []) {
     if (!Number.isFinite(at)) continue;
 
     const entry = index.get(personId) ?? { lastOutbound: 0, lastInbound: 0 };
-    if (inbound) entry.lastInbound = Math.max(entry.lastInbound, at);
-    else entry.lastOutbound = Math.max(entry.lastOutbound, at);
+    // `via` records which channel set the latest touch — diagnostic only, read
+    // by the report to say WHY a lead counts as worked. Nothing decides on it.
+    if (inbound) {
+      if (at > entry.lastInbound && via) entry.inVia = via;
+      entry.lastInbound = Math.max(entry.lastInbound, at);
+    } else {
+      if (at > entry.lastOutbound && via) entry.outVia = via;
+      entry.lastOutbound = Math.max(entry.lastOutbound, at);
+    }
     index.set(personId, entry);
   }
   return index;
