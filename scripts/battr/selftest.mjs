@@ -3465,4 +3465,50 @@ check("the state Battr owns is the state that went missing", () => {
   });
 }
 
+
+// ─── History must reach past the longest list window ─────────────────────────
+{
+  const L = await import("./lists.mjs");
+  const { rules: R } = await import("./rules.mjs");
+
+  check("history: the longest window any list judges on is read off the rule JSON", () => {
+    assert.equal(L.longestCommWindowDays(), 96, "Quarterly Nurture / Sphere & Past Clients, 93/96");
+    assert.equal(L.commWindowDays({ groups: [[{ field: "custom_fields.fub.system_lastCommunication", value: 33 }]] }), 33);
+    assert.equal(L.commWindowDays({}), null);
+  });
+
+  check("history: the configured lookback covers every list window, with room to spare", () => {
+    // 45 days of history against a 93-day list made every lead last called
+    // 46-93 days ago read as never contacted: at risk on every run, unable to
+    // clear. Pinned so a later edit to either number cannot reopen it.
+    assert.ok(
+      R.activityLookbackDays > L.longestCommWindowDays(),
+      `lookback ${R.activityLookbackDays}d must exceed the longest list window ${L.longestCommWindowDays()}d`
+    );
+  });
+
+  check("history: the engine will not read less than the longest window, whatever rules say", () => {
+    const src = readFileSync(join(HERE, "..", "battr-audit.mjs"), "utf8");
+    assert.match(src, /Math\.max\(rules\.activityLookbackDays, longestCommWindowDays\(\) \+ 4\)/);
+    assert.match(src, /const since = new Date\(Date\.now\(\) - lookbackDays \* DAY_MS\)/);
+  });
+
+  check("history: a lead worked on a quarterly cadence is not at risk once its call is in the index", () => {
+    const quarterly = L.lists.find((l) => l.name.includes("Quarterly"));
+    const now = Date.now();
+    const person = {
+      id: 7, name: "Q", stage: "Nurture", timeframeId: 4, assignedUserId: 5, assignedTo: "A",
+      created: new Date(now - 400 * 86_400_000).toISOString(), source: "Zillow Preferred", tags: [],
+    };
+    const call = { personId: 7, created: new Date(now - 60 * 86_400_000).toISOString(), isIncoming: false };
+
+    const withCall = foldTouches(new Map(), [call]);
+    const seen = classifyForList(normalizeContact(person, withCall.get(7), {}), quarterly, now);
+    const blind = classifyForList(normalizeContact(person, undefined, {}), quarterly, now);
+    assert.notEqual(seen, null, "the fixture lead must be a Quarterly Nurture member");
+    assert.equal(seen, "compliant", "a 60-day-old call satisfies a 93-day window");
+    assert.equal(blind, "at_risk", "without it, the same lead reads as never contacted — the bug");
+  });
+}
+
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);

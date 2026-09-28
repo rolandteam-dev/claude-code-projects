@@ -501,6 +501,32 @@ export const lists = [
 
 export const listById = (id) => lists.find((l) => l.id === id);
 
+/**
+ * The N in a tier's "Last Communication Days Ago > N" condition, or null.
+ */
+export function commWindowDays(set) {
+  for (const group of set?.groups ?? []) {
+    for (const c of group ?? []) {
+      if (/lastCommunication/i.test(String(c?.field ?? "")) && Number.isFinite(Number(c?.value))) return Number(c.value);
+    }
+  }
+  return null;
+}
+
+/**
+ * The longest communication window any active list judges on — 96 days
+ * (Quarterly Nurture, Sphere & Past Clients). The activity history the audit
+ * reads must reach further back than this, or a lead called on schedule 60
+ * days ago reads as never called at all.
+ */
+export function longestCommWindowDays(ls = lists) {
+  const days = ls
+    .filter((l) => l.is_active)
+    .flatMap((l) => [commWindowDays(l.at_risk_filters), commWindowDays(l.neglected_filters)])
+    .filter((d) => d !== null);
+  return days.length ? Math.max(...days) : 0;
+}
+
 /** Lists that are audited and reported every night but never trigger an action. */
 export const reportOnlyLists = () => lists.filter((l) => l.report_only && l.is_active);
 
