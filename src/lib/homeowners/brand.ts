@@ -31,7 +31,14 @@ export const homeownerBrand = {
   legalName: "The Roland Team | LPT Realty",
   founder: site.founder,
   founderPhoto: site.founderPhoto,
-  phone: site.phone,
+  /**
+   * The Roland Team's main line. NOT site.phone — that is the rolandluxury.com
+   * tracking number and must stay on the luxury site. Every homeowner email,
+   * dashboard, unsubscribe page and client-portal card reads this.
+   * HOMEOWNER_PHONE overrides it (e.g. a dedicated call-tracking number for the
+   * email channel) without a code change.
+   */
+  phone: (process.env.HOMEOWNER_PHONE ?? "").trim() || "(702) 830-9366",
   email: site.email,
   brokerage: site.brokerage,
   /**
