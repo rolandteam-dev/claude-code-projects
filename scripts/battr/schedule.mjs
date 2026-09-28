@@ -10,6 +10,25 @@
  * A blocked day must log a SKIP, never silently drop the action.
  */
 
+/**
+ * The evening a run BELONGS to, as opposed to the moment it started.
+ *
+ * The audit is scheduled for 7 PM Pacific, matching Battr. GitHub starts
+ * scheduled runs late — on this repo, 5 to 6 hours late every night (runs
+ * #42-#45 started between 11:52 PM and 1:00 AM PT). Read off the wall clock,
+ * Monday night's run believes it is Tuesday: "Weekdays Excluding Monday" then
+ * sweeps Mon-Thu nights where Battr sweeps Tue-Fri, and every At Risk Since
+ * stamp lands a day later than Battr's would.
+ *
+ * Stepping back seven hours maps any start between 7 PM and 7 AM onto the
+ * evening it was meant for, and leaves a daytime manual run on its own day.
+ */
+export const AUDIT_DAY_OFFSET_HOURS = 7;
+
+export function auditDate(now = new Date()) {
+  return new Date(now.getTime() - AUDIT_DAY_OFFSET_HOURS * 3_600_000);
+}
+
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 /** Weekday name in the team's timezone, not the server's. */

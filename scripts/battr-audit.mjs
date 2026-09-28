@@ -29,7 +29,16 @@ import { normalizeContact } from "./battr/contact.mjs";
 import { resolvePausedOwners } from "./battr/paused.mjs";
 import { pondForLead } from "./battr/ponds.mjs";
 import { foldEmailTouches, describeEmailOrigin } from "./battr/communication.mjs";
-import { isDayAllowed } from "./battr/schedule.mjs";
+import { isDayAllowed, auditDate } from "./battr/schedule.mjs";
+
+/**
+ * The evening this run belongs to. GitHub starts the 7 PM schedule 5-6 hours
+ * late, so the wall clock says tomorrow; see schedule.mjs. Every date the run
+ * reports or stamps, and every day filter it checks, reads this — never
+ * `new Date()`. Elapsed-time math ("days since last touch") still uses the
+ * real clock.
+ */
+const AUDIT_DAY = auditDate();
 import { lists, reportOnlyLists, longestCommWindowDays } from "./battr/lists.mjs";
 import { bucketName, isSourceAudited } from "./battr/sources.mjs";
 import { needsRules, unseenCount, OBSERVED_DATE } from "./battr/observed.mjs";
@@ -176,7 +185,7 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
   );
 
   const lines = [];
-  lines.push(`# Battr audit — ${ptDate()}${dry ? " (DRY RUN — nothing was written)" : ""}`);
+  lines.push(`# Battr audit — ${ptDate(AUDIT_DAY)}${dry ? " (DRY RUN — nothing was written)" : ""}`);
   lines.push("");
   // "53786 leads audited" was the raw database pull, not the audit list. The
   // audited population is what the combined list actually holds — Battr's
@@ -507,7 +516,7 @@ async function deliverReport(markdown, { runId, dry, stageEmails = [] }) {
     appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${markdown}\n`);
   }
 
-  const subject = `Battr audit — ${ptDate()}${dry ? " (dry run)" : ""}`;
+  const subject = `Battr audit — ${ptDate(AUDIT_DAY)}${dry ? " (dry run)" : ""}`;
 
   if (mailConfigured() && process.env.BATTR_REPORT_TO) {
     // Battr's layout first — one message per stage, the ones Mike reads — then
@@ -683,7 +692,7 @@ async function main() {
 
   // Writing requires an explicit opt-in. Everything else is a dry run.
   const dry = args.dry === true || process.env.BATTR_LIVE !== "true";
-  const runId = `${ptDate()}-${Date.now().toString(36).slice(-4)}`;
+  const runId = `${ptDate(AUDIT_DAY)}-${Date.now().toString(36).slice(-4)}`;
 
   const fub = new FubClient(process.env.FUB_API_KEY, { dry, log });
 
@@ -1031,7 +1040,7 @@ async function main() {
   const neglected = results.filter((r) => r.status === "neglected");
   log(`  ${atRisk.length} at risk, ${neglected.length} neglected`);
 
-  const today = ptDate();
+  const today = ptDate(AUDIT_DAY);
   const actions = { atRisk, neglected, nudged: [], alreadyFlagged: [], swept: [], heldBack: [], skipped: [] };
 
   const peopleById = new Map(people.map((p) => [p.id, p]));
@@ -1069,8 +1078,8 @@ async function main() {
   const touchReason = touchComplete
     ? "last-touch complete via per-person backfill, but rules.sweepOnBackfilledTexts is off"
     : "last-touch incomplete";
-  const nudgesAllowedToday = isDayAllowed(rules.nudgeDayFilter, new Date(), rules.timezone) && touchUsable;
-  const sweepsAllowedToday = isDayAllowed(rules.sweepDayFilter, new Date(), rules.timezone) && touchUsable;
+  const nudgesAllowedToday = isDayAllowed(rules.nudgeDayFilter, AUDIT_DAY, rules.timezone) && touchUsable;
+  const sweepsAllowedToday = isDayAllowed(rules.sweepDayFilter, AUDIT_DAY, rules.timezone) && touchUsable;
   if (!nudgesAllowedToday) log(`  nudges skipped: ${touchUsable ? `day filter "${rules.nudgeDayFilter}"` : touchReason}`);
   if (!sweepsAllowedToday) log(`  sweeps skipped: ${touchUsable ? `day filter "${rules.sweepDayFilter}"` : touchReason}`);
 
