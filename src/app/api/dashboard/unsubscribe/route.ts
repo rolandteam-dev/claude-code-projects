@@ -25,9 +25,7 @@ function page(message: string): Response {
   return new Response(body, { headers: { "content-type": "text/html; charset=utf-8" } });
 }
 
-export async function GET(req: Request) {
-  const token = new URL(req.url).searchParams.get("token");
-  if (!token) return page("Invalid unsubscribe link.");
+async function unsubscribeToken(token: string): Promise<void> {
   try {
     const store = homeownerStore();
     // Read first: after unsubscribe() we still need the contact details, and an
@@ -36,7 +34,24 @@ export async function GET(req: Request) {
     await store.unsubscribe(token);
     if (homeowner) await sendHomeownerActivity("unsubscribe", homeowner);
   } catch {
-    // fall through to a friendly message regardless
+    // never fail an opt-out request
   }
+}
+
+export async function GET(req: Request) {
+  const token = new URL(req.url).searchParams.get("token");
+  if (!token) return page("Invalid unsubscribe link.");
+  await unsubscribeToken(token);
   return page("You've been unsubscribed from home value updates.");
+}
+
+/**
+ * RFC 8058 one-click unsubscribe: mailbox providers POST
+ * "List-Unsubscribe=One-Click" to the List-Unsubscribe URL (token in the query
+ * string). Must succeed without cookies, redirects, or a confirmation step.
+ */
+export async function POST(req: Request) {
+  const token = new URL(req.url).searchParams.get("token");
+  if (token) await unsubscribeToken(token);
+  return new Response(null, { status: 200 });
 }

@@ -38,7 +38,7 @@ function html(h: Homeowner): string {
   const latest = latestEstimate(h)!;
   const appr = appreciation(h);
   const url = dashboardUrl(h.token);
-  const unsub = `${homeownerBrand.baseUrl.replace(/\/$/, "")}/api/dashboard/unsubscribe?token=${h.token}`;
+  const unsub = unsubscribeUrl(h.token);
   const apprLine = appr
     ? `<p style="margin:6px 0 0;color:${appr.abs >= 0 ? "#8a6d2b" : "#b4433a"};font-size:14px;">
          ${appr.abs >= 0 ? "▲" : "▼"} ${money(Math.abs(appr.abs))} (${appr.pct >= 0 ? "+" : "−"}${Math.abs(appr.pct).toFixed(1)}%) since we started tracking
@@ -67,7 +67,8 @@ function html(h: Homeowner): string {
       </p>
     </div>
     <div style="padding:16px 8px;text-align:center;font-size:11px;color:#9a9a9a;line-height:1.6;">
-      ${homeownerBrand.legalName} · Automated estimate, not an appraisal. Equal Housing Opportunity.<br/>
+      ${homeownerBrand.legalName} · ${homeownerBrand.postalAddress}<br/>
+      Automated estimate, not an appraisal. Equal Housing Opportunity.<br/>
       <a href="${unsub}" style="color:#9a9a9a;">Unsubscribe from home value updates</a>
     </div>
   </div>`;
@@ -76,7 +77,7 @@ function html(h: Homeowner): string {
 function welcomeHtml(h: Homeowner): string {
   const latest = latestEstimate(h);
   const url = dashboardUrl(h.token);
-  const unsub = `${homeownerBrand.baseUrl.replace(/\/$/, "")}/api/dashboard/unsubscribe?token=${h.token}`;
+  const unsub = unsubscribeUrl(h.token);
   return `
   <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;color:#1c1c1c;">
     <div style="padding:20px 0;text-align:center;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#8a6d2b;font-weight:600;">
@@ -104,7 +105,8 @@ function welcomeHtml(h: Homeowner): string {
       </p>
     </div>
     <div style="padding:16px 8px;text-align:center;font-size:11px;color:#9a9a9a;line-height:1.6;">
-      ${homeownerBrand.legalName} · Automated estimate, not an appraisal. Equal Housing Opportunity.<br/>
+      ${homeownerBrand.legalName} · ${homeownerBrand.postalAddress}<br/>
+      Automated estimate, not an appraisal. Equal Housing Opportunity.<br/>
       You're receiving this because you requested your home value. <a href="${unsub}" style="color:#9a9a9a;">Unsubscribe</a>.
     </div>
   </div>`;
@@ -142,6 +144,23 @@ const DISABLED = {
   reason: "sending disabled (HOMEOWNER_EMAIL_ENABLED is not \"true\")",
 } as const;
 
+/** Absolute one-click unsubscribe URL for a homeowner token. */
+function unsubscribeUrl(token: string): string {
+  return `${homeownerBrand.baseUrl.replace(/\/$/, "")}/api/dashboard/unsubscribe?token=${encodeURIComponent(token)}`;
+}
+
+/**
+ * RFC 8058 one-click unsubscribe headers. Gmail and Yahoo show a native
+ * "Unsubscribe" control from these and treat their absence on marketing-style
+ * mail as a negative signal; the POST handler lives on the same URL.
+ */
+function listUnsubscribeHeaders(token: string): Record<string, string> {
+  return {
+    "List-Unsubscribe": `<${unsubscribeUrl(token)}>`,
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+  };
+}
+
 export async function sendWelcomeEmail(h: Homeowner): Promise<{ sent: boolean; reason?: string }> {
   if (!sendingEnabled()) return DISABLED;
   const key = process.env.RESEND_API_KEY;
@@ -156,6 +175,7 @@ export async function sendWelcomeEmail(h: Homeowner): Promise<{ sent: boolean; r
       subject: `Your ${h.city || "Las Vegas"} home value dashboard`,
       html: welcomeHtml(h),
       replyTo: homeownerBrand.email,
+      headers: listUnsubscribeHeaders(h.token),
     });
     if (error) return { sent: false, reason: errMsg(error) };
     return { sent: true };
@@ -191,7 +211,8 @@ export async function sendCashOfferEmail(to: {
       </a>
     </div>
     <div style="padding:16px 8px;text-align:center;font-size:11px;color:#9a9a9a;line-height:1.6;">
-      ${homeownerBrand.legalName} · Equal Housing Opportunity.
+      ${homeownerBrand.legalName} · ${homeownerBrand.postalAddress}<br/>
+      Equal Housing Opportunity.
     </div>
   </div>`;
   try {
@@ -224,6 +245,7 @@ export async function sendValueEmail(h: Homeowner): Promise<{ sent: boolean; rea
       subject: `Your ${h.city} home value: ${money(latestEstimate(h)!.value)}`,
       html: html(h),
       replyTo: homeownerBrand.email,
+      headers: listUnsubscribeHeaders(h.token),
     });
     if (error) return { sent: false, reason: errMsg(error) };
     return { sent: true };

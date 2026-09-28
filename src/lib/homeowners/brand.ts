@@ -46,6 +46,15 @@ export const homeownerBrand = {
    * and an unset/blank value can never point links at a dead host.
    */
   baseUrl: resolveBaseUrl(),
+  /**
+   * Physical postal address printed in every homeowner email footer. CAN-SPAM
+   * requires a valid physical postal address in each commercial email; a brand
+   * name alone ("The Roland Team | LPT Realty") does not satisfy it.
+   * HOMEOWNER_POSTAL_ADDRESS overrides the default without a code change.
+   */
+  postalAddress:
+    (process.env.HOMEOWNER_POSTAL_ADDRESS ?? "").trim() ||
+    `${site.address.streetAddress}, Unit 300, ${site.address.addressLocality}, ${site.address.addressRegion} ${site.address.postalCode}`,
 } as const;
 
 export function dashboardUrl(token: string): string {
