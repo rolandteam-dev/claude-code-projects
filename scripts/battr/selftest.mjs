@@ -3423,7 +3423,7 @@ check("the state Battr owns is the state that went missing", () => {
     const automatedAt = new Map([[1, NOW - 3 * 86_400_000], [2, NOW - 20 * 86_400_000]]);
     const g = G.explainAtRisk({ results, peopleById, automatedAt, now: NOW });
     assert.equal(g.total, 5, "compliant leads are not counted");
-    assert.deepEqual(g.signals, { automatedEmail: 1, recordEdited: 1, divergentSource: 1, unexplained: 2 });
+    assert.deepEqual(g.signals, { automatedEmail: 1, recordEdited: 1, divergentSource: 1, unexplained: 2, byRule: 2 });
     assert.deepEqual(g.byAgent.map((a) => [a.agent, a.atRisk, a.unexplained]), [["Agent B", 3, 1], ["Agent A", 2, 1]]);
     assert.equal(g.byList[0].days, 10);
     assert.deepEqual(g.profileFields, { people: 6, stageField: 0, timeframeField: 0, fieldNames: {} });
@@ -3580,6 +3580,40 @@ check("the state Battr owns is the state that went missing", () => {
     const md = G.renderGapSection(g).join("\n");
     assert.match(md, /`timeframeUpdated` 1/);
     assert.match(md, /Stage changes are invisible to us/);
+  });
+}
+
+
+// ─── Stay strict: a drip is not work (Mike, 28 Sep 2026) ─────────────────────
+{
+  const { rules: R } = await import("./rules.mjs");
+  const G = await import("./gap.mjs");
+  const { lists: allLists } = await import("./lists.mjs");
+  const warm = allLists.find((l) => l.name.includes("Warm Back Up"));
+
+  check("strict: automated email never counts as working a lead — Mike's decision, pinned", () => {
+    assert.equal(R.automatedEmailCountsAsTouch, false);
+    const src = readFileSync(join(HERE, "rules.mjs"), "utf8");
+    assert.match(src, /Stay strict: agents who let drips do the work get flagged/, "the decision is recorded where the rule lives");
+    assert.match(src, /DELIBERATE DIVERGENCE FROM BATTR/);
+    const comm = readFileSync(join(HERE, "communication.mjs"), "utf8");
+    assert.match(comm, /if \(origin !== "manual"\) continue;/, "only a manual email reaches the touch index");
+  });
+
+  check("strict: the report separates differences you chose from differences nobody has explained", () => {
+    const NOW = Date.parse("2026-09-28T08:00:00Z");
+    const rec = (id, source = "Zillow Preferred") => ({ id, owner: "A", source, status: "at_risk", source_list_ids: [warm.id] });
+    const g = G.explainAtRisk({
+      results: [rec(1), rec(2, "Steve Hawks"), rec(3)],
+      peopleById: new Map([[1, { id: 1 }], [2, { id: 2 }], [3, { id: 3 }]]),
+      automatedAt: new Map([[1, NOW - 86_400_000]]),
+      now: NOW,
+    });
+    assert.equal(g.signals.byRule, 2, "the drip-only lead and the divergent-source lead");
+    const md = G.renderGapSection(g).join("\n");
+    assert.match(md, /\*\*2 of 3\*\* are expected differences/);
+    assert.match(md, /\*\*1\*\* are not explained by a rule you set/);
+    assert.match(md, /not work, by your rule of 28 Sep/);
   });
 }
 
