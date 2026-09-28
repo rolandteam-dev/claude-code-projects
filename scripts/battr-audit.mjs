@@ -30,7 +30,7 @@ import { resolvePausedOwners } from "./battr/paused.mjs";
 import { pondForLead } from "./battr/ponds.mjs";
 import { foldEmailTouches, describeEmailOrigin } from "./battr/communication.mjs";
 import { isDayAllowed } from "./battr/schedule.mjs";
-import { lists, reportOnlyLists } from "./battr/lists.mjs";
+import { lists, reportOnlyLists, longestCommWindowDays } from "./battr/lists.mjs";
 import { bucketName, isSourceAudited } from "./battr/sources.mjs";
 import { needsRules, unseenCount, OBSERVED_DATE } from "./battr/observed.mjs";
 import {
@@ -705,7 +705,13 @@ async function main() {
   log(`  ${people.length} leads in the audit population`);
 
   // 3. activity → last touch
-  const since = new Date(Date.now() - rules.activityLookbackDays * DAY_MS).toISOString();
+  // Never read less history than the longest window a list judges on. A short
+  // read makes every lead last worked before its cutoff look never contacted.
+  const lookbackDays = Math.max(rules.activityLookbackDays, longestCommWindowDays() + 4);
+  if (lookbackDays !== rules.activityLookbackDays) {
+    log(`  activity lookback raised ${rules.activityLookbackDays}d → ${lookbackDays}d to cover the longest list window`);
+  }
+  const since = new Date(Date.now() - lookbackDays * DAY_MS).toISOString();
   const activity = await fub.activity(since);
   const touchIndex = buildTouchIndex(activity);
   log(

@@ -25,7 +25,7 @@
  *
  * Counts and agent names only. No lead name leaves this module.
  */
-import { listById } from "./lists.mjs";
+import { listById, commWindowDays } from "./lists.mjs";
 import { STAGE_UPDATED_FIELDS, TIMEFRAME_UPDATED_FIELDS, profileTouchAt } from "./communication.mjs";
 
 /** The two sources swept on Mike's instruction that Battr excludes (sources.mjs). */
@@ -33,18 +33,8 @@ export const DIVERGENT_SOURCES = ["my +plus leads", "Steve Hawks"];
 
 const DAY = 86_400_000;
 
-/**
- * The "days since last communication >" number on a list's at-risk tier, or
- * null if the tier has no such condition.
- */
-export function atRiskDaysOf(list) {
-  for (const group of list?.at_risk_filters?.groups ?? []) {
-    for (const c of group ?? []) {
-      if (/lastCommunication/i.test(String(c?.field ?? "")) && Number.isFinite(Number(c?.value))) return Number(c.value);
-    }
-  }
-  return null;
-}
+/** The "days since last communication >" number on a list's at-risk tier, or null. */
+export const atRiskDaysOf = (list) => commWindowDays(list?.at_risk_filters);
 
 /** The tightest at-risk window among the lists that selected this lead. */
 function windowDaysFor(record) {

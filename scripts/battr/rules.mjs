@@ -48,9 +48,21 @@ export const rules = {
 
   /**
    * How far back to pull the activity feed when computing last-touch. Must be
-   * comfortably larger than neglectedDays or old leads look untouched.
+   * comfortably larger than the LONGEST list window, or old leads look untouched.
+   *
+   * This was 45, which was fine for the single 7/14 pair it was written for and
+   * wrong from the day per-list thresholds arrived: Quarterly Nurture and Sphere
+   * & Past Clients judge on 93/96 days. A lead called on a quarterly cadence 60
+   * days ago had no call inside 45 days of history, so it read as NEVER
+   * contacted — at risk on every run, and never able to clear. That is the
+   * shape of our at-risk count running 4-8x Battr's and not draining, and of
+   * Sphere reading 89 compliant against Battr's 356.
+   *
+   * More history can only move a lead toward compliant (folding is monotonic),
+   * so raising this narrows who can be flagged or swept; it never widens it.
+   * The engine also refuses to run on less than longestCommWindowDays() + 4.
    */
-  activityLookbackDays: 45,
+  activityLookbackDays: 100,
 
   /**
    * Follow Up Boss refuses `/v1/textMessages` in bulk — the same 400 it gives
