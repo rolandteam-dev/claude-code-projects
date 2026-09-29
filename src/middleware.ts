@@ -7,7 +7,8 @@ import { NextResponse, type NextRequest } from "next/server";
  * decided by the Host header, not by the path:
  *
  *   app host        → the client product (hub + the tools it links to)
- *   marketing hosts → the marketing site; the client product is not reachable
+ *   marketing hosts → the marketing site; the client product is not reachable,
+ *                     and homeowner pages 308 to the homeowner host
  *   homeowner host  → untouched, exactly as today
  *   guide host      → the relocation-guide landing page only ("/" is the page)
  *   rebate host     → the new-construction rebate page only ("/" is the page)
@@ -46,6 +47,27 @@ const PRODUCT_TOOLS = [
 
 /** Internal + per-recipient routes: reachable on every host, unchanged. */
 const ALWAYS_ALLOWED = ["/admin", "/dashboard"];
+
+/**
+ * Homeowner-facing pages. On a marketing (rolandluxury.com) host these 308 to
+ * the same path + query on the homeowner host, so an old or stray link can
+ * never show a homeowner — or the team — a luxury-site URL for the homeowner
+ * engine. API routes never reach middleware (see the matcher), so cron jobs,
+ * webhooks and the estimator are never redirected.
+ */
+const HOMEOWNER_PAGES = ["/dashboard", "/embed", "/admin"];
+
+/** https origin of the homeowner host: HOMEOWNER_HOST, else HOMEOWNER_BASE_URL. */
+function homeownerOrigin(homeownerHost: string): string | null {
+  if (homeownerHost) return `https://${homeownerHost}`;
+  const raw = (process.env.HOMEOWNER_BASE_URL ?? "").trim();
+  if (!raw) return null;
+  try {
+    return new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`).origin;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * The relocation-guide landing page (linked from YouTube). On its own host the
@@ -115,6 +137,14 @@ export function middleware(req: NextRequest) {
       return NextResponse.rewrite(url);
     }
     return startsWithPath(pathname, REBATE_ROOT) ? NextResponse.next() : notFound(req);
+  }
+
+  if (marketingHosts.includes(host) && HOMEOWNER_PAGES.some((base) => startsWithPath(pathname, base))) {
+    const origin = homeownerOrigin(homeownerHost);
+    // Fail open: with no homeowner origin configured, serve as before.
+    if (origin && new URL(origin).hostname !== host) {
+      return NextResponse.redirect(new URL(`${pathname}${req.nextUrl.search}`, origin), 308);
+    }
   }
 
   if (ALWAYS_ALLOWED.some((base) => startsWithPath(pathname, base))) {

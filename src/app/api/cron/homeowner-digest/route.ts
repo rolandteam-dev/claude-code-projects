@@ -16,22 +16,34 @@ export const maxDuration = 60;
  * runs can pass ?secret=. If CRON_SECRET is unset the endpoint refuses, so it
  * can never be triggered anonymously.
  */
-function authorized(req: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  const auth = req.headers.get("authorization");
-  if (auth === `Bearer ${secret}`) return true;
+/**
+ * "cron" = Vercel's scheduler (Bearer CRON_SECRET) or a manual ?secret= run.
+ * "admin" = a manual run with ?key=ADMIN_TOKEN. CRON_SECRET is stored as a
+ * write-only Vercel secret, so nobody can read it back to run the warm-up by
+ * hand; the admin key covers that. Admin runs DRY-RUN BY DEFAULT and only send
+ * with an explicit &send=1, so a pasted URL can never mail the list by accident.
+ */
+function authorizedAs(req: Request): "cron" | "admin" | null {
   const url = new URL(req.url);
-  return url.searchParams.get("secret") === secret;
+  const secret = process.env.CRON_SECRET;
+  if (secret) {
+    if (req.headers.get("authorization") === `Bearer ${secret}`) return "cron";
+    if (url.searchParams.get("secret") === secret) return "cron";
+  }
+  const admin = process.env.ADMIN_TOKEN;
+  if (admin && url.searchParams.get("key") === admin) return "admin";
+  return null;
 }
 
 async function run(req: Request) {
-  if (!authorized(req)) {
+  const via = authorizedAs(req);
+  if (!via) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
   const url = new URL(req.url);
   const days = Number(url.searchParams.get("days") ?? 14);
-  const dryRun = url.searchParams.get("dryRun") === "1";
+  const dryRun =
+    url.searchParams.get("dryRun") === "1" || (via === "admin" && url.searchParams.get("send") !== "1");
 
   // Batch cap: never run all ~34k due rows inside a 60s function (it would time
   // out and blast a brand-new sending domain). ?limit= wins, else
@@ -106,6 +118,7 @@ async function run(req: Request) {
     emailed,
     remaining,
     dryRun,
+    via,
     errors: errors.slice(0, 10),
   });
 }

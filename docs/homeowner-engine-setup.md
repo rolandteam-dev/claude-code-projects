@@ -35,26 +35,28 @@ pooled connection string as `DATABASE_URL` in Vercel.)*
 > Provision the keys now; flip the switch only once you have clicked a real email
 > end to end yourself.
 
-## 3. The subdomain (where homeowners land) — OPTIONAL
-**No DNS work is required.** Dashboards, portal hubs and every link in an email
-default to the main site origin (`site.url`), where these pages already live at
-`/dashboard/<token>` and `/portal`. That works today.
+## 3. The subdomain (where homeowners land) — DONE ✅
+The homeowner engine lives on **`home.therolandteam.com`** — every dashboard,
+portal hub, unsubscribe link and email button. This is live and
+`HOMEOWNER_BASE_URL` = `https://home.therolandteam.com` is set in Production.
 
-Do this section only if you want the Roland Team brand in the URL as well as on
-the page — homeowners landing on `home.therolandteam.com` rather than the
-Roland Luxury domain.
+The code never falls back to the luxury site: if `HOMEOWNER_BASE_URL` is ever
+blank or invalid, links resolve to `HOMEOWNER_ORIGIN`
+(`https://home.therolandteam.com`), **not** `site.url` (rolandluxury.com). See
+`src/lib/homeowners/brand.ts`.
 
-- [ ] In Vercel → project → **Domains**, add `home.therolandteam.com`.
-- [ ] Add the CNAME Vercel shows, **wherever `therolandteam.com`'s DNS is
-      managed** — that is your registrar, or whoever runs the Roland Team site
-      today. It is a new record on a new subdomain: your existing site is
-      untouched.
-- [ ] Confirm `https://home.therolandteam.com/dashboard/demo` loads.
-- [ ] Only then, in Environment Variables, add:
-  - `HOMEOWNER_BASE_URL` = `https://home.therolandteam.com`
+Optional hardening: set `MARKETING_HOSTS` (comma-separated luxury hosts) so that
+`/dashboard`, `/embed` and `/admin` requested on a rolandluxury.com host **308**
+to the same path on the homeowner host. Left unset, nothing redirects (fail-open);
+API routes — crons, webhooks, the estimator — are never redirected either way.
 
-Setting `HOMEOWNER_BASE_URL` before the subdomain resolves is worse than leaving
-it unset: it points every email button and unsubscribe link at a dead host.
+## Optional homeowner overrides
+- `HOMEOWNER_POSTAL_ADDRESS` — the physical address printed in every email footer
+  (CAN-SPAM). Defaults to `5860 S Pecos Rd, Unit 300, Las Vegas, NV 89120`.
+- `HOMEOWNER_PHONE` — the number on every homeowner email, dashboard, unsubscribe
+  page and portal card. Defaults to the Roland Team main line **(702) 830-9366**.
+  Never point homeowner surfaces at `site.phone` — that is the luxury tracking
+  number.
 
 ## 4. Automation secret (protects the cron jobs) — required
 - [ ] Add `CRON_SECRET` = any long random string (e.g. from a password generator).
@@ -81,6 +83,10 @@ it unset: it points every email button and unsubscribe link at a dead host.
 4. **Test the digest (dry run first):**
    `…/api/cron/homeowner-digest?secret=YOUR_CRON_SECRET&dryRun=1` → shows how many are
    due. Drop `&dryRun=1` to actually refresh values + send one round of emails.
+   `CRON_SECRET` is write-only in Vercel, so to run the warm-up **by hand** use the
+   admin key instead: `…/api/cron/homeowner-digest?key=YOUR_ADMIN_TOKEN` — this
+   **dry-runs by default**; add `&send=1` only when you mean to send. Narrow to your
+   warmest people with `&engaged=1&limit=25`.
 
 ## Turning sending on (do this LAST)
 
@@ -100,10 +106,12 @@ Do not flip this until:
 
 Then, and only then:
 
-- [ ] Vercel → Environment Variables → `HOMEOWNER_EMAIL_ENABLED` = `true`.
-- [ ] Restore the weekly digest cron in `vercel.json` (removed while sending was
-      held), then redeploy:
-      `{ "path": "/api/cron/homeowner-digest", "schedule": "0 16 * * 1" }`
+- [ ] Vercel → Environment Variables → `HOMEOWNER_EMAIL_ENABLED` = `true`, then redeploy.
+
+The digest cron is **already scheduled** in `vercel.json` —
+`{ "path": "/api/cron/homeowner-digest", "schedule": "0 17 * * *" }` (daily, 10am PT,
+50/run via the route default). It is dormant until `HOMEOWNER_EMAIL_ENABLED` is `true`;
+once flipped, the next 17:00 UTC run begins sending 50/day.
 
 To pause sending again at any time, set `HOMEOWNER_EMAIL_ENABLED` to anything other
 than `true` (or delete it) and redeploy. The funnels keep working and keep capturing
