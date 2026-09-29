@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ingestHomeowner, type IngestInput } from "@/lib/homeowners/ingest";
+import { latestEstimate } from "@/lib/homeowners/store";
 import { sendWelcomeEmail } from "@/lib/homeowners/email";
 import { sendHomeownerActivity } from "@/lib/homeowners/fubActivity";
 import { notifyAssignedAgent } from "@/lib/homeowners/agentAlert";
@@ -33,6 +34,7 @@ export async function POST(req: Request) {
     // alert the assigned agent (or team fallback) directly. force:true because
     // the signup's own tags aren't in the hot-click set. Off unless enabled.
     try {
+      const est = latestEstimate(homeowner);
       await notifyAssignedAgent(
         {
           firstName: homeowner.firstName,
@@ -42,6 +44,10 @@ export async function POST(req: Request) {
           address: `${homeowner.address}, ${homeowner.city}, ${homeowner.state} ${homeowner.zip}`.trim(),
           type: "Seller Inquiry",
           tags: ["Home Value Request"],
+          beds: homeowner.beds,
+          baths: homeowner.baths,
+          sqft: homeowner.sqft,
+          estimate: est ? { value: est.value, low: est.low, high: est.high } : undefined,
           message: "Just requested their home value on the dashboard — brand-new lead. Call fast.",
         },
         { force: true, signal: "New Home-Value Lead" },

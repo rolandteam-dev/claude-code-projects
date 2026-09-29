@@ -41,6 +41,16 @@ export type AgentAlertLead = {
   type?: string;
   tags: string[];
   message?: string;
+  /** Property facts, when known (home-value funnel) — rendered as a details block. */
+  beds?: number;
+  baths?: number;
+  sqft?: number;
+  yearBuilt?: number;
+  propertyType?: string;
+  /** Sale timeline the lead selected, if any. */
+  saleTimeline?: string;
+  /** Instant AVM estimate shown to the lead — rendered as the headline number. */
+  estimate?: { value?: number; low?: number; high?: number };
 };
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -106,24 +116,61 @@ export async function notifyAssignedAgent(
     : "";
   const from = process.env.HOMEOWNER_FROM_EMAIL || "The Roland Team <home@therolandteam.com>";
 
+  const money = (n?: number) =>
+    typeof n === "number" && Number.isFinite(n) && n > 0
+      ? n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
+      : "";
+  const numFmt = (n?: number) =>
+    typeof n === "number" && Number.isFinite(n) && n > 0 ? n.toLocaleString("en-US") : "";
+
   const row = (label: string, value?: string) =>
-    value ? `<tr><td style="padding:2px 12px 2px 0;color:#8a8a8a;">${label}</td><td style="padding:2px 0;color:#1c1c1c;font-weight:600;">${esc(value)}</td></tr>` : "";
+    value ? `<tr><td style="padding:3px 14px 3px 0;color:#8a8a8a;white-space:nowrap;vertical-align:top;">${label}</td><td style="padding:3px 0;color:#1c1c1c;font-weight:600;">${esc(value)}</td></tr>` : "";
+  const sectionTitle = (t: string) =>
+    `<div style="margin:22px 0 6px;font-size:13px;font-weight:700;letter-spacing:0.3px;color:#3F3D56;">${t}</div>`;
+  const table = (rows: string) =>
+    rows.trim() ? `<table style="font-size:14px;border-collapse:collapse;">${rows}</table>` : "";
+
+  // Property details block (home-value funnel). Only rendered when we have facts.
+  const bathsText = lead.baths ? `${numFmt(lead.baths)}` : "";
+  const propertyRows =
+    row("Address", lead.address) +
+    row("Beds", numFmt(lead.beds)) +
+    row("Baths", bathsText) +
+    row("Square Feet", numFmt(lead.sqft)) +
+    row("Year Built", lead.yearBuilt ? String(lead.yearBuilt) : "") +
+    row("Property Type", lead.propertyType);
+  const hasProperty = !!(lead.beds || lead.baths || lead.sqft || lead.yearBuilt || lead.propertyType);
+
+  // Estimated-value (AVM) headline block — the number the lead just saw.
+  const est = lead.estimate;
+  const avmValue = money(est?.value);
+  const avmRange =
+    money(est?.low) && money(est?.high) ? `${money(est?.low)} – ${money(est?.high)}` : "";
+  const avmBlock = avmValue
+    ? `<div style="margin:18px 0 0;padding:14px 16px;border:1px solid #E7E2D3;border-radius:10px;background:#FBF9F3;">
+         <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#8a6d2b;font-weight:700;">Estimated Value</div>
+         <div style="font-size:26px;font-weight:700;color:#1c1c1c;margin-top:2px;">${avmValue}</div>
+         ${avmRange ? `<div style="font-size:13px;color:#5a5a5a;margin-top:2px;">Likely range ${avmRange}</div>` : ""}
+       </div>`
+    : "";
 
   const html = `
   <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;color:#1c1c1c;">
-    <div style="font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#8a6d2b;font-weight:700;">Hot lead · Homeowner Dashboard</div>
-    <h2 style="margin:6px 0 2px;font-size:20px;">🔥 ${esc(signal)}</h2>
-    <p style="margin:0 0 14px;font-size:14px;color:#5a5a5a;">${esc(name)} took a high-intent action on their home dashboard.</p>
-    <table style="font-size:14px;border-collapse:collapse;">
-      ${row("Name", name)}
-      ${row("Email", lead.email)}
-      ${row("Phone", lead.phone)}
-      ${row("Address", lead.address)}
-      ${resolved?.name ? row("Assigned to", resolved.name) : ""}
-    </table>
-    ${lead.message ? `<p style="margin:14px 0 0;font-size:14px;color:#3a3a3a;white-space:pre-line;">${esc(lead.message)}</p>` : ""}
-    ${fubLink ? `<p style="margin:18px 0 0;"><a href="${fubLink}" style="display:inline-block;background:#8a6d2b;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:600;font-size:14px;">Open in Follow Up Boss</a></p>` : ""}
-    <p style="margin:16px 0 0;font-size:12px;color:#9a9a9a;">Sent by The Roland Team homeowner dashboard. Reply to reach the lead directly.</p>
+    <div style="height:4px;background:#8a6d2b;border-radius:2px;"></div>
+    <div style="margin-top:16px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#8a6d2b;font-weight:700;">The Roland Team · Homeowner Dashboard</div>
+    <h2 style="margin:6px 0 2px;font-size:22px;">${esc(signal)}</h2>
+    <p style="margin:0 0 4px;font-size:14px;color:#5a5a5a;">The lead details are below — reply to this email to reach ${esc(name)} directly.</p>
+
+    ${sectionTitle("Contact Details")}
+    ${table(row("Name", name) + row("Email", lead.email) + row("Phone", lead.phone) + (resolved?.name ? row("Assigned to", resolved.name) : ""))}
+
+    ${hasProperty ? sectionTitle("Property Details") + table(propertyRows) : ""}
+    ${avmBlock}
+    ${lead.saleTimeline ? sectionTitle("Lead Preferences") + table(row("Sale Timeline", lead.saleTimeline)) : ""}
+
+    ${lead.message ? `<p style="margin:18px 0 0;font-size:14px;color:#3a3a3a;white-space:pre-line;">${esc(lead.message)}</p>` : ""}
+    ${fubLink ? `<p style="margin:20px 0 0;"><a href="${fubLink}" style="display:inline-block;background:#8a6d2b;color:#fff;text-decoration:none;padding:11px 22px;border-radius:8px;font-weight:600;font-size:14px;">Open in Follow Up Boss</a></p>` : ""}
+    <p style="margin:22px 0 0;font-size:12px;color:#9a9a9a;">Sent by The Roland Team homeowner dashboard. Reply to reach the lead directly.</p>
   </div>`;
 
   try {
