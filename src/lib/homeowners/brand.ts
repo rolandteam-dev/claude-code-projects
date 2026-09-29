@@ -8,21 +8,28 @@
 import { site } from "@/lib/site";
 
 /**
+ * The homeowner engine's home. Every email link, dashboard, portal invite and
+ * FUB "Home Dashboard" link lives here. Deliberately NOT site.url: that is the
+ * rolandluxury.com marketing site, and homeowners should never land on it.
+ */
+export const HOMEOWNER_ORIGIN = "https://home.therolandteam.com";
+
+/**
  * Resolve the public origin for homeowner links. Uses HOMEOWNER_BASE_URL when
- * it's set to a real https origin, otherwise the main site origin. Defensive on
+ * it's set to a real http(s) origin, otherwise HOMEOWNER_ORIGIN. Defensive on
  * purpose: a blank/whitespace value, or one that isn't a valid absolute URL,
- * falls back to site.url so links can never point at a dead host.
+ * falls back to the homeowner host — never to the luxury site.
  */
 function resolveBaseUrl(): string {
   const raw = (process.env.HOMEOWNER_BASE_URL ?? "").trim();
-  if (!raw) return site.url;
+  if (!raw) return HOMEOWNER_ORIGIN;
   const candidate = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
   try {
     const u = new URL(candidate);
-    if (u.protocol !== "http:" && u.protocol !== "https:") return site.url;
+    if (u.protocol !== "http:" && u.protocol !== "https:") return HOMEOWNER_ORIGIN;
     return u.origin;
   } catch {
-    return site.url;
+    return HOMEOWNER_ORIGIN;
   }
 }
 

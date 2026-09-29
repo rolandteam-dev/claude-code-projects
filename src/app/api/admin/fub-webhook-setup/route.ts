@@ -40,9 +40,9 @@ export async function GET(req: Request) {
   }
 
   const headers = fubHeaders(key, { "Content-Type": "application/json" });
-  // Register the webhook against the homeowner origin (HOMEOWNER_BASE_URL, with
-  // a safe fallback to site.url), NOT the marketing site — the receiver lives on
-  // the Roland Team host.
+  // Register the webhook against the homeowner origin (HOMEOWNER_BASE_URL,
+  // falling back to home.therolandteam.com), NOT the marketing site — the
+  // receiver lives on the Roland Team host.
   const targetUrl = `${homeownerBrand.baseUrl.replace(/\/$/, "")}/api/webhooks/fub?secret=${encodeURIComponent(secret)}`;
   const currentOrigin = (() => {
     try {

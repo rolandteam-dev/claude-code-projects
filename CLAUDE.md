@@ -66,6 +66,10 @@ organically for community/neighborhood and buyer/seller search terms.
 - **Repliers `status` takes a single value.** `status=A,U` 400s — use one (`U` for sold comps).
 - **The `/estimates` (AVM) POST requires a `details` object** (beds/baths/sqft); omitting it 400s.
 
+## Homeowner engine lives on home.therolandteam.com
+- Every homeowner-facing link, page and email uses `homeownerBrand.baseUrl`, which falls back to `https://home.therolandteam.com` (`HOMEOWNER_ORIGIN`) — **never** `site.url`. `site.url` is the rolandluxury.com marketing site and stays that way; do not point homeowner links, phone numbers or admin checks at it.
+- With `MARKETING_HOSTS` set, `/dashboard`, `/embed` and `/admin` on a rolandluxury.com host 308 to the homeowner host (middleware). API routes are never redirected.
+
 ## Roadmap (next)
 - Client Portal on real auth + a database (hubs that follow a client across devices; per-agent dashboard access)
 - Live IDX/MLS listing search integration
