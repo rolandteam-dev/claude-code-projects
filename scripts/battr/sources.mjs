@@ -136,6 +136,10 @@ export const sourceBuckets = {
   "Ylopo Seller": 2,
   "Ylopo LSA": 2,
   "Ylopo Adwords": 2,
+  // Left unmapped by oversight, so unmappedPolicy excluded it — while Battr
+  // audits it (it flagged lead 100603 from this source on 28 Sep). Mapped on
+  // Mike's instruction, 29 Sep 2026.
+  "Ylopo PPC+": 2,
   "Realtor.com": 2,
   "Realtor.com Lf": 2,
   Redfin: 2,
