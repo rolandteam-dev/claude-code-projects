@@ -3423,7 +3423,7 @@ check("the state Battr owns is the state that went missing", () => {
     const automatedAt = new Map([[1, NOW - 3 * 86_400_000], [2, NOW - 20 * 86_400_000]]);
     const g = G.explainAtRisk({ results, peopleById, automatedAt, now: NOW });
     assert.equal(g.total, 5, "compliant leads are not counted");
-    assert.deepEqual(g.signals, { automatedEmail: 1, recordEdited: 1, divergentSource: 1, unexplained: 2, byRule: 2 });
+    assert.deepEqual(g.signals, { automatedEmail: 1, recordEdited: 1, divergentSource: 1, unexplained: 2, byRule: 1 });
     assert.deepEqual(g.byAgent.map((a) => [a.agent, a.atRisk, a.unexplained]), [["Agent B", 3, 1], ["Agent A", 2, 1]]);
     assert.equal(g.byList[0].days, 10);
     assert.deepEqual(g.profileFields, { people: 6, stageField: 0, timeframeField: 0, fieldNames: {} });
@@ -3595,7 +3595,10 @@ check("the state Battr owns is the state that went missing", () => {
     assert.equal(R.automatedEmailCountsAsTouch, false);
     const src = readFileSync(join(HERE, "rules.mjs"), "utf8");
     assert.match(src, /Stay strict: agents who let drips do the work get flagged/, "the decision is recorded where the rule lives");
-    assert.match(src, /DELIBERATE DIVERGENCE FROM BATTR/);
+    // Battr's own behaviour, measured on the 28 Sep run: it ignores drips too.
+    // Recorded as parity so nobody "fixes" the at-risk gap by flipping this.
+    assert.match(src, /CONFIRMED it on the 28 Sep run: 58%/);
+    assert.match(src, /this is\s+\* parity, not a divergence/);
     const comm = readFileSync(join(HERE, "communication.mjs"), "utf8");
     assert.match(comm, /if \(origin !== "manual"\) continue;/, "only a manual email reaches the touch index");
   });
@@ -3609,11 +3612,13 @@ check("the state Battr owns is the state that went missing", () => {
       automatedAt: new Map([[1, NOW - 86_400_000]]),
       now: NOW,
     });
-    assert.equal(g.signals.byRule, 2, "the drip-only lead and the divergent-source lead");
+    // Only the divergent source is a chosen difference. A drip is not: Battr
+    // ignores drips too (28 Sep control group), so it separates nothing.
+    assert.equal(g.signals.byRule, 1, "the divergent-source lead only");
     const md = G.renderGapSection(g).join("\n");
-    assert.match(md, /\*\*2 of 3\*\* are expected differences/);
-    assert.match(md, /\*\*1\*\* are not explained by a rule you set/);
-    assert.match(md, /not work, by your rule of 28 Sep/);
+    assert.match(md, /\*\*1 of 3\*\* are expected differences — the two sources you chose to sweep/);
+    assert.match(md, /\*\*2\*\* are not explained by a rule you set/);
+    assert.match(md, /Battr ignores these too, so this is not the difference/);
   });
 }
 
@@ -3650,6 +3655,42 @@ check("the state Battr owns is the state that went missing", () => {
     assert.doesNotMatch(src, /ptDate\(\)/, "no date is taken from the wall clock");
     assert.doesNotMatch(src, /isDayAllowed\([^)]*new Date\(\)/, "no day filter reads the wall clock");
     assert.equal((src.match(/isDayAllowed\(rules\.\w+DayFilter, AUDIT_DAY/g) ?? []).length, 2);
+  });
+}
+
+
+// ─── Lead-level evidence for the remaining gap ───────────────────────────────
+{
+  const G = await import("./gap.mjs");
+  const { lists: allLists } = await import("./lists.mjs");
+  const NOW = Date.parse("2026-09-29T08:00:00Z");
+  const DAYMS = 86_400_000;
+  const monthly = allLists.find((l) => l.name.includes("Monthly Nurture"));
+
+  check("evidence: a Battr-flagged lead shows the exact days elapsed and its list window", () => {
+    const g = G.explainAtRisk({
+      results: [{ id: 5, owner: "A", status: "compliant", source_list_ids: [monthly.id] }],
+      peopleById: new Map([[5, { id: 5, assignedTo: "A", customBattrAtRiskSince: "2026-09-28" }]]),
+      touchIndex: new Map([[5, { lastOutbound: NOW - 33.4 * DAYMS, outVia: "call", lastInbound: 0 }]]),
+      now: NOW,
+    });
+    assert.equal(g.battrFlagged[0].elapsed, 33.4);
+    assert.equal(g.battrFlagged[0].window, 33);
+    assert.match(G.renderBattrFlagged(g).join("\n"), /\| 5 \| A \| 2026-09-28 \| compliant \| call out, 33\.4d ago \| 33d \|/);
+  });
+
+  check("evidence: leads only we flag are listed for spot-checking, minus the chosen sources and Battr's own", () => {
+    const rec = (id, source = "Zillow Preferred") => ({ id, owner: "A", source, status: "at_risk", source_list_ids: [monthly.id] });
+    const g = G.explainAtRisk({
+      results: [rec(1), rec(2, "my +plus leads"), rec(3)],
+      peopleById: new Map([[1, { id: 1 }], [2, { id: 2 }], [3, { id: 3, customBattrAtRiskSince: "2026-09-27" }]]),
+      touchIndex: new Map([[1, { lastOutbound: NOW - 40 * DAYMS, outVia: "text", lastInbound: 0 }]]),
+      now: NOW,
+    });
+    assert.deepEqual(g.onlyUsSample.map((r) => [r.id, r.via, r.elapsed, r.window]), [[1, "text out", 40, 33]]);
+    const md = G.renderOnlyUs(g).join("\n");
+    assert.match(md, /At risk here, not flagged by Battr — 1 lead\(s\)/);
+    assert.match(md, /\| 1 \| A \| 🌱 Monthly Nurture \| 33d \| text out, 40d ago \|/);
   });
 }
 

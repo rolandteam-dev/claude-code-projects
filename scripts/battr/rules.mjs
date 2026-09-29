@@ -315,13 +315,12 @@ export const rules = {
    * AUTOMATED EMAIL IS NEVER WORK. Mike's decision, 28 Sep 2026:
    *   "Stay strict: agents who let drips do the work get flagged."
    *
-   * Battr's playbook says the same ("Automated emails do NOT count"), but on
-   * 28 Sep more than half our at-risk leads had an action-plan email inside
-   * their window and Battr flagged almost none of them — so Battr may count
-   * drips in practice. If the control group in the nightly report confirms
-   * that, THIS IS A DELIBERATE DIVERGENCE FROM BATTR, like the two sources in
-   * sources.mjs: leads on a drip with no call or text will be flagged here and
-   * not there, and that is the point. Do not "fix" the gap by flipping this.
+   * Battr's playbook says the same ("Automated emails do NOT count"), and the
+   * nightly control group CONFIRMED it on the 28 Sep run: 58% of the at-risk
+   * leads Battr also stamped had a drip email in their window, against 59% of
+   * the leads only we flag. Battr ignores drips exactly as we do, so this is
+   * parity, not a divergence — and a drip explains none of the gap between the
+   * two at-risk counts. Do not "fix" that gap by flipping this.
    *
    * Enforced in communication.mjs (foldEmailTouches folds manual email only)
    * and pinned by the self-test.
