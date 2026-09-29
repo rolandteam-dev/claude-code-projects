@@ -21,7 +21,9 @@
 const API_BASE = "https://api.repliers.io";
 const DEFAULT_BOARD_ID = "193"; // GLVAR / Las Vegas REALTORS® (matches repliers.ts)
 
-const MIN_COMPS = 5; // fewer than this → not defensible, defer to a human CMA
+const MIN_COMPS = 10; // fewer than this → not defensible, defer to a human CMA. Live ZIP
+// sweep (9/29) showed 56–89 comps in every valley ZIP, so 10 never starves a real market;
+// it only makes small/unique homes with a thin comp set defer to a human CMA (more honest).
 const SQFT_TOLERANCE = 0.2; // ±20%
 const MONTHS_BACK = 6;
 
