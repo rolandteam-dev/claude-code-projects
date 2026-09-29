@@ -109,9 +109,11 @@ export function explainAtRisk({
       divergentSource: DIVERGENT_SOURCES.includes(r.source),
     };
     hit.unexplained = !hit.automatedEmail && !hit.recordEdited && !hit.divergentSource;
-    // Expected by a rule Mike chose: a drip is not work (rules.automatedEmailCountsAsTouch),
-    // and the two divergent sources are swept on purpose.
-    hit.byRule = hit.automatedEmail || hit.divergentSource;
+    // Expected by a rule Mike chose: the two divergent sources are swept on
+    // purpose. A drip is NOT an expected difference: on 28 Sep the control
+    // group showed Battr ignores drips too (58% of the leads it agrees on had
+    // one, against 59% of the rest), so a drip explains nothing between us.
+    hit.byRule = hit.divergentSource;
 
     const side = person[stampKey] ? split.battrAgrees : split.onlyUs;
     side.leads++;
@@ -163,10 +165,37 @@ export function explainAtRisk({
       status,
       via: touch.via,
       daysAgo: touch.at ? Math.floor((now - touch.at) / DAY) : null,
+      // Exact, to one decimal: the 28 Sep run had all four disagreements
+      // sitting on the same 33-day line, which points at how the two systems
+      // count days. The decimal is what settles the formula.
+      elapsed: touch.at ? Math.round(((now - touch.at) / DAY) * 10) / 10 : null,
+      window: r ? windowDaysFor(r) : null,
       reason: r?.reason ?? null,
     });
   }
   battrFlagged.sort((a, b) => b.stamped.localeCompare(a.stamped) || a.id - b.id);
+
+  // The open question, lead by lead: at-risk here, never stamped by Battr, and
+  // not from a source Mike chose to sweep. Opening a few of these in Follow Up
+  // Boss shows what Battr is counting that we are not.
+  const onlyUsSample = atRisk
+    .filter((r) => {
+      const person = peopleById.get(r.id) ?? {};
+      return !person[stampKey] && !DIVERGENT_SOURCES.includes(r.source);
+    })
+    .map((r) => {
+      const person = peopleById.get(r.id) ?? r.contact?._raw ?? {};
+      const touch = lastTouchOf(touchIndex.get(r.id), person);
+      return {
+        id: r.id,
+        owner: r.owner ?? "",
+        list: (r.source_list_ids ?? []).map((id) => listById(id)?.name ?? `list ${id}`).join(" + "),
+        window: windowDaysFor(r),
+        via: touch.via,
+        elapsed: touch.at ? Math.round(((now - touch.at) / DAY) * 10) / 10 : null,
+      };
+    })
+    .sort((a, b) => a.owner.localeCompare(b.owner) || a.id - b.id);
 
   return {
     total: atRisk.length,
@@ -176,6 +205,7 @@ export function explainAtRisk({
     byAgent: [...byAgent.values()].sort((a, b) => b.atRisk - a.atRisk),
     profileFields: { people: peopleById.size, stageField, timeframeField, fieldNames },
     battrFlagged,
+    onlyUsSample,
     recentDays,
   };
 }
@@ -195,13 +225,13 @@ export function renderGapSection(gap, { battrAtRisk = null, battrDate = null } =
     "",
     `| Explanation | Leads | Share |`,
     `| --- | ---: | ---: |`,
-    `| An automated (drip) email went out inside the window — not work, by your rule of 28 Sep | ${gap.signals.automatedEmail} | ${pct(gap.signals.automatedEmail)} |`,
+    `| An automated (drip) email went out inside the window — Battr ignores these too, so this is not the difference | ${gap.signals.automatedEmail} | ${pct(gap.signals.automatedEmail)} |`,
     `| The FUB record was edited inside the window (upper bound on a stage/timeframe change) | ${gap.signals.recordEdited} | ${pct(gap.signals.recordEdited)} |`,
     `| From \`my +plus leads\` or \`Steve Hawks\` — swept by choice, excluded by Battr | ${gap.signals.divergentSource} | ${pct(gap.signals.divergentSource)} |`,
     `| **None of the above** — Battr should be flagging these too | **${gap.signals.unexplained}** | ${pct(gap.signals.unexplained)} |`,
     "",
-    `**${gap.signals.byRule ?? 0} of ${gap.total}** are expected differences — a drip-only lead or a divergent source, both by ` +
-      `your choice. **${gap.total - (gap.signals.byRule ?? 0)}** are not explained by a rule you set; that is the number that has ` +
+    `**${gap.signals.byRule ?? 0} of ${gap.total}** are expected differences — the two sources you chose to sweep. ` +
+      `**${gap.total - (gap.signals.byRule ?? 0)}** are not explained by a rule you set; that is the number that has ` +
       `to reach about Battr's before going live.`,
     "",
   ];
@@ -242,6 +272,7 @@ export function renderGapSection(gap, { battrAtRisk = null, battrDate = null } =
   for (const l of gap.byList) lines.push(`| ${l.list} | ${l.days ?? "?"}d | ${l.count} |`);
   lines.push("");
   lines.push(...renderBattrFlagged(gap));
+  lines.push(...renderOnlyUs(gap));
   return lines;
 }
 
@@ -267,14 +298,38 @@ export function renderBattrFlagged(gap) {
         .join(", ") +
       `. For a lead we call worked, "our last touch" is the thing we count that Battr does not.`,
     "",
-    `| FUB ID | Agent | Battr stamped | Our verdict | Our last touch |`,
-    `| ---: | --- | --- | --- | --- |`,
+    `| FUB ID | Agent | Battr stamped | Our verdict | Our last touch | Window |`,
+    `| ---: | --- | --- | --- | --- | ---: |`,
   ];
   for (const r of rows) {
     const verdict = r.status === "excluded" && r.reason ? `excluded — ${r.reason}` : r.status.replace("_", " ");
-    const touch = r.daysAgo === null ? r.via : `${r.via}, ${r.daysAgo}d ago`;
-    lines.push(`| ${r.id} | ${r.owner} | ${r.stamped} | ${verdict} | ${touch} |`);
+    const touch = r.elapsed === null || r.elapsed === undefined ? r.via : `${r.via}, ${r.elapsed}d ago`;
+    lines.push(`| ${r.id} | ${r.owner} | ${r.stamped} | ${verdict} | ${touch} | ${r.window ?? "—"}d |`);
   }
+  lines.push("");
+  return lines;
+}
+
+/**
+ * Leads only we flag (not from a divergent source), for spot-checking in FUB.
+ * FUB ids and agent names only.
+ */
+export function renderOnlyUs(gap, { limit = 40 } = {}) {
+  const rows = gap?.onlyUsSample ?? [];
+  if (!rows.length) return [];
+  const lines = [
+    `### At risk here, not flagged by Battr — ${rows.length} lead(s)`,
+    "",
+    `Open a few of these in Follow Up Boss. Whatever activity is newer than "our last touch" is what Battr counts and we do not.`,
+    "",
+    `| FUB ID | Agent | List | Window | Our last touch |`,
+    `| ---: | --- | --- | ---: | --- |`,
+  ];
+  for (const r of rows.slice(0, limit)) {
+    const touch = r.elapsed === null ? r.via : `${r.via}, ${r.elapsed}d ago`;
+    lines.push(`| ${r.id} | ${r.owner} | ${r.list} | ${r.window ?? "—"}d | ${touch} |`);
+  }
+  if (rows.length > limit) lines.push(`| … | ${rows.length - limit} more | | | |`);
   lines.push("");
   return lines;
 }
