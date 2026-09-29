@@ -16,7 +16,18 @@
 const DAY_MS = 86_400_000;
 
 /**
- * Whole days between a timestamp and now, in tenant-local time.
+ * Days between a timestamp and now — EXACT, not rounded down.
+ *
+ * Battr reads "Last Communication Days Ago > 33" as "more than 33 days have
+ * passed". This used to floor to whole days, which made `> 33` mean "34 full
+ * days", one day behind Battr on every line: on the 28 Sep run all four leads
+ * Battr warned on that we called worked sat at 33.x days on the 33-day
+ * Monthly Nurture line. Mike's call the next day: match Battr.
+ *
+ * Exact days change only `>` (and `<=`). `<` and `>=` give the same answer as
+ * before, since floor(x) < N exactly when x < N. It also closes the one-day
+ * hole between Hot Leads (created < 10 days) and Warm Back Up (> 10), where a
+ * lead 10.5 days old used to belong to neither list.
  *
  * A null source is treated as INFINITELY OLD: it matches `>` comparisons and
  * fails `<` ones. A lead that has never been contacted is maximally overdue, not
@@ -26,7 +37,7 @@ export function daysSince(value, now = Date.now()) {
   if (value === null || value === undefined || value === "") return Number.POSITIVE_INFINITY;
   const at = new Date(value).getTime();
   if (!Number.isFinite(at)) return Number.POSITIVE_INFINITY;
-  return Math.floor((now - at) / DAY_MS);
+  return (now - at) / DAY_MS;
 }
 
 /** Resolve a field name, following dotted paths into nested objects. */

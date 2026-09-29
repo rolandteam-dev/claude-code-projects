@@ -3694,4 +3694,56 @@ check("the state Battr owns is the state that went missing", () => {
   });
 }
 
+
+// ─── Count days the way Battr does (Mike, 29 Sep 2026) ───────────────────────
+{
+  const F = await import("./filters.mjs");
+  const L = await import("./lists.mjs");
+  const Src = await import("./sources.mjs");
+  const DAYMS = 86_400_000;
+  const NOW = Date.parse("2026-09-29T08:00:00Z");
+  const ago = (d) => new Date(NOW - d * DAYMS).toISOString();
+  const monthly = L.lists.find((l) => l.name.includes("Monthly Nurture"));
+  const hot = L.lists.find((l) => l.name.includes("Hot Leads"));
+  const warm = L.lists.find((l) => l.name.includes("Warm Back Up"));
+  const lead = (extra, touchDaysAgo) =>
+    normalizeContact(
+      { id: 1, name: "X", assignedUserId: 5, assignedTo: "A", source: "Zillow Preferred", tags: [], ...extra },
+      touchDaysAgo === null ? undefined : { lastOutbound: NOW - touchDaysAgo * DAYMS, lastInbound: 0 },
+      {}
+    );
+
+  check("days: 'more than 33 days' means more than 33 days have passed — not 34", () => {
+    assert.equal(F.daysSince(ago(33.4), NOW), 33.4);
+    const nurture = { stage: "Nurture", timeframeId: 3, created: ago(400) };
+    // The 28 Sep case: Battr warned at 33.x days on the 33-day line; we did not.
+    assert.equal(classifyForList(lead(nurture, 33.4), monthly, NOW), "at_risk");
+    assert.equal(classifyForList(lead(nurture, 32.9), monthly, NOW), "compliant");
+    assert.equal(classifyForList(lead(nurture, 33), monthly, NOW), "compliant", "exactly 33 days is not more than 33");
+  });
+
+  check("days: '<' comparisons read the same as before", () => {
+    const f = { object: "battr.contact", field: "crm_created_at", operator: "<", value: 10, transform: { type: "days_since" }, value_data_type: "int" };
+    assert.equal(F.evaluateCondition(f, { crm_created_at: ago(9.9) }, NOW), true);
+    assert.equal(F.evaluateCondition(f, { crm_created_at: ago(10) }, NOW), false);
+    assert.equal(F.evaluateCondition(f, { crm_created_at: ago(10.5) }, NOW), false, "floor(10.5) = 10 was not < 10 either");
+  });
+
+  check("days: a lead 10.5 days old now belongs to Warm Back Up instead of neither list", () => {
+    const young = { stage: "Lead", created: ago(10.5) };
+    assert.equal(classifyForList(lead(young, 1), hot, NOW), null, "too old for Hot Leads");
+    assert.notEqual(classifyForList(lead(young, 1), warm, NOW), null, "old enough for Warm Back Up");
+  });
+
+  check("days: a never-contacted lead is still infinitely overdue", () => {
+    assert.equal(F.daysSince(null, NOW), Number.POSITIVE_INFINITY);
+    assert.equal(F.daysSince("not a date", NOW), Number.POSITIVE_INFINITY);
+  });
+
+  check("sources: Ylopo PPC+ is audited as a Ylopo source, as Battr does", () => {
+    assert.equal(Src.bucketForSource("Ylopo PPC+"), Src.bucketForSource("Ylopo"));
+    assert.equal(Src.isSourceAudited("Ylopo PPC+"), true);
+  });
+}
+
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);
