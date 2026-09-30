@@ -62,6 +62,60 @@ export function lastTouchOf(entry, person = {}) {
 }
 
 /**
+ * Coarse, privacy-safe facts about a lead: categorical values and which person
+ * fields carry a value. Names and counts only — never a name, number or address.
+ */
+export function factsOf(person = {}, record = null, now = Date.now()) {
+  const facts = new Set();
+  if (person.stage) facts.add(`stage: ${person.stage}`);
+  if (person.source) facts.add(`source: ${person.source}`);
+  facts.add(`timeframe id: ${person.timeframeId ?? "none"}`);
+  for (const t of Array.isArray(person.tags) ? person.tags : []) {
+    const tag = String(t);
+    // Tags are labels, but a few teams type names into them. Keep the label-shaped ones.
+    if (tag.length <= 40 && !/@|\d{7,}/.test(tag)) facts.add(`tag: ${tag}`);
+  }
+  for (const id of record?.source_list_ids ?? []) facts.add(`list: ${listById(id)?.name ?? id}`);
+  const created = ms(person.created);
+  if (Number.isFinite(created)) {
+    const d = (now - created) / DAY;
+    facts.add(`lead age: ${d < 30 ? "under 30d" : d < 90 ? "30-90d" : d < 180 ? "90-180d" : d < 365 ? "180-365d" : "over a year"}`);
+  }
+  for (const [key, value] of Object.entries(person)) {
+    if (value === null || value === undefined || value === "" || (Array.isArray(value) && !value.length)) continue;
+    facts.add(`has field: ${key}`);
+  }
+  return facts;
+}
+
+/**
+ * Which facts are much commoner in group B than in group A (and the reverse).
+ * With small groups this is a pointer, not a proof — the report says so.
+ */
+export function liftBetween(groupB, groupA, { minCount = 4, minDiff = 0.25, top = 12 } = {}) {
+  const tally = (group) => {
+    const m = new Map();
+    for (const facts of group) for (const f of facts) m.set(f, (m.get(f) ?? 0) + 1);
+    return m;
+  };
+  const b = tally(groupB);
+  const a = tally(groupA);
+  const rows = [];
+  for (const f of new Set([...b.keys(), ...a.keys()])) {
+    const cb = b.get(f) ?? 0;
+    const ca = a.get(f) ?? 0;
+    const diff = (groupB.length ? cb / groupB.length : 0) - (groupA.length ? ca / groupA.length : 0);
+    if (Math.max(cb, ca) >= minCount) rows.push({ fact: f, b: cb, a: ca, diff });
+  }
+  return {
+    sizeB: groupB.length,
+    sizeA: groupA.length,
+    moreInB: rows.filter((r) => r.diff >= minDiff).sort((x, y) => y.diff - x.diff).slice(0, top),
+    moreInA: rows.filter((r) => r.diff <= -minDiff).sort((x, y) => x.diff - y.diff).slice(0, 6),
+  };
+}
+
+/**
  * @param {object} p
  * @param {object[]} p.results                   classified records (combined list)
  * @param {Map<number, object>} p.peopleById     raw FUB person payloads
@@ -171,6 +225,9 @@ export function explainAtRisk({
       elapsed: touch.at ? Math.round(((now - touch.at) / DAY) * 10) / 10 : null,
       window: r ? windowDaysFor(r) : null,
       reason: r?.reason ?? null,
+      stage: person.stage ?? "",
+      timeframe: person.timeframeId ?? null,
+      source: person.source ?? "",
     });
   }
   battrFlagged.sort((a, b) => b.stamped.localeCompare(a.stamped) || a.id - b.id);
@@ -191,16 +248,33 @@ export function explainAtRisk({
         owner: r.owner ?? "",
         list: (r.source_list_ids ?? []).map((id) => listById(id)?.name ?? `list ${id}`).join(" + "),
         window: windowDaysFor(r),
+        stage: person.stage ?? "",
+        source: person.source ?? "",
         via: touch.via,
         elapsed: touch.at ? Math.round(((now - touch.at) / DAY) * 10) / 10 : null,
       };
     })
     .sort((a, b) => a.owner.localeCompare(b.owner) || a.id - b.id);
 
+  // What is different about the leads only we flag? Compare them with every
+  // lead Battr stamped in the last week, on stage, source, timeframe, tags,
+  // list, age and which person fields carry a value.
+  const controlDays = 7;
+  const flaggedPeople = [...peopleById.values()].filter((p) => {
+    const at = ms(p[stampKey]);
+    return Number.isFinite(at) && now - at <= controlDays * DAY;
+  });
+  const lift = liftBetween(
+    onlyUsSample.map((x) => factsOf(peopleById.get(x.id) ?? {}, resultsById.get(x.id), now)),
+    flaggedPeople.map((p) => factsOf(p, resultsById.get(p.id), now))
+  );
+
   return {
     total: atRisk.length,
     signals,
     split,
+    lift,
+    controlDays,
     byList: [...byList.values()].sort((a, b) => b.count - a.count),
     byAgent: [...byAgent.values()].sort((a, b) => b.atRisk - a.atRisk),
     profileFields: { people: peopleById.size, stageField, timeframeField, fieldNames },
@@ -272,6 +346,7 @@ export function renderGapSection(gap, { battrAtRisk = null, battrDate = null } =
   for (const l of gap.byList) lines.push(`| ${l.list} | ${l.days ?? "?"}d | ${l.count} |`);
   lines.push("");
   lines.push(...renderBattrFlagged(gap));
+  lines.push(...renderLift(gap));
   lines.push(...renderOnlyUs(gap));
   return lines;
 }
@@ -298,13 +373,16 @@ export function renderBattrFlagged(gap) {
         .join(", ") +
       `. For a lead we call worked, "our last touch" is the thing we count that Battr does not.`,
     "",
-    `| FUB ID | Agent | Battr stamped | Our verdict | Our last touch | Window |`,
-    `| ---: | --- | --- | --- | --- | ---: |`,
+    `| FUB ID | Agent | Battr stamped | Our verdict | Our last touch | Window | Stage · timeframe id · source |`,
+    `| ---: | --- | --- | --- | --- | ---: | --- |`,
   ];
   for (const r of rows) {
     const verdict = r.status === "excluded" && r.reason ? `excluded — ${r.reason}` : r.status.replace("_", " ");
     const touch = r.elapsed === null || r.elapsed === undefined ? r.via : `${r.via}, ${r.elapsed}d ago`;
-    lines.push(`| ${r.id} | ${r.owner} | ${r.stamped} | ${verdict} | ${touch} | ${r.window ?? "—"}d |`);
+    lines.push(
+      `| ${r.id} | ${r.owner} | ${r.stamped} | ${verdict} | ${touch} | ${r.window ?? "—"}d | ` +
+        `${r.stage || "—"} · ${r.timeframe ?? "none"} · ${r.source || "—"} |`
+    );
   }
   lines.push("");
   return lines;
@@ -314,7 +392,7 @@ export function renderBattrFlagged(gap) {
  * Leads only we flag (not from a divergent source), for spot-checking in FUB.
  * FUB ids and agent names only.
  */
-export function renderOnlyUs(gap, { limit = 40 } = {}) {
+export function renderOnlyUs(gap, { limit = 80 } = {}) {
   const rows = gap?.onlyUsSample ?? [];
   if (!rows.length) return [];
   const lines = [
@@ -322,14 +400,40 @@ export function renderOnlyUs(gap, { limit = 40 } = {}) {
     "",
     `Open a few of these in Follow Up Boss. Whatever activity is newer than "our last touch" is what Battr counts and we do not.`,
     "",
-    `| FUB ID | Agent | List | Window | Our last touch |`,
-    `| ---: | --- | --- | ---: | --- |`,
+    `| FUB ID | Agent | List | Window | Stage | Source | Our last touch |`,
+    `| ---: | --- | --- | ---: | --- | --- | --- |`,
   ];
   for (const r of rows.slice(0, limit)) {
     const touch = r.elapsed === null ? r.via : `${r.via}, ${r.elapsed}d ago`;
-    lines.push(`| ${r.id} | ${r.owner} | ${r.list} | ${r.window ?? "—"}d | ${touch} |`);
+    lines.push(`| ${r.id} | ${r.owner} | ${r.list} | ${r.window ?? "—"}d | ${r.stage || "—"} | ${r.source || "—"} | ${touch} |`);
   }
-  if (rows.length > limit) lines.push(`| … | ${rows.length - limit} more | | | |`);
+  if (rows.length > limit) lines.push(`| … | ${rows.length - limit} more | | | | | |`);
   lines.push("");
+  return lines;
+}
+
+/** What sets the leads only we flag apart from the leads Battr flagged. */
+export function renderLift(gap) {
+  const lift = gap?.lift;
+  if (!lift || !lift.sizeB || !lift.sizeA) return [];
+  const pct = (n, d) => `${Math.round((n / d) * 100)}%`;
+  const lines = [
+    `### What sets the ${lift.sizeB} leads only we flag apart from the ${lift.sizeA} Battr stamped in the last ${gap.controlDays} days`,
+    "",
+    `A pointer, not a proof — the groups are small. Something far commoner on our side is a candidate for what Battr treats as work, or as out of scope.`,
+    "",
+  ];
+  if (lift.moreInB.length) {
+    lines.push(`| More common among leads only we flag | Only us | Battr-flagged |`, `| --- | ---: | ---: |`);
+    for (const r of lift.moreInB) lines.push(`| ${r.fact} | ${r.b} (${pct(r.b, lift.sizeB)}) | ${r.a} (${pct(r.a, lift.sizeA)}) |`);
+    lines.push("");
+  } else {
+    lines.push(`Nothing is markedly commoner among the leads only we flag.`, "");
+  }
+  if (lift.moreInA.length) {
+    lines.push(`| More common among leads Battr flagged | Only us | Battr-flagged |`, `| --- | ---: | ---: |`);
+    for (const r of lift.moreInA) lines.push(`| ${r.fact} | ${r.b} (${pct(r.b, lift.sizeB)}) | ${r.a} (${pct(r.a, lift.sizeA)}) |`);
+    lines.push("");
+  }
   return lines;
 }

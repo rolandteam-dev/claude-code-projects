@@ -29,7 +29,7 @@ import { normalizeContact } from "./battr/contact.mjs";
 import { resolvePausedOwners } from "./battr/paused.mjs";
 import { pondForLead } from "./battr/ponds.mjs";
 import { foldEmailTouches, describeEmailOrigin } from "./battr/communication.mjs";
-import { isDayAllowed, auditDate } from "./battr/schedule.mjs";
+import { isDayAllowed, auditDate, auditInstant } from "./battr/schedule.mjs";
 
 /**
  * The evening this run belongs to. GitHub starts the 7 PM schedule 5-6 hours
@@ -39,6 +39,12 @@ import { isDayAllowed, auditDate } from "./battr/schedule.mjs";
  * real clock.
  */
 const AUDIT_DAY = auditDate();
+
+/**
+ * The instant every threshold is judged at: 7 PM PT on the run's evening, as
+ * Battr does, rather than the 1 AM GitHub actually starts at. See schedule.mjs.
+ */
+const AUDIT_NOW = auditInstant().getTime();
 import { lists, reportOnlyLists, longestCommWindowDays } from "./battr/lists.mjs";
 import { bucketName, isSourceAudited } from "./battr/sources.mjs";
 import { needsRules, unseenCount, OBSERVED_DATE } from "./battr/observed.mjs";
@@ -791,7 +797,7 @@ async function main() {
       const combined = lists.find((l) => l.audit_type === "combined_contact_lists");
       if (!combined) throw new Error("mode is 'lists' but no combined list is configured.");
 
-      const run = runCombinedList(contacts, combined, Date.now());
+      const run = runCombinedList(contacts, combined, AUDIT_NOW);
       if (run.missingMemberLists.length) {
         say(`  WARNING: member lists ${run.missingMemberLists.join(", ")} have no rule JSON — population is narrower than the live audit.`);
       }
@@ -891,7 +897,7 @@ async function main() {
         return r;
       });
     } else {
-      results = contacts.map((c) => classifySimple(c, touchIndex, rules));
+      results = contacts.map((c) => classifySimple(c, touchIndex, rules, AUDIT_NOW));
     }
     return results;
   };
@@ -1277,7 +1283,7 @@ async function main() {
   const channel = process.env.BATTR_ALERT_CHANNEL || "email";
   // The lists Battr runs that never act. Counted every night so a wrong rule
   // surfaces as a number, not as silence.
-  const reportLists = rules.mode === "lists" ? runReportOnlyLists(contacts, reportOnlyLists(), Date.now()) : [];
+  const reportLists = rules.mode === "lists" ? runReportOnlyLists(contacts, reportOnlyLists(), AUDIT_NOW) : [];
   for (const r of reportLists) {
     const drift = r.observed && r.observed.total ? Math.abs(r.total - r.observed.total) / r.observed.total : 0;
     if (drift > 0.25) {
@@ -1331,6 +1337,7 @@ async function main() {
   let gap = null;
   try {
     const explained = explainAtRisk({
+      now: AUDIT_NOW,
       results,
       peopleById,
       automatedAt,
