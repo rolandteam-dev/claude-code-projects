@@ -5,20 +5,26 @@ import { sendHomeownerActivity } from "@/lib/homeowners/fubActivity";
 export const runtime = "nodejs";
 
 /**
- * Resend → Follow Up Boss: email opens and clicks.
+ * Resend → Follow Up Boss: real email engagement only.
  *
- * Opens and clicks are the earliest signal that a dormant contact is paying
- * attention again, and nothing was listening for them before this. Each one is
- * forwarded to FUB as an event on the recipient's record so it reaches the
- * agents' calling filters.
+ * A CLICK on a content link is genuine interest, so it is forwarded to FUB as an
+ * event on the recipient's record and reaches the agents' calling filters. An
+ * OPEN is NOT engagement — forwarding every open created a CRM notification each
+ * time a mail client merely rendered (or pre-fetched) the message — so opens, and
+ * all non-click events, are acknowledged and dropped. Two navigation clicks are
+ * dropped too, because they are not interest in the property:
+ *   • the agent-alert "Open in Follow Up Boss" button (a followupboss.com link the
+ *     assigned AGENT taps, not the homeowner), and
+ *   • the unsubscribe link (handled by its own route; never a buying signal).
  *
  * SECURITY: this endpoint is public and writes to the CRM, so it refuses
  * everything unless RESEND_WEBHOOK_SECRET is set and the Svix signature checks
  * out. Failing closed is deliberate — an open endpoint here would let anyone
  * forge activity on any contact by posting an email address.
  *
- * Set up: Resend → Webhooks → add this URL, subscribe to email.opened and
- * email.clicked, then copy the signing secret into RESEND_WEBHOOK_SECRET.
+ * Set up: Resend → Webhooks → add this URL, subscribe to email.clicked (opens may
+ * be subscribed too — they are safely ignored), then copy the signing secret into
+ * RESEND_WEBHOOK_SECRET.
  */
 
 /** Svix signature: base64 HMAC-SHA256 over `${id}.${timestamp}.${body}`. */
@@ -67,11 +73,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "invalid json" }, { status: 400 });
   }
 
-  const activity =
-    payload.type === "email.opened" ? "email-open" : payload.type === "email.clicked" ? "email-click" : null;
-  // Every other Resend event (delivered, bounced, complained) is acknowledged
-  // and ignored — nothing to tell an agent about.
-  if (!activity) return NextResponse.json({ ok: true, ignored: payload.type ?? "unknown" });
+  // Only a CLICK is engagement. Opens (and delivered/bounced/complained) are
+  // acknowledged and dropped — an open is not interest and forwarding it just
+  // creates notification noise on the contact.
+  if (payload.type !== "email.clicked") {
+    return NextResponse.json({ ok: true, ignored: payload.type ?? "unknown" });
+  }
+
+  // Drop navigation clicks that aren't interest in the property: the agent-alert
+  // "Open in Follow Up Boss" button (a followupboss.com link the agent taps) and
+  // the unsubscribe link (handled by its own route).
+  const link = (payload.data?.click?.link ?? "").trim();
+  if (/followupboss\.com/i.test(link) || /\/api\/dashboard\/unsubscribe/i.test(link)) {
+    return NextResponse.json({ ok: true, ignored: "navigation click" });
+  }
 
   const to = payload.data?.to;
   const email = (Array.isArray(to) ? to[0] : to)?.trim();
@@ -80,12 +95,12 @@ export async function POST(req: Request) {
   // FUB resolves the person from the email, so no local lookup is needed.
   const detail = [
     payload.data?.subject ? `Email: ${payload.data.subject}` : "",
-    payload.data?.click?.link ? `Clicked: ${payload.data.click.link}` : "",
+    link ? `Clicked: ${link}` : "",
   ]
     .filter(Boolean)
     .join("\n");
 
-  const result = await sendHomeownerActivity(activity, { email }, detail || undefined);
+  const result = await sendHomeownerActivity("email-click", { email }, detail || undefined);
   // Always 200 on a verified delivery: a non-2xx makes Resend retry, and a CRM
   // outage should not turn into a redelivery storm.
   return NextResponse.json({ ok: true, forwarded: result.sent, reason: result.reason });
