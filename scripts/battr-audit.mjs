@@ -68,6 +68,7 @@ import {
 } from "./battr/battr-emails.mjs";
 import { appendComparisons, readComparisons, drift } from "./battr/compare.mjs";
 import { explainAtRisk, renderGapSection } from "./battr/gap.mjs";
+import { STAGE_STATE_FILE, loadStageState, saveStageState, applyStageChanges } from "./battr/stages.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 /**
@@ -169,7 +170,7 @@ async function replyReprieve(fub, personId, sinceIso, diag) {
 
 // ---------------------------------------------------------------------- report
 
-function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], touchIncomplete = [], unenforceable = [], comparisonDrift = [], gap = null, passedOver = { beforeList: 0, pausedAgents: 0, pausedLeads: 0 }, emailBackfill = null }) {
+function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], touchIncomplete = [], unenforceable = [], comparisonDrift = [], gap = null, stageTracking = null, passedOver = { beforeList: 0, pausedAgents: 0, pausedLeads: 0 }, emailBackfill = null }) {
   const byAgent = new Map();
   for (const r of results) {
     if (r.status === "excluded" || !r.owner) continue;
@@ -262,6 +263,17 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     `- Excluded: **${excludedAfterList + passedOver.beforeList}** ` +
       `(${passedOver.beforeList} never entered the audit list, ${excludedAfterList} removed after it)`
   );
+  if (stageTracking) {
+    // Reported because it is the only way Battr's "stage advanced counts as work"
+    // reaches this engine, and a silent no-op here is the fault this project has
+    // had four times already.
+    lines.push(
+      stageTracking.baseline
+        ? `- Stage changes: baseline recorded for **${stageTracking.tracked}** leads tonight — changes are counted from the next run`
+        : `- Stage changes counted as work: **${stageTracking.moved}** since the last run, **${stageTracking.recorded}** lead(s) carry one` +
+            (stageTracking.since ? ` (tracking since ${stageTracking.since})` : "")
+    );
+  }
   if (emailBackfill && emailBackfill.manual !== undefined) {
     // Reported, not logged. The point of this pass is to learn which field
     // Follow Up Boss uses to mark an email as machine-sent, and the answer
@@ -718,6 +730,18 @@ async function main() {
   const smartListId = args.smartListId || process.env.BATTR_SMART_LIST_ID;
   const people = await fub.people({ smartListId });
   log(`  ${people.length} leads in the audit population`);
+
+  // Stage changes, which FUB will not date for us: diff against last night's
+  // stages. Must run before any lead is normalised, because it stamps
+  // `stageUpdated` on the people it finds moved. See stages.mjs.
+  const stageStatePath = join(LOG_DIR, "state", STAGE_STATE_FILE);
+  const stageTracking = applyStageChanges(people, loadStageState(stageStatePath));
+  saveStageState(stageStatePath, stageTracking.stages, stageTracking.since);
+  log(
+    stageTracking.baseline
+      ? `  stage baseline recorded for ${stageTracking.tracked} leads — stage changes are counted from the next run`
+      : `  ${stageTracking.moved} stage change(s) since the last run; ${stageTracking.recorded} lead(s) carry a recorded change`
+  );
 
   // 3. activity → last touch
   // Never read less history than the longest window a list judges on. A short
@@ -1386,7 +1410,7 @@ async function main() {
   mkdirSync(LOG_DIR, { recursive: true });
   if (sweepLog.sweeps.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
 
-  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete, unenforceable, comparisonDrift, gap, passedOver, emailBackfill });
+  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete, unenforceable, comparisonDrift, gap, stageTracking, passedOver, emailBackfill });
   const stageEmails = buildStageEmails({
     runId,
     dry,

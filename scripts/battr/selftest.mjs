@@ -3579,7 +3579,7 @@ check("the state Battr owns is the state that went missing", () => {
     assert.deepEqual(g.profileFields.fieldNames, { timeframeUpdated: 1 });
     const md = G.renderGapSection(g).join("\n");
     assert.match(md, /`timeframeUpdated` 1/);
-    assert.match(md, /Stage changes are invisible to us/);
+    assert.match(md, /this system dates stage changes itself by comparing each night's stages with the last/);
   });
 }
 
@@ -3824,6 +3824,92 @@ check("the state Battr owns is the state that went missing", () => {
     assert.match(md, /\| 9 \| B \| 2026-09-29 \| not on our list \|.*\| Nurture · 5 · Ylopo \|/, "a timeframe of No Plans explains an absent lead");
     assert.match(md, /### At risk here, not flagged by Battr — 5 lead\(s\)/);
     assert.match(md, /\| Stage \| Source \|/);
+  });
+}
+
+
+// ─── Stage changes, dated by diffing nightly (FUB will not say when) ─────────
+{
+  const St = await import("./stages.mjs");
+  const { mkdtempSync, rmSync } = await import("node:fs");
+  const { tmpdir: td } = await import("node:os");
+  const DAYMS = 86_400_000;
+  const NOW = Date.parse("2026-09-30T08:00:00Z");
+  const empty = { stages: new Map(), since: null };
+  const fresh = () => [{ id: 1, stageId: 4 }, { id: 2, stageId: 4 }];
+
+  check("stages: the first night records a baseline and changes nothing", () => {
+    const people = fresh();
+    const r = St.applyStageChanges(people, empty, NOW);
+    assert.equal(r.baseline, true);
+    assert.equal(r.moved, 0);
+    assert.equal(r.tracked, 2);
+    assert.equal(r.since, "2026-09-30");
+    assert.ok(people.every((p) => p.stageUpdated === undefined), "no lead looks worked on a cold start");
+  });
+
+  check("stages: a lead whose stage moved is dated to that run; one that did not is left alone", () => {
+    const base = St.applyStageChanges(fresh(), empty, NOW - DAYMS);
+    const people = [{ id: 1, stageId: 6 }, { id: 2, stageId: 4 }, { id: 3, stageId: 4 }];
+    const r = St.applyStageChanges(people, base, NOW);
+    assert.equal(r.moved, 1);
+    assert.equal(people[0].stageUpdated, new Date(NOW).toISOString());
+    assert.equal(people[1].stageUpdated, undefined);
+    assert.equal(people[2].stageUpdated, undefined, "a lead we have never seen has no history to diff");
+    assert.equal(r.since, "2026-09-29", "tracking since the baseline night");
+  });
+
+  check("stages: a recorded change survives a rerun and is not re-dated", () => {
+    const base = St.applyStageChanges(fresh(), empty, NOW - 2 * DAYMS);
+    const moved = St.applyStageChanges([{ id: 1, stageId: 6 }], base, NOW - DAYMS);
+    const again = [{ id: 1, stageId: 6 }];
+    St.applyStageChanges(again, moved, NOW);
+    assert.equal(again[0].stageUpdated, new Date(NOW - DAYMS).toISOString(), "dated to the night it was seen, not today");
+  });
+
+  check("stages: leads missing from tonight's pull keep their record, and a date FUB supplies wins", () => {
+    const base = St.applyStageChanges(fresh(), empty, NOW - DAYMS);
+    const r = St.applyStageChanges([{ id: 1, stageId: 4 }], base, NOW);
+    assert.ok(r.stages.has(2), "a smart-list run must not forget everyone else");
+    const native = [{ id: 1, stageId: 9, stageUpdated: "2026-09-01T00:00:00Z" }];
+    St.applyStageChanges(native, base, NOW);
+    assert.equal(native[0].stageUpdated, "2026-09-01T00:00:00Z");
+  });
+
+  check("stages: the state round-trips through its file", () => {
+    const dir = mkdtempSync(join(td(), "stages-"));
+    try {
+      const path = join(dir, "state", St.STAGE_STATE_FILE);
+      const base = St.applyStageChanges(fresh(), empty, NOW - DAYMS);
+      const moved = St.applyStageChanges([{ id: 1, stageId: 6 }, { id: 2, stageId: 4 }], base, NOW);
+      St.saveStageState(path, moved.stages, moved.since);
+      const back = St.loadStageState(path);
+      assert.equal(back.since, "2026-09-29");
+      assert.deepEqual(back.stages.get(1), { stage: "#6", changedAt: NOW });
+      assert.deepEqual(back.stages.get(2), { stage: "#4", changedAt: null });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  check("stages: a recorded change clears a flag, and only ever clears one", () => {
+    const L = lists;
+    const monthly = L.find((l) => l.name.includes("Monthly Nurture"));
+    const person = { id: 7, name: "X", assignedUserId: 5, assignedTo: "A", source: "Zillow Preferred", stage: "Nurture", timeframeId: 3, created: new Date(NOW - 400 * DAYMS).toISOString(), tags: [] };
+    const touch = { lastOutbound: NOW - 40 * DAYMS, lastInbound: 0 };
+    assert.equal(classifyForList(normalizeContact(person, touch, {}), monthly, NOW), "at_risk", "40 days quiet on a 33-day list");
+    const moved = { ...person, stageUpdated: new Date(NOW - 1 * DAYMS).toISOString() };
+    assert.equal(classifyForList(normalizeContact(moved, touch, {}), monthly, NOW), "compliant", "moved yesterday");
+    const old = { ...person, stageUpdated: new Date(NOW - 60 * DAYMS).toISOString() };
+    assert.equal(classifyForList(normalizeContact(old, touch, {}), monthly, NOW), "at_risk", "an old move does not help a lead that has since gone quiet");
+  });
+
+  check("stages: the engine diffs before normalising, saves the state, and reports the count", () => {
+    const src = readFileSync(join(HERE, "..", "battr-audit.mjs"), "utf8");
+    assert.match(src, /applyStageChanges\(people, loadStageState\(stageStatePath\)\)/);
+    assert.match(src, /saveStageState\(stageStatePath, stageTracking\.stages, stageTracking\.since\)/);
+    assert.ok(src.indexOf("applyStageChanges(people") < src.indexOf("normalizeContact(p, touchIndex.get(p.id)"), "stamped before the leads are normalised");
+    assert.match(src, /Stage changes counted as work/);
   });
 }
 

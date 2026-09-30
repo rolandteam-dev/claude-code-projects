@@ -317,7 +317,9 @@ export function renderGapSection(gap, { battrAtRisk = null, battrDate = null } =
           `or timeframe-changed timestamp under any name we look for. Battr counts those changes as work; we currently cannot see them.`
       : `- Stage-change timestamps on **${stageField}**, timeframe-change timestamps on **${timeframeField}**, of ${people} FUB records` +
           (named ? ` (${named})` : "") +
-          (stageField === 0 ? `. **Stage changes are invisible to us** — FUB sends no stage-changed date on the record.` : "."),
+          (stageField === 0
+            ? `. FUB sends no stage-changed date on the record, so this system dates stage changes itself by comparing each night's stages with the last (see the summary) — none recorded yet.`
+            : "."),
     ""
   );
 
