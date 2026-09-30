@@ -3460,7 +3460,7 @@ check("the state Battr owns is the state that went missing", () => {
   check("gap: the engine measures the gap and puts it in the report", () => {
     const src = readFileSync(join(HERE, "..", "battr-audit.mjs"), "utf8");
     assert.match(src, /foldEmailTouches\(touchIndex, rows, \{ personId: cand\.id, automated: automatedAt \}\)/);
-    assert.match(src, /explainAtRisk\(\{\s*results,\s*peopleById,\s*automatedAt,\s*touchIndex,/);
+    assert.match(src, /explainAtRisk\(\{\s*now: AUDIT_NOW,\s*results,\s*peopleById,\s*automatedAt,\s*touchIndex,/);
     assert.match(src, /renderGapSection\(gap/);
   });
 }
@@ -3690,7 +3690,7 @@ check("the state Battr owns is the state that went missing", () => {
     assert.deepEqual(g.onlyUsSample.map((r) => [r.id, r.via, r.elapsed, r.window]), [[1, "text out", 40, 33]]);
     const md = G.renderOnlyUs(g).join("\n");
     assert.match(md, /At risk here, not flagged by Battr — 1 lead\(s\)/);
-    assert.match(md, /\| 1 \| A \| 🌱 Monthly Nurture \| 33d \| text out, 40d ago \|/);
+    assert.match(md, /\| 1 \| A \| 🌱 Monthly Nurture \| 33d \| — \| — \| text out, 40d ago \|/);
   });
 }
 
@@ -3743,6 +3743,87 @@ check("the state Battr owns is the state that went missing", () => {
   check("sources: Ylopo PPC+ is audited as a Ylopo source, as Battr does", () => {
     assert.equal(Src.bucketForSource("Ylopo PPC+"), Src.bucketForSource("Ylopo"));
     assert.equal(Src.isSourceAudited("Ylopo PPC+"), true);
+  });
+}
+
+
+// ─── Judge every threshold at 7 PM PT, like Battr ────────────────────────────
+{
+  const S = await import("./schedule.mjs");
+
+  check("instant: a run GitHub starts at 1 AM is judged at the 7 PM it was scheduled for", () => {
+    // Real: Monday-night run started 2026-09-29 08:20Z (1:20 AM PDT Tuesday).
+    assert.equal(S.auditInstant(new Date("2026-09-29T08:20:00Z")).toISOString(), "2026-09-29T02:00:00.000Z");
+    assert.equal(S.auditInstant(new Date("2026-09-29T03:10:00Z")).toISOString(), "2026-09-29T02:00:00.000Z", "an on-time run, 7:10 PM");
+    assert.equal(S.auditInstant(new Date("2026-09-29T14:30:00Z")).toISOString(), "2026-09-29T14:30:00.000Z", "a 7:30 AM run is past the window and has no 7 PM to align to");
+  });
+
+  check("instant: winter time moves the instant an hour, daytime manual runs are judged at once", () => {
+    assert.equal(S.auditInstant(new Date("2026-12-15T09:00:00Z")).toISOString(), "2026-12-15T03:00:00.000Z", "PST: 1 AM is 09:00Z, 7 PM is 03:00Z");
+    const tenAm = new Date("2026-09-28T17:00:00Z");
+    assert.equal(S.auditInstant(tenAm).toISOString(), tenAm.toISOString());
+  });
+
+  check("instant: the engine judges every list at that instant, and exact days make the hour matter", () => {
+    const src = readFileSync(join(HERE, "..", "battr-audit.mjs"), "utf8");
+    assert.match(src, /const AUDIT_NOW = auditInstant\(\)\.getTime\(\);/);
+    assert.match(src, /runCombinedList\(contacts, combined, AUDIT_NOW\)/);
+    assert.match(src, /runReportOnlyLists\(contacts, reportOnlyLists\(\), AUDIT_NOW\)/);
+    assert.match(src, /now: AUDIT_NOW,/);
+    assert.doesNotMatch(src, /runCombinedList\([^)]*Date\.now\(\)/);
+    // The skew this removes: a lead 33.2 days stale at 8 AM UTC was 32.95 days stale at Battr's 2 AM.
+    const D = 86_400_000;
+    const touch = Date.parse("2026-08-28T03:12:00Z");
+    assert.ok((Date.parse("2026-09-30T08:00:00Z") - touch) / D > 33);
+    assert.ok((Date.parse("2026-09-30T02:00:00Z") - touch) / D < 33);
+  });
+}
+
+
+// ─── What sets the leads only we flag apart ──────────────────────────────────
+{
+  const G = await import("./gap.mjs");
+  const { lists: allLists } = await import("./lists.mjs");
+  const NOW = Date.parse("2026-09-30T02:00:00Z");
+  const monthly = allLists.find((l) => l.name.includes("Monthly Nurture"));
+
+  check("lift: facts are labels and counts — never a name, number or address", () => {
+    const f = G.factsOf(
+      { id: 1, name: "Jane Doe", stage: "Nurture", source: "Zillow", timeframeId: 3, tags: ["YPRIORITY", "jane@x.com", "5551234567"], created: new Date(NOW - 40 * 86_400_000).toISOString(), emails: [{ value: "a@b.c" }], phones: [] },
+      { source_list_ids: [monthly.id] }, NOW
+    );
+    assert.ok(f.has("stage: Nurture") && f.has("source: Zillow") && f.has("timeframe id: 3"));
+    assert.ok(f.has("tag: YPRIORITY") && f.has("lead age: 30-90d") && f.has("list: 🌱 Monthly Nurture"));
+    assert.ok(f.has("has field: emails") && !f.has("has field: phones"), "an empty field is not present");
+    assert.ok(![...f].some((x) => /Jane|@|5551234567/.test(x)), "no name, email or number");
+  });
+
+  check("lift: a fact common on one side and rare on the other is surfaced, in both directions", () => {
+    const mk = (facts) => new Set(facts);
+    const only = [...Array(10)].map(() => mk(["tag: Drip", "stage: Nurture"]));
+    const battr = [...Array(10)].map((_, i) => mk(["stage: Nurture", i < 8 ? "tag: YPRIORITY" : "x"]));
+    const l = G.liftBetween(only, battr);
+    assert.deepEqual(l.moreInB.map((r) => r.fact), ["tag: Drip"]);
+    assert.deepEqual(l.moreInA.map((r) => r.fact), ["tag: YPRIORITY"]);
+    assert.ok(!l.moreInB.some((r) => r.fact === "stage: Nurture"), "a fact both sides share is not a difference");
+    assert.deepEqual(G.liftBetween(only.slice(0, 3), battr, { minCount: 4 }).moreInB, [], "too few leads to say anything");
+  });
+
+  check("lift: the report names the gap, and the Battr-flagged table says why a lead is off our list", () => {
+    const warm = allLists.find((l) => l.name.includes("Warm Back Up"));
+    const rec = (id) => ({ id, owner: "A", source: "Zillow Preferred", status: "at_risk", source_list_ids: [warm.id] });
+    const peopleById = new Map([
+      ...[1, 2, 3, 4, 5].map((i) => [i, { id: i, stage: "Nurture", source: "Zillow Preferred", timeframeId: 3, tags: ["Drip"] }]),
+      [9, { id: 9, assignedTo: "B", stage: "Nurture", source: "Ylopo", timeframeId: 5, customBattrAtRiskSince: "2026-09-29" }],
+      [10, { id: 10, assignedTo: "B", stage: "Lead", source: "Ylopo", timeframeId: 1, customBattrAtRiskSince: "2026-09-28" }],
+    ]);
+    const g = G.explainAtRisk({ results: [1, 2, 3, 4, 5].map(rec), peopleById, now: NOW });
+    const md = G.renderGapSection(g).join("\n");
+    assert.match(md, /### What sets the 5 leads only we flag apart from the 2 Battr stamped/);
+    assert.match(md, /Stage · timeframe id · source/);
+    assert.match(md, /\| 9 \| B \| 2026-09-29 \| not on our list \|.*\| Nurture · 5 · Ylopo \|/, "a timeframe of No Plans explains an absent lead");
+    assert.match(md, /### At risk here, not flagged by Battr — 5 lead\(s\)/);
+    assert.match(md, /\| Stage \| Source \|/);
   });
 }
 

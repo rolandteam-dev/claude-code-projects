@@ -29,6 +29,39 @@ export function auditDate(now = new Date()) {
   return new Date(now.getTime() - AUDIT_DAY_OFFSET_HOURS * 3_600_000);
 }
 
+/** Pacific time minus UTC at a given instant, in ms (handles DST). */
+function ptOffsetMs(at, timeZone = "America/Los_Angeles") {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+  }).formatToParts(at);
+  const v = Object.fromEntries(parts.map((p) => [p.type, p.value]));
+  const wall = Date.UTC(+v.year, +v.month - 1, +v.day, +v.hour, +v.minute, +v.second);
+  return wall - Math.floor(at.getTime() / 1000) * 1000;
+}
+
+/**
+ * The INSTANT a run is judged at — 7 PM Pacific on its evening, not whenever
+ * GitHub got round to starting it.
+ *
+ * With days now counted exactly ("more than 33 days" means 33.0001), the hour
+ * matters. Battr judges at about 7 PM PT; we start 5-6 hours later, so every
+ * lead sitting inside that gap reads a quarter-day older here than it did to
+ * Battr and is flagged a night early. Judging at 7 PM removes the skew.
+ *
+ * Activity that arrives after 7 PM is still read (it makes a lead MORE
+ * compliant, never less). A daytime manual run, which has no 7 PM to align to,
+ * is judged at the moment it starts.
+ */
+export function auditInstant(now = new Date(), timeZone = "America/Los_Angeles") {
+  const evening = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" })
+    .format(auditDate(now));
+  const [y, m, d] = evening.split("-").map(Number);
+  const guess = Date.UTC(y, m - 1, d, 19, 0, 0);
+  const instant = guess - ptOffsetMs(new Date(guess), timeZone);
+  return new Date(Math.min(instant, now.getTime()));
+}
+
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 /** Weekday name in the team's timezone, not the server's. */
