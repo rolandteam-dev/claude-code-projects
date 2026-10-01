@@ -115,6 +115,52 @@ export function liftBetween(groupB, groupA, { minCount = 4, minDiff = 0.25, top 
   };
 }
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}/;
+// Battr's own bookkeeping and the creation date say nothing about communication.
+const NOT_COMMUNICATION = /^(custom|created$)/i;
+
+/**
+ * Which FUB date fields sit INSIDE a lead's window, for each group.
+ *
+ * Battr reads "Last Communication Days Ago" from somewhere on the Follow Up Boss
+ * record, and which field that is has never been confirmed. The record carries
+ * a handful of date fields (last email, last inbox message, last marketing
+ * text, …). Battr says the leads only we flag are fine, so for most of them
+ * Battr's field must be newer than the lead's window; and for the leads Battr
+ * flagged it must be older. A field that separates the two groups that cleanly
+ * is the candidate. Dates only — nothing from a message.
+ *
+ * @param {{person: object, window: number|null}[]} groupB  leads only we flag
+ * @param {{person: object, window: number|null}[]} groupA  leads Battr flagged
+ */
+export function dateFieldWindows(groupB, groupA, now, { minCount = 4, minDiff = 0.3, minShare = 0.5, top = 10 } = {}) {
+  const tally = (group) => {
+    const m = new Map();
+    for (const { person, window } of group) {
+      if (window === null || window === undefined) continue;
+      for (const [key, value] of Object.entries(person)) {
+        if (NOT_COMMUNICATION.test(key) || typeof value !== "string" || !ISO_DATE.test(value)) continue;
+        const at = Date.parse(value);
+        if (Number.isFinite(at) && (now - at) / DAY <= window) m.set(key, (m.get(key) ?? 0) + 1);
+      }
+    }
+    return m;
+  };
+  const sizeB = groupB.filter((g) => g.window != null).length;
+  const sizeA = groupA.filter((g) => g.window != null).length;
+  const b = tally(groupB);
+  const a = tally(groupA);
+  const rows = [];
+  for (const field of b.keys()) {
+    const cb = b.get(field);
+    const ca = a.get(field) ?? 0;
+    const shareB = sizeB ? cb / sizeB : 0;
+    const diff = shareB - (sizeA ? ca / sizeA : 0);
+    if (cb >= minCount && shareB >= minShare && diff >= minDiff) rows.push({ field, b: cb, a: ca, diff });
+  }
+  return { sizeB, sizeA, fields: rows.sort((x, y) => y.diff - x.diff).slice(0, top) };
+}
+
 /**
  * @param {object} p
  * @param {object[]} p.results                   classified records (combined list)
@@ -260,13 +306,23 @@ export function explainAtRisk({
   // lead Battr stamped in the last week, on stage, source, timeframe, tags,
   // list, age and which person fields carry a value.
   const controlDays = 7;
+  // Still with an agent. A lead Battr already swept sits in a pond, carries pond
+  // fields and has been through a different life; compared against leads that
+  // are still assigned it makes every "has field" difference look real.
   const flaggedPeople = [...peopleById.values()].filter((p) => {
     const at = ms(p[stampKey]);
-    return Number.isFinite(at) && now - at <= controlDays * DAY;
+    return Number.isFinite(at) && now - at <= controlDays * DAY && p.assignedUserId && !p.assignedPondId;
   });
   const lift = liftBetween(
     onlyUsSample.map((x) => factsOf(peopleById.get(x.id) ?? {}, resultsById.get(x.id), now)),
     flaggedPeople.map((p) => factsOf(p, resultsById.get(p.id), now))
+  );
+
+  const windowOf = (id) => (resultsById.get(id) ? windowDaysFor(resultsById.get(id)) : null);
+  const dateFields = dateFieldWindows(
+    onlyUsSample.map((x) => ({ person: peopleById.get(x.id) ?? {}, window: x.window })),
+    flaggedPeople.map((p) => ({ person: p, window: windowOf(p.id) })),
+    now
   );
 
   return {
@@ -274,6 +330,7 @@ export function explainAtRisk({
     signals,
     split,
     lift,
+    dateFields,
     controlDays,
     byList: [...byList.values()].sort((a, b) => b.count - a.count),
     byAgent: [...byAgent.values()].sort((a, b) => b.atRisk - a.atRisk),
@@ -348,6 +405,7 @@ export function renderGapSection(gap, { battrAtRisk = null, battrDate = null } =
   for (const l of gap.byList) lines.push(`| ${l.list} | ${l.days ?? "?"}d | ${l.count} |`);
   lines.push("");
   lines.push(...renderBattrFlagged(gap));
+  lines.push(...renderDateFields(gap));
   lines.push(...renderLift(gap));
   lines.push(...renderOnlyUs(gap));
   return lines;
@@ -410,6 +468,28 @@ export function renderOnlyUs(gap, { limit = 80 } = {}) {
     lines.push(`| ${r.id} | ${r.owner} | ${r.list} | ${r.window ?? "—"}d | ${r.stage || "—"} | ${r.source || "—"} | ${touch} |`);
   }
   if (rows.length > limit) lines.push(`| … | ${rows.length - limit} more | | | | | |`);
+  lines.push("");
+  return lines;
+}
+
+/** The FUB date field that best separates the two groups — a candidate for Battr's "last communication". */
+export function renderDateFields(gap) {
+  const d = gap?.dateFields;
+  if (!d || !d.sizeB || !d.sizeA) return [];
+  const pct = (n, t) => `${Math.round((n / t) * 100)}%`;
+  const lines = [
+    `### Which Follow Up Boss date field is Battr's "last communication"?`,
+    "",
+    `Battr calls the ${d.sizeB} leads only we flag fine, so for most of them its field must be newer than the lead's window — ` +
+      `and older for the ${d.sizeA} leads it flagged. A date field on the FUB record that does that is the candidate. Dates only.`,
+    "",
+  ];
+  if (!d.fields.length) {
+    lines.push(`No date field separates the two groups: nothing on the record explains the difference, so what Battr counts is not stored there.`, "");
+    return lines;
+  }
+  lines.push(`| FUB date field | Inside window — only us | Inside window — Battr-flagged |`, `| --- | ---: | ---: |`);
+  for (const r of d.fields) lines.push(`| \`${r.field}\` | ${r.b} of ${d.sizeB} (${pct(r.b, d.sizeB)}) | ${r.a} of ${d.sizeA} (${pct(r.a, d.sizeA)}) |`);
   lines.push("");
   return lines;
 }
