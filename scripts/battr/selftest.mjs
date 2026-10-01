@@ -3814,8 +3814,8 @@ check("the state Battr owns is the state that went missing", () => {
     const rec = (id) => ({ id, owner: "A", source: "Zillow Preferred", status: "at_risk", source_list_ids: [warm.id] });
     const peopleById = new Map([
       ...[1, 2, 3, 4, 5].map((i) => [i, { id: i, stage: "Nurture", source: "Zillow Preferred", timeframeId: 3, tags: ["Drip"] }]),
-      [9, { id: 9, assignedTo: "B", stage: "Nurture", source: "Ylopo", timeframeId: 5, customBattrAtRiskSince: "2026-09-29" }],
-      [10, { id: 10, assignedTo: "B", stage: "Lead", source: "Ylopo", timeframeId: 1, customBattrAtRiskSince: "2026-09-28" }],
+      [9, { id: 9, assignedUserId: 5, assignedTo: "B", stage: "Nurture", source: "Ylopo", timeframeId: 5, customBattrAtRiskSince: "2026-09-29" }],
+      [10, { id: 10, assignedUserId: 5, assignedTo: "B", stage: "Lead", source: "Ylopo", timeframeId: 1, customBattrAtRiskSince: "2026-09-28" }],
     ]);
     const g = G.explainAtRisk({ results: [1, 2, 3, 4, 5].map(rec), peopleById, now: NOW });
     const md = G.renderGapSection(g).join("\n");
@@ -3910,6 +3910,51 @@ check("the state Battr owns is the state that went missing", () => {
     assert.match(src, /saveStageState\(stageStatePath, stageTracking\.stages, stageTracking\.since\)/);
     assert.ok(src.indexOf("applyStageChanges(people") < src.indexOf("normalizeContact(p, touchIndex.get(p.id)"), "stamped before the leads are normalised");
     assert.match(src, /Stage changes counted as work/);
+  });
+}
+
+
+// ─── Which FUB field is Battr's "last communication"? ────────────────────────
+{
+  const G = await import("./gap.mjs");
+  const { lists: allLists } = await import("./lists.mjs");
+  const NOW = Date.parse("2026-10-01T02:00:00Z");
+  const D = 86_400_000;
+  const iso = (d) => new Date(NOW - d * D).toISOString();
+  const monthly = allLists.find((l) => l.name.includes("Monthly Nurture"));
+
+  check("date fields: a field inside the window for most leads we flag, and few Battr flagged, is surfaced", () => {
+    const only = [...Array(8)].map((_, i) => ({ person: { id: i, lastSentInboxAppMessage: iso(5), lastEmail: iso(60), created: iso(2), customBattrAtRiskSince: iso(1) }, window: 33 }));
+    const battr = [...Array(6)].map((_, i) => ({ person: { id: 100 + i, lastSentInboxAppMessage: iso(70), lastEmail: iso(60), created: iso(2) }, window: 33 }));
+    const r = G.dateFieldWindows(only, battr, NOW);
+    assert.deepEqual(r.fields.map((f) => f.field), ["lastSentInboxAppMessage"]);
+    assert.deepEqual([r.fields[0].b, r.fields[0].a, r.sizeB, r.sizeA], [8, 0, 8, 6]);
+    assert.ok(!r.fields.some((f) => /created|customBattr|lastEmail/.test(f.field)), "creation date, Battr's own fields, and a field that does not separate are not candidates");
+  });
+
+  check("date fields: a lead with no list window is not judged, and values that are not dates are ignored", () => {
+    const only = [...Array(6)].map((_, i) => ({ person: { id: i, lastX: iso(1), note: "2026 plan", lastXId: 12345 }, window: i < 5 ? 33 : null }));
+    const r = G.dateFieldWindows(only, [{ person: { id: 9, lastX: iso(90) }, window: 33 }], NOW, { minCount: 4 });
+    assert.equal(r.sizeB, 5);
+    assert.deepEqual(r.fields.map((f) => f.field), ["lastX"]);
+  });
+
+  check("date fields: Battr's control group is leads still with an agent — a swept lead is a different animal", () => {
+    const rec = (id) => ({ id, owner: "A", source: "Zillow Preferred", status: "at_risk", source_list_ids: [monthly.id] });
+    const people = new Map([
+      [1, { id: 1, customBattrAtRiskSince: iso(1), assignedUserId: 5 }],
+      [2, { id: 2, customBattrAtRiskSince: iso(1), assignedUserId: 32, assignedPondId: 20 }],
+    ]);
+    const g = G.explainAtRisk({ results: [rec(1)], peopleById: people, now: NOW });
+    assert.equal(g.lift.sizeA, 1, "the pond lead is not in the control group");
+  });
+
+  check("date fields: the report says plainly when no field explains it", () => {
+    const md = G.renderDateFields({ dateFields: { sizeB: 40, sizeA: 9, fields: [] } }).join("\n");
+    assert.match(md, /No date field separates the two groups/);
+    const md2 = G.renderDateFields({ dateFields: { sizeB: 40, sizeA: 9, fields: [{ field: "lastSentEmail", b: 38, a: 1, diff: 0.84 }] } }).join("\n");
+    assert.match(md2, /\| `lastSentEmail` \| 38 of 40 \(95%\) \| 1 of 9 \(11%\) \|/);
+    assert.deepEqual(G.renderDateFields({}), []);
   });
 }
 
