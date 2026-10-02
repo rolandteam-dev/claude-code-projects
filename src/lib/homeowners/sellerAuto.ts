@@ -124,7 +124,11 @@ async function recordInFub(key: string, person: any, h: Homeowner): Promise<void
       body: JSON.stringify({
         personId: Number(person.id),
         subject: "Home value report emailed",
-        body: `Automatic home value report emailed to ${h.email} on ${when} PT.\nTheir private dashboard: ${url}`,
+        body:
+          `Automatic home value report emailed to ${h.email} on ${when} PT.\nTheir private dashboard: ${url}` +
+          (h.estimates?.length
+            ? ""
+            : "\n\nNo automatic value could be generated for this address (not found in MLS history), so the email and dashboard show no number. Run a CMA and follow up by hand."),
         isHtml: false,
       }),
     });
@@ -142,6 +146,18 @@ async function recordInFub(key: string, person: any, h: Homeowner): Promise<void
   } catch {
     // ignore
   }
+}
+
+/**
+ * Forget that a contact was sent a report (and strip the visible FUB tag) so
+ * it can be sent again. For re-testing a test contact only — the permanent
+ * per-person claim is what prevents real leads from ever being mailed twice.
+ */
+export async function resetSellerReport(person: any): Promise<void> {
+  const key = process.env.FUB_API_KEY;
+  if (!key) return;
+  await homeownerStore().releaseSellerPerson(String(person?.id ?? ""));
+  await removeSentTag(key, person);
 }
 
 /**

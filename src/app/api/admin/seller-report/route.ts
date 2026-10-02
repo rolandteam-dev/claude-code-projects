@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { FUB_BASE, fubHeaders } from "@/lib/homeowners/fubMap";
-import { maybeSendSellerReport } from "@/lib/homeowners/sellerAuto";
+import { maybeSendSellerReport, resetSellerReport } from "@/lib/homeowners/sellerAuto";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -11,6 +11,7 @@ export const maxDuration = 60;
  *
  *   ?key=ADMIN_TOKEN&personId=123            → report whether they'd qualify
  *   ?key=ADMIN_TOKEN&personId=123&send=1     → actually send (tags them "Home Report Sent")
+ *   add &reset=1                              → first forget a previous send (re-testing a test contact)
  *
  * The contact still needs the seller tag, a valid email, and a Nevada address
  * with ZIP, and HOMEOWNER_EMAIL_ENABLED must be "true" — same rules as the
@@ -28,7 +29,13 @@ export async function GET(req: Request) {
 
   const res = await fetch(`${FUB_BASE}/v1/people/${personId}?fields=allFields`, { headers: fubHeaders(apiKey) });
   if (!res.ok) return NextResponse.json({ ok: false, error: `FUB ${res.status}` }, { status: 502 });
-  const person = await res.json();
+  let person = await res.json();
+
+  if (p.get("reset") === "1") {
+    await resetSellerReport(person);
+    const again = await fetch(`${FUB_BASE}/v1/people/${personId}?fields=allFields`, { headers: fubHeaders(apiKey) });
+    if (again.ok) person = await again.json();
+  }
 
   const result = await maybeSendSellerReport(person, { manual: true, dryRun: p.get("send") !== "1" });
   return NextResponse.json({ ok: true, dryRun: p.get("send") !== "1", result });
