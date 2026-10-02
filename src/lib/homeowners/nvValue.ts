@@ -21,14 +21,37 @@ const num = (...vals: any[]): number => {
   return 0;
 };
 
-/** Loose street-name compare: lowercase, strip punctuation + common suffixes. */
-function normStreet(s: string): string {
-  return (s || "")
+const DIRECTIONALS = new Set(["n", "s", "e", "w", "ne", "nw", "se", "sw", "north", "south", "east", "west", "northeast", "northwest", "southeast", "southwest"]);
+const SUFFIXES = new Set([
+  "ave", "avenue", "st", "street", "dr", "drive", "ln", "lane", "rd", "road", "ct", "court", "blvd", "boulevard",
+  "way", "cir", "circle", "pl", "place", "pkwy", "parkway", "ter", "terrace", "trl", "trail", "hwy", "highway",
+  "loop", "pt", "point", "aly", "alley", "sq", "square", "run", "pass", "path", "walk", "xing", "crossing",
+]);
+
+/**
+ * The MLS stores street direction, name and suffix as SEPARATE fields, so a
+ * search must use the bare street name only: "272 Helmsdale Dr" → "helmsdale",
+ * "1912 W Hart Ave" → "hart", "9465 West Post Rd Apt 1035" → "post". Drops the
+ * unit, any leading/trailing direction (N/S/E/W…) and the trailing suffix
+ * (Dr/St/Pl/Ave…), but never reduces the name to nothing.
+ */
+export function searchStreetName(raw: string): string {
+  let t = (raw || "")
     .toLowerCase()
-    .replace(/[.,]/g, "")
-    .replace(/\b(ave|avenue|st|street|dr|drive|ln|lane|rd|road|ct|court|blvd|way|cir|circle|pl|place|pkwy|parkway|ter|terrace)\b/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+    .replace(/[.,]/g, " ")
+    .replace(/\b(apt|unit|ste|suite|bldg|#)\s*\S+\s*$/i, "")
+    .replace(/#\s*\S+\s*$/, "")
+    .split(/\s+/)
+    .filter(Boolean);
+  if (t.length > 1 && DIRECTIONALS.has(t[0])) t = t.slice(1);
+  // Trailing direction and/or suffix, in either order ("Hart Ave W", "Main St N").
+  while (t.length > 1 && (DIRECTIONALS.has(t[t.length - 1]) || SUFFIXES.has(t[t.length - 1]))) t = t.slice(0, -1);
+  return t.join(" ").trim();
+}
+
+/** Same bare-name form, for comparing against the MLS's own streetName field. */
+function normStreet(s: string): string {
+  return searchStreetName(s);
 }
 
 function isNevada(h: Homeowner): boolean {
@@ -48,12 +71,17 @@ async function resolveProperty(h: Homeowner): Promise<{ beds: number; baths: num
   const boardId = (process.env.REPLIERS_BOARD_ID ?? DEFAULT_BOARD_ID).trim();
   const headers = { "content-type": "application/json", "REPLIERS-API-KEY": key };
 
+  // Search by number + bare street name first (best comps); if the MLS filter
+  // finds nothing, fall back to number + ZIP and match the name ourselves.
   // status must be a single value; check sold history (U) first, then active (A).
-  for (const status of ["U", "A"]) {
+  const attempts: Array<{ withName: boolean; status: string }> = [];
+  for (const withName of [true, false]) for (const status of ["U", "A"]) attempts.push({ withName, status });
+  for (const { withName, status } of attempts) {
     const p = new URLSearchParams();
     p.set("boardId", boardId);
     p.set("zip", zip);
     p.set("streetNumber", streetNumber);
+    if (withName && want) p.set("streetName", want.replace(/\b\w/g, (c) => c.toUpperCase())); // "helmsdale" → "Helmsdale"
     p.set("status", status);
     p.set("resultsPerPage", "20");
     p.set("fields", "address,details,soldDate,listDate");

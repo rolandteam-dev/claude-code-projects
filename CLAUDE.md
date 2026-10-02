@@ -65,6 +65,7 @@ organically for community/neighborhood and buyer/seller search terms.
 
 ## Gotchas (Repliers / estimator)
 - **`class` is NOT detached-vs-attached on GLVAR.** Detached homes in an HOA/PUD are filed under `CondoProperty`, so filtering the comp query by `class=ResidentialProperty` (for "Single Family") returned an empty bucket across ~half the valley (Summerlin, Anthem, Green Valley, Southern Highlands, Mountain's Edge). `src/lib/idx/estimate.ts` no longer sends `class`; it pulls all comps and classifies each in-app (`styleWantFor` / `styleTextOf` / `matchesStyle`), **failing open** — a comp is dropped only when its own style text positively reads as attached. The style field names vary by MLS; `/api/admin/estimate-test?...&comps=1` dumps the `byStyle` map + sample `details` to find the real ones.
+- **Search the MLS by bare street name — never include the suffix or direction.** GLVAR stores street direction, name and suffix as separate fields, so `272 Helmsdale Dr` is searched as `272` + `Helmsdale`, and `1912 W Hart Ave` as `1912` + `Hart` (also drops units/`Apt`). Use `searchStreetName()` in `src/lib/homeowners/nvValue.ts` for any address lookup; `resolveProperty` queries with it first and falls back to number+ZIP.
 - **Repliers `status` takes a single value.** `status=A,U` 400s — use one (`U` for sold comps).
 - **The `/estimates` (AVM) POST requires a `details` object** (beds/baths/sqft); omitting it 400s.
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { homeownerStore } from "@/lib/homeowners/store";
 import { styleWantFor, styleTextOf, matchesStyle } from "@/lib/idx/estimate";
+import { searchStreetName } from "@/lib/homeowners/nvValue";
 
 export const runtime = "nodejs";
 
@@ -104,7 +105,7 @@ export async function GET(req: Request) {
   if (!address) return NextResponse.json({ ok: false, error: "provide ?token=, ?address=, or ?comps=1&zip=" });
   const m = address.match(/^(\d+[A-Za-z]?)\s+(.+)$/);
   const streetNumber = m?.[1];
-  const streetName = m?.[2] ?? address;
+  const streetName = m?.[2] ? searchStreetName(m[2]) : address; // bare name: no Dr/St/Pl, no N/S/E/W
 
   // 1. Estimates (AVM) by address — now with the required details object.
   let estimate: unknown = null;
@@ -130,6 +131,7 @@ export async function GET(req: Request) {
     p.set("boardId", String(boardId));
     if (zip) p.set("zip", zip);
     if (streetNumber) p.set("streetNumber", streetNumber);
+    if (streetNumber && streetName) p.set("streetName", streetName);
     p.set("resultsPerPage", "3");
     p.set("status", "U");
     p.set("fields", "mlsNumber,status,lastStatus,soldPrice,listPrice,class,address,details");
