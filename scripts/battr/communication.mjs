@@ -144,6 +144,32 @@ export function describeEmailOrigin(rows = []) {
 export const STAGE_UPDATED_FIELDS = ["stageUpdated", "stageUpdatedAt", "lastStageChange", "stageChanged"];
 export const TIMEFRAME_UPDATED_FIELDS = ["timeframeUpdated", "timeframeUpdatedAt", "lastTimeframeChange"];
 
+/**
+ * Follow Up Boss's own "last email" dates on the person record.
+ *
+ * Found on 2 Oct 2026 by comparing the leads only we flag with the leads Battr
+ * flagged: `lastSentEmail` and `lastEmail` sat inside the lead's window for 31
+ * of 44 leads Battr leaves alone and for 0 of the 16 it flagged — a cleaner
+ * split than anything else on the record. Yet 82% of the leads Battr flagged
+ * had an automated email in the same window, so these fields are NOT counting
+ * drips: they are the emails a person sent (or got back).
+ *
+ * `lastEmail` can be an email the lead sent, so it is only read when inbound
+ * contact counts as a touch (it does).
+ */
+export const FUB_EMAIL_FIELDS = ["lastSentEmail", "lastEmail"];
+
+/** The NEWEST of several person-record dates. profileTouchAt returns the first one present. */
+export function latestProfileTouchAt(person, fields) {
+  let latest = null;
+  for (const field of fields) {
+    if (!present(person, field)) continue;
+    const at = Date.parse(person[field]);
+    if (Number.isFinite(at) && (latest === null || at > latest)) latest = at;
+  }
+  return latest;
+}
+
 export function profileTouchAt(person, fields) {
   for (const field of fields) {
     if (!present(person, field)) continue;

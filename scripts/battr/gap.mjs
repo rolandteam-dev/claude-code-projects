@@ -26,7 +26,7 @@
  * Counts and agent names only. No lead name leaves this module.
  */
 import { listById, commWindowDays } from "./lists.mjs";
-import { STAGE_UPDATED_FIELDS, TIMEFRAME_UPDATED_FIELDS, profileTouchAt } from "./communication.mjs";
+import { STAGE_UPDATED_FIELDS, TIMEFRAME_UPDATED_FIELDS, FUB_EMAIL_FIELDS, profileTouchAt, latestProfileTouchAt } from "./communication.mjs";
 
 /** The two sources swept on Mike's instruction that Battr excludes (sources.mjs). */
 export const DIVERGENT_SOURCES = ["my +plus leads", "Steve Hawks"];
@@ -325,12 +325,26 @@ export function explainAtRisk({
     now
   );
 
+  // The evidence the email-date rule rests on, re-checked every run. Leads Battr
+  // flagged must NOT have one of FUB's last-email dates inside their window; if one
+  // does, those fields have started counting emails Battr ignores.
+  let emailCheckLeads = 0;
+  let emailCheckInWindow = 0;
+  for (const p of flaggedPeople) {
+    const w = windowOf(p.id);
+    if (w === null || w === undefined) continue;
+    emailCheckLeads++;
+    const at = latestProfileTouchAt(p, FUB_EMAIL_FIELDS);
+    if (at !== null && within(at, w, now)) emailCheckInWindow++;
+  }
+
   return {
     total: atRisk.length,
     signals,
     split,
     lift,
     dateFields,
+    emailCheck: { leads: emailCheckLeads, inWindow: emailCheckInWindow },
     controlDays,
     byList: [...byList.values()].sort((a, b) => b.count - a.count),
     byAgent: [...byAgent.values()].sort((a, b) => b.atRisk - a.atRisk),
@@ -405,6 +419,7 @@ export function renderGapSection(gap, { battrAtRisk = null, battrDate = null } =
   for (const l of gap.byList) lines.push(`| ${l.list} | ${l.days ?? "?"}d | ${l.count} |`);
   lines.push("");
   lines.push(...renderBattrFlagged(gap));
+  lines.push(...renderEmailCheck(gap));
   lines.push(...renderDateFields(gap));
   lines.push(...renderLift(gap));
   lines.push(...renderOnlyUs(gap));
@@ -470,6 +485,19 @@ export function renderOnlyUs(gap, { limit = 80 } = {}) {
   if (rows.length > limit) lines.push(`| … | ${rows.length - limit} more | | | | | |`);
   lines.push("");
   return lines;
+}
+
+/** The standing check on the email-date rule. Empty when there are no Battr-flagged leads to test it on. */
+export function renderEmailCheck(gap) {
+  const c = gap?.emailCheck;
+  if (!c || !c.leads) return [];
+  return c.inWindow === 0
+    ? [`- Email-date rule check: **0 of ${c.leads}** leads Battr flagged have a Follow Up Boss last-email date inside their window, as the rule assumes.`, ""]
+    : [
+        `- ⚠ **Email-date rule check FAILED: ${c.inWindow} of ${c.leads}** leads Battr flagged have a Follow Up Boss last-email date inside their window. ` +
+          `Those fields may now be counting emails Battr ignores — see rules.fubEmailActivityCountsAsTouch before trusting tonight's counts.`,
+        "",
+      ];
 }
 
 /** The FUB date field that best separates the two groups — a candidate for Battr's "last communication". */

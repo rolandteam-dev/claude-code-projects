@@ -3958,4 +3958,68 @@ check("the state Battr owns is the state that went missing", () => {
   });
 }
 
+
+// ─── FUB's last-email dates count as work (found 2 Oct 2026) ─────────────────
+{
+  const C = await import("./communication.mjs");
+  const G = await import("./gap.mjs");
+  const R2 = (await import("./rules.mjs")).rules;
+  const DAYMS = 86_400_000;
+  const NOW = Date.parse("2026-10-02T02:00:00Z");
+  const ago = (d) => new Date(NOW - d * DAYMS).toISOString();
+  const monthly = lists.find((l) => l.name.includes("Monthly Nurture"));
+  const person = (extra = {}) => ({
+    id: 7, name: "X", assignedUserId: 5, assignedTo: "A", source: "Zillow Preferred", stage: "Nurture", timeframeId: 3,
+    created: ago(400), tags: [], ...extra,
+  });
+  const touch = { lastOutbound: NOW - 40 * DAYMS, lastInbound: 0 };
+
+  check("email dates: a lead with a recent FUB email date is not at risk — and is without it", () => {
+    assert.equal(R2.fubEmailActivityCountsAsTouch, true);
+    assert.equal(classifyForList(normalizeContact(person(), touch, {}), monthly, NOW), "at_risk", "40 days quiet on a 33-day list");
+    const c = normalizeContact(person({ lastSentEmail: ago(5) }), touch, {});
+    assert.equal(classifyForList(c, monthly, NOW), "compliant");
+    assert.equal(c.touch_via, "fub email", "the report can say this lead was saved by it");
+    assert.equal(normalizeContact(person({ lastSentEmail: ago(5) }), { lastOutbound: NOW - 2 * DAYMS, lastInbound: 0 }, {}).touch_via, null, "a call that is newer wins, and takes the credit");
+  });
+
+  check("email dates: the newest of the two fields counts; an old one does not rescue a lead", () => {
+    assert.equal(C.latestProfileTouchAt({ lastSentEmail: ago(40), lastEmail: ago(3) }, C.FUB_EMAIL_FIELDS), NOW - 3 * DAYMS);
+    assert.equal(C.latestProfileTouchAt({}, C.FUB_EMAIL_FIELDS), null);
+    assert.equal(classifyForList(normalizeContact(person({ lastSentEmail: ago(50), lastEmail: ago(45) }), touch, {}), monthly, NOW), "at_risk");
+  });
+
+  check("email dates: when inbound contact does not count, a received email cannot save a lead", () => {
+    const p = person({ lastSentEmail: ago(60), lastEmail: ago(2) });
+    assert.equal(classifyForList(normalizeContact(p, touch, {}, { inboundCountsAsTouch: false }), monthly, NOW), "at_risk");
+    assert.equal(classifyForList(normalizeContact(p, touch, {}, { inboundCountsAsTouch: true }), monthly, NOW), "compliant");
+  });
+
+  check("email dates: a drip still does not count — only these dates do", () => {
+    // A lead with an automated email in the index and no FUB email date stays at risk.
+    const idx = new Map();
+    C.foldEmailTouches(idx, [{ created: ago(2), actionPlanId: 9 }], { personId: 7, automated: new Map() });
+    assert.equal(idx.has(7), false);
+    assert.equal(classifyForList(normalizeContact(person(), touch, {}), monthly, NOW), "at_risk");
+    assert.equal(R2.automatedEmailCountsAsTouch, false);
+  });
+
+  check("email dates: the report re-checks the evidence, and fails loudly if it stops holding", () => {
+    const flagged = (extra) => ({ id: 1, assignedUserId: 5, customBattrAtRiskSince: ago(1), ...extra });
+    const rec = (id) => ({ id, owner: "A", source: "Z", status: "at_risk", source_list_ids: [monthly.id] });
+    const ok = G.explainAtRisk({ results: [rec(1)], peopleById: new Map([[1, flagged({ lastSentEmail: ago(60) })]]), now: NOW });
+    assert.deepEqual(ok.emailCheck, { leads: 1, inWindow: 0 });
+    assert.match(G.renderEmailCheck(ok).join("\n"), /\*\*0 of 1\*\* leads Battr flagged have a Follow Up Boss last-email date inside their window/);
+    const bad = G.explainAtRisk({ results: [rec(1)], peopleById: new Map([[1, flagged({ lastSentEmail: ago(5) })]]), now: NOW });
+    assert.match(G.renderEmailCheck(bad).join("\n"), /Email-date rule check FAILED: 1 of 1/);
+    assert.deepEqual(G.renderEmailCheck({}), []);
+  });
+
+  check("email dates: the engine reports how many leads it saves", () => {
+    const src = readFileSync(join(HERE, "..", "battr-audit.mjs"), "utf8");
+    assert.match(src, /touch_via === "fub email"/);
+    assert.match(src, /Follow Up Boss last-email dates counted as work/);
+  });
+}
+
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);

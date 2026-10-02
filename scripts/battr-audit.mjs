@@ -274,6 +274,11 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
             (stageTracking.since ? ` (tracking since ${stageTracking.since})` : "")
     );
   }
+  if (rules.fubEmailActivityCountsAsTouch) {
+    // Reported so a silent no-op cannot hide: how many leads this is what saves.
+    const saved = results.filter((r) => r.status !== "excluded" && r.contact?.touch_via === "fub email").length;
+    lines.push(`- Follow Up Boss last-email dates counted as work: **${saved}** audited lead(s) have one as their latest touch (\`lastSentEmail\`, \`lastEmail\`)`);
+  }
   if (emailBackfill && emailBackfill.manual !== undefined) {
     // Reported, not logged. The point of this pass is to learn which field
     // Follow Up Boss uses to mark an email as machine-sent, and the answer
