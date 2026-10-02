@@ -26,6 +26,7 @@ import { homeownerStore, type Homeowner } from "./store";
 import { FUB_BASE, fubHeaders, personToHomeowner } from "./fubMap";
 import { valueHome } from "./nvValue";
 import { sendWelcomeEmail } from "./email";
+import { dashboardUrl } from "./brand";
 
 export const SENT_TAG = "Home Report Sent";
 
@@ -102,6 +103,48 @@ async function removeSentTag(key: string, person: any): Promise<void> {
 }
 
 /**
+ * Leave a visible trail on the FUB contact: a note saying the report went out
+ * (with the lead's private dashboard link) and, when FUB_DASHBOARD_FIELD is
+ * configured, the link in that custom field so agents can click straight to it.
+ * Best-effort — the email is already sent, so CRM trouble must not undo it.
+ */
+async function recordInFub(key: string, person: any, h: Homeowner): Promise<void> {
+  const url = dashboardUrl(h.token);
+  const when = new Date().toLocaleString("en-US", {
+    timeZone: "America/Los_Angeles",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  try {
+    await fetch(`${FUB_BASE}/v1/notes`, {
+      method: "POST",
+      headers: fubHeaders(key, { "Content-Type": "application/json" }),
+      body: JSON.stringify({
+        personId: Number(person.id),
+        subject: "Home value report emailed",
+        body: `Automatic home value report emailed to ${h.email} on ${when} PT.\nTheir private dashboard: ${url}`,
+        isHtml: false,
+      }),
+    });
+  } catch {
+    // ignore
+  }
+  const field = process.env.FUB_DASHBOARD_FIELD;
+  if (!field) return;
+  try {
+    await fetch(`${FUB_BASE}/v1/people/${encodeURIComponent(String(person.id))}`, {
+      method: "PUT",
+      headers: fubHeaders(key, { "Content-Type": "application/json" }),
+      body: JSON.stringify({ [field]: url }),
+    });
+  } catch {
+    // ignore
+  }
+}
+
+/**
  * Send the home report to one FUB contact if they qualify.
  * `manual` = an agent just applied the tag (no age limit).
  * `dryRun` = evaluate and report, change nothing.
@@ -168,6 +211,7 @@ export async function maybeSendSellerReport(
       return { personId, status: "failed", reason: sent.reason };
     }
     await store.markEmailed(h.token);
+    await recordInFub(key, person, h);
     return { personId, status: "sent" };
   } catch (e) {
     await removeSentTag(key, person);
