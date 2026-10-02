@@ -6,7 +6,7 @@
  * and views are stored as JSONB arrays to mirror the record shape exactly.
  */
 import postgres from "postgres";
-import type { EstimatePoint, Homeowner, HomeownerStore } from "./store";
+import { pacificDay, type EstimatePoint, type Homeowner, type HomeownerStore } from "./store";
 
 let sqlClient: ReturnType<typeof postgres> | null = null;
 function sql() {
@@ -228,5 +228,23 @@ export const postgresStore: HomeownerStore = {
   async unsubscribe(token) {
     await ensureSchema();
     await sql()`UPDATE homeowners SET subscribed = false WHERE token = ${token}`;
+  },
+
+  async claimSellerSend(limit) {
+    await ensureSchema();
+    await sql()`CREATE TABLE IF NOT EXISTS seller_send_counts (day text PRIMARY KEY, n int NOT NULL DEFAULT 0)`;
+    // Single atomic statement: the WHERE on the conflict branch means no row is
+    // returned once the day's budget is spent, even under concurrent requests.
+    const rows = await sql()`
+      INSERT INTO seller_send_counts (day, n) VALUES (${pacificDay()}, 1)
+      ON CONFLICT (day) DO UPDATE SET n = seller_send_counts.n + 1
+      WHERE seller_send_counts.n < ${limit}
+      RETURNING n`;
+    return rows.length > 0;
+  },
+
+  async releaseSellerSend() {
+    await ensureSchema();
+    await sql()`UPDATE seller_send_counts SET n = GREATEST(n - 1, 0) WHERE day = ${pacificDay()}`;
   },
 };

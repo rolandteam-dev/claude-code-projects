@@ -18,8 +18,9 @@
  *     poll/updated paths only consider recently created contacts.
  *   - Reuses the standing eligibility rule (valid email + Nevada ZIP), the
  *     HOMEOWNER_EMAIL_ENABLED master switch, and the unsubscribe flag.
- *   - Callers cap sends per run (SELLER_AUTO_MAX_PER_RUN) to protect the
- *     sending domain.
+ *   - Hard daily budget (SELLER_AUTO_DAILY_CAP, default 40 per Las Vegas day)
+ *     plus a per-run cap (SELLER_AUTO_MAX_PER_RUN) to protect the sending
+ *     domain. Leads over budget wait for the next day.
  */
 import { homeownerStore, type Homeowner } from "./store";
 import { FUB_BASE, fubHeaders, personToHomeowner } from "./fubMap";
@@ -40,6 +41,12 @@ export function newLeadWindowDays(): number {
 export function maxPerRun(): number {
   const n = Number(process.env.SELLER_AUTO_MAX_PER_RUN ?? 25);
   return Number.isFinite(n) && n > 0 ? Math.min(Math.trunc(n), 200) : 25;
+}
+
+/** Hard ceiling on seller reports per Las Vegas calendar day (protects sender reputation). */
+export function dailyCap(): number {
+  const n = Number(process.env.SELLER_AUTO_DAILY_CAP ?? 40);
+  return Number.isFinite(n) && n >= 0 ? Math.min(Math.trunc(n), 1000) : 40;
 }
 
 export type SellerAutoResult = {
@@ -124,8 +131,15 @@ export async function maybeSendSellerReport(
 
   if (opts.dryRun) return { personId, status: "would-send" };
 
+  // Daily budget. Over-cap leads are left untagged so a later run (next day)
+  // picks them up while they are still inside the new-lead window.
+  if (!(await store.claimSellerSend(dailyCap()))) return skip(`daily cap reached (${dailyCap()}/day)`);
+
   // Claim first so overlapping webhook/poll runs can't double-send.
-  if (!(await addSentTag(key, person))) return { personId, status: "failed", reason: "could not tag contact in FUB" };
+  if (!(await addSentTag(key, person))) {
+    await store.releaseSellerSend();
+    return { personId, status: "failed", reason: "could not tag contact in FUB" };
+  }
 
   try {
     const h: Homeowner = existing ?? record;
@@ -140,12 +154,14 @@ export async function maybeSendSellerReport(
     const sent = await sendWelcomeEmail(h, { reason: "seller-lead" });
     if (!sent.sent) {
       await removeSentTag(key, person);
+      await store.releaseSellerSend();
       return { personId, status: "failed", reason: sent.reason };
     }
     await store.markEmailed(h.token);
     return { personId, status: "sent" };
   } catch (e) {
     await removeSentTag(key, person);
+    await store.releaseSellerSend();
     return { personId, status: "failed", reason: String(e) };
   }
 }
