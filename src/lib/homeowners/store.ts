@@ -70,6 +70,18 @@ export interface HomeownerStore {
   updateFacts(token: string, facts: { beds?: number; baths?: number; sqft?: number }): Promise<void>;
   markEmailed(token: string, at?: string): Promise<void>;
   unsubscribe(token: string): Promise<void>;
+  /**
+   * Atomically take one slot from today's (Pacific) seller-report send budget.
+   * Returns false once `limit` slots are taken — the caller must not send.
+   */
+  claimSellerSend(limit: number): Promise<boolean>;
+  /** Give back a slot claimed by claimSellerSend when the send did not happen. */
+  releaseSellerSend(): Promise<void>;
+}
+
+/** Calendar day in Las Vegas time (YYYY-MM-DD) — the daily send budget resets at local midnight. */
+export function pacificDay(d: Date = new Date()): string {
+  return d.toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
 }
 
 const now = () => new Date().toISOString();
@@ -114,6 +126,8 @@ function seed(): Map<string, Homeowner> {
 // Persist across hot-reloads in dev via globalThis; a fresh Map per cold start.
 const g = globalThis as unknown as { __homeownerStore?: Map<string, Homeowner> };
 const mem: Map<string, Homeowner> = g.__homeownerStore ?? (g.__homeownerStore = seed());
+
+const sellerSends = new Map<string, number>();
 
 const memoryStore: HomeownerStore = {
   async getByToken(token) {
@@ -187,6 +201,17 @@ const memoryStore: HomeownerStore = {
   async unsubscribe(token) {
     const h = mem.get(token);
     if (h) h.subscribed = false;
+  },
+  async claimSellerSend(limit) {
+    const day = pacificDay();
+    const n = sellerSends.get(day) ?? 0;
+    if (n >= limit) return false;
+    sellerSends.set(day, n + 1);
+    return true;
+  },
+  async releaseSellerSend() {
+    const day = pacificDay();
+    sellerSends.set(day, Math.max(0, (sellerSends.get(day) ?? 0) - 1));
   },
 };
 
