@@ -77,6 +77,14 @@ export interface HomeownerStore {
   claimSellerSend(limit: number): Promise<boolean>;
   /** Give back a slot claimed by claimSellerSend when the send did not happen. */
   releaseSellerSend(): Promise<void>;
+  /**
+   * Atomically claim the one-and-only seller-report send for a FUB person.
+   * True for exactly one caller, ever — concurrent webhook/poll runs for the
+   * same contact cannot both win, so nobody is mailed twice.
+   */
+  claimSellerPerson(personId: string): Promise<boolean>;
+  /** Undo claimSellerPerson when the send did not happen, so it can be retried. */
+  releaseSellerPerson(personId: string): Promise<void>;
 }
 
 /** Calendar day in Las Vegas time (YYYY-MM-DD) — the daily send budget resets at local midnight. */
@@ -128,6 +136,7 @@ const g = globalThis as unknown as { __homeownerStore?: Map<string, Homeowner> }
 const mem: Map<string, Homeowner> = g.__homeownerStore ?? (g.__homeownerStore = seed());
 
 const sellerSends = new Map<string, number>();
+const sellerPeople = new Set<string>();
 
 const memoryStore: HomeownerStore = {
   async getByToken(token) {
@@ -212,6 +221,14 @@ const memoryStore: HomeownerStore = {
   async releaseSellerSend() {
     const day = pacificDay();
     sellerSends.set(day, Math.max(0, (sellerSends.get(day) ?? 0) - 1));
+  },
+  async claimSellerPerson(personId) {
+    if (sellerPeople.has(personId)) return false;
+    sellerPeople.add(personId);
+    return true;
+  },
+  async releaseSellerPerson(personId) {
+    sellerPeople.delete(personId);
   },
 };
 

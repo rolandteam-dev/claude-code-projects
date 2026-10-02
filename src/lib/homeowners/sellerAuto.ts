@@ -131,13 +131,22 @@ export async function maybeSendSellerReport(
 
   if (opts.dryRun) return { personId, status: "would-send" };
 
+  // One send per person, ever. FUB fires several events at once for a new,
+  // tagged contact; this atomic claim lets exactly one of them through. (The
+  // FUB tag below is only the visible marker — it is a check-then-act and is
+  // NOT safe against concurrent runs on its own.)
+  if (!(await store.claimSellerPerson(personId))) return skip("already claimed (sent or in progress)");
+
   // Daily budget. Over-cap leads are left untagged so a later run (next day)
   // picks them up while they are still inside the new-lead window.
-  if (!(await store.claimSellerSend(dailyCap()))) return skip(`daily cap reached (${dailyCap()}/day)`);
+  if (!(await store.claimSellerSend(dailyCap()))) {
+    await store.releaseSellerPerson(personId);
+    return skip(`daily cap reached (${dailyCap()}/day)`);
+  }
 
-  // Claim first so overlapping webhook/poll runs can't double-send.
   if (!(await addSentTag(key, person))) {
     await store.releaseSellerSend();
+    await store.releaseSellerPerson(personId);
     return { personId, status: "failed", reason: "could not tag contact in FUB" };
   }
 
@@ -155,6 +164,7 @@ export async function maybeSendSellerReport(
     if (!sent.sent) {
       await removeSentTag(key, person);
       await store.releaseSellerSend();
+      await store.releaseSellerPerson(personId);
       return { personId, status: "failed", reason: sent.reason };
     }
     await store.markEmailed(h.token);
@@ -162,6 +172,7 @@ export async function maybeSendSellerReport(
   } catch (e) {
     await removeSentTag(key, person);
     await store.releaseSellerSend();
+    await store.releaseSellerPerson(personId);
     return { personId, status: "failed", reason: String(e) };
   }
 }
