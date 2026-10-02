@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { homeownerStore, type Homeowner } from "@/lib/homeowners/store";
 import { FUB_BASE, fubHeaders, personToHomeowner } from "@/lib/homeowners/fubMap";
+import { isSellerCandidate, maxPerRun, maybeSendSellerReport } from "@/lib/homeowners/sellerAuto";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -55,6 +56,9 @@ export async function GET(req: Request) {
   let imported = 0;
   let skipped = 0;
   let scanned = 0;
+  let sellerSent = 0;
+  const sellerSkips: Record<string, number> = {};
+  const sellerDry = params.get("dryRun") === "1";
   let newestUpdated: string | null = null;
   let oldestUpdated: string | null = null;
 
@@ -80,6 +84,16 @@ export async function GET(req: Request) {
         const record = personToHomeowner(person);
         if (record) batch.push(record);
         else skipped++;
+        // New seller leads (Seller tag + address) get the home report.
+        if (sellerSent < maxPerRun() && isSellerCandidate(person, false)) {
+          try {
+            const r = await maybeSendSellerReport(person, { manual: false, dryRun: sellerDry });
+            if (r.status === "sent" || r.status === "would-send") sellerSent++;
+            else sellerSkips[r.reason ?? r.status] = (sellerSkips[r.reason ?? r.status] ?? 0) + 1;
+          } catch {
+            // never fail the sync on a send
+          }
+        }
       }
       if (batch.length) {
         await store.upsertContacts(batch);
@@ -91,6 +105,14 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: String(e), imported, skipped }, { status: 502 });
   }
 
-  return NextResponse.json({ ok: true, imported, skipped, scanned, newestUpdated, oldestUpdated });
+  return NextResponse.json({
+    ok: true,
+    imported,
+    skipped,
+    scanned,
+    newestUpdated,
+    oldestUpdated,
+    sellerReports: { [sellerDry ? "wouldSend" : "sent"]: sellerSent, skipped: sellerSkips },
+  });
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */

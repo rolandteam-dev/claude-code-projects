@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { homeownerStore, type Homeowner } from "@/lib/homeowners/store";
 import { FUB_BASE, fubHeaders, personToHomeowner } from "@/lib/homeowners/fubMap";
+import { isSellerCandidate, maxPerRun, maybeSendSellerReport } from "@/lib/homeowners/sellerAuto";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -75,6 +76,10 @@ async function handle(req: Request) {
   const store = homeownerStore();
   const batch: Homeowner[] = [];
   let missing = 0;
+  // An agent adding a tag is explicit intent, so it ignores the new-lead window.
+  const manual = (payload as { event?: string } | null)?.event === "peopleTagsCreated";
+  const sellerResults: unknown[] = [];
+  let sellerSends = 0;
 
   for (const id of ids) {
     try {
@@ -89,6 +94,16 @@ async function handle(req: Request) {
       const record = personToHomeowner(person);
       if (record) batch.push(record);
       else missing++;
+      // Seller tag + address → send the home report (never fails the webhook).
+      if (sellerSends < maxPerRun() && isSellerCandidate(person, manual)) {
+        try {
+          const r = await maybeSendSellerReport(person, { manual });
+          sellerResults.push(r);
+          if (r.status === "sent") sellerSends++;
+        } catch {
+          // ignore
+        }
+      }
     } catch {
       missing++;
     }
@@ -96,7 +111,13 @@ async function handle(req: Request) {
 
   if (batch.length) await store.upsertContacts(batch);
 
-  return NextResponse.json({ ok: true, processed: ids.length, added: batch.length, skipped: missing });
+  return NextResponse.json({
+    ok: true,
+    processed: ids.length,
+    added: batch.length,
+    skipped: missing,
+    sellerReports: sellerResults,
+  });
 }
 
 export async function POST(req: Request) {

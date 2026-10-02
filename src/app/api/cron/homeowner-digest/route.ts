@@ -41,6 +41,12 @@ async function run(req: Request) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
   const url = new URL(req.url);
+  // The scheduled digest mails the whole imported database, so it has its own
+  // switch: turning on HOMEOWNER_EMAIL_ENABLED (seller home reports, welcome
+  // emails) must not start it. Manual admin runs are unaffected.
+  if (via === "cron" && process.env.HOMEOWNER_DIGEST_ENABLED !== "true") {
+    return NextResponse.json({ ok: true, skipped: "digest off (set HOMEOWNER_DIGEST_ENABLED=true to run)" });
+  }
   const days = Number(url.searchParams.get("days") ?? 14);
   const dryRun =
     url.searchParams.get("dryRun") === "1" || (via === "admin" && url.searchParams.get("send") !== "1");
