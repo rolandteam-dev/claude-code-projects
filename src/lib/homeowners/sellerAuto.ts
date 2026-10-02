@@ -145,6 +145,18 @@ async function recordInFub(key: string, person: any, h: Homeowner): Promise<void
 }
 
 /**
+ * Forget that a contact was sent a report (and strip the visible FUB tag) so
+ * it can be sent again. For re-testing a test contact only — the permanent
+ * per-person claim is what prevents real leads from ever being mailed twice.
+ */
+export async function resetSellerReport(person: any): Promise<void> {
+  const key = process.env.FUB_API_KEY;
+  if (!key) return;
+  await homeownerStore().releaseSellerPerson(String(person?.id ?? ""));
+  await removeSentTag(key, person);
+}
+
+/**
  * Send the home report to one FUB contact if they qualify.
  * `manual` = an agent just applied the tag (no age limit).
  * `dryRun` = evaluate and report, change nothing.
