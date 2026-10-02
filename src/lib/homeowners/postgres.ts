@@ -243,6 +243,22 @@ export const postgresStore: HomeownerStore = {
     return rows.length > 0;
   },
 
+  async claimSellerPerson(personId) {
+    await ensureSchema();
+    await sql()`CREATE TABLE IF NOT EXISTS seller_report_sent (person_id text PRIMARY KEY, claimed_at timestamptz NOT NULL DEFAULT now())`;
+    // PRIMARY KEY + DO NOTHING: exactly one concurrent caller gets a row back.
+    const rows = await sql()`
+      INSERT INTO seller_report_sent (person_id) VALUES (${personId})
+      ON CONFLICT (person_id) DO NOTHING
+      RETURNING person_id`;
+    return rows.length > 0;
+  },
+
+  async releaseSellerPerson(personId) {
+    await ensureSchema();
+    await sql()`DELETE FROM seller_report_sent WHERE person_id = ${personId}`;
+  },
+
   async releaseSellerSend() {
     await ensureSchema();
     await sql()`UPDATE seller_send_counts SET n = GREATEST(n - 1, 0) WHERE day = ${pacificDay()}`;
