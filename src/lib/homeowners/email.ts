@@ -74,7 +74,7 @@ function html(h: Homeowner): string {
   </div>`;
 }
 
-function welcomeHtml(h: Homeowner): string {
+function welcomeHtml(h: Homeowner, reason: "requested" | "seller-lead" = "requested"): string {
   const latest = latestEstimate(h);
   const url = dashboardUrl(h.token);
   const unsub = unsubscribeUrl(h.token);
@@ -107,7 +107,11 @@ function welcomeHtml(h: Homeowner): string {
     <div style="padding:16px 8px;text-align:center;font-size:11px;color:#9a9a9a;line-height:1.6;">
       ${homeownerBrand.legalName} · ${homeownerBrand.postalAddress}<br/>
       Automated estimate, not an appraisal. Equal Housing Opportunity.<br/>
-      You're receiving this because you requested your home value. <a href="${unsub}" style="color:#9a9a9a;">Unsubscribe</a>.
+      ${
+        reason === "seller-lead"
+          ? `You're receiving this because you asked about selling your home with ${homeownerBrand.name}.`
+          : "You're receiving this because you requested your home value."
+      } <a href="${unsub}" style="color:#9a9a9a;">Unsubscribe</a>.
     </div>
   </div>`;
 }
@@ -161,7 +165,10 @@ function listUnsubscribeHeaders(token: string): Record<string, string> {
   };
 }
 
-export async function sendWelcomeEmail(h: Homeowner): Promise<{ sent: boolean; reason?: string }> {
+export async function sendWelcomeEmail(
+  h: Homeowner,
+  opts: { reason?: "requested" | "seller-lead" } = {}
+): Promise<{ sent: boolean; reason?: string }> {
   if (!sendingEnabled()) return DISABLED;
   const key = process.env.RESEND_API_KEY;
   const from = fromAddress();
@@ -173,7 +180,7 @@ export async function sendWelcomeEmail(h: Homeowner): Promise<{ sent: boolean; r
       from,
       to: h.email,
       subject: `Your ${h.city || "Las Vegas"} home value dashboard`,
-      html: welcomeHtml(h),
+      html: welcomeHtml(h, opts.reason),
       replyTo: homeownerBrand.email,
       headers: listUnsubscribeHeaders(h.token),
     });

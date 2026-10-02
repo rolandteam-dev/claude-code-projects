@@ -10,13 +10,13 @@ export const runtime = "nodejs";
  * updated FUB contact with a home address is tracked immediately.
  *
  *   ?key=ADMIN_TOKEN                 → list what's currently registered
- *   ?key=ADMIN_TOKEN&action=install  → create the peopleCreated + peopleUpdated webhooks
+ *   ?key=ADMIN_TOKEN&action=install  → create the peopleCreated + peopleUpdated + peopleTagsCreated webhooks
  *   ?key=ADMIN_TOKEN&action=uninstall→ remove the ones pointing at this site
  *
  * The registered URL carries the shared secret as ?secret= so the webhook
  * endpoint can authenticate FUB's calls. The secret is masked in the response.
  */
-const EVENTS = ["peopleCreated", "peopleUpdated"] as const;
+const EVENTS = ["peopleCreated", "peopleUpdated", "peopleTagsCreated"] as const;
 
 function mask(url: string): string {
   return url.replace(/([?&]secret=)[^&]+/i, "$1***");
