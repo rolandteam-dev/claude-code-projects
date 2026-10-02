@@ -336,6 +336,20 @@ export const rules = {
   stageOrTimeframeUpdateCountsAsTouch: true,
 
   /**
+   * Follow Up Boss's own last-email dates (`lastSentEmail`, `lastEmail`) count as
+   * a touch. Evidence, 2 Oct 2026: inside the lead's window for 31 of the 44
+   * leads Battr leaves alone and for 0 of the 16 it flagged, while 82% of those
+   * 16 had a drip email in the same window — so the fields exclude drips, which
+   * stay uncounted (automatedEmailCountsAsTouch is still false).
+   *
+   * Narrowing only: a date can move a lead's last touch forward, never back.
+   * The nightly report re-checks the evidence every run and shouts if a lead
+   * Battr flagged ever has one of these dates inside its window, which would
+   * mean the fields have started counting emails Battr ignores.
+   */
+  fubEmailActivityCountsAsTouch: true,
+
+  /**
    * Ceiling on per-lead email lookups in the touch backfill. Same shape and
    * same reason as maxTextBackfill: FUB will not serve /v1/emails in bulk, so
    * the actionable shortlist is fetched one lead at a time, and a run that

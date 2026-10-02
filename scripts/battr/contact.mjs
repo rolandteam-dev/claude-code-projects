@@ -14,7 +14,13 @@ import { bucketForSource } from "./sources.mjs";
 import { rules } from "./rules.mjs";
 import { TIMEFRAME_IDS } from "./lists.mjs";
 import { PAUSED_GROUP_MARKER } from "./paused.mjs";
-import { profileTouchAt, STAGE_UPDATED_FIELDS, TIMEFRAME_UPDATED_FIELDS } from "./communication.mjs";
+import {
+  profileTouchAt,
+  latestProfileTouchAt,
+  STAGE_UPDATED_FIELDS,
+  TIMEFRAME_UPDATED_FIELDS,
+  FUB_EMAIL_FIELDS,
+} from "./communication.mjs";
 
 /** Shared so the default never becomes a per-call allocation in a 54k loop. */
 const EMPTY_SET = new Set();
@@ -70,8 +76,17 @@ export function normalizeContact(
       )
     : 0;
 
-  const lastTouchMs = Math.max(touch?.lastOutbound ?? 0, inbound, profileTouch);
+  // Follow Up Boss's own last-email dates. See FUB_EMAIL_FIELDS: they separate the
+  // leads Battr flags from the ones it leaves alone better than any other field,
+  // and they do not count drips.
+  const emailFields = inboundCountsAsTouch ? FUB_EMAIL_FIELDS : ["lastSentEmail"];
+  const emailActivity = rules.fubEmailActivityCountsAsTouch ? (latestProfileTouchAt(person, emailFields) ?? 0) : 0;
+
+  const otherTouch = Math.max(touch?.lastOutbound ?? 0, inbound, profileTouch);
+  const lastTouchMs = Math.max(otherTouch, emailActivity);
   const lastCommunication = lastTouchMs ? new Date(lastTouchMs).toISOString() : null;
+  // Reported, so a silent no-op here cannot hide: how many leads this field is what saves.
+  const touchVia = emailActivity && emailActivity > otherTouch ? "fub email" : null;
 
   const atRiskSinceKey = stamps.atRiskSince || "customBattrAtRiskSince";
 
@@ -119,6 +134,7 @@ export function normalizeContact(
     crm_created_at: first(person.created, person.createdAt, null),
     last_activity_at: first(person.lastActivity, person.lastActivityAt, null),
     last_communication_at: lastCommunication,
+    touch_via: touchVia,
     /**
      * A WEBSITE VISIT, not any activity. The fallback to `lastActivity` used to
      * be here and it made "visited the site in the last 10 days" mean "did
