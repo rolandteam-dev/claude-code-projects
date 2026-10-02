@@ -124,7 +124,11 @@ async function recordInFub(key: string, person: any, h: Homeowner): Promise<void
       body: JSON.stringify({
         personId: Number(person.id),
         subject: "Home value report emailed",
-        body: `Automatic home value report emailed to ${h.email} on ${when} PT.\nTheir private dashboard: ${url}`,
+        body:
+          `Automatic home value report emailed to ${h.email} on ${when} PT.\nTheir private dashboard: ${url}` +
+          (h.estimates?.length
+            ? ""
+            : "\n\nNo automatic value could be generated for this address (not found in MLS history), so the email and dashboard show no number. Run a CMA and follow up by hand."),
         isHtml: false,
       }),
     });
