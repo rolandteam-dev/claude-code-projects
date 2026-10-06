@@ -4151,3 +4151,32 @@ console.log(`\n${passed} checks passed${process.exitCode ? " — with failures a
     assert.match(fubSrc, /deleteNote\(noteId\) \{\s*return this\.request\("DELETE", `\/notes\/\$\{noteId\}`\);/);
   });
 }
+
+{
+  const { lastSecondRecheck } = await import("./recheck.mjs");
+  const lead = { id: 7, ownerId: 3 };
+  const fake = (over = {}) => ({
+    person: async () => ({ assignedUserId: 3 }),
+    textsForPerson: async () => [],
+    callsForPerson: async () => [],
+    ...over,
+  });
+  check("last-second recheck: a lead with nothing new is cleared", async () => {
+    assert.equal((await lastSecondRecheck(fake(), lead, "x")).ok, true);
+  });
+  check("last-second recheck: a new text, a new call, or a new owner each hold the sweep", async () => {
+    assert.equal((await lastSecondRecheck(fake({ textsForPerson: async () => [{}] }), lead, "x")).ok, false);
+    assert.equal((await lastSecondRecheck(fake({ callsForPerson: async () => [{}] }), lead, "x")).ok, false);
+    assert.equal((await lastSecondRecheck(fake({ person: async () => ({ assignedUserId: 9 }) }), lead, "x")).ok, false);
+  });
+  check("last-second recheck: any read failure holds the sweep (fail closed)", async () => {
+    const r = await lastSecondRecheck(fake({ callsForPerson: async () => { throw new Error("503"); } }), lead, "x");
+    assert.equal(r.ok, false);
+    assert.match(r.reason, /could not re-check/);
+  });
+  check("last-second recheck: the sweep loop calls it before the note and the assign", () => {
+    const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+    const at = src.indexOf("lastSecondRecheck(fub, lead, since)");
+    assert.ok(at > 0 && at < src.indexOf("await fub.note(lead.id, rules.sweepNote(record))"), "recheck must precede the first write");
+  });
+}

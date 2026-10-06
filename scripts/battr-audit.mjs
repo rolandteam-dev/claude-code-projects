@@ -30,6 +30,7 @@ import { DAY_MS, ptDate, buildTouchIndex, classifySimple, runCombinedList, isExe
 import { normalizeContact } from "./battr/contact.mjs";
 import { resolvePausedOwners } from "./battr/paused.mjs";
 import { pondForLead } from "./battr/ponds.mjs";
+import { lastSecondRecheck } from "./battr/recheck.mjs";
 import { foldEmailTouches, describeEmailOrigin } from "./battr/communication.mjs";
 import { isDayAllowed, auditDate, auditInstant } from "./battr/schedule.mjs";
 
@@ -1256,6 +1257,14 @@ async function main() {
           actions.heldBack.push({ ...lead, holdReason: reprieve.reason });
           continue;
         }
+      }
+
+      // Re-read the lead now. The evidence above is as old as the run; an agent
+      // may have texted, called or been handed the lead since. Any change holds.
+      const fresh = await lastSecondRecheck(fub, lead, since);
+      if (!fresh.ok) {
+        actions.heldBack.push({ ...lead, holdReason: fresh.reason });
+        continue;
       }
 
       // Battr's "Pond Assignments" rule set, read off the screen on 23 Sep:

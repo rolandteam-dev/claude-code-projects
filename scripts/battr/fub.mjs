@@ -292,6 +292,16 @@ export class FubClient {
     return this.paginate("/textMessages", { personId, createdAfter: sinceIso });
   }
 
+  /** One lead's current record — used to re-verify ownership just before a sweep. */
+  person(personId) {
+    return this.request("GET", `/people/${personId}`);
+  }
+
+  /** Calls logged against ONE lead since `sinceIso`. */
+  callsForPerson(personId, sinceIso) {
+    return this.paginate("/calls", { personId, createdAfter: sinceIso });
+  }
+
   // ------------------------------------------------------------------ writes
 
   note(personId, body, subject = "Battr audit") {
