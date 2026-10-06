@@ -61,6 +61,20 @@ const agoText = (via, elapsed) =>
 const ms = (value) => (value ? new Date(value).getTime() : NaN);
 
 /**
+ * When Battr really wrote a stamp. The field holds only the date, which is the
+ * Pacific day of Battr's 7 PM run — read as midnight UTC it sits 26 hours
+ * before the run itself, so a stamp two nights old looked three days old and
+ * dropped out of the "last 3 days" table a night early (8 of Battr's 27 leads
+ * on 5 Oct, four of them for this reason alone). A value that carries a time
+ * is taken as given.
+ */
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+const stampInstant = (value) => {
+  const at = ms(value);
+  return Number.isFinite(at) && DATE_ONLY.test(String(value)) ? at + 26 * 3_600_000 : at;
+};
+
+/**
  * What set a lead's latest touch, as we see it: the channel and when.
  * Diagnostic only — the classifier never reads this.
  */
@@ -268,7 +282,7 @@ export function explainAtRisk({
   const resultsById = new Map(results.map((r) => [r.id, r]));
   const battrFlagged = [];
   for (const person of peopleById.values()) {
-    const stampAt = ms(person[stampKey]);
+    const stampAt = stampInstant(person[stampKey]);
     if (!Number.isFinite(stampAt) || now - stampAt > recentDays * DAY) continue;
     const r = resultsById.get(person.id);
     const status = r ? r.status : "not on our list";

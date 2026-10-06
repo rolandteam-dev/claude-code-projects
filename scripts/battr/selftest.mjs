@@ -3536,6 +3536,20 @@ check("the state Battr owns is the state that went missing", () => {
     assert.match(md, /Battr stamped them too \(Battr agrees\) \| 1 \| 1 \(100%\)/);
   });
 
+  check("battr stamps: a stamp dated two nights ago is still in the 3-day table (the date is the Pacific day of the 7 PM run)", () => {
+    // 5 Oct run: Battr's 10-03 stamps were read as midnight UTC, 3.08 days
+    // before the audit instant, and fell out of the table a night early.
+    const at = Date.parse("2026-10-06T02:00:00Z");
+    const peopleById = new Map([
+      [1, { id: 1, assignedTo: "A", customBattrAtRiskSince: "2026-10-05" }],
+      [2, { id: 2, assignedTo: "A", customBattrAtRiskSince: "2026-10-03" }],
+      [3, { id: 3, assignedTo: "A", customBattrAtRiskSince: "2026-10-02" }],
+      [4, { id: 4, assignedTo: "A", customBattrAtRiskSince: "2026-10-01" }],
+    ]);
+    const g = G.explainAtRisk({ results: [], peopleById, now: at });
+    assert.deepEqual(g.battrFlagged.map((r) => r.id), [1, 2, 3]);
+  });
+
   check("battr stamps: a lead Battr flagged that we call worked names the touch we counted", () => {
     const results = [
       { id: 10, owner: "A", status: "compliant", source_list_ids: [warm.id] },
