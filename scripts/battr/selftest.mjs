@@ -4022,4 +4022,51 @@ check("the state Battr owns is the state that went missing", () => {
   });
 }
 
+
+// ─── Activity after Battr's run is not evidence about Battr ──────────────────
+{
+  const G = await import("./gap.mjs");
+  const { lists: allLists } = await import("./lists.mjs");
+  const NOW = Date.parse("2026-10-06T02:00:00Z");
+  const D = 86_400_000;
+  const iso = (d) => new Date(NOW - d * D).toISOString();
+  const monthly = allLists.find((l) => l.name.includes("Monthly Nurture"));
+
+  check("after the run: a date from the hours after 7 PM does not count as inside Battr's window", () => {
+    const only = [...Array(5)].map((_, i) => ({ person: { id: i, lastX: iso(2) }, window: 33 }));
+    // Five leads Battr flagged whose field is dated six hours AFTER the audit instant.
+    const battr = [...Array(5)].map((_, i) => ({ person: { id: 10 + i, lastX: new Date(NOW + 6 * 3_600_000).toISOString() }, window: 33 }));
+    const r = G.dateFieldWindows(only, battr, NOW);
+    assert.deepEqual([r.fields[0].field, r.fields[0].b, r.fields[0].a], ["lastX", 5, 0], "Battr's group reads 0, not 5");
+  });
+
+  check("after the run: the email-date rule check does not fail on an email Battr could not have seen", () => {
+    const rec = { id: 1, owner: "A", source: "Z", status: "at_risk", source_list_ids: [monthly.id] };
+    const late = G.explainAtRisk({
+      results: [rec],
+      peopleById: new Map([[1, { id: 1, assignedUserId: 5, customBattrAtRiskSince: iso(1), lastSentEmail: new Date(NOW + 3 * 3_600_000).toISOString() }]]),
+      now: NOW,
+    });
+    assert.deepEqual(late.emailCheck, { leads: 1, inWindow: 0 });
+    const early = G.explainAtRisk({
+      results: [rec],
+      peopleById: new Map([[1, { id: 1, assignedUserId: 5, customBattrAtRiskSince: iso(1), lastSentEmail: iso(5) }]]),
+      now: NOW,
+    });
+    assert.deepEqual(early.emailCheck, { leads: 1, inWindow: 1 }, "an email before the run still fails the check");
+  });
+
+  check("after the run: the tables say so instead of printing a negative number of days", () => {
+    const g = G.explainAtRisk({
+      results: [{ id: 1, owner: "A", status: "compliant", source_list_ids: [monthly.id] }],
+      peopleById: new Map([[1, { id: 1, assignedUserId: 5, assignedTo: "A", customBattrAtRiskSince: iso(0.5) }]]),
+      touchIndex: new Map([[1, { lastOutbound: NOW + 0.3 * D, outVia: "call", lastInbound: 0 }]]),
+      now: NOW,
+    });
+    const md = G.renderBattrFlagged(g).join("\n");
+    assert.match(md, /call out, after the 7 PM run/);
+    assert.ok(!/-0\.3d/.test(md));
+  });
+}
+
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);
