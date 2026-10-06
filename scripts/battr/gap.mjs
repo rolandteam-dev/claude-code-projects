@@ -42,7 +42,22 @@ function windowDaysFor(record) {
   return days.length ? Math.min(...days) : null;
 }
 
-const within = (at, days, now) => Number.isFinite(at) && at > 0 && days !== null && now - at <= days * DAY;
+/**
+ * Anything dated AFTER the audit instant is something Battr could not have seen.
+ * We judge at 7 PM PT but read the data at ~1 AM, so activity in between exists
+ * here and not there. Counting it made leads Battr flagged look as if they had
+ * recent activity (3 of 36 on 5 Oct, in one table), which is a timing artifact,
+ * not evidence about what Battr counts. A little grace covers Battr starting a
+ * few minutes after the hour.
+ */
+const BATTR_RUN_GRACE_MS = 20 * 60_000;
+const seenByBattr = (at, now) => at <= now + BATTR_RUN_GRACE_MS;
+const within = (at, days, now) =>
+  Number.isFinite(at) && at > 0 && seenByBattr(at, now) && days !== null && now - at <= days * DAY;
+
+/** "12.3d ago", or why it is not a number. */
+const agoText = (via, elapsed) =>
+  elapsed === null || elapsed === undefined ? via : elapsed < 0 ? `${via}, after the 7 PM run` : `${via}, ${elapsed}d ago`;
 const ms = (value) => (value ? new Date(value).getTime() : NaN);
 
 /**
@@ -141,7 +156,7 @@ export function dateFieldWindows(groupB, groupA, now, { minCount = 4, minDiff = 
       for (const [key, value] of Object.entries(person)) {
         if (NOT_COMMUNICATION.test(key) || typeof value !== "string" || !ISO_DATE.test(value)) continue;
         const at = Date.parse(value);
-        if (Number.isFinite(at) && (now - at) / DAY <= window) m.set(key, (m.get(key) ?? 0) + 1);
+        if (Number.isFinite(at) && seenByBattr(at, now) && (now - at) / DAY <= window) m.set(key, (m.get(key) ?? 0) + 1);
       }
     }
     return m;
@@ -453,7 +468,7 @@ export function renderBattrFlagged(gap) {
   ];
   for (const r of rows) {
     const verdict = r.status === "excluded" && r.reason ? `excluded — ${r.reason}` : r.status.replace("_", " ");
-    const touch = r.elapsed === null || r.elapsed === undefined ? r.via : `${r.via}, ${r.elapsed}d ago`;
+    const touch = agoText(r.via, r.elapsed);
     lines.push(
       `| ${r.id} | ${r.owner} | ${r.stamped} | ${verdict} | ${touch} | ${r.window ?? "—"}d | ` +
         `${r.stage || "—"} · ${r.timeframe ?? "none"} · ${r.source || "—"} |`
@@ -479,7 +494,7 @@ export function renderOnlyUs(gap, { limit = 80 } = {}) {
     `| ---: | --- | --- | ---: | --- | --- | --- |`,
   ];
   for (const r of rows.slice(0, limit)) {
-    const touch = r.elapsed === null ? r.via : `${r.via}, ${r.elapsed}d ago`;
+    const touch = agoText(r.via, r.elapsed);
     lines.push(`| ${r.id} | ${r.owner} | ${r.list} | ${r.window ?? "—"}d | ${r.stage || "—"} | ${r.source || "—"} | ${touch} |`);
   }
   if (rows.length > limit) lines.push(`| … | ${rows.length - limit} more | | | | | |`);
