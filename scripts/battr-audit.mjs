@@ -15,7 +15,9 @@
  *   --stage=at-risk|neglected|both   which rules to act on (default: both)
  *   --max-sweeps=N        override the per-run sweep cap
  *   --smart-list=N        audit a specific FUB smart list (Battr's audit list)
- *   --undo=<run-id>       put every lead swept in that run back where it was
+ *   --only=<fub id>       single-lead live test: act on that one lead only (nudge), skip
+ *                         the agent emails and the nightly comparison row
+ *   --undo=<run-id>       put every lead swept or nudged in that run back where it was
  *
  * Tune behavior in scripts/battr/rules.mjs — not here.
  */
@@ -95,6 +97,7 @@ function parseArgs(argv) {
     else if (arg.startsWith("--max-sweeps=")) a.maxSweeps = Number(arg.slice(13));
     else if (arg.startsWith("--smart-list=")) a.smartListId = arg.slice(13);
     else if (arg.startsWith("--undo=")) a.undo = arg.slice(7);
+    else if (arg.startsWith("--only=")) a.only = Number(arg.slice(7)) || null;
   }
   return a;
 }
@@ -278,6 +281,17 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     // Reported so a silent no-op cannot hide: how many leads this is what saves.
     const saved = results.filter((r) => r.status !== "excluded" && r.contact?.touch_via === "fub email").length;
     lines.push(`- Follow Up Boss last-email dates counted as work: **${saved}** audited lead(s) have one as their latest touch (\`lastSentEmail\`, \`lastEmail\`)`);
+  }
+  if (rules.ylopoReactivatedInboxCountsAsTouch) {
+    // Mike's "match Battr" rule. The standing self-check: a lead this saves that
+    // ALSO carries Battr's own stamp means Battr flags leads like it, so the
+    // rule is wrong and must come out.
+    const saved = results.filter((r) => r.status !== "excluded" && r.contact?.touch_via === "ylopo inbox");
+    const stamped = saved.filter((r) => r.contact?._raw?.customBattrAtRiskSince).length;
+    lines.push(
+      `- Reactivated Ylopo leads (\`${rules.ylopoReactivatedTag}\`) counted as worked on their last inbox message, to match Battr: **${saved.length}** audited lead(s)` +
+        (stamped ? ` — ⚠ **${stamped}** of them carry Battr's own stamp, so Battr DOES flag leads like these; the rule is wrong` : " — none of them carry Battr's stamp, as expected")
+    );
   }
   if (emailBackfill && emailBackfill.manual !== undefined) {
     // Reported, not logged. The point of this pass is to learn which field
@@ -676,8 +690,9 @@ async function undo(apiKey, runId, log) {
         `Reversing them would move live leads to owners they were never taken from. Refusing.`
     );
   }
-  if (!entry.sweeps.length) {
-    log(`Run ${runId} swept nothing. Nothing to undo.`);
+  const nudges = entry.nudges ?? [];
+  if (!entry.sweeps.length && !nudges.length) {
+    log(`Run ${runId} swept and nudged nothing. Nothing to undo.`);
     return;
   }
 
@@ -685,10 +700,21 @@ async function undo(apiKey, runId, log) {
   // that invoked it is in.
   const fub = new FubClient(apiKey, { dry: false, log });
 
-  log(`Undoing ${entry.sweeps.length} sweeps from run ${runId} — THIS WRITES TO FOLLOW UP BOSS.`);
+  log(`Undoing ${entry.sweeps.length} sweeps and ${nudges.length} nudges from run ${runId} — THIS WRITES TO FOLLOW UP BOSS.`);
 
   let restored = 0;
   const failed = [];
+  // A nudge is a note plus the warning stamp. Both go: the stamp is what arms a
+  // sweep three days later, so leaving it behind would leave the lead on a clock.
+  for (const nudge of nudges) {
+    try {
+      if (nudge.noteId) await fub.deleteNote(nudge.noteId);
+      if (nudge.fields.length) await fub.updateFields(nudge.personId, Object.fromEntries(nudge.fields.map((f) => [f, null])));
+      log(`  nudge on ${nudge.name} (#${nudge.personId}) reversed${nudge.noteId ? "" : " — NOTE ID WAS NOT RECORDED, delete the note by hand"}`);
+    } catch (err) {
+      failed.push(`nudge on ${nudge.name} (#${nudge.personId}): ${err.message}`);
+    }
+  }
   for (const sweep of entry.sweeps) {
     try {
       await fub.assign(sweep.personId, { userId: sweep.fromUserId, pondId: null });
@@ -1113,14 +1139,36 @@ async function main() {
   const touchReason = touchComplete
     ? "last-touch complete via per-person backfill, but rules.sweepOnBackfilledTexts is off"
     : "last-touch incomplete";
+  // The single-lead live test. It lifts the backfill gate for ONE lead, and only
+  // when every backfill came back complete — so the evidence is the same
+  // evidence a real night would act on. It never sweeps: a test that moves a
+  // lead between agents is not a test Mike signed off on.
+  const only = args.only ?? null;
+  const testOverride = only !== null && backfillsComplete;
+  if (only !== null) {
+    log(`  SINGLE-LEAD TEST for #${only}: ${testOverride ? "nudge only, backfills complete" : "backfills incomplete — nothing will be written"}`);
+  }
   const nudgesAllowedToday = isDayAllowed(rules.nudgeDayFilter, AUDIT_DAY, rules.timezone) && touchUsable;
   const sweepsAllowedToday = isDayAllowed(rules.sweepDayFilter, AUDIT_DAY, rules.timezone) && touchUsable;
+  // The test's own gate, kept apart so the two production gates above stay
+  // exactly as the selftest pins them. It lifts one condition — the opt-in —
+  // and only for the one lead named.
+  const testNudgeAllowed = testOverride && isDayAllowed(rules.nudgeDayFilter, AUDIT_DAY, rules.timezone);
   if (!nudgesAllowedToday) log(`  nudges skipped: ${touchUsable ? `day filter "${rules.nudgeDayFilter}"` : touchReason}`);
   if (!sweepsAllowedToday) log(`  sweeps skipped: ${touchUsable ? `day filter "${rules.sweepDayFilter}"` : touchReason}`);
 
+  const sweepLog = { runId, timestamp: new Date().toISOString(), dry, sweeps: [] };
+  // A single-lead test records the lead and the note it wrote, which is all undo needs.
+  sweepLog.only = only;
+  sweepLog.nudges = [];
+
   // 5a. nudge
-  if ((args.stage === "both" || args.stage === "at-risk") && nudgesAllowedToday) {
+  if ((args.stage === "both" || args.stage === "at-risk") && (nudgesAllowedToday || testNudgeAllowed) && (only === null || testNudgeAllowed)) {
+    if (only !== null && !atRisk.some((l) => l.id === only)) {
+      log(`  #${only} is not at risk tonight (or is excluded) — the test wrote nothing.`);
+    }
     for (const lead of atRisk) {
+      if (only !== null && lead.id !== only) continue;
       const person = peopleById.get(lead.id);
       const alreadyFlagged = fields.atRiskSince ? Boolean(person?.[fields.atRiskSince]) : false;
 
@@ -1129,7 +1177,18 @@ async function main() {
         continue;
       }
       try {
-        await fub.note(lead.id, rules.nudgeNote(lead));
+        const created = await fub.note(lead.id, rules.nudgeNote(lead));
+        if (only !== null) {
+          // What undo needs to put this lead back exactly as it was.
+          sweepLog.nudges.push({
+            personId: lead.id,
+            name: lead.name,
+            owner: lead.owner,
+            source: lead.source,
+            noteId: created?.id ?? null,
+            fields: fields.atRiskSince ? [fields.atRiskSince, ...(fields.lastNudged ? [fields.lastNudged] : [])] : [],
+          });
+        }
         if (fields.atRiskSince) {
           await fub.updateFields(lead.id, {
             [fields.atRiskSince]: today,
@@ -1144,9 +1203,8 @@ async function main() {
   }
 
   // 5b. sweep
-  const sweepLog = { runId, timestamp: new Date().toISOString(), dry, sweeps: [] };
   const replyDiag = { checks: 0, undirected: 0, budgetSpent: 0, spared: 0, failures: [] };
-  if ((args.stage === "both" || args.stage === "neglected") && sweepsAllowedToday) {
+  if ((args.stage === "both" || args.stage === "neglected") && sweepsAllowedToday && only === null) {
     const cap = args.maxSweeps ?? rules.maxSweepsPerRun;
     const replyWindow = new Date(Date.now() - rules.inboundEmailWindowDays * DAY_MS).toISOString();
     /** Sweeps issued to each pond this run, for the cap below. */
@@ -1260,14 +1318,14 @@ async function main() {
       ? `${touchIncomplete.map((g) => g.channel).join(", ")} backfilled per person and complete — ` +
         `set rules.sweepOnBackfilledTexts to act on it`
       : `last-touch incomplete — ${touchIncomplete.map((g) => g.channel).join(", ")} could not be read in bulk`);
-  if (!nudgesAllowedToday && atRisk.length) {
+  if (!nudgesAllowedToday && !testNudgeAllowed && atRisk.length) {
     actions.skipped.push({
       what: "nudges",
       count: atRisk.length,
       reason: touchUsable ? `day filter "${rules.nudgeDayFilter}"` : incompleteReason(),
     });
   }
-  if (!sweepsAllowedToday && neglected.length) {
+  if (!sweepsAllowedToday && neglected.length && only === null) {
     actions.skipped.push({
       what: "sweeps",
       count: neglected.length,
@@ -1350,7 +1408,9 @@ async function main() {
     })),
   ];
   try {
-    appendComparisons(COMPARISON_PATH, comparisonRows);
+    // A single-lead test is not a night: a second "ours" row for today would
+    // skew the running record Battr is compared against.
+    if (only === null) appendComparisons(COMPARISON_PATH, comparisonRows);
   } catch (err) {
     log(`  could not record tonight's comparison row: ${err.message}`);
   }
@@ -1408,14 +1468,19 @@ async function main() {
     actions.skipped.push({ what: "agent alerts", count: wouldHave, reason: incompleteReason() });
   }
 
-  const alerts = await deliverDigests(digests, { channel, fub, usersById, dry, log });
-  if (digests.length) log(`  ${digests.length} agent digests (${channel}${dry ? ", dry" : ""})`);
+  // A single-lead test emails no agent — whatever the digests would have said.
+  const alerts = await deliverDigests(only === null ? digests : [], { channel, fub, usersById, dry, log });
+  if (digests.length && only === null) log(`  ${digests.length} agent digests (${channel}${dry ? ", dry" : ""})`);
 
   // 8. report + undo trail
   mkdirSync(LOG_DIR, { recursive: true });
-  if (sweepLog.sweeps.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
+  if (sweepLog.sweeps.length || sweepLog.nudges.length) writeFileSync(join(LOG_DIR, `${runId}.json`), JSON.stringify(sweepLog, null, 2));
 
-  const markdown = buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete, unenforceable, comparisonDrift, gap, stageTracking, passedOver, emailBackfill });
+  const testBanner =
+    only !== null
+      ? `> ## 🔬 SINGLE-LEAD LIVE TEST — lead #${only} only\n>\n> ${sweepLog.nudges.length ? `Nudged: ${sweepLog.nudges.map((n) => `${n.name} (#${n.personId}, ${n.owner}, ${n.source || "no source"})`).join("; ")}. Undo: \`node scripts/battr-audit.mjs --undo=${runId}\`` : "Nothing was written to Follow Up Boss."} Everything below is tonight's normal read-only audit; no other lead was touched and no agent was emailed.\n\n`
+      : "";
+  const markdown = testBanner + buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete, unenforceable, comparisonDrift, gap, stageTracking, passedOver, emailBackfill });
   const stageEmails = buildStageEmails({
     runId,
     dry,

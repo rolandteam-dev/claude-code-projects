@@ -300,6 +300,10 @@ export class FubClient {
     });
   }
 
+  deleteNote(noteId) {
+    return this.request("DELETE", `/notes/${noteId}`);
+  }
+
   /** Reassign a person. Passing a pond clears the individual agent assignment. */
   assign(personId, { userId = null, pondId = null, fields = {} } = {}) {
     return this.request("PUT", `/people/${personId}`, {

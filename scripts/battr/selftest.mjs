@@ -3668,7 +3668,9 @@ check("the state Battr owns is the state that went missing", () => {
     assert.match(src, /const AUDIT_DAY = auditDate\(\);/);
     assert.doesNotMatch(src, /ptDate\(\)/, "no date is taken from the wall clock");
     assert.doesNotMatch(src, /isDayAllowed\([^)]*new Date\(\)/, "no day filter reads the wall clock");
-    assert.equal((src.match(/isDayAllowed\(rules\.\w+DayFilter, AUDIT_DAY/g) ?? []).length, 2);
+    // Three: the nudge and sweep gates, and the single-lead test's own nudge gate.
+    // Each one must read the audit evening, which is what the pattern pins.
+    assert.equal((src.match(/isDayAllowed\(rules\.\w+DayFilter, AUDIT_DAY/g) ?? []).length, 3);
   });
 }
 
@@ -4084,3 +4086,68 @@ check("the state Battr owns is the state that went missing", () => {
 }
 
 console.log(`\n${passed} checks passed${process.exitCode ? " — with failures above" : ""}\n`);
+
+// ─── Reactivated Ylopo leads: match Battr (Mike, 6 Oct 2026) ─────────────────
+{
+  const R3 = (await import("./rules.mjs")).rules;
+  const DAYMS = 86_400_000;
+  const NOW = Date.parse("2026-10-06T02:00:00Z");
+  const ago = (d) => new Date(NOW - d * DAYMS).toISOString();
+  const monthly = lists.find((l) => l.name.includes("Monthly Nurture"));
+  const person = (extra = {}) => ({
+    id: 9, name: "Y", assignedUserId: 5, assignedTo: "A", source: "Ylopo", stage: "Nurture", timeframeId: 3,
+    created: ago(400), tags: ["Ylopo_Reactivated"], ...extra,
+  });
+  const touch = { lastOutbound: NOW - 40 * DAYMS, lastInbound: 0 };
+
+  check("ylopo: a reactivated lead with a recent inbox-app message is worked, and says why", () => {
+    assert.equal(R3.ylopoReactivatedInboxCountsAsTouch, true);
+    assert.equal(classifyForList(normalizeContact(person(), touch, {}), monthly, NOW), "at_risk", "no message: still at risk");
+    const c = normalizeContact(person({ lastSentInboxAppMessage: ago(4) }), touch, {});
+    assert.equal(classifyForList(c, monthly, NOW), "compliant");
+    assert.equal(c.touch_via, "ylopo inbox");
+  });
+
+  check("ylopo: the tag gates it — the same message on any other lead counts for nothing", () => {
+    const c = normalizeContact(person({ tags: ["Import"], lastSentInboxAppMessage: ago(4) }), touch, {});
+    assert.equal(classifyForList(c, monthly, NOW), "at_risk");
+    assert.equal(c.touch_via, null);
+  });
+
+  check("ylopo: an old message does not rescue a lead, and a newer call takes the credit", () => {
+    assert.equal(classifyForList(normalizeContact(person({ lastSentInboxAppMessage: ago(60) }), touch, {}), monthly, NOW), "at_risk");
+    const c = normalizeContact(person({ lastSentInboxAppMessage: ago(4) }), { lastOutbound: NOW - 1 * DAYMS, lastInbound: 0 }, {});
+    assert.equal(c.touch_via, null);
+  });
+}
+
+// ─── The single-lead live test (--only) ──────────────────────────────────────
+{
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+
+  check("single-lead test: it can nudge the one lead and nothing else — never sweep, never email an agent", () => {
+    assert.match(src, /else if \(arg\.startsWith\("--only="\)\) a\.only = Number\(arg\.slice\(7\)\) \|\| null;/);
+    // The test gate needs a COMPLETE backfill, so it acts on the evidence a real night would.
+    assert.match(src, /const testOverride = only !== null && backfillsComplete;/);
+    assert.match(src, /if \(only !== null && lead\.id !== only\) continue;/, "every other lead is skipped in the nudge loop");
+    assert.match(src, /sweepsAllowedToday && only === null\)/, "a test never sweeps");
+    assert.match(src, /deliverDigests\(only === null \? digests : \[\]/, "a test emails no agent");
+    assert.match(src, /if \(only === null\) appendComparisons/, "a test is not a night in the running record");
+  });
+
+  check("single-lead test: the nudge is logged with its note id so undo can reverse it, and undo still refuses a dry log", () => {
+    assert.match(src, /noteId: created\?\.id \?\? null/);
+    const fn = src.slice(src.indexOf("async function undo("), src.indexOf("// ---", src.indexOf("async function undo(")));
+    assert.match(fn, /deleteNote\(nudge\.noteId\)/);
+    assert.match(fn, /Object\.fromEntries\(nudge\.fields\.map\(\(f\) => \[f, null\]\)\)/, "the stamp comes off too — it is what arms a sweep");
+    assert.ok(fn.indexOf("if (entry.dry)") < fn.indexOf("new FubClient"), "the dry-log refusal still comes first");
+  });
+
+  check("single-lead test: the workflow passes the lead id through and the client can delete a note", () => {
+    const wf = readFileSync(join(ROOT, ".github", "workflows", "battr-audit.yml"), "utf8");
+    assert.match(wf, /only_id:/);
+    assert.match(wf, /format\('--only=\{0\}', inputs\.only_id\)/);
+    const fubSrc = readFileSync(join(ROOT, "scripts", "battr", "fub.mjs"), "utf8");
+    assert.match(fubSrc, /deleteNote\(noteId\) \{\s*return this\.request\("DELETE", `\/notes\/\$\{noteId\}`\);/);
+  });
+}
