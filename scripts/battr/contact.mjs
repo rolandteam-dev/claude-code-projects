@@ -82,11 +82,24 @@ export function normalizeContact(
   const emailFields = inboundCountsAsTouch ? FUB_EMAIL_FIELDS : ["lastSentEmail"];
   const emailActivity = rules.fubEmailActivityCountsAsTouch ? (latestProfileTouchAt(person, emailFields) ?? 0) : 0;
 
+  // A reactivated Ylopo lead's inbox-app message, which Battr counts as work on
+  // that tag alone. See rules.ylopoReactivatedInboxCountsAsTouch.
+  const ylopoTag = String(rules.ylopoReactivatedTag ?? "").toLowerCase();
+  const ylopoActivity =
+    rules.ylopoReactivatedInboxCountsAsTouch && ylopoTag && tags.some((t) => String(t).toLowerCase() === ylopoTag)
+      ? (profileTouchAt(person, ["lastSentInboxAppMessage"]) ?? 0)
+      : 0;
+
   const otherTouch = Math.max(touch?.lastOutbound ?? 0, inbound, profileTouch);
-  const lastTouchMs = Math.max(otherTouch, emailActivity);
+  const lastTouchMs = Math.max(otherTouch, emailActivity, ylopoActivity);
   const lastCommunication = lastTouchMs ? new Date(lastTouchMs).toISOString() : null;
   // Reported, so a silent no-op here cannot hide: how many leads this field is what saves.
-  const touchVia = emailActivity && emailActivity > otherTouch ? "fub email" : null;
+  const touchVia =
+    ylopoActivity && ylopoActivity > Math.max(otherTouch, emailActivity)
+      ? "ylopo inbox"
+      : emailActivity && emailActivity > otherTouch
+        ? "fub email"
+        : null;
 
   const atRiskSinceKey = stamps.atRiskSince || "customBattrAtRiskSince";
 

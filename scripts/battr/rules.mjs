@@ -350,6 +350,24 @@ export const rules = {
   fubEmailActivityCountsAsTouch: true,
 
   /**
+   * On a lead tagged `Ylopo_Reactivated`, Follow Up Boss's last-sent-inbox-app
+   * message date counts as a touch. Mike's call, 6 Oct 2026: "match Battr".
+   *
+   * Evidence, 5 Oct: all 9 leads only we flagged carried that tag AND a
+   * `lastSentInboxAppMessage` inside their window; Battr leaves them alone. So
+   * for these reactivated Ylopo leads Battr treats the message as work, which
+   * it does not for any other lead (3 of the 36 it flagged had the field in
+   * window with no such tag effect).
+   *
+   * Narrowing only, and tag-gated: it can clear a flag, never raise one, and it
+   * touches nobody without the tag. The nightly Summary counts the leads it
+   * saves and how many of them carry Battr's own stamp — which must be 0. A
+   * non-zero count means Battr does flag leads like these, and the rule is wrong.
+   */
+  ylopoReactivatedInboxCountsAsTouch: true,
+  ylopoReactivatedTag: "Ylopo_Reactivated",
+
+  /**
    * Ceiling on per-lead email lookups in the touch backfill. Same shape and
    * same reason as maxTextBackfill: FUB will not serve /v1/emails in bulk, so
    * the actionable shortlist is fetched one lead at a time, and a run that

@@ -55,6 +55,10 @@ on:
         description: "Where to send the test email (task: test-email)"
         required: false
         type: string
+      only_id:
+        description: "Single-lead live test: FUB id of the ONE lead to nudge (mode live, stage at-risk). Writes nothing for anyone else, emails no agent."
+        required: false
+        type: string
       max_sweeps:
         description: "Override the per-run sweep cap (optional)"
         required: false
@@ -212,7 +216,8 @@ jobs:
         run: |
           node scripts/battr-audit.mjs \
             --stage="${{ inputs.stage || 'both' }}" \
-            ${{ inputs.max_sweeps && format('--max-sweeps={0}', inputs.max_sweeps) || '' }}
+            ${{ inputs.max_sweeps && format('--max-sweeps={0}', inputs.max_sweeps) || '' }} \
+            ${{ inputs.only_id && format('--only={0}', inputs.only_id) || '' }}
 
       # The emergency brake. Reversing a sweep is a corrective action against
       # writes that already happened, so it is deliberately NOT gated on
