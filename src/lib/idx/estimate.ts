@@ -45,7 +45,12 @@ export type EstimateResult = {
 
 export type EstimateResponse =
   | { ok: true; estimate: EstimateResult }
-  | { ok: false; reason: "not_configured" | "insufficient_comps" | "invalid_input" | "upstream_error" };
+  | {
+      ok: false;
+      reason: "not_configured" | "insufficient_comps" | "invalid_input" | "upstream_error";
+      /** Field-level upstream error text, surfaced rather than swallowed. */
+      detail?: string;
+    };
 
 type StyleWant = "detached" | "attached" | null;
 
@@ -163,10 +168,13 @@ export async function estimateHomeValue(input: EstimateInput): Promise<EstimateR
       headers: { "REPLIERS-API-KEY": key, "Content-Type": "application/json" },
       next: { revalidate: 3600 }, // comps move slowly; cache an hour
     });
-    if (!res.ok) return { ok: false, reason: "upstream_error" };
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      return { ok: false, reason: "upstream_error", detail: body.slice(0, 300) || `HTTP ${res.status}` };
+    }
     data = await res.json();
-  } catch {
-    return { ok: false, reason: "upstream_error" };
+  } catch (e) {
+    return { ok: false, reason: "upstream_error", detail: String(e).slice(0, 300) };
   }
 
   const rows: any[] = Array.isArray(data?.listings) ? data.listings : [];
