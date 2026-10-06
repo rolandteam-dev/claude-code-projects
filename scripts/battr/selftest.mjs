@@ -4151,3 +4151,18 @@ console.log(`\n${passed} checks passed${process.exitCode ? " — with failures a
     assert.match(fubSrc, /deleteNote\(noteId\) \{\s*return this\.request\("DELETE", `\/notes\/\$\{noteId\}`\);/);
   });
 }
+
+// ─── Run 9gwg (6 Oct): what the first single-lead dry run exposed ────────────
+{
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+
+  check("single-lead test: no stage emails, so the test lead is not buried under 'held' rows", () => {
+    assert.match(src, /const stageEmails = only !== null \? \[\] : buildStageEmails\(/);
+  });
+
+  check("ylopo self-check: only a lead we call WORKED can contradict Battr's stamp", () => {
+    // Run 9gwg counted two stamped leads that were still at risk — a false alarm
+    // that told Mike the rule was wrong. A lead the message did not save is not evidence.
+    assert.match(src, /r\.status === "compliant" && r\.contact\?\.touch_via === "ylopo inbox"/);
+  });
+}

@@ -286,10 +286,14 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     // Mike's "match Battr" rule. The standing self-check: a lead this saves that
     // ALSO carries Battr's own stamp means Battr flags leads like it, so the
     // rule is wrong and must come out.
-    const saved = results.filter((r) => r.status !== "excluded" && r.contact?.touch_via === "ylopo inbox");
+    // Only leads we call WORKED count: a lead whose latest touch is that message
+    // but which is still at risk (the message is older than its window) was not
+    // saved by it, and Battr stamping it contradicts nothing. 6 Oct, run 9gwg:
+    // 2 such leads tripped this check as a false alarm.
+    const saved = results.filter((r) => r.status === "compliant" && r.contact?.touch_via === "ylopo inbox");
     const stamped = saved.filter((r) => r.contact?._raw?.customBattrAtRiskSince).length;
     lines.push(
-      `- Reactivated Ylopo leads (\`${rules.ylopoReactivatedTag}\`) counted as worked on their last inbox message, to match Battr: **${saved.length}** audited lead(s)` +
+      `- Reactivated Ylopo leads (\`${rules.ylopoReactivatedTag}\`) counted as worked on their last inbox message, to match Battr: **${saved.length}** compliant lead(s) have it as their latest touch` +
         (stamped ? ` — ⚠ **${stamped}** of them carry Battr's own stamp, so Battr DOES flag leads like these; the rule is wrong` : " — none of them carry Battr's stamp, as expected")
     );
   }
@@ -1481,7 +1485,9 @@ async function main() {
       ? `> ## 🔬 SINGLE-LEAD LIVE TEST — lead #${only} only\n>\n> ${sweepLog.nudges.length ? `Nudged: ${sweepLog.nudges.map((n) => `${n.name} (#${n.personId}, ${n.owner}, ${n.source || "no source"})`).join("; ")}. Undo: \`node scripts/battr-audit.mjs --undo=${runId}\`` : "Nothing was written to Follow Up Boss."} Everything below is tonight's normal read-only audit; no other lead was touched and no agent was emailed.\n\n`
       : "";
   const markdown = testBanner + buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete, unenforceable, comparisonDrift, gap, stageTracking, passedOver, emailBackfill });
-  const stageEmails = buildStageEmails({
+  // A single-lead test sends the one report and no stage emails: those would
+  // list every at-risk lead as "held" and bury the one that was tested.
+  const stageEmails = only !== null ? [] : buildStageEmails({
     runId,
     dry,
     results,
