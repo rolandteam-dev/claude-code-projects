@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { homeownerStore, type Homeowner } from "@/lib/homeowners/store";
 import { FUB_BASE, fubHeaders, personToHomeowner } from "@/lib/homeowners/fubMap";
 import { isSellerCandidate, maxPerRun, maybeSendSellerReport } from "@/lib/homeowners/sellerAuto";
+import { applyLandingPageRules, createdWithin } from "@/lib/fub/landingPageRules";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -60,6 +61,7 @@ export async function GET(req: Request) {
   const sellerSkips: Record<string, number> = {};
   const sellerDry = params.get("dryRun") === "1";
   let newestUpdated: string | null = null;
+  const attribution: Record<string, number> = {};
   let oldestUpdated: string | null = null;
 
   try {
@@ -84,6 +86,15 @@ export async function GET(req: Request) {
         const record = personToHomeowner(person);
         if (record) batch.push(record);
         else skipped++;
+        // Safety net for the webhook: stamp landing-page attribution on
+        // anything created in the last 2 days that the webhook missed.
+        if (createdWithin(person, 48)) {
+          const a = await applyLandingPageRules(key, String(person.id), { person, dryRun: sellerDry });
+          if (a.action !== "no-match" && a.action !== "no-events") {
+            const k = `${a.rule ?? "?"}:${a.action}`;
+            attribution[k] = (attribution[k] ?? 0) + 1;
+          }
+        }
         // New seller leads (Seller tag + address) get the home report.
         if (sellerSent < maxPerRun() && isSellerCandidate(person, false)) {
           try {
@@ -113,6 +124,7 @@ export async function GET(req: Request) {
     newestUpdated,
     oldestUpdated,
     sellerReports: { [sellerDry ? "wouldSend" : "sent"]: sellerSent, skipped: sellerSkips },
+    attribution,
   });
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
