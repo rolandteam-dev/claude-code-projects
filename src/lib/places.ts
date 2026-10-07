@@ -11,8 +11,13 @@ export function placesKey(): string | null {
   return process.env.GOOGLE_PLACES_API_KEY || process.env.GOOGLE_MAPS_API_KEY || null;
 }
 
-/** Bias autocomplete toward the Las Vegas valley (Clark County). */
-export const CLARK_COUNTY = { latitude: 36.08, longitude: -115.17, radiusMeters: 60000 };
+/**
+ * Bias autocomplete toward the Las Vegas valley (Clark County). Google caps a
+ * locationBias circle radius at 50,000 meters — anything larger is rejected
+ * with INVALID_ARGUMENT, so keep this at the 50 km max (covers Las Vegas,
+ * Henderson, North Las Vegas, Summerlin and Boulder City from this center).
+ */
+export const CLARK_COUNTY = { latitude: 36.08, longitude: -115.17, radiusMeters: 50000 };
 
 /** First client IP from the proxy headers (best-effort). */
 export function clientIp(req: Request): string {
