@@ -4,7 +4,15 @@ import { useRef, useState } from "react";
 import { site } from "@/lib/site";
 import { AddressAutocomplete, type StructuredAddress } from "@/components/AddressAutocomplete";
 
-type Estimate = { low: number; mid: number; high: number; compCount: number; ppsfMedian: number };
+type Estimate = {
+  low: number;
+  mid: number;
+  high: number;
+  compCount: number;
+  ppsfMedian: number;
+  basis?: "radius" | "zip";
+  radiusMiles?: number;
+};
 type ApiResponse = { ok: true; estimate: Estimate } | { ok: false; reason: string };
 
 /** Where a field's current value came from — never a fabricated default. */
@@ -171,6 +179,8 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
           propertyType: f.propertyType,
           beds: Number(f.beds),
           sqft: Number(f.sqft),
+          lat: geoRef.current.lat ?? undefined,
+          lng: geoRef.current.lng ?? undefined,
         }),
       });
       const data: ApiResponse = await res.json();
@@ -264,8 +274,11 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
           Likely range <strong>{fmt(estimate.low)}</strong> – <strong>{fmt(estimate.high)}</strong>
         </div>
         <div className="mt-3 rounded-md bg-[var(--color-sand)] px-3 py-2 font-sans text-[0.78rem] text-[var(--color-ink-soft)]">
-          Based on <strong>{estimate.compCount}</strong> sold comps in {f.zip} over the past 6 months · median{" "}
-          {fmt(estimate.ppsfMedian)}/sqft.
+          Based on <strong>{estimate.compCount}</strong> sold comps{" "}
+          {estimate.basis === "radius" && estimate.radiusMiles
+            ? `within ~${estimate.radiusMiles} mi of your home`
+            : `in ${f.zip}`}{" "}
+          over the past 6 months · median {fmt(estimate.ppsfMedian)}/sqft.
         </div>
         <a href="#request-cma" className={`btn mt-5 w-full${showCmaButton ? "" : " hidden"}`}>
           Get my precise CMA →
