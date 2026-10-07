@@ -33,6 +33,13 @@ export type EstimateInput = {
   propertyType?: string;
   beds: number;
   sqft: number;
+  /** Subject coordinates (from address autocomplete). When present and enough
+   * comps fall within the radius, the estimate uses the NEAREST comps instead
+   * of the whole ZIP. Absent → ZIP-wide, exactly as before. */
+  lat?: number;
+  lng?: number;
+  /** Comp radius in miles (default COMP_RADIUS_MILES env or 3). */
+  radiusMiles?: number;
 };
 
 export type EstimateResult = {
@@ -41,6 +48,11 @@ export type EstimateResult = {
   high: number;
   compCount: number;
   ppsfMedian: number;
+  /** Which comp set produced the range: "radius" = nearest comps to the home's
+   * coordinates, "zip" = all comps in the ZIP (the fallback / prior behavior). */
+  basis: "radius" | "zip";
+  /** Radius actually used, when basis is "radius". */
+  radiusMiles?: number;
 };
 
 export type EstimateResponse =
@@ -95,6 +107,20 @@ function percentile(sorted: number[], p: number): number {
 
 const roundTo = (n: number, step: number) => Math.round(n / step) * step;
 
+const DEFAULT_RADIUS_MILES = 3;
+
+/** Great-circle distance in miles between two lat/lng points (haversine). */
+function milesBetween(aLat: number, aLng: number, bLat: number, bLng: number): number {
+  const R = 3958.8; // Earth radius, miles
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(bLat - aLat);
+  const dLng = toRad(bLng - aLng);
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const num = (...vals: any[]): number => {
   for (const v of vals) {
@@ -120,6 +146,16 @@ export function styleTextOf(row: any): string {
   return [d.style, d.propertySubType, d.subType]
     .filter((v) => typeof v === "string" && v.trim())
     .join(" ");
+}
+
+/** A comp row's coordinates, if the feed carries them (GLVAR: `map.latitude/
+ * longitude`, sometimes on `address`). Missing/zero → null (never 0,0). */
+function coordsOf(row: any): { lat: number | null; lng: number | null } {
+  const m = row?.map ?? {};
+  const a = row?.address ?? {};
+  const lat = num(m.latitude, m.lat, a.latitude, a.lat);
+  const lng = num(m.longitude, m.lng, a.longitude, a.lng);
+  return { lat: lat || null, lng: lng || null };
 }
 
 /** ISO date (YYYY-MM-DD) for the comp-window cutoff, MONTHS_BACK months ago. */
@@ -160,7 +196,7 @@ export async function estimateHomeValue(input: EstimateInput): Promise<EstimateR
   const want = styleWantFor(input.propertyType);
   p.set("resultsPerPage", "100");
   p.set("sortBy", "soldDateDesc");
-  p.set("fields", "mlsNumber,soldPrice,soldDate,lastStatus,class,address,details");
+  p.set("fields", "mlsNumber,soldPrice,soldDate,lastStatus,class,address,details,map");
 
   let data: any;
   try {
@@ -179,9 +215,15 @@ export async function estimateHomeValue(input: EstimateInput): Promise<EstimateR
 
   const rows: any[] = Array.isArray(data?.listings) ? data.listings : [];
 
+  // Subject coordinates + comp radius for distance-based selection.
+  const subjLat = num(input.lat);
+  const subjLng = num(input.lng);
+  const haveGeo = subjLat !== 0 && subjLng !== 0 && Number.isFinite(subjLat) && Number.isFinite(subjLng);
+  const radius = Math.min(25, Math.max(0.5, num(input.radiusMiles, process.env.COMP_RADIUS_MILES) || DEFAULT_RADIUS_MILES));
+
   // Re-apply every filter in-app so a loosened server param can't skew the math.
   const cutoffTs = Date.parse(cutoff);
-  const ppsf: number[] = [];
+  const comps: { ppsf: number; dist: number | null }[] = [];
   for (const r of rows) {
     const details = r?.details ?? {};
     const addr = r?.address ?? {};
@@ -203,9 +245,31 @@ export async function estimateHomeValue(input: EstimateInput): Promise<EstimateR
     if (soldDate && Number.isFinite(cutoffTs) && Date.parse(soldDate) < cutoffTs) continue;
 
     const perSqft = soldPrice / rowSqft;
-    if (Number.isFinite(perSqft) && perSqft > 0) ppsf.push(perSqft);
+    if (!Number.isFinite(perSqft) || perSqft <= 0) continue;
+
+    let dist: number | null = null;
+    if (haveGeo) {
+      const c = coordsOf(r);
+      if (c.lat != null && c.lng != null) dist = milesBetween(subjLat, subjLng, c.lat, c.lng);
+    }
+    comps.push({ ppsf: perSqft, dist });
   }
 
+  // Prefer the NEAREST comps when we have the home's coordinates and enough
+  // sales fall within the radius. Otherwise fall back to the full ZIP set —
+  // identical to the prior behavior, so this can never shrink a thin market
+  // below the minimum or make a report blank.
+  let basis: "radius" | "zip" = "zip";
+  let selected = comps;
+  if (haveGeo) {
+    const near = comps.filter((c) => c.dist != null && c.dist <= radius);
+    if (near.length >= MIN_COMPS) {
+      selected = near;
+      basis = "radius";
+    }
+  }
+
+  const ppsf = selected.map((c) => c.ppsf);
   if (ppsf.length < MIN_COMPS) return { ok: false, reason: "insufficient_comps" };
 
   // Trim the top & bottom 5% of $/sqft (distressed sales, non-arm's-length flips).
@@ -225,6 +289,8 @@ export async function estimateHomeValue(input: EstimateInput): Promise<EstimateR
       high: roundTo(p75 * sqft, 1000),
       compCount: trimmed.length,
       ppsfMedian: Math.round(p50),
+      basis,
+      radiusMiles: basis === "radius" ? radius : undefined,
     },
   };
 }
