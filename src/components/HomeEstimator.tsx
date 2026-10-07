@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { site } from "@/lib/site";
+import { AddressAutocomplete, type StructuredAddress } from "@/components/AddressAutocomplete";
 
 type Estimate = { low: number; mid: number; high: number; compCount: number; ppsfMedian: number };
-type ApiResponse =
-  | { ok: true; estimate: Estimate }
-  | { ok: false; reason: string };
+type ApiResponse = { ok: true; estimate: Estimate } | { ok: false; reason: string };
+
+/** Where a field's current value came from — never a fabricated default. */
+type Src = "" | "mls" | "user";
 
 const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
@@ -15,24 +17,43 @@ const field =
 const label = "mb-1 block font-sans text-[0.66rem] font-semibold uppercase tracking-[0.1em] text-[var(--color-muted)]";
 
 /**
- * Instant comp-based home value estimator. Posts ZIP + beds + sqft to
- * /api/home-estimate (Repliers sold comps) and shows a low/mid/high range —
- * no email required to see the number. Routes to a full human CMA afterward.
+ * Instant comp-based home value estimator with Google Places autocomplete.
+ * Picking an address pre-fills beds/baths/sqft from the MLS (editable, tagged
+ * "from records"); when the MLS has no record, the fields are blank for manual
+ * entry. Nothing is ever invented — beds has no default. Posts ZIP + beds + sqft
+ * to /api/home-estimate (sold comps) and shows a low/mid/high range.
  *
- * `showCmaButton` (default true) toggles the "Get my precise CMA →" link, which
- * scrolls to the page's #request-cma section. The embeddable version turns it
- * off (there's no CMA section there) so the flow is a single clean path:
- * estimate → track this home → dashboard.
+ * `showCmaButton` (default true) toggles the "Get my precise CMA →" link.
  */
 export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolean } = {}) {
   const [f, setF] = useState({
     address: "",
     zip: "",
     city: "",
+    state: "NV",
     propertyType: "Single Family",
-    beds: "3",
+    beds: "", // no default — never invented
+    baths: "",
     sqft: "",
   });
+  // Where each editable value came from (for the "from records" tag).
+  const [src, setSrc] = useState<{ beds: Src; baths: Src; sqft: Src; propertyType: Src }>({
+    beds: "",
+    baths: "",
+    sqft: "",
+    propertyType: "",
+  });
+  // Structured geo captured from Places (lat/lng held for a future distance-comp
+  // pass — see the PR notes). Kept in a ref: it feeds no request in this version,
+  // so it must not trigger re-renders or read as unused state.
+  const geoRef = useRef<{ streetNumber: string; streetName: string; lat: number | null; lng: number | null }>({
+    streetNumber: "",
+    streetName: "",
+    lat: null,
+    lng: null,
+  });
+  const [prefilling, setPrefilling] = useState(false);
+
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "nocomps" | "error">("idle");
   const [estimate, setEstimate] = useState<Estimate | null>(null);
 
@@ -44,6 +65,49 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
   function set<K extends keyof typeof f>(k: K, v: string) {
     setF((prev) => ({ ...prev, [k]: v }));
   }
+  /** User-typed edit of a prefillable field → mark it as user-sourced. */
+  function edit(k: "beds" | "baths" | "sqft" | "propertyType", v: string) {
+    set(k, v);
+    setSrc((prev) => ({ ...prev, [k]: "user" }));
+  }
+
+  /** User picked a Places suggestion → fill address parts, then prefill from MLS. */
+  async function onPickAddress(a: StructuredAddress) {
+    setF((prev) => ({ ...prev, address: a.address, city: a.city || prev.city, zip: a.zip || prev.zip, state: a.state || prev.state }));
+    geoRef.current = { streetNumber: a.streetNumber, streetName: a.streetName, lat: a.lat, lng: a.lng };
+    if (!a.address || !a.zip) return;
+    setPrefilling(true);
+    try {
+      const res = await fetch("/api/homeowners/resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: a.address, zip: a.zip }),
+      });
+      const d = await res.json();
+      if (d?.ok && d.found) {
+        setF((prev) => ({
+          ...prev,
+          beds: d.beds ? String(d.beds) : prev.beds,
+          baths: d.baths ? String(d.baths) : prev.baths,
+          sqft: d.sqft ? String(d.sqft) : prev.sqft,
+          propertyType: d.propertyType || prev.propertyType,
+        }));
+        setSrc({
+          beds: d.beds ? "mls" : "",
+          baths: d.baths ? "mls" : "",
+          sqft: d.sqft ? "mls" : "",
+          propertyType: d.propertyType ? "mls" : "",
+        });
+      }
+    } catch {
+      // leave fields for manual entry — never guess
+    } finally {
+      setPrefilling(false);
+    }
+  }
+
+  const fromRecords = (k: "beds" | "baths" | "sqft" | "propertyType") =>
+    src[k] === "mls" ? <span className="ml-2 font-sans text-[0.6rem] font-semibold normal-case text-[var(--color-gold)]">✓ from records</span> : null;
 
   async function saveTracking(e: React.FormEvent) {
     e.preventDefault();
@@ -107,8 +171,6 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
         setEstimate(data.estimate);
         setStatus("done");
       } else {
-        // Any non-success reason (no comps, not configured, upstream) → the
-        // same graceful "let a human run it" fallback.
         setStatus("nocomps");
       }
     } catch {
@@ -142,12 +204,15 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
           </p>
           <div className="mt-3 space-y-2">
             {!f.address.trim() && (
-              <input
+              <AddressAutocomplete
                 className={field}
                 placeholder="Street address"
                 value={track.address}
-                onChange={(e) => setTrack((p) => ({ ...p, address: e.target.value }))}
-                aria-label="Street address"
+                onTextChange={(v) => setTrack((p) => ({ ...p, address: v }))}
+                onPick={(a) => {
+                  setTrack((p) => ({ ...p, address: a.address }));
+                  setF((prev) => ({ ...prev, city: a.city || prev.city, zip: a.zip || prev.zip }));
+                }}
               />
             )}
             <input
@@ -167,9 +232,7 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
               required
             />
             {trackStatus === "error" && (
-              <div className="font-sans text-[0.76rem] text-[#b4433a]">
-                Please add your email and street address.
-              </div>
+              <div className="font-sans text-[0.76rem] text-[#b4433a]">Please add your email and street address.</div>
             )}
             <button type="submit" disabled={trackStatus === "sending"} className="btn w-full disabled:opacity-60">
               {trackStatus === "sending" ? "Setting up…" : estimate ? "Track my home value" : "Create my dashboard"}
@@ -201,7 +264,6 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
           Get my precise CMA →
         </a>
 
-        {/* Track this home → private homeowner dashboard + value updates */}
         {trackBox}
 
         <button
@@ -235,8 +297,6 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
           Request a free CMA →
         </a>
 
-        {/* Even without an instant number, still capture the lead + create the
-            dashboard — the team values luxury/unique homes by hand. */}
         {trackBox}
 
         <button
@@ -254,12 +314,21 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
     <form onSubmit={submit} className="rounded-[14px] bg-white p-7 text-[var(--color-ink)] shadow-[var(--shadow-soft)]">
       <div className="font-sans text-[1.1rem] font-semibold">Get a starting home value</div>
       <p className="mt-1 font-sans text-[0.82rem] text-[var(--color-ink-soft)]">
-        Enter your ZIP, bedrooms, and square footage — no sign-up, no email required to see the number.
+        Start typing your address — we&apos;ll pull your home&apos;s details automatically. No sign-up to see the number.
       </p>
       <div className="mt-4 space-y-3">
         <div>
-          <label className={label}>Street address (optional)</label>
-          <input className={field} placeholder="123 Main St, City, NV" value={f.address} onChange={(e) => set("address", e.target.value)} />
+          <label className={label}>Street address</label>
+          <AddressAutocomplete
+            className={field}
+            placeholder="123 Main St, Las Vegas, NV"
+            value={f.address}
+            onTextChange={(v) => set("address", v)}
+            onPick={onPickAddress}
+          />
+          {prefilling && (
+            <p className="mt-1 font-sans text-[0.68rem] text-[var(--color-muted)]">Looking up your home&apos;s details…</p>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -279,18 +348,19 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
           </div>
         </div>
         <div>
-          <label className={label}>Property type</label>
-          <select className={field} value={f.propertyType} onChange={(e) => set("propertyType", e.target.value)}>
+          <label className={label}>Property type{fromRecords("propertyType")}</label>
+          <select className={field} value={f.propertyType} onChange={(e) => edit("propertyType", e.target.value)}>
             <option>Single Family</option>
             <option>Condo</option>
             <option>Townhouse</option>
             <option>Multi-Family</option>
           </select>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <div>
-            <label className={label}>Bedrooms *</label>
-            <select className={field} value={f.beds} onChange={(e) => set("beds", e.target.value)} required>
+            <label className={label}>Bedrooms *{fromRecords("beds")}</label>
+            <select className={field} value={f.beds} onChange={(e) => edit("beds", e.target.value)} required>
+              <option value="">Select</option>
               {["1", "2", "3", "4", "5", "6"].map((b) => (
                 <option key={b} value={b}>
                   {b === "6" ? "6+" : b}
@@ -299,13 +369,24 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
             </select>
           </div>
           <div>
-            <label className={label}>Square footage *</label>
+            <label className={label}>Baths{fromRecords("baths")}</label>
+            <select className={field} value={f.baths} onChange={(e) => edit("baths", e.target.value)}>
+              <option value="">—</option>
+              {["1", "2", "3", "4", "5"].map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className={label}>Sq ft *{fromRecords("sqft")}</label>
             <input
               className={field}
               inputMode="numeric"
               placeholder="2,400"
               value={f.sqft}
-              onChange={(e) => set("sqft", e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
+              onChange={(e) => edit("sqft", e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
               required
             />
           </div>
