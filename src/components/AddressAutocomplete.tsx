@@ -42,15 +42,16 @@ export function AddressAutocomplete({
   const [noResults, setNoResults] = useState(false);
   const sessionRef = useRef<string>(newSession());
   const boxRef = useRef<HTMLDivElement>(null);
-  const skipNext = useRef(false); // don't re-query right after a pick
+  // Suppress autocomplete queries after a pick — a pick changes `value` several
+  // times (the chosen text, then the parent writing back the parsed address),
+  // and every one would otherwise re-open the list. Cleared only when the user
+  // actually types again.
+  const suppress = useRef(false);
 
   // Debounced autocomplete query. All state changes happen inside the timeout
   // callback (not synchronously in the effect body) to avoid cascading renders.
   useEffect(() => {
-    if (skipNext.current) {
-      skipNext.current = false;
-      return;
-    }
+    if (suppress.current) return;
     const q = value.trim();
     const t = setTimeout(async () => {
       if (q.length < 3) {
@@ -90,7 +91,8 @@ export function AddressAutocomplete({
   async function choose(s: Suggestion) {
     setOpen(false);
     setSuggestions([]);
-    skipNext.current = true;
+    setNoResults(false);
+    suppress.current = true; // keep the pick's value changes from re-opening the list
     onTextChange(s.text); // reflect the chosen text immediately
     try {
       const res = await fetch(
@@ -125,7 +127,10 @@ export function AddressAutocomplete({
         placeholder={placeholder}
         autoComplete="off"
         autoFocus={autoFocus}
-        onChange={(e) => onTextChange(e.target.value)}
+        onChange={(e) => {
+          suppress.current = false; // user is typing again — allow queries
+          onTextChange(e.target.value);
+        }}
         onFocus={() => suggestions.length > 0 && setOpen(true)}
         aria-label="Street address"
       />

@@ -53,6 +53,8 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
     lng: null,
   });
   const [prefilling, setPrefilling] = useState(false);
+  // "notfound" after a pick we couldn't match in the MLS → prompt manual entry.
+  const [lookup, setLookup] = useState<"idle" | "found" | "notfound">("idle");
 
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "nocomps" | "error">("idle");
   const [estimate, setEstimate] = useState<Estimate | null>(null);
@@ -77,6 +79,7 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
     geoRef.current = { streetNumber: a.streetNumber, streetName: a.streetName, lat: a.lat, lng: a.lng };
     if (!a.address || !a.zip) return;
     setPrefilling(true);
+    setLookup("idle");
     try {
       const res = await fetch("/api/homeowners/resolve", {
         method: "POST",
@@ -98,9 +101,13 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
           sqft: d.sqft ? "mls" : "",
           propertyType: d.propertyType ? "mls" : "",
         });
+        setLookup("found");
+      } else {
+        setLookup("notfound");
       }
     } catch {
       // leave fields for manual entry — never guess
+      setLookup("notfound");
     } finally {
       setPrefilling(false);
     }
@@ -323,11 +330,19 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
             className={field}
             placeholder="123 Main St, Las Vegas, NV"
             value={f.address}
-            onTextChange={(v) => set("address", v)}
+            onTextChange={(v) => {
+              set("address", v);
+              if (lookup !== "idle") setLookup("idle");
+            }}
             onPick={onPickAddress}
           />
           {prefilling && (
             <p className="mt-1 font-sans text-[0.68rem] text-[var(--color-muted)]">Looking up your home&apos;s details…</p>
+          )}
+          {!prefilling && lookup === "notfound" && (
+            <p className="mt-1 font-sans text-[0.68rem] text-[var(--color-muted)]">
+              We couldn&apos;t pull this home from the MLS automatically — just enter the details below.
+            </p>
           )}
         </div>
         <div className="grid grid-cols-2 gap-3">
