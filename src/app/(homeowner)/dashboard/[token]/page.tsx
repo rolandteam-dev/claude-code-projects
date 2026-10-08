@@ -81,8 +81,8 @@ export default async function DashboardPage({
               {h.address ? (
                 <>
                   Tell us a couple of quick details about{" "}
-                  <span className="font-semibold text-[var(--color-ink)]">{h.address}</span> and we&apos;ll pull an
-                  instant estimate from recent sold comparables.
+                  <span className="font-semibold text-[var(--color-ink)]">{h.address}</span>{" "}and we&apos;ll pull
+                  an instant estimate from recent sold comparables.
                 </>
               ) : (
                 <>Tell us a couple of quick details and we&apos;ll pull an instant estimate from recent sold comparables.</>
