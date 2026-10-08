@@ -1,14 +1,14 @@
 /**
- * Former teammates — agents who have LEFT the team (deactivated in Slack). The
- * Referral Watch flags a closing in our database where the listing agent is one
- * of these, so we can decide whether a referral is due.
+ * Former teammates — agents who have LEFT the team (Deactivated in the Slack
+ * roster). The Referral Watch flags a closing in our database where the listing
+ * agent is one of these, so we can decide whether a referral is due.
  *
- * ⚠️ PARTIAL LIST: seeded from the Slack "Manage members" roster, Deactivated
- * only, names A–L (the M–Z rows had scrolled off). ADD the rest — the match is
- * by first + last name, so exact middle initials/suffixes don't matter.
- * Current (Active) members are intentionally excluded so they never trigger.
+ * Source: full Slack "Manage members" CSV export, status = Deactivated, names
+ * with a first + last (single-name usernames and bots dropped). Current (Member/
+ * Admin/Owner) accounts are intentionally excluded so they never trigger.
+ * Matching is by first + last name, so middle initials/suffixes don't matter.
  *
- * To update: just add/remove names here (one per line) and redeploy.
+ * To update when someone leaves/returns: add/remove a name here and redeploy.
  */
 export const formerAgents: string[] = [
   "Aaron Mazza",
@@ -71,5 +71,26 @@ export const formerAgents: string[] = [
   "Lindsay L. Timm",
   "Logan Ostrea",
   "Lucy Bouza",
-  // --- ADD M–Z HERE ---
+  "Makenna Pittman",
+  "Michael Holman",
+  "Molly Roland",
+  "Oryan Rodriguez",
+  "Patricia Smith",
+  "Pauline Aguilera",
+  "Renée Jars",
+  "Ronald Krell",
+  "Royann Robins",
+  "Ryan Donahue",
+  "Ryan Williams",
+  "Sasha Richard",
+  "Sheri Paul",
+  "Shima Shadmani",
+  "Tannyr Catlin",
+  "Tara Goldberg",
+  "Theresa Ballentine",
+  "Tiana Joy Jimenez",
+  "William Crawford",
+  "Yajaira Grimaldo",
+  "Yanette Melendez",
+  "Zach Hare",
 ];
