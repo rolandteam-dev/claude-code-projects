@@ -110,7 +110,7 @@ export default async function ClosingsPage({
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b border-[var(--color-line)] text-left">
-                    {["Property", "Sold", "Sold price", "DOM", "Listing agent", "Your contact", "Links"].map((h) => (
+                    {["Property", "Sold", "Sold price", "DOM", "Listing agent", "Buyer agent", "Your contact", "Links"].map((h) => (
                       <th key={h} className={`${label} px-3 py-2.5`}>
                         {h}
                       </th>
@@ -132,6 +132,7 @@ export default async function ClosingsPage({
                         <td className={cell}>{money(m.soldPrice)}</td>
                         <td className={cell}>{m.dom ?? "—"}</td>
                         <td className={cell}>{m.listAgent || "—"}</td>
+                        <td className={cell}>{m.buyerAgent || "—"}</td>
                         <td className={cell}>
                           <div className="font-semibold">
                             {[m.contact.firstName, m.contact.lastName].filter(Boolean).join(" ") || "—"}

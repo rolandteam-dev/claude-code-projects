@@ -60,7 +60,7 @@ function intelBlock(title: string, rows: IntelMatch[]): string {
             m.address || "Address unavailable",
           )}</a>
           <div style="font-size:13px;color:#6a6f76;margin-top:2px;">
-            ${m.status} (MLS) · ${money(m.price)}${m.listAgent ? ` · ${esc(m.listAgent)} (listing agent)` : ""}
+            ${m.status} (MLS) · ${money(m.price)}${m.listAgent ? ` · ${esc(m.listAgent)} (listing)` : ""}${m.buyerAgent ? ` · ${esc(m.buyerAgent)} (buyer)` : ""}
           </div>
           <div style="font-size:13px;color:#6a6f76;margin-top:1px;">${esc(name)}${place ? ` · ${esc(place)}` : ""}</div>
         </td></tr>`;
