@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { expiredMatches } from "@/lib/idx/expired";
 import { dashboardUrl } from "@/lib/homeowners/brand";
 import { AdminLogin } from "@/components/AdminLogin";
+import { TagExpiredButton } from "@/components/TagExpiredButton";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -101,7 +102,11 @@ export default async function ExpiredsPage({
               No expired listings in this window matched a contact in your database.
             </div>
           ) : (
-            <div className="mt-6 overflow-x-auto rounded-[12px] border border-[var(--color-line)] bg-white">
+            <>
+            <div className="mt-6 mb-3">
+              <TagExpiredButton count={result.matched.length} adminKey={key} days={sinceDays} />
+            </div>
+            <div className="overflow-x-auto rounded-[12px] border border-[var(--color-line)] bg-white">
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b border-[var(--color-line)] text-left">
@@ -162,10 +167,12 @@ export default async function ExpiredsPage({
                 </tbody>
               </table>
             </div>
+            </>
           )}
           <p className="mt-4 font-sans text-[0.66rem] text-[var(--color-muted)]">
-            Read-only — this pulls from the MLS and reads your contacts; it writes nothing. Matching is by street
-            number + street + ZIP against the {result.indexed.toLocaleString()} most recent homeowner records.
+            The list pulls from the MLS and reads your contacts. The only write is the &ldquo;Tag as Expired&rdquo;
+            button, which adds the <code>Expired</code> tag in FUB (idempotent). Matching is by street number + street +
+            ZIP against the {result.indexed.toLocaleString()} most recent homeowner records.
           </p>
         </>
       )}
