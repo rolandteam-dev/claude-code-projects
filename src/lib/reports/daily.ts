@@ -13,6 +13,7 @@ import { Resend } from "resend";
 import { homeownerBrand } from "@/lib/homeowners/brand";
 import { databaseClosings, databaseNewListings, type IntelMatch } from "@/lib/idx/closings";
 import { expiredMatches } from "@/lib/idx/expired";
+import { formerAgentMatch } from "@/lib/idx/referral";
 
 const money = (n: number) =>
   n > 0 ? n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) : "—";
@@ -54,6 +55,7 @@ function intelBlock(title: string, rows: IntelMatch[]): string {
       const name = [m.contact.firstName, m.contact.lastName].filter(Boolean).join(" ") || "Unnamed contact";
       const link = fubLink(m.contact.fubPersonId) || `${adminBase()}/dashboard/${m.contact.token}`;
       const place = [m.city, m.zip].filter(Boolean).join(", ");
+      const former = formerAgentMatch(m.listAgent);
       return `
         <tr><td style="padding:10px 0;border-bottom:1px solid #eceef1;">
           <a href="${link}" style="font-size:15px;font-weight:600;color:#8a6d2b;text-decoration:none;">${esc(
@@ -62,6 +64,7 @@ function intelBlock(title: string, rows: IntelMatch[]): string {
           <div style="font-size:13px;color:#6a6f76;margin-top:2px;">
             ${m.status} (MLS) · ${money(m.price)}${m.listAgent ? ` · ${esc(m.listAgent)} (listing)` : ""}${m.buyerAgent ? ` · ${esc(m.buyerAgent)} (buyer)` : ""}
           </div>
+          ${former ? `<div style="font-size:13px;font-weight:600;color:#b4433a;margin-top:1px;">⚠️ Former teammate (${esc(former)}) — possible referral</div>` : ""}
           <div style="font-size:13px;color:#6a6f76;margin-top:1px;">${esc(name)}${place ? ` · ${esc(place)}` : ""}</div>
         </td></tr>`;
     })
@@ -96,9 +99,13 @@ export async function segmentWatchData(windowDays: number): Promise<SegmentWatch
     databaseNewListings(windowDays),
   ]);
   const base = adminBase();
+  const referral =
+    (solds.ok ? solds.matched.filter((m) => formerAgentMatch(m.listAgent)).length : 0) +
+    (listings.ok ? listings.matched.filter((m) => formerAgentMatch(m.listAgent)).length : 0);
   return {
     windowDays,
     segments: [
+      { label: "⚠️ Referral watch — former teammate on your DB deal", count: referral, href: `${base}/admin/closings` },
       { label: "Expired sellers (in your database)", count: expired.ok ? expired.matched.length : 0, href: `${base}/admin/expireds` },
       { label: "Closings (your database)", count: solds.ok ? solds.matched.length : 0, href: `${base}/admin/closings` },
       { label: "Newly listed (your database)", count: listings.ok ? listings.matched.length : 0, href: `${base}/admin/closings` },

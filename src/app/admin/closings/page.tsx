@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { databaseClosings } from "@/lib/idx/closings";
+import { formerAgentMatch } from "@/lib/idx/referral";
 import { dashboardUrl } from "@/lib/homeowners/brand";
 import { AdminLogin } from "@/components/AdminLogin";
 
@@ -87,6 +88,12 @@ export default async function ClosingsPage({
               <div className={label}>Matched (your database)</div>
               <div className="font-serif text-[1.4rem] text-[var(--color-gold)]">{result.matched.length}</div>
             </div>
+            <div>
+              <div className={label}>⚠️ Former teammate</div>
+              <div className="font-serif text-[1.4rem] text-[#b4433a]">
+                {result.matched.filter((m) => formerAgentMatch(m.listAgent)).length}
+              </div>
+            </div>
           </div>
 
           {result.moreToScan && (
@@ -120,8 +127,13 @@ export default async function ClosingsPage({
                 <tbody>
                   {result.matched.map((m) => {
                     const fub = fubLink(m.contact.fubPersonId);
+                    const former = formerAgentMatch(m.listAgent);
                     return (
-                      <tr key={m.mlsNumber} className="border-b border-[var(--color-line)] last:border-0">
+                      <tr
+                        key={m.mlsNumber}
+                        className="border-b border-[var(--color-line)] last:border-0"
+                        style={former ? { background: "rgba(180,67,58,0.06)" } : undefined}
+                      >
                         <td className={cell}>
                           <div className="font-semibold">{m.address || "—"}</div>
                           <div className="text-[var(--color-muted)]">
@@ -131,7 +143,12 @@ export default async function ClosingsPage({
                         <td className={cell}>{m.soldDate || "—"}</td>
                         <td className={cell}>{money(m.soldPrice)}</td>
                         <td className={cell}>{m.dom ?? "—"}</td>
-                        <td className={cell}>{m.listAgent || "—"}</td>
+                        <td className={cell}>
+                          {m.listAgent || "—"}
+                          {former && (
+                            <div className="mt-0.5 font-semibold text-[#b4433a]">⚠️ Former teammate</div>
+                          )}
+                        </td>
                         <td className={cell}>{m.buyerAgent || "—"}</td>
                         <td className={cell}>
                           <div className="font-semibold">
