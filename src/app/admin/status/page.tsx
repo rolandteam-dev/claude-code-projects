@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { homeownerStore, storeDriver, type Homeowner } from "@/lib/homeowners/store";
-import { isEligible } from "@/lib/homeowners/eligibility";
+import { homeownerStore, storeDriver } from "@/lib/homeowners/store";
 import { AdminLogin } from "@/components/AdminLogin";
 
 export const dynamic = "force-dynamic";
@@ -9,14 +8,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const WORKING_SET = 3000;
 const num = (v: string | undefined, d: number) => {
   const n = Number(v);
   return Number.isFinite(n) && n > 0 ? n : d;
 };
 const on = (v: string | undefined) => v === "true";
-const within = (iso: string | undefined, days: number) =>
-  !!iso && Date.now() - new Date(iso).getTime() <= days * 86_400_000;
 
 function Pill({ live }: { live: boolean }) {
   return (
@@ -79,16 +75,8 @@ export default async function EngineStatusPage({
   const backfillPerRun = num(process.env.SELLER_BACKFILL_PER_RUN, 10);
   const sellerPerRun = num(process.env.SELLER_AUTO_MAX_PER_RUN, 25);
 
-  // Store pipeline numbers.
-  const store = homeownerStore();
-  const total = await store.count();
-  const loaded: Homeowner[] = await store.list(WORKING_SET);
-  const eligible = loaded.filter((h) => isEligible({ email: h.email, state: h.state, zip: h.zip })).length;
-  const subscribed = loaded.filter((h) => h.subscribed).length;
-  const emailed7d = loaded.filter((h) => within(h.lastEmailedAt, 7)).length;
-  const dueNow = (await store.listDueForEmail(14, WORKING_SET)).length;
-  const sampled = total > loaded.length;
-  const ofLoaded = sampled ? `of ${loaded.length.toLocaleString()} loaded` : undefined;
+  // Exact pipeline numbers across the whole database (not a sample).
+  const { total, eligible, subscribed, dueNow, emailed7d } = await homeownerStore().pipelineStats(14);
 
   const backfillDryRunHref = `/api/cron/seller-backfill?key=${encodeURIComponent(key)}&dryRun=1`;
 
@@ -197,19 +185,16 @@ export default async function EngineStatusPage({
       </h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Total homeowners" value={total.toLocaleString()} />
-        <Stat label="Eligible to email" value={eligible.toLocaleString()} sub={ofLoaded} />
-        <Stat label="Subscribed" value={subscribed.toLocaleString()} sub={ofLoaded} />
-        <Stat label="Due for digest now" value={dueNow.toLocaleString()} sub={ofLoaded} />
+        <Stat label="Eligible to email" value={eligible.toLocaleString()} />
+        <Stat label="Subscribed" value={subscribed.toLocaleString()} />
+        <Stat label="Due for digest now" value={dueNow.toLocaleString()} sub="eligible + subscribed + due" />
       </div>
       <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Emailed last 7 days" value={emailed7d.toLocaleString()} sub={ofLoaded} />
+        <Stat label="Emailed last 7 days" value={emailed7d.toLocaleString()} />
       </div>
-      {sampled && (
-        <p className="mt-3 font-sans text-[0.68rem] text-[var(--color-muted)]">
-          Breakdowns are computed over the {loaded.length.toLocaleString()} most recent records (the total count is
-          exact).
-        </p>
-      )}
+      <p className="mt-3 font-sans text-[0.68rem] text-[var(--color-muted)]">
+        Exact counts across all {total.toLocaleString()} records.
+      </p>
 
       {/* Seller backlog check */}
       <h2 className="mt-9 mb-3 font-sans text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--color-muted)]">

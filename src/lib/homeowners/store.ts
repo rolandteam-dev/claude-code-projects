@@ -14,6 +14,8 @@
  * the Postgres driver (next slice).
  */
 
+import { isEligible } from "./eligibility";
+
 export type EstimatePoint = {
   /** ISO date, e.g. "2026-07-01" */
   date: string;
@@ -58,12 +60,24 @@ export type Homeowner = {
   emailCount?: number;
 };
 
+/** Exact pipeline counts across the WHOLE database (not a sample). */
+export type PipelineStats = {
+  total: number;
+  eligible: number;
+  subscribed: number;
+  /** eligible + subscribed + last email older than the interval (or never) — the real mailable-due set */
+  dueNow: number;
+  emailed7d: number;
+};
+
 export interface HomeownerStore {
   getByToken(token: string): Promise<Homeowner | null>;
   /** Most-recently-updated homeowners, optionally capped (for large databases). */
   list(limit?: number): Promise<Homeowner[]>;
   /** Total tracked homeowners. */
   count(): Promise<number>;
+  /** Exact pipeline aggregates over every record (light columns only). */
+  pipelineStats(intervalDays: number): Promise<PipelineStats>;
   /** records whose last email is older than `intervalDays` (or never sent) and still subscribed, engaged contacts first; `limit` caps the working set */
   listDueForEmail(intervalDays: number, limit?: number): Promise<Homeowner[]>;
   upsert(h: Homeowner): Promise<Homeowner>;
@@ -100,6 +114,34 @@ export function pacificDay(d: Date = new Date()): string {
 const now = () => new Date().toISOString();
 const daysAgoISO = (d: number) =>
   new Date(Date.now() - d * 86_400_000).toISOString().slice(0, 10);
+
+/**
+ * Exact pipeline aggregates from light rows (email/state/zip/subscribed/
+ * lastEmailedAt). Shared by both drivers so "eligible" uses the real isEligible
+ * rule rather than a re-implemented SQL approximation.
+ */
+export function computePipelineStats(
+  rows: Array<{ email?: string; state?: string; zip?: string; subscribed?: boolean; lastEmailedAt?: string | null }>,
+  intervalDays: number,
+): PipelineStats {
+  const cutoff = Date.now() - Math.max(1, intervalDays) * 86_400_000;
+  const sevenDays = Date.now() - 7 * 86_400_000;
+  let total = 0;
+  let eligible = 0;
+  let subscribed = 0;
+  let dueNow = 0;
+  let emailed7d = 0;
+  for (const r of rows) {
+    total++;
+    const elig = isEligible({ email: r.email, state: r.state, zip: r.zip });
+    if (elig) eligible++;
+    if (r.subscribed) subscribed++;
+    const last = r.lastEmailedAt ? new Date(r.lastEmailedAt).getTime() : null;
+    if (elig && r.subscribed && (last === null || last < cutoff)) dueNow++;
+    if (last !== null && last >= sevenDays) emailed7d++;
+  }
+  return { total, eligible, subscribed, dueNow, emailed7d };
+}
 
 /* ---------------- In-memory driver (dev / build / UI verification) ---------------- */
 
@@ -153,6 +195,9 @@ const memoryStore: HomeownerStore = {
   },
   async count() {
     return mem.size;
+  },
+  async pipelineStats(intervalDays) {
+    return computePipelineStats([...mem.values()], intervalDays);
   },
   async listDueForEmail(intervalDays, limit) {
     const cutoff = Date.now() - intervalDays * 86_400_000;
