@@ -1639,6 +1639,17 @@ console.log("\nUnit — combined list");
 
 const teamLeads = lists.find((l) => l.audit_type === "combined_contact_lists");
 
+check("list-mode records carry the day count the notes print (no \"undefined days\")", () => {
+  const contact = quietFor(10, { created: daysAgo(30), stageId: 2, lastVisit: daysAgo(1) });
+  contact.last_communication_at = daysAgo(10); // contact.mjs sets this beside the custom field
+  const { records } = runCombinedList([contact], teamLeads, NOW);
+  assert.equal(records.length, 1);
+  assert.equal(records[0].daysSinceTouch, 10);
+  assert.ok(!/undefined/.test(rules.nudgeNote(records[0])), "nudge note");
+  assert.ok(!/undefined/.test(rules.sweepNote({ ...records[0], pondName: "Shark Tank" })), "sweep note");
+  assert.ok(!/undefined/.test(rules.nudgeNote({ source: "x" })), "nudge note without a count");
+});
+
 check("a contact matching two member lists appears once, worst status wins", () => {
   const contact = quietFor(10, { created: daysAgo(5), stageId: 2, lastVisit: daysAgo(1) });
   contact.custom_fields.fub.customBattrAtRiskSince = "2026-08-20";

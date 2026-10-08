@@ -429,11 +429,11 @@ export const rules = {
    */
   nudgeNote: (lead) =>
     `This lead is at risk - reach out and keep them going! 🙌\n\n` +
-    `${lead.daysSinceTouch} days with no outreach. Source: ${lead.source || "unknown"}.`,
+    `${lead.daysSinceTouch ?? "Several"} days with no outreach. Source: ${lead.source || "unknown"}.`,
 
   /** Text of the note recorded on the lead when it is swept. */
   sweepNote: (lead) =>
-    `Battr: swept to the ${lead.pondName} pond after ${lead.daysSinceTouch} days with no outreach. ` +
+    `Battr: swept to the ${lead.pondName} pond after ${lead.daysSinceTouch ?? "many"} days with no outreach. ` +
     `Previously assigned to ${lead.previousOwner || "unassigned"}. At Risk since ${lead.atRiskSince || "unknown"}.`,
 };
 
