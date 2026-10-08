@@ -1650,6 +1650,12 @@ check("list-mode records carry the day count the notes print (no \"undefined day
   assert.ok(!/undefined/.test(rules.nudgeNote({ source: "x" })), "nudge note without a count");
 });
 
+check("notes @mention the assigned agent so Follow Up Boss notifies them", () => {
+  assert.ok(rules.nudgeNote({ owner: "Liza Rivera", daysSinceTouch: 9, source: "x" }).startsWith("@Liza Rivera This lead is at risk"));
+  assert.ok(rules.sweepNote({ previousOwner: "Liza Rivera", pondName: "Shark Tank", daysSinceTouch: 15 }).startsWith("@Liza Rivera Battr: swept"));
+  assert.ok(!/@/.test(rules.nudgeNote({ source: "x" })), "no mention for an unassigned lead");
+});
+
 check("a contact matching two member lists appears once, worst status wins", () => {
   const contact = quietFor(10, { created: daysAgo(5), stageId: 2, lastVisit: daysAgo(1) });
   contact.custom_fields.fub.customBattrAtRiskSince = "2026-08-20";

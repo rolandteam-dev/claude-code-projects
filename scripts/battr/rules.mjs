@@ -428,11 +428,15 @@ export const rules = {
    * First line is the live system's exact copy, so agents see no change.
    */
   nudgeNote: (lead) =>
+    // "@Full Name" is how Follow Up Boss tags an agent in a note, which is what
+    // makes it notify them. Without it the note sits on the lead unseen.
+    (lead.owner ? `@${lead.owner} ` : "") +
     `This lead is at risk - reach out and keep them going! 🙌\n\n` +
     `${lead.daysSinceTouch ?? "Several"} days with no outreach. Source: ${lead.source || "unknown"}.`,
 
   /** Text of the note recorded on the lead when it is swept. */
   sweepNote: (lead) =>
+    (lead.previousOwner ? `@${lead.previousOwner} ` : "") +
     `Battr: swept to the ${lead.pondName} pond after ${lead.daysSinceTouch ?? "many"} days with no outreach. ` +
     `Previously assigned to ${lead.previousOwner || "unassigned"}. At Risk since ${lead.atRiskSince || "unknown"}.`,
 };
