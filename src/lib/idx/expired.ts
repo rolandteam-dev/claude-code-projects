@@ -61,7 +61,7 @@ const num = (...vals: any[]): number => {
 };
 
 /** Lowercase, strip punctuation + common street suffixes (same idea as nvValue). */
-function normStreet(s: string): string {
+export function normStreet(s: string): string {
   return (s || "")
     .toLowerCase()
     .replace(/[.,#]/g, "")
@@ -75,13 +75,13 @@ function normStreet(s: string): string {
 }
 
 /** Split a stored street line ("807 Pine Flower Court") into number + street. */
-function splitAddr(full: string): { num: string; street: string } {
+export function splitAddr(full: string): { num: string; street: string } {
   const m = (full || "").trim().match(/^(\d+)\s+(.*)$/);
   return m ? { num: m[1], street: m[2] } : { num: "", street: full || "" };
 }
 
 /** Match key: street number + normalized street name + 5-digit ZIP. */
-function keyOf(numPart: string, street: string, zip: string): string {
+export function keyOf(numPart: string, street: string, zip: string): string {
   const z = (zip || "").trim().slice(0, 5);
   const n = (numPart || "").trim();
   const s = normStreet(street);
