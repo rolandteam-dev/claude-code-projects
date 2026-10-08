@@ -6,7 +6,7 @@
  * and views are stored as JSONB arrays to mirror the record shape exactly.
  */
 import postgres from "postgres";
-import { pacificDay, type EstimatePoint, type Homeowner, type HomeownerStore } from "./store";
+import { computePipelineStats, pacificDay, type EstimatePoint, type Homeowner, type HomeownerStore } from "./store";
 
 let sqlClient: ReturnType<typeof postgres> | null = null;
 function sql() {
@@ -108,6 +108,23 @@ export const postgresStore: HomeownerStore = {
     await ensureSchema();
     const rows = await sql()`SELECT count(*)::int AS n FROM homeowners`;
     return (rows[0]?.n as number) ?? 0;
+  },
+
+  async pipelineStats(intervalDays) {
+    await ensureSchema();
+    // Light columns only (no estimates/views JSONB) so this stays cheap even
+    // across the whole table; eligibility is then applied with the real rule.
+    const rows = await sql()`SELECT email, state, zip, subscribed, last_emailed_at FROM homeowners`;
+    return computePipelineStats(
+      rows.map((r) => ({
+        email: r.email as string,
+        state: r.state as string,
+        zip: r.zip as string,
+        subscribed: r.subscribed as boolean,
+        lastEmailedAt: r.last_emailed_at ? new Date(r.last_emailed_at).toISOString() : null,
+      })),
+      intervalDays,
+    );
   },
 
   async listDueForEmail(intervalDays, limit) {
