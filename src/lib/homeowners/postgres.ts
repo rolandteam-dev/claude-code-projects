@@ -46,10 +46,16 @@ function ensureSchema(): Promise<void> {
         created_at timestamptz NOT NULL DEFAULT now(),
         updated_at timestamptz NOT NULL DEFAULT now(),
         last_emailed_at timestamptz,
+        first_emailed_at timestamptz,
+        email_count int NOT NULL DEFAULT 0,
         estimates jsonb NOT NULL DEFAULT '[]'::jsonb,
         views jsonb NOT NULL DEFAULT '[]'::jsonb
       )
-    `.then(() => undefined);
+    `
+      // Migrate tables created before send-count tracking was added.
+      .then(() => s`ALTER TABLE homeowners ADD COLUMN IF NOT EXISTS first_emailed_at timestamptz`)
+      .then(() => s`ALTER TABLE homeowners ADD COLUMN IF NOT EXISTS email_count int NOT NULL DEFAULT 0`)
+      .then(() => undefined);
   }
   return ready;
 }
@@ -76,6 +82,8 @@ function rowToHomeowner(r: any): Homeowner {
     createdAt: new Date(r.created_at).toISOString(),
     updatedAt: new Date(r.updated_at).toISOString(),
     lastEmailedAt: r.last_emailed_at ? new Date(r.last_emailed_at).toISOString() : undefined,
+    firstEmailedAt: r.first_emailed_at ? new Date(r.first_emailed_at).toISOString() : undefined,
+    emailCount: r.email_count != null ? Number(r.email_count) : 0,
     estimates: (r.estimates ?? []) as EstimatePoint[],
     views: (r.views ?? []) as string[],
   };
@@ -222,7 +230,14 @@ export const postgresStore: HomeownerStore = {
 
   async markEmailed(token, at) {
     await ensureSchema();
-    await sql()`UPDATE homeowners SET last_emailed_at = ${at ?? new Date().toISOString()} WHERE token = ${token}`;
+    const when = at ?? new Date().toISOString();
+    await sql()`
+      UPDATE homeowners
+      SET last_emailed_at = ${when},
+          first_emailed_at = COALESCE(first_emailed_at, ${when}),
+          email_count = COALESCE(email_count, 0) + 1
+      WHERE token = ${token}
+    `;
   },
 
   async unsubscribe(token) {

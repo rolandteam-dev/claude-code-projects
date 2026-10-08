@@ -51,6 +51,11 @@ export type Homeowner = {
   views: string[];
   /** last automated value email send (ISO), if any */
   lastEmailedAt?: string;
+  /** first automated email send (ISO), if any */
+  firstEmailedAt?: string;
+  /** total automated emails sent to this homeowner (accurate from when this was
+   * added; older records may show fewer than were actually sent) */
+  emailCount?: number;
 };
 
 export interface HomeownerStore {
@@ -179,6 +184,8 @@ const memoryStore: HomeownerStore = {
         subscribed: existing?.subscribed ?? h.subscribed,
         createdAt: existing?.createdAt ?? h.createdAt,
         lastEmailedAt: existing?.lastEmailedAt ?? h.lastEmailedAt,
+        firstEmailedAt: existing?.firstEmailedAt ?? h.firstEmailedAt,
+        emailCount: existing?.emailCount ?? h.emailCount,
         updatedAt: now(),
       });
     }
@@ -205,7 +212,12 @@ const memoryStore: HomeownerStore = {
   },
   async markEmailed(token, at) {
     const h = mem.get(token);
-    if (h) h.lastEmailedAt = at ?? now();
+    if (h) {
+      const when = at ?? now();
+      h.lastEmailedAt = when;
+      if (!h.firstEmailedAt) h.firstEmailedAt = when;
+      h.emailCount = (h.emailCount ?? 0) + 1;
+    }
   },
   async unsubscribe(token) {
     const h = mem.get(token);
@@ -246,6 +258,18 @@ export function homeownerStore(): HomeownerStore {
     return (require("./postgres") as typeof import("./postgres")).postgresStore;
   }
   return memoryStore;
+}
+
+/**
+ * Which driver is active: "postgres" means homeowner data persists; "memory"
+ * means the in-memory fallback is in use and NOTHING persists across requests
+ * (no DATABASE_URL/POSTGRES_URL set). Surfaced on the admin status page so a
+ * missing database is obvious at a glance.
+ */
+export function storeDriver(): "postgres" | "memory" {
+  return process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_DATABASE_URL
+    ? "postgres"
+    : "memory";
 }
 
 /** Unguessable token for dashboard URLs. */
