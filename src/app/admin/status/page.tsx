@@ -122,6 +122,7 @@ export default async function EngineStatusPage({
       <div className="mt-6 flex flex-wrap gap-2">
         {[
           { href: `/admin/recipients?key=${encodeURIComponent(key)}`, label: "Recipients →" },
+          { href: `/admin/closings?key=${encodeURIComponent(key)}`, label: "Closings →" },
           { href: `/admin/expireds?key=${encodeURIComponent(key)}`, label: "Expired listings →" },
           { href: `/admin/sellers?key=${encodeURIComponent(key)}`, label: "Seller Radar →" },
         ].map((l) => (
