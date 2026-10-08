@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ingestHomeowner, type IngestInput } from "@/lib/homeowners/ingest";
-import { latestEstimate } from "@/lib/homeowners/store";
+import { homeownerStore, latestEstimate } from "@/lib/homeowners/store";
 import { sendWelcomeEmail } from "@/lib/homeowners/email";
 import { sendHomeownerActivity } from "@/lib/homeowners/fubActivity";
 import { notifyAssignedAgent } from "@/lib/homeowners/agentAlert";
@@ -57,6 +57,14 @@ export async function POST(req: Request) {
     }
     // Best-effort welcome email; never fail the request if email isn't configured.
     const email = await sendWelcomeEmail(homeowner);
+    if (email.sent) {
+      // Count the send so the engagement dashboard reflects it (don't fail on it).
+      try {
+        await homeownerStore().markEmailed(token);
+      } catch {
+        // ignore
+      }
+    }
     return NextResponse.json({ ok: true, token, url, emailed: email.sent });
   } catch (e) {
     return NextResponse.json({ ok: false, error: String(e) }, { status: 500 });

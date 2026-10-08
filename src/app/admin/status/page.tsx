@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { homeownerStore, type Homeowner } from "@/lib/homeowners/store";
+import { homeownerStore, storeDriver, type Homeowner } from "@/lib/homeowners/store";
 import { isEligible } from "@/lib/homeowners/eligibility";
 import { AdminLogin } from "@/components/AdminLogin";
 
@@ -103,6 +103,49 @@ export default async function EngineStatusPage({
       <p className="mt-2 font-sans text-[0.9rem] text-[var(--color-ink-soft)]">
         Live view of every automated email engine and the homeowner pipeline feeding them.
       </p>
+
+      {/* Database health — the single most important fact. */}
+      {(() => {
+        const persisting = storeDriver() === "postgres";
+        return (
+          <div
+            className="mt-6 flex items-start gap-3 rounded-[12px] border p-4"
+            style={{
+              borderColor: persisting ? "rgba(34,139,84,0.3)" : "#b4433a",
+              background: persisting ? "rgba(34,139,84,0.06)" : "rgba(180,67,58,0.08)",
+            }}
+          >
+            <span className="mt-0.5 text-[1.1rem]">{persisting ? "🟢" : "🔴"}</span>
+            <div>
+              <div className="font-sans text-[0.9rem] font-semibold text-[var(--color-ink)]">
+                Database: {persisting ? "Connected (Postgres) — data is persisting" : "NOT connected — data is NOT persisting"}
+              </div>
+              <div className="mt-0.5 font-sans text-[0.78rem] text-[var(--color-ink-soft)]">
+                {persisting
+                  ? "Homeowner records, engagement, and email history are saved to Postgres."
+                  : "The in-memory fallback is active (no DATABASE_URL / POSTGRES_URL). Homeowner records, dashboards, engagement, and email history do NOT survive between requests — connect a Postgres database in Vercel to fix this."}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Internal pages */}
+      <div className="mt-6 flex flex-wrap gap-2">
+        {[
+          { href: `/admin/recipients?key=${encodeURIComponent(key)}`, label: "Recipients →" },
+          { href: `/admin/expireds?key=${encodeURIComponent(key)}`, label: "Expired listings →" },
+          { href: `/admin/sellers?key=${encodeURIComponent(key)}`, label: "Seller Radar →" },
+        ].map((l) => (
+          <a
+            key={l.href}
+            href={l.href}
+            className="rounded-md border border-[var(--color-line)] px-3 py-1.5 font-sans text-[0.78rem] font-semibold text-[var(--color-gold)] hover:bg-[var(--color-sand)]"
+          >
+            {l.label}
+          </a>
+        ))}
+      </div>
 
       {/* Engines */}
       <h2 className="mt-9 mb-3 font-sans text-[0.72rem] font-semibold uppercase tracking-[0.12em] text-[var(--color-muted)]">
