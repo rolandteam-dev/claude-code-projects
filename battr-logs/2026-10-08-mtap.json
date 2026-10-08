@@ -1,0 +1,19 @@
+{
+  "runId": "2026-10-08-mtap",
+  "timestamp": "2026-10-08T21:18:06.874Z",
+  "dry": true,
+  "sweeps": [],
+  "only": 85008,
+  "nudges": [
+    {
+      "personId": 85008,
+      "name": "Phumanee Nosavan",
+      "owner": "Liza Rivera",
+      "source": "my +plus leads",
+      "noteId": null,
+      "fields": [
+        "customBattrAtRiskSince"
+      ]
+    }
+  ]
+}
