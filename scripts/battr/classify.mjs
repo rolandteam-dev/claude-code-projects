@@ -212,6 +212,13 @@ const isEmpty = (set) => {
   return groups.every((g) => !Array.isArray(g) || g.length === 0);
 };
 
+/** Whole days since the last touch (or since creation if never touched); undefined only if neither is known. */
+const daysQuiet = (contact, now) => {
+  const from = contact.last_communication_at || contact.crm_created_at;
+  if (!from || Number.isNaN(new Date(from).getTime())) return undefined;
+  return Math.max(0, daysBetween(from, now));
+};
+
 /** Run every member list, then combine. Returns one record per contact. */
 export function runCombinedList(contacts, combinedList, now = Date.now()) {
   const { resolved, missing } = memberListsOf(combinedList);
@@ -236,6 +243,10 @@ export function runCombinedList(contacts, combinedList, now = Date.now()) {
           source: contact.source_normalized,
           stage: contact.stage_name,
           tags: contact.tags_array,
+          // The nudge/sweep notes and the agent email all print this. List mode
+          // never set it, so the first live test wrote "undefined days with no
+          // outreach". A lead never touched counts from the day it was created.
+          daysSinceTouch: daysQuiet(contact, now),
           status,
           source_list_ids: [list.id],
         });
