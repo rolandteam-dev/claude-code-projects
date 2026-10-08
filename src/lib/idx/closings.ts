@@ -41,6 +41,7 @@ export type IntelListing = {
   date: string;
   dom: number | null;
   listAgent: string;
+  buyerAgent: string;
   status: "Sold" | "Active";
 };
 
@@ -68,16 +69,35 @@ const num = (...vals: any[]): number => {
   return 0;
 };
 
-/** Best-effort listing-agent name from the varied Repliers shapes. */
-export function agentOf(r: any): string {
+/**
+ * Best-effort split of a sale's agents into listing side vs buyer side from the
+ * varied Repliers shapes. When roles aren't labeled, the first agent is treated
+ * as the listing agent (matches the old single-agent behavior). Fields and role
+ * labels vary by MLS, so this fails soft to "" rather than guessing wrong.
+ */
+export function agentsByRole(r: any): { listing: string; buyer: string } {
+  let listing = "";
+  let buyer = "";
+  const add = (cur: string, name: string) => (cur ? `${cur}, ${name}` : name);
   const a = r?.agents;
-  if (Array.isArray(a) && a.length) {
-    const names = a
-      .map((x: any) => x?.name || [x?.firstName, x?.lastName].filter(Boolean).join(" "))
-      .filter(Boolean);
-    if (names.length) return names.join(", ");
+  if (Array.isArray(a)) {
+    for (const x of a) {
+      const name = String(x?.name || [x?.firstName, x?.lastName].filter(Boolean).join(" ")).trim();
+      if (!name) continue;
+      const role = String(x?.type ?? x?.role ?? x?.agentType ?? x?.side ?? "").toLowerCase();
+      if (/buyer|coop|co-?op|selling|sell\b/.test(role) && !/list/.test(role)) buyer = add(buyer, name);
+      else if (/list/.test(role)) listing = add(listing, name);
+      else if (!listing) listing = name; // unlabeled → assume listing side
+    }
   }
-  return String(r?.listAgentName ?? r?.listingAgentName ?? r?.listAgent ?? r?.office?.brokerageName ?? "").trim();
+  if (!listing) listing = String(r?.listAgentName ?? r?.listingAgentName ?? r?.listAgent ?? "").trim();
+  if (!buyer) buyer = String(r?.buyerAgentName ?? r?.coopAgentName ?? r?.sellingAgentName ?? "").trim();
+  return { listing, buyer };
+}
+
+/** Back-compat: the listing-agent name only. */
+export function agentOf(r: any): string {
+  return agentsByRole(r).listing;
 }
 
 function rowToListing(r: any, mode: "sold" | "active"): IntelListing {
@@ -90,6 +110,7 @@ function rowToListing(r: any, mode: "sold" | "active"): IntelListing {
     mode === "sold"
       ? String(r.soldDate ?? r.lastStatusUpdate ?? "").slice(0, 10)
       : String(r.listDate ?? r.listingDate ?? r.updatedOn ?? "").slice(0, 10);
+  const roles = agentsByRole(r);
   return {
     mlsNumber: String(r.mlsNumber ?? "").trim(),
     address: addressLine,
@@ -98,7 +119,8 @@ function rowToListing(r: any, mode: "sold" | "active"): IntelListing {
     price: mode === "sold" ? num(r.soldPrice, r.price, r?.details?.soldPrice) : num(r.listPrice, r.price),
     date,
     dom: num(r.daysOnMarket, r?.details?.daysOnMarket) || null,
-    listAgent: agentOf(r),
+    listAgent: roles.listing,
+    buyerAgent: roles.buyer,
     status: mode === "sold" ? "Sold" : "Active",
   };
 }
