@@ -2,18 +2,23 @@
  * Daily internal reports — our in-house replacement for Fello's "Property
  * Intelligence Summary" and "(Segment Watch) Daily Summary" emails.
  *
- *  - Property Intelligence: homes IN your database that were recently LISTED or
- *    SOLD (address, status, price, listing agent, the matched contact).
- *  - Segment Watch: a one-line count per segment of what's new since yesterday
- *    (new expireds / closings / listings in your database), with links.
+ *  - Property Intelligence: homes IN your database newly LISTED or SOLD.
+ *  - Segment Watch: a one-line count per segment of what's NEW since the last
+ *    report (new expireds / closings / listings in your database).
  *
- * READ-ONLY data gathering (MLS + local store). Sends via Resend to the team.
+ * MLS sold/expired data lags, so we pull a WIDE look-back window and report only
+ * items we haven't reported before (see seen.ts) — "new since yesterday" the way
+ * Fello counts "N new contacts", instead of a tight sold-date window that misses
+ * everything. READ-ONLY data gathering (MLS + local store). Sends via Resend.
  */
 import { Resend } from "resend";
 import { homeownerBrand } from "@/lib/homeowners/brand";
 import { databaseClosings, databaseNewListings, type IntelMatch } from "@/lib/idx/closings";
-import { expiredMatches } from "@/lib/idx/expired";
-import { formerAgentMatch } from "@/lib/idx/referral";
+import { expiredMatches, type ExpiredMatch } from "@/lib/idx/expired";
+import { loadFormerMatcher } from "@/lib/idx/referral";
+import { filterNew } from "./seen";
+
+type Matcher = (name: string) => string | null;
 
 const money = (n: number) =>
   n > 0 ? n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) : "—";
@@ -31,31 +36,45 @@ const adminBase = () => homeownerBrand.baseUrl.replace(/\/$/, "");
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-// ---------------------------------------------------------------- Property Intelligence
+// ---------------------------------------------------------------- gather (once, deduped)
 
-export type PropertyIntel = {
-  listings: IntelMatch[];
-  solds: IntelMatch[];
-  windowDays: number;
+export type DailyData = {
+  lookbackDays: number;
+  newListings: IntelMatch[];
+  newSolds: IntelMatch[];
+  newExpired: ExpiredMatch[];
+  matchFormer: Matcher;
 };
 
-export async function propertyIntelData(windowDays: number): Promise<PropertyIntel> {
-  const [listings, solds] = await Promise.all([databaseNewListings(windowDays), databaseClosings(windowDays)]);
-  return {
-    listings: listings.ok ? listings.matched : [],
-    solds: solds.ok ? solds.matched : [],
-    windowDays,
-  };
+/**
+ * Pull a wide window, match to the database, then keep only items not reported
+ * before (unless dryRun). Shared by both emails so an item is deduped once.
+ */
+export async function gatherDailyData(lookbackDays: number, dryRun = false): Promise<DailyData> {
+  const [listings, solds, expired, matchFormer] = await Promise.all([
+    databaseNewListings(lookbackDays),
+    databaseClosings(lookbackDays),
+    expiredMatches(lookbackDays),
+    loadFormerMatcher(),
+  ]);
+  const [newListings, newSolds, newExpired] = await Promise.all([
+    filterNew("listed", listings.ok ? listings.matched : [], { dryRun }),
+    filterNew("sold", solds.ok ? solds.matched : [], { dryRun }),
+    filterNew("expired", expired.ok ? expired.matched : [], { dryRun }),
+  ]);
+  return { lookbackDays, newListings, newSolds, newExpired, matchFormer };
 }
 
-function intelBlock(title: string, rows: IntelMatch[]): string {
+// ---------------------------------------------------------------- Property Intelligence
+
+function intelBlock(title: string, rows: IntelMatch[], matchFormer: Matcher): string {
   const total = rows.reduce((s, r) => s + (r.price || 0), 0);
   const items = rows
     .map((m) => {
       const name = [m.contact.firstName, m.contact.lastName].filter(Boolean).join(" ") || "Unnamed contact";
       const link = fubLink(m.contact.fubPersonId) || `${adminBase()}/dashboard/${m.contact.token}`;
       const place = [m.city, m.zip].filter(Boolean).join(", ");
-      const former = formerAgentMatch(m.listAgent);
+      const former = matchFormer(m.listAgent);
       return `
         <tr><td style="padding:10px 0;border-bottom:1px solid #eceef1;">
           <a href="${link}" style="font-size:15px;font-weight:600;color:#8a6d2b;text-decoration:none;">${esc(
@@ -73,48 +92,32 @@ function intelBlock(title: string, rows: IntelMatch[]): string {
     <div style="background:#fafafb;border:1px solid #d5d8de;border-radius:8px;padding:16px;margin-top:16px;">
       <div style="font-size:15px;font-weight:600;color:#3f3d56;">${title}: ${rows.length}</div>
       <div style="font-size:30px;font-weight:600;color:#3f3d56;line-height:1.1;margin-top:2px;">${money(total)}</div>
-      ${rows.length ? `<table width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;">${items}</table>` : `<div style="font-size:13px;color:#6a6f76;margin-top:8px;">None in this window.</div>`}
+      ${rows.length ? `<table width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;">${items}</table>` : `<div style="font-size:13px;color:#6a6f76;margin-top:8px;">Nothing new since the last report.</div>`}
     </div>`;
 }
 
-export function renderPropertyIntelEmail(d: PropertyIntel): string {
+export function renderPropertyIntelEmail(d: DailyData): string {
   return shell(
     "Property Intelligence Summary",
-    `Your snapshot of homes in your database recently listed and sold · last ${d.windowDays} day${d.windowDays === 1 ? "" : "s"}`,
-    intelBlock("Recent Listings", d.listings) + intelBlock("Recent Solds", d.solds),
+    "Homes in your database newly listed and sold · new since the last report",
+    intelBlock("Recent Listings", d.newListings, d.matchFormer) + intelBlock("Recent Solds", d.newSolds, d.matchFormer),
   );
 }
 
 // ---------------------------------------------------------------- Segment Watch
 
-export type SegmentWatch = {
-  windowDays: number;
-  segments: { label: string; count: number; href: string }[];
-};
-
-export async function segmentWatchData(windowDays: number): Promise<SegmentWatch> {
-  const [expired, solds, listings] = await Promise.all([
-    expiredMatches(windowDays),
-    databaseClosings(windowDays),
-    databaseNewListings(windowDays),
-  ]);
+export function renderSegmentWatchEmail(d: DailyData): string {
   const base = adminBase();
   const referral =
-    (solds.ok ? solds.matched.filter((m) => formerAgentMatch(m.listAgent)).length : 0) +
-    (listings.ok ? listings.matched.filter((m) => formerAgentMatch(m.listAgent)).length : 0);
-  return {
-    windowDays,
-    segments: [
-      { label: "⚠️ Referral watch — former teammate on your DB deal", count: referral, href: `${base}/admin/closings` },
-      { label: "Expired sellers (in your database)", count: expired.ok ? expired.matched.length : 0, href: `${base}/admin/expireds` },
-      { label: "Closings (your database)", count: solds.ok ? solds.matched.length : 0, href: `${base}/admin/closings` },
-      { label: "Newly listed (your database)", count: listings.ok ? listings.matched.length : 0, href: `${base}/admin/closings` },
-    ],
-  };
-}
-
-export function renderSegmentWatchEmail(d: SegmentWatch): string {
-  const rows = d.segments
+    d.newSolds.filter((m) => d.matchFormer(m.listAgent)).length +
+    d.newListings.filter((m) => d.matchFormer(m.listAgent)).length;
+  const segments = [
+    { label: "⚠️ Referral watch — former teammate on your DB deal", count: referral, href: `${base}/admin/closings` },
+    { label: "Expired sellers (in your database)", count: d.newExpired.length, href: `${base}/admin/expireds` },
+    { label: "Closings (your database)", count: d.newSolds.length, href: `${base}/admin/closings` },
+    { label: "Newly listed (your database)", count: d.newListings.length, href: `${base}/admin/closings` },
+  ];
+  const rows = segments
     .map(
       (s) => `
       <a href="${s.href}" style="display:block;text-decoration:none;background:#fafafb;border:1px solid #d5d8de;border-radius:8px;padding:16px;margin-top:12px;">
@@ -123,7 +126,21 @@ export function renderSegmentWatchEmail(d: SegmentWatch): string {
       </a>`,
     )
     .join("");
-  return shell("Segment Watch — Daily Summary", `What's new in each segment · last ${d.windowDays} day${d.windowDays === 1 ? "" : "s"}`, rows);
+  return shell("Segment Watch — Daily Summary", "What's new in each segment since the last report", rows);
+}
+
+/** Totals for an admin dry-run preview (no send). */
+export function dailyCounts(d: DailyData) {
+  const referral =
+    d.newSolds.filter((m) => d.matchFormer(m.listAgent)).length +
+    d.newListings.filter((m) => d.matchFormer(m.listAgent)).length;
+  return {
+    lookbackDays: d.lookbackDays,
+    newListings: d.newListings.length,
+    newSolds: d.newSolds.length,
+    newExpired: d.newExpired.length,
+    referralWatch: referral,
+  };
 }
 
 // ---------------------------------------------------------------- shell + send

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
-  propertyIntelData,
-  segmentWatchData,
+  gatherDailyData,
+  dailyCounts,
   renderPropertyIntelEmail,
   renderSegmentWatchEmail,
   sendReportEmail,
@@ -11,14 +11,15 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 /**
- * Daily internal reports: Property Intelligence (homes in your DB recently
+ * Daily internal reports: Property Intelligence (homes in your DB newly
  * listed/sold) + Segment Watch (what's new per segment). Our replacement for
  * the Fello emails of the same names.
  *
- * OFF by default: the scheduled run no-ops unless REPORTS_ENABLED === "true".
- * An admin `?key=` run always works, and `&dryRun=1` returns the data/counts
- * without sending. `&report=property|segment|both` (default both).
- * Window: REPORTS_WINDOW_DAYS (default 2). Recipients: REPORTS_EMAIL_TO
+ * Reports NEW items (deduped) from a wide look-back window — because MLS data
+ * lags, a tight date window shows nothing. OFF by default: the scheduled run
+ * no-ops unless REPORTS_ENABLED === "true". An admin `?key=` run always works,
+ * and `&dryRun=1` returns the counts without sending (and without marking items
+ * seen). Window: REPORTS_WINDOW_DAYS (default 45). Recipients: REPORTS_EMAIL_TO
  * (falls back to AGENT_ALERT_TO, then the team email).
  *
  * Auth: CRON_SECRET (Vercel Cron / `?secret=`) or ADMIN_TOKEN (`?key=`).
@@ -45,31 +46,20 @@ export async function GET(req: Request) {
 
   const params = new URL(req.url).searchParams;
   const dryRun = params.get("dryRun") === "1";
-  const which = (params.get("report") || "both").toLowerCase();
-  const windowDays = Math.min(Math.max(Number(params.get("days") ?? process.env.REPORTS_WINDOW_DAYS ?? 2) || 2, 1), 30);
+  const windowDays = Math.min(Math.max(Number(params.get("days") ?? process.env.REPORTS_WINDOW_DAYS ?? 45) || 45, 1), 120);
 
-  const out: Record<string, unknown> = { ok: true, mode: dryRun ? "dry-run" : "send", windowDays };
+  // Gather once (dedup shared across both emails). dryRun does not mark items seen.
+  const data = await gatherDailyData(windowDays, dryRun);
+  const out: Record<string, unknown> = { ok: true, mode: dryRun ? "dry-run" : "send", ...dailyCounts(data) };
 
-  if (which === "property" || which === "both") {
-    const data = await propertyIntelData(windowDays);
-    const subject = `Property Intelligence Summary — ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
-    out.property = { listings: data.listings.length, solds: data.solds.length };
-    if (!dryRun) {
-      const r = await sendReportEmail(subject, renderPropertyIntelEmail(data));
-      (out.property as Record<string, unknown>).sent = r.sent;
-      if (!r.sent) (out.property as Record<string, unknown>).reason = r.reason;
-    }
-  }
-
-  if (which === "segment" || which === "both") {
-    const data = await segmentWatchData(windowDays);
-    const subject = `(Segment Watch) Daily Summary — ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
-    out.segment = { segments: data.segments };
-    if (!dryRun) {
-      const r = await sendReportEmail(subject, renderSegmentWatchEmail(data));
-      (out.segment as Record<string, unknown>).sent = r.sent;
-      if (!r.sent) (out.segment as Record<string, unknown>).reason = r.reason;
-    }
+  if (!dryRun) {
+    const stamp = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    const sends: Record<string, unknown> = {};
+    const p = await sendReportEmail(`Property Intelligence Summary — ${stamp}`, renderPropertyIntelEmail(data));
+    sends.property = p.sent ? "sent" : p.reason;
+    const s = await sendReportEmail(`(Segment Watch) Daily Summary — ${stamp}`, renderSegmentWatchEmail(data));
+    sends.segment = s.sent ? "sent" : s.reason;
+    out.sends = sends;
   }
 
   return NextResponse.json(out);

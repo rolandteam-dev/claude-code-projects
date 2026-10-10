@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { databaseClosings } from "@/lib/idx/closings";
-import { formerAgentMatch } from "@/lib/idx/referral";
+import { loadFormerMatcher } from "@/lib/idx/referral";
 import { dashboardUrl } from "@/lib/homeowners/brand";
 import { AdminLogin } from "@/components/AdminLogin";
 
@@ -43,6 +43,7 @@ export default async function ClosingsPage({
 
   const sinceDays = Math.min(Math.max(Number(days) || 30, 1), 180);
   const result = await databaseClosings(sinceDays);
+  const matchFormer = await loadFormerMatcher();
 
   const label = "font-sans text-[0.62rem] font-semibold uppercase tracking-[0.1em] text-[var(--color-muted)]";
   const cell = "px-3 py-2.5 font-sans text-[0.82rem] text-[var(--color-ink)] align-top";
@@ -91,7 +92,7 @@ export default async function ClosingsPage({
             <div>
               <div className={label}>⚠️ Former teammate</div>
               <div className="font-serif text-[1.4rem] text-[#b4433a]">
-                {result.matched.filter((m) => formerAgentMatch(m.listAgent)).length}
+                {result.matched.filter((m) => matchFormer(m.listAgent)).length}
               </div>
             </div>
           </div>
@@ -127,7 +128,7 @@ export default async function ClosingsPage({
                 <tbody>
                   {result.matched.map((m) => {
                     const fub = fubLink(m.contact.fubPersonId);
-                    const former = formerAgentMatch(m.listAgent);
+                    const former = matchFormer(m.listAgent);
                     return (
                       <tr
                         key={m.mlsNumber}
