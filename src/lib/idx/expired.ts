@@ -8,18 +8,30 @@
  * READ-ONLY. Pulls from the MLS and reads the local store; writes nothing to the
  * CRM or the store.
  *
- * NOTE: on GLVAR/Repliers, an off-market record is `status=U`; "expired" is
- * `lastStatus=Exp` (mirrors the sold-comp query which uses `lastStatus=Sld`).
- * The exact code set can vary by MLS — if a live pull returns zero, widen
- * `EXPIRED_STATUSES` and re-check the admin page's diagnostic line.
+ * NOTE: on GLVAR/Repliers, an off-market record is `status=U`; the sold-comp
+ * query uses `lastStatus=Sld`. The "came off without selling" family of codes
+ * varies by MLS, so instead of betting on one code we query the whole family
+ * (`EXPIRED_STATUSES`) and, when a live pull returns ZERO, auto-run a lightweight
+ * diagnostic (`probeOffMarketStatuses`) that reports how many off-market records
+ * exist per status code feed-wide — so we can SEE which code the MLS actually
+ * uses (or confirm it exposes nothing but `Sld`) instead of guessing again.
  */
 import { homeownerStore, type Homeowner } from "@/lib/homeowners/store";
 
 const API_BASE = "https://api.repliers.io";
 const DEFAULT_BOARD_ID = "193"; // GLVAR / Las Vegas REALTORS®
 
-/** lastStatus codes that mean "was listed, came off without selling". */
-const EXPIRED_STATUSES = ["Exp"]; // extend if needed, e.g. ["Exp","Ter","Can","Sus"]
+/** lastStatus codes that mean "was listed, came off the market without selling"
+ * (Expired / Terminated / Cancelled / Withdrawn / Suspended). Repliers rejects
+ * an unknown code with a non-200, which we skip — so listing the whole family is
+ * safe and lets the right code surface whatever this board happens to use. */
+const EXPIRED_STATUSES = ["Exp", "Ter", "Can", "Wdn", "Sus"];
+
+/** Codes to tally in the on-empty diagnostic: the expired family plus a few more
+ * off-market variants and `Sld` as an anchor (we know Sld returns thousands, so
+ * if every expired-ish code is 0 while Sld is large, the feed simply doesn't
+ * expose non-sold off-market listings). */
+const PROBE_STATUSES = [...EXPIRED_STATUSES, "Dft", "Hld", "Cnc", "Sld"];
 
 const WORKING_SET = 8000; // homeowner records to index for matching
 
@@ -46,7 +58,16 @@ export type ExpiredMatch = ExpiredListing & {
 };
 
 export type ExpiredResult =
-  | { ok: true; pulled: number; indexed: number; matched: ExpiredMatch[]; sinceDays: number }
+  | {
+      ok: true;
+      pulled: number;
+      indexed: number;
+      matched: ExpiredMatch[];
+      sinceDays: number;
+      /** Only populated when `pulled === 0`: off-market record counts per status
+       * code (−1 = the feed rejected that code). Reveals the board's real code. */
+      byStatus?: Record<string, number>;
+    }
   | { ok: false; reason: "not_configured" | "upstream_error"; detail?: string };
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -148,6 +169,45 @@ async function fetchExpired(key: string, sinceTs: number): Promise<ExpiredListin
 }
 
 /**
+ * Diagnostic — only runs when the expired pull comes back empty. Asks the feed
+ * how many off-market (`status=U`) records exist for each candidate status code
+ * and returns the tally, so the admin page can show which code this board uses
+ * (or prove it exposes nothing but `Sld`). One light call per code; `-1` means
+ * the feed rejected that code (so it isn't a real code on this board).
+ */
+async function probeOffMarketStatuses(key: string): Promise<Record<string, number>> {
+  const boardId = (process.env.REPLIERS_BOARD_ID ?? DEFAULT_BOARD_ID).trim();
+  const out: Record<string, number> = {};
+  for (const st of PROBE_STATUSES) {
+    const p = new URLSearchParams();
+    p.set("boardId", boardId);
+    p.set("type", "sale");
+    p.set("status", "U");
+    p.set("lastStatus", st);
+    p.set("resultsPerPage", "1"); // we only want the total count, not the rows
+    p.set("fields", "mlsNumber");
+    try {
+      const res = await fetch(`${API_BASE}/listings?${p.toString()}`, {
+        headers: { "REPLIERS-API-KEY": key, "Content-Type": "application/json" },
+        next: { revalidate: 1800 },
+      });
+      if (!res.ok) {
+        out[st] = -1; // feed rejected this code → not a valid status here
+        continue;
+      }
+      const data: any = await res.json();
+      const count = Number(
+        data?.count ?? data?.numResults ?? (Array.isArray(data?.listings) ? data.listings.length : 0),
+      );
+      out[st] = Number.isFinite(count) ? count : 0;
+    } catch {
+      out[st] = -1;
+    }
+  }
+  return out;
+}
+
+/**
  * Pull expired listings from the last `sinceDays` and match them to homeowner
  * records by address. Returns the matched set (expireds whose owner you have).
  */
@@ -194,6 +254,17 @@ export async function expiredMatches(sinceDays = 90): Promise<ExpiredResult> {
   // Freshest first.
   matched.sort((a, b) => (a.expiredDate < b.expiredDate ? 1 : -1));
 
-  return { ok: true, pulled: listings.length, indexed: index.size, matched, sinceDays };
+  // Nothing came back from the feed → run the status diagnostic so the admin
+  // page can show which off-market code this board actually uses.
+  let byStatus: Record<string, number> | undefined;
+  if (listings.length === 0) {
+    try {
+      byStatus = await probeOffMarketStatuses(key);
+    } catch {
+      /* diagnostic is best-effort */
+    }
+  }
+
+  return { ok: true, pulled: listings.length, indexed: index.size, matched, sinceDays, byStatus };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */

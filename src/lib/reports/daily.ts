@@ -38,12 +38,17 @@ const esc = (s: string) =>
 
 // ---------------------------------------------------------------- gather (once, deduped)
 
+type RawCounts = { listings: number; solds: number; expired: number };
+
 export type DailyData = {
   lookbackDays: number;
   newListings: IntelMatch[];
   newSolds: IntelMatch[];
   newExpired: ExpiredMatch[];
   matchFormer: Matcher;
+  /** diagnostics: how many each MLS query returned, and how many matched the DB */
+  pulled: RawCounts;
+  matched: RawCounts;
 };
 
 /**
@@ -62,7 +67,23 @@ export async function gatherDailyData(lookbackDays: number, dryRun = false): Pro
     filterNew("sold", solds.ok ? solds.matched : [], { dryRun }),
     filterNew("expired", expired.ok ? expired.matched : [], { dryRun }),
   ]);
-  return { lookbackDays, newListings, newSolds, newExpired, matchFormer };
+  return {
+    lookbackDays,
+    newListings,
+    newSolds,
+    newExpired,
+    matchFormer,
+    pulled: {
+      listings: listings.ok ? listings.pulled : 0,
+      solds: solds.ok ? solds.pulled : 0,
+      expired: expired.ok ? expired.pulled : 0,
+    },
+    matched: {
+      listings: listings.ok ? listings.matched.length : 0,
+      solds: solds.ok ? solds.matched.length : 0,
+      expired: expired.ok ? expired.matched.length : 0,
+    },
+  };
 }
 
 // ---------------------------------------------------------------- Property Intelligence
@@ -140,6 +161,11 @@ export function dailyCounts(d: DailyData) {
     newSolds: d.newSolds.length,
     newExpired: d.newExpired.length,
     referralWatch: referral,
+    // Diagnostics: raw rows the MLS returned vs. how many matched the database,
+    // before dedup. Lets a dry-run tell "feed returned nothing" (pulled 0) apart
+    // from "nothing in the DB overlapped" (pulled > 0, matched 0).
+    pulled: d.pulled,
+    matched: d.matched,
   };
 }
 
