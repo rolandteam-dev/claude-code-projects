@@ -91,10 +91,28 @@ export default async function ExpiredsPage({
           </div>
 
           {result.pulled === 0 && (
-            <p className="mt-3 font-sans text-[0.72rem] text-[var(--color-muted)]">
-              Zero expired listings came back from the feed — the MLS&apos;s expired status code may differ from{" "}
-              <code>Exp</code>. Tell me and I&apos;ll widen the status set.
-            </p>
+            <div className="mt-3 rounded-[10px] border border-[var(--color-line)] bg-white px-4 py-3">
+              <p className="font-sans text-[0.72rem] text-[var(--color-muted)]">
+                Zero expired listings came back from the feed for the status family{" "}
+                <code>Exp / Ter / Can / Wdn / Sus</code>. Below is how many off-market records the feed
+                reports per status code — a large <code>Sld</code> with everything else at 0 means this feed
+                withholds non-sold off-market listings (<code>rejected</code> = not a valid code here).
+              </p>
+              {result.byStatus ? (
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[0.72rem] text-[var(--color-ink)]">
+                  {Object.entries(result.byStatus).map(([code, n]) => (
+                    <span key={code}>
+                      <span className="text-[var(--color-muted)]">{code}</span>{" "}
+                      <span className="font-semibold">{n < 0 ? "rejected" : n.toLocaleString()}</span>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-1 font-sans text-[0.72rem] text-[var(--color-muted)]">
+                  (status diagnostic unavailable)
+                </p>
+              )}
+            </div>
           )}
 
           {result.matched.length === 0 ? (
