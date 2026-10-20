@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { homeownerStore, type Homeowner } from "@/lib/homeowners/store";
 import { FUB_BASE, fubHeaders, personToHomeowner } from "@/lib/homeowners/fubMap";
 import { isSellerCandidate, maxPerRun, maybeSendSellerReport } from "@/lib/homeowners/sellerAuto";
+import { applyLandingPageRules, type RuleOutcome } from "@/lib/fub/landingPageRules";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -80,6 +81,8 @@ async function handle(req: Request) {
   const manual = (payload as { event?: string } | null)?.event === "peopleTagsCreated";
   const sellerResults: unknown[] = [];
   let sellerSends = 0;
+  const attribution: RuleOutcome[] = [];
+  const isCreate = (payload as { event?: string } | null)?.event === "peopleCreated";
 
   for (const id of ids) {
     try {
@@ -94,6 +97,13 @@ async function handle(req: Request) {
       const record = personToHomeowner(person);
       if (record) batch.push(record);
       else missing++;
+      // Landing-page attribution (e.g. Guaranteed Sale form → tag + source).
+      // Runs on creates and on the first update after a create, since the
+      // AgentLoft lead event can land a moment after the person record.
+      if (isCreate || (person?.created && Date.now() - Date.parse(person.created) < 2 * 3600 * 1000)) {
+        const a = await applyLandingPageRules(key, id, { person });
+        if (a.action !== "no-match" && a.action !== "no-events") attribution.push(a);
+      }
       // Seller tag + address → send the home report (never fails the webhook).
       if (sellerSends < maxPerRun() && isSellerCandidate(person, manual)) {
         try {
@@ -117,6 +127,7 @@ async function handle(req: Request) {
     added: batch.length,
     skipped: missing,
     sellerReports: sellerResults,
+    attribution,
   });
 }
 
