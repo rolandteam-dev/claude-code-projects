@@ -35,7 +35,7 @@ For real estate, the Map Pack drives more calls than classic organic. This is hu
 - [ ] Make the **Name, Address, Phone match the site EXACTLY**:
   - Roland Luxury / The Roland Team | LPT Realty
   - 5860 S Pecos Rd, Las Vegas, NV 89120
-  - (702) 793-2158
+  - (702) 830-9366
   - *(If any of these are wrong, tell me — they must match `src/lib/site.ts` exactly.)*
 - [ ] Primary category: **Real Estate Agency** (add *Real Estate Agent*).
 - [ ] Add the website URL `https://www.therolandteam.com`, service areas (Las Vegas,

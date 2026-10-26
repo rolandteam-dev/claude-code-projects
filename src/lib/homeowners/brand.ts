@@ -39,9 +39,10 @@ export const homeownerBrand = {
   founder: site.founder,
   founderPhoto: site.founderPhoto,
   /**
-   * The Roland Team's main line. NOT site.phone — that is the rolandluxury.com
-   * tracking number and must stay on the luxury site. Every homeowner email,
-   * dashboard, unsubscribe page and client-portal card reads this.
+   * The Roland Team's main line. Read from here, not site.phone, so a dedicated
+   * call-tracking number can be set for the email channel via HOMEOWNER_PHONE.
+   * Every homeowner email, dashboard, unsubscribe page and client-portal card
+   * reads this.
    * HOMEOWNER_PHONE overrides it (e.g. a dedicated call-tracking number for the
    * email channel) without a code change.
    */

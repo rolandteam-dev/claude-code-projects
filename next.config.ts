@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { legacyRedirects } from "./src/lib/legacyRedirects";
 
 /**
  * The marketing site moved from rolandluxury.com to www.therolandteam.com.
@@ -33,13 +34,18 @@ const nextConfig: NextConfig = {
     ],
   },
   async redirects() {
-    return LEGACY_MARKETING_HOSTS.map((host) => ({
+    const hostMoves = LEGACY_MARKETING_HOSTS.map((host) => ({
       // Matches "/" and every other path except the exempt ones above.
       source: `/:path((?!${NOT_EXEMPT}).*)`,
       has: [{ type: "host" as const, value: host.replace(/\./g, "\\.") }],
       destination: `${MARKETING_ORIGIN}/:path`,
       permanent: true,
     }));
+    // Old AgentLoft URLs on therolandteam.com → their equivalents here. Listed
+    // after the host moves, so a rolandluxury.com request lands on the new
+    // origin first and then takes this second hop.
+    const legacyPages = legacyRedirects.map((r) => ({ ...r, permanent: true }));
+    return [...hostMoves, ...legacyPages];
   },
 };
 

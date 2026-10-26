@@ -20,7 +20,10 @@ export const site = {
   url: "https://www.therolandteam.com",
   locale: "en_US",
   // Contact
-  phone: "(702) 793-2158",
+  // Main company line — the number on therolandteam.com and the Google Business
+  // Profile. (702) 793-2158 was the old rolandluxury.com tracking line; do not
+  // reintroduce it here.
+  phone: "(702) 830-9366",
   email: "mike@therolandteam.com",
   // Home-value tool — embedded CloudCMA widget (routes seller leads to Follow Up Boss).
   // Loaded over https to avoid mixed-content blocking on the secure site.
