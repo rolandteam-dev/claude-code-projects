@@ -11,13 +11,13 @@ export const site = {
    * Canonical origin. Every canonical tag, sitemap entry, JSON-LD id and email
    * link derives from this one value.
    *
-   * NOTE: this still points at rolandluxury.com deliberately. It flips to
-   * https://www.therolandteam.com in the same change that points that domain's
-   * DNS at this app — not before. Pointing canonicals at a domain that serves
-   * different content tells Google this content lives somewhere it does not,
-   * which is worse than leaving it alone.
+   * NOTE: the marketing site moved from rolandluxury.com to
+   * https://www.therolandteam.com. DNS and the Vercel domain point at this app,
+   * and next.config.ts 308s rolandluxury.com / www.rolandluxury.com to this
+   * origin (path and query kept). Do not point canonicals back at the old
+   * domain — it only redirects here now.
    */
-  url: "https://www.rolandluxury.com",
+  url: "https://www.therolandteam.com",
   locale: "en_US",
   // Contact
   phone: "(702) 793-2158",

@@ -1,4 +1,4 @@
-# Organic Traffic Launch Checklist — rolandluxury.com
+# Organic Traffic Launch Checklist — therolandteam.com
 
 The site's technical SEO is already built (sitemap, robots + AI crawlers, JSON-LD,
 unique titles, canonical URLs). What's left is **getting Google to discover, index,
@@ -11,16 +11,22 @@ three are the ones that actually move the needle for a brand-new domain.
 Without this, Google indexes slowly and you're blind to what's happening.
 
 - [ ] Go to **search.google.com/search-console** → *Add property*.
-- [ ] Choose the **Domain** property type, enter `rolandluxury.com`.
+- [ ] Choose the **Domain** property type, enter `therolandteam.com`.
 - [ ] Google gives you a **TXT record** to add to DNS. Add it wherever the domain's
       DNS lives (Vercel, GoDaddy, Cloudflare, etc.) → *Verify*.
-  - *Tip:* if DNS is a hassle, use the **URL-prefix** property (`https://www.rolandluxury.com`)
+  - *Tip:* if DNS is a hassle, use the **URL-prefix** property (`https://www.therolandteam.com`)
     and verify with the **HTML tag** method — send me the tag and I'll drop it in the
     site's `<head>` in one commit.
 - [ ] Once verified: **Sitemaps** → submit `sitemap.xml`.
-- [ ] **URL Inspection** → paste `https://www.rolandluxury.com` → *Request indexing*.
+- [ ] **URL Inspection** → paste `https://www.therolandteam.com` → *Request indexing*.
       Repeat for 5–10 of your most important pages (home, /communities, top community
       pages, /home-value, /calculators).
+
+- [ ] **Domain move from rolandluxury.com:** the old hosts now 308 to
+      `www.therolandteam.com` (see `next.config.ts`). Keep a Search Console property
+      for `rolandluxury.com`, then use *Settings → Change of address* to point it at
+      the new property (Change of address requires the old site to already redirect).
+      Leave the redirect in place for at least a year.
 
 ## 2. Google Business Profile — the #1 LOCAL lever ⭐
 For real estate, the Map Pack drives more calls than classic organic. This is huge.
@@ -32,7 +38,7 @@ For real estate, the Map Pack drives more calls than classic organic. This is hu
   - (702) 793-2158
   - *(If any of these are wrong, tell me — they must match `src/lib/site.ts` exactly.)*
 - [ ] Primary category: **Real Estate Agency** (add *Real Estate Agent*).
-- [ ] Add the website URL `https://www.rolandluxury.com`, service areas (Las Vegas,
+- [ ] Add the website URL `https://www.therolandteam.com`, service areas (Las Vegas,
       Henderson, Summerlin, North Las Vegas, Boulder City), hours, and photos.
 - [ ] Link your Google reviews here — this is also what backs the 5★ review count.
 
@@ -52,7 +58,7 @@ is to close the gap the same way big agent sites did — volume + depth.
 
 ## 5. Backlinks & citations (builds domain trust over time)
 - [ ] Make sure your **Zillow, Realtor.com, Homes.com, Yelp** profiles link to
-      rolandluxury.com. *(Zillow, Yelp, Instagram are already listed in the site's
+      therolandteam.com. *(Zillow, Yelp, Instagram are already listed in the site's
       structured data — add Google Business Profile + Realtor.com when live.)*
 - [ ] Get listed in local directories (Vegas Chamber, LPT Realty agent page, local
       press). Each quality link speeds up ranking.

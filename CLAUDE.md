@@ -13,7 +13,7 @@ organically for community/neighborhood and buyer/seller search terms.
 - Deploy target: **Vercel**
 
 ## Structure
-- `src/lib/site.ts` — global site config (name, URL, phone, nav). **Update contact + URL before launch.**
+- `src/lib/site.ts` — global site config (name, URL, phone, nav). `site.url` is `https://www.therolandteam.com`; confirm contact details before launch.
 - `src/lib/schema.ts` — JSON-LD builders (RealEstateAgent, BreadcrumbList, FAQPage)
 - `src/content/communities.ts` — community/neighborhood pages (the main traffic engine)
 - `src/content/guides.ts` — buyer/seller/relocation guides
@@ -72,8 +72,9 @@ organically for community/neighborhood and buyer/seller search terms.
 - **The `/estimates` (AVM) POST requires a `details` object** (beds/baths/sqft); omitting it 400s.
 
 ## Homeowner engine lives on home.therolandteam.com
-- Every homeowner-facing link, page and email uses `homeownerBrand.baseUrl`, which falls back to `https://home.therolandteam.com` (`HOMEOWNER_ORIGIN`) — **never** `site.url`. `site.url` is the rolandluxury.com marketing site and stays that way; do not point homeowner links, phone numbers or admin checks at it.
-- With `MARKETING_HOSTS` set, `/dashboard`, `/embed` and `/admin` on a rolandluxury.com host 308 to the homeowner host (middleware). API routes are never redirected.
+- Every homeowner-facing link, page and email uses `homeownerBrand.baseUrl`, which falls back to `https://home.therolandteam.com` (`HOMEOWNER_ORIGIN`) — **never** `site.url`. `site.url` is the marketing site (`https://www.therolandteam.com`, moved from rolandluxury.com) and stays that way; do not point homeowner links, phone numbers or admin checks at it.
+- **`MARKETING_HOSTS`** (comma-separated, no scheme) names every host that serves the marketing site. On those hosts `/portal` 404s and `/dashboard`, `/embed` and `/admin` 308 to the homeowner host (middleware). API routes are never redirected. Set it in Vercel to `www.therolandteam.com` plus the legacy hosts `rolandluxury.com,www.rolandluxury.com`; add the apex `therolandteam.com` only if it also serves this app. Unset = fail-open: the new marketing host would serve the whole app, `/portal` included.
+- **Legacy host redirect (`next.config.ts`).** `rolandluxury.com` and `www.rolandluxury.com` 308 to `https://www.therolandteam.com`, path and query kept. `redirects` runs *before* `src/middleware.ts`, so the rule deliberately skips `/api`, `/dashboard`, `/embed` and `/admin`: middleware keeps owning the homeowner redirect (which is why the legacy hosts stay in `MARKETING_HOSTS`), and webhook/cron senders never meet a redirect. If you add another path that middleware must handle on the old host, add it to `EXEMPT_PATHS` there.
 
 ## Roadmap (next)
 - Client Portal on real auth + a database (hubs that follow a client across devices; per-agent dashboard access)

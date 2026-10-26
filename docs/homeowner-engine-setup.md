@@ -42,13 +42,20 @@ portal hub, unsubscribe link and email button. This is live and
 
 The code never falls back to the luxury site: if `HOMEOWNER_BASE_URL` is ever
 blank or invalid, links resolve to `HOMEOWNER_ORIGIN`
-(`https://home.therolandteam.com`), **not** `site.url` (rolandluxury.com). See
+(`https://home.therolandteam.com`), **not** `site.url` (the marketing site, `www.therolandteam.com`). See
 `src/lib/homeowners/brand.ts`.
 
-Optional hardening: set `MARKETING_HOSTS` (comma-separated luxury hosts) so that
-`/dashboard`, `/embed` and `/admin` requested on a rolandluxury.com host **308**
-to the same path on the homeowner host. Left unset, nothing redirects (fail-open);
-API routes — crons, webhooks, the estimator — are never redirected either way.
+Optional hardening: set `MARKETING_HOSTS` (comma-separated marketing hosts) so that
+`/dashboard`, `/embed` and `/admin` requested on a marketing host **308**
+to the same path on the homeowner host. Use `www.therolandteam.com` plus the
+legacy hosts `rolandluxury.com,www.rolandluxury.com`. Left unset, nothing redirects
+(fail-open); API routes — crons, webhooks, the estimator — are never redirected
+either way.
+
+The legacy hosts also 308 to `www.therolandteam.com` via `next.config.ts`, which
+runs before the middleware. That rule skips `/api`, `/dashboard`, `/embed` and
+`/admin` on purpose, so an old homeowner link on `rolandluxury.com` still lands on
+`home.therolandteam.com` (via `MARKETING_HOSTS`) rather than on the marketing site.
 
 ## Optional homeowner overrides
 - `HOMEOWNER_POSTAL_ADDRESS` — the physical address printed in every email footer

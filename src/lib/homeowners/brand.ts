@@ -10,7 +10,7 @@ import { site } from "@/lib/site";
 /**
  * The homeowner engine's home. Every email link, dashboard, portal invite and
  * FUB "Home Dashboard" link lives here. Deliberately NOT site.url: that is the
- * rolandluxury.com marketing site, and homeowners should never land on it.
+ * marketing site (www.therolandteam.com), and homeowners should never land on it.
  */
 export const HOMEOWNER_ORIGIN = "https://home.therolandteam.com";
 
