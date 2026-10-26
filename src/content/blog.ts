@@ -100,16 +100,16 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Reading Price Trends Without Being Fooled By Them",
         body: [
-          "Median price is the number that makes headlines, and it is also the number most likely to mislead you. The median simply marks the middle of what sold in a given period, so it can rise or fall based on the mix of homes changing hands rather than any real change in value. A month where more large luxury homes close will push the median up even if every individual home is worth exactly what it was before. Read median price as a rough temperature, not a precise measurement of your home's worth.",
+          "Median price is the number that makes headlines, and it is also the number most likely to mislead you. The median simply marks the middle of what sold in a given period, so it can rise or fall based on the mix of homes changing hands rather than any real change in value. A month where more large, higher-priced homes close will push the median up even if every individual home is worth exactly what it was before. Read median price as a rough temperature, not a precise measurement of your home's worth.",
           "Two better tools exist for understanding value. Price per square foot normalizes for size and lets you compare like with like, though it still needs adjusting for condition, lot, and location. More reliable still are recent comparable sales — actual closed transactions of genuinely similar homes in your specific neighborhood within the last few months. Comps are how appraisers work and how disciplined agents price, because they reflect what real buyers actually paid for real homes near yours.",
-          "The Las Vegas market also does not move as one block. The entry-level tier, the move-up tier, and the luxury tier can each be doing something different at the same moment — one heating up while another cools. This is why a valley-wide statistic can be true and useless to you simultaneously. What matters is the trend in your price band and your area, which a focused [home value](/home-value) analysis captures far better than any citywide average."
+          "The Las Vegas market also does not move as one block. The entry-level tier, the move-up tier, and the larger-home tier can each be doing something different at the same moment — one heating up while another cools. This is why a valley-wide statistic can be true and useless to you simultaneously. What matters is the trend in your price band and your area, which a focused [home value](/home-value) analysis captures far better than any citywide average."
         ]
       },
       {
         heading: "Days on Market: The Leverage Gauge",
         body: [
           "Days on market — how long homes take to go from listed to under contract — is the market's real-time leverage gauge, and it often signals a shift before prices confirm it. When homes are selling within days and appraisals are racing to keep up, sellers hold the whip hand. When the typical listing lingers for weeks and price reductions become routine, buyers regain room to negotiate on price, repairs, and terms.",
-          "The subtlety is that days on market varies enormously by price tier and location, so an average across the whole valley can hide what is happening where you are. A well-priced starter home in a popular area can go pending over a weekend while a comparable-value luxury estate takes months by nature — a smaller buyer pool at the high end simply takes longer to match with the right home. Judge the number against homes like yours, not against the metro as a whole.",
+          "The subtlety is that days on market varies enormously by price tier and location, so an average across the whole valley can hide what is happening where you are. A well-priced starter home in a popular area can go pending over a weekend while a comparable-value custom estate takes months by nature — a smaller buyer pool at higher price points simply takes longer to match with the right home. Judge the number against homes like yours, not against the metro as a whole.",
           "Watch, too, for a specific tell: a rising share of listings with price cuts. When more sellers are reducing their asking prices and homes are sitting longer, leverage is drifting toward buyers even if the median price has not budged yet. That combination is one of the earliest reliable signs of a cooling market, and it usually shows up in the days-on-market data first."
         ]
       },
@@ -122,11 +122,11 @@ export const blogPosts: BlogPost[] = [
         ]
       },
       {
-        heading: "The Luxury Tier Plays By Its Own Rules",
+        heading: "Larger and Higher-Priced Homes Play By Their Own Rules",
         body: [
-          "If you are watching the market at the high end, understand that luxury behaves almost like a separate economy inside the valley. High-end buyers are far less sensitive to mortgage rates — many pay cash or put down large amounts — so the rate swings that reshape the entry-level market barely register above a certain price point. Demand at the top is driven more by wealth creation, relocation of affluent households, and the simple scarcity of truly special homes than by the monthly-payment math that governs the broader market.",
+          "If you are watching the market at higher price points, understand that it can behave almost like a separate economy inside the valley. Buyers of higher-priced homes are often less sensitive to mortgage rates — many pay cash or put down large amounts — so the rate swings that reshape the entry-level market barely register above a certain price point. Demand at the top is driven more by equity from a prior home, relocation, and the simple scarcity of truly special homes than by the monthly-payment math that governs the broader market.",
           "That scarcity cuts both ways. In guard-gated enclaves like [The Ridges in Summerlin](/communities/the-ridges-summerlin), [MacDonald Highlands](/communities/macdonald-highlands), and [Ascaya](/communities/ascaya), a limited number of view lots and custom estates means individual sales carry more weight and pricing is far more property-specific than statistical. One extraordinary home can reset expectations for a street; a stale, overpriced listing can sit for a year without saying much about the neighborhood's true value. Averages mean even less here than they do elsewhere.",
-          "Luxury also moves quietly. A meaningful share of high-end transactions happen off-market or as coming-soon opportunities that never hit the public portals, which means the homes you see online are an incomplete picture of what is actually available. If you are buying or selling in this tier, the network you work with matters as much as the data. Our [Las Vegas luxury real estate](/las-vegas-luxury-real-estate) overview goes deeper on how the high end operates."
+          "These sales also move quietly. A meaningful share of higher-priced transactions happen off-market or as coming-soon opportunities that never hit the public portals, which means the homes you see online are an incomplete picture of what is actually available. If you are buying or selling in this range, the network you work with matters as much as the data. Our [guard-gated communities](/guard-gated-communities-las-vegas) overview goes deeper on how these neighborhoods operate."
         ]
       },
       {
@@ -199,11 +199,11 @@ export const blogPosts: BlogPost[] = [
       },
       {
         q: "Why is the median price a misleading way to value my home?",
-        a: "The median just marks the middle of what sold in a period, so it shifts with the mix of homes changing hands rather than the value of any one home. A month with more luxury closings pushes the median up even if individual values are flat. To understand what your home is actually worth, rely on recent comparable sales of genuinely similar homes in your neighborhood, which is how appraisers and disciplined agents price."
+        a: "The median just marks the middle of what sold in a period, so it shifts with the mix of homes changing hands rather than the value of any one home. A month with more closings of larger, higher-priced homes pushes the median up even if individual values are flat. To understand what your home is actually worth, rely on recent comparable sales of genuinely similar homes in your neighborhood, which is how appraisers and disciplined agents price."
       },
       {
-        q: "Does the luxury market in Las Vegas follow the same trends as the overall market?",
-        a: "Not closely. High-end buyers are far less sensitive to mortgage rates because many pay cash or put large amounts down, so rate-driven swings barely register above a certain price point. Luxury demand is driven more by wealth, relocation of affluent households, and the scarcity of exceptional homes, and a meaningful share of high-end sales happen off-market, so public listings show only part of what is available."
+        q: "Do larger, higher-priced homes in Las Vegas follow the same trends as the overall market?",
+        a: "Not closely. Buyers of higher-priced homes are often less sensitive to mortgage rates because many pay cash or put large amounts down, so rate-driven swings barely register above a certain price point. Demand there is driven more by equity from a prior home, relocation, and the scarcity of exceptional homes, and a meaningful share of these sales happen off-market, so public listings show only part of what is available."
       },
       {
         q: "Is there a best season to buy or sell in Las Vegas?",
@@ -237,12 +237,12 @@ export const blogPosts: BlogPost[] = [
         heading: "What 'New Construction' Actually Means in Las Vegas",
         body: [
           "New construction isn't a single product. In the Las Vegas market it generally falls into three buckets, and the buying experience is different for each. Knowing which one you're looking at changes your timeline, your leverage, and how much you can personalize.",
-          "The most common path is a production or tract home from a national builder inside a master-planned community. You choose a floor plan and a homesite, then select finishes at the builder's design center. A second path is a spec or inventory home — a house the builder already started or completed on speculation, which you can often move into faster and sometimes buy with better incentives. The third, at the luxury end, is a semi-custom or fully custom home, common in guard-gated enclaves like [The Ridges](/communities/the-ridges-summerlin), [MacDonald Highlands](/communities/macdonald-highlands), and [Ascaya](/communities/ascaya), where you're building a one-of-a-kind estate on a premium lot."
+          "The most common path is a production or tract home from a national builder inside a master-planned community. You choose a floor plan and a homesite, then select finishes at the builder's design center. A second path is a spec or inventory home — a house the builder already started or completed on speculation, which you can often move into faster and sometimes buy with better incentives. The third, at the custom end, is a semi-custom or fully custom home, common in guard-gated enclaves like [The Ridges](/communities/the-ridges-summerlin), [MacDonald Highlands](/communities/macdonald-highlands), and [Ascaya](/communities/ascaya), where you're building a one-of-a-kind home on a premium lot."
         ],
         bullets: [
           "Production / to-be-built: pick a plan and lot, personalize at the design center, wait for construction.",
           "Spec / inventory home: already underway or finished — faster close, less choice, often strong incentives.",
-          "Semi-custom or custom: architect-driven luxury builds, mostly in guard-gated communities, longest timeline and highest degree of control."
+          "Semi-custom or custom: architect-driven builds, mostly in guard-gated communities, longest timeline and highest degree of control."
         ]
       },
       {
@@ -279,7 +279,7 @@ export const blogPosts: BlogPost[] = [
         body: [
           "Where you can buy new versus resale is one of the most underrated differences. New construction, by definition, happens where there's still developable land — which in Las Vegas increasingly means the outer edges of the valley: the northwest around [Skye Canyon](/communities/skye-canyon), the southeast in [Cadence](/communities/cadence) and [Inspirada](/communities/inspirada), and newer villages within [Summerlin](/communities/summerlin). These areas are growing fast, with new schools, parks, and retail, but some amenities may still be under construction when you move in.",
           "Resale homes give you access to established, centrally located neighborhoods that are essentially built out — places like [Green Valley](/communities/green-valley), [Seven Hills](/communities/seven-hills), and [Anthem](/communities/anthem), where the trees are tall, the commercial corridors are mature, and you know exactly what the community feels like because it already exists. You're buying a known quantity rather than a projection.",
-          "Lots matter too. Newer communities often maximize the number of homesites, which can mean smaller yards and closer neighbors. Older neighborhoods frequently offer larger lots and more spacing. On the luxury side, the calculus flips again: the most dramatic view lots — ridgelines, elevation, and Strip or valley panoramas — are often still available through new construction in [luxury communities](/las-vegas-luxury-real-estate) precisely because those homesites are being released now. If land, views, and privacy drive your decision, that's worth weighing carefully."
+          "Lots matter too. Newer communities often maximize the number of homesites, which can mean smaller yards and closer neighbors. Older neighborhoods frequently offer larger lots and more spacing. For custom and view-lot buyers, the calculus flips again: the most dramatic view lots — ridgelines, elevation, and Strip or valley panoramas — are often still available through new construction in [guard-gated communities](/guard-gated-communities-las-vegas) precisely because those homesites are being released now. If land, views, and privacy drive your decision, that's worth weighing carefully."
         ]
       },
       {
@@ -315,7 +315,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Who Should Lean Toward New Construction",
         body: [
           "New construction tends to be the better fit when personalization, low near-term maintenance, and energy efficiency top your list — and when your timeline has room to breathe. If the idea of choosing your own finishes excites you rather than overwhelms you, and you'd rather not inherit anyone else's projects, a new build delivers exactly that.",
-          "It's also compelling for buyers drawn to the newest master-planned areas and their fresh amenities, and for luxury buyers chasing the best remaining view lots in guard-gated communities, where new construction is often the only way to secure premium land. Buyers who want warranty protection on major systems in a demanding desert climate value that coverage highly.",
+          "It's also compelling for buyers drawn to the newest master-planned areas and their fresh amenities, and for custom-home buyers chasing the best remaining view lots in guard-gated communities, where new construction is often the only way to secure premium land. Buyers who want warranty protection on major systems in a demanding desert climate value that coverage highly.",
           "If that sounds like you, our [new construction guide](/new-construction) covers builder communities and the buying process in more depth, and we can represent you at the builder's table at no cost to you — which is the single smartest move a new-construction buyer can make."
         ],
         bullets: [
@@ -374,8 +374,8 @@ export const blogPosts: BlogPost[] = [
         a: "Often, yes. New homes in master-planned communities can carry LID or SID bond assessments tied to infrastructure, layered on top of standard HOA dues, plus lot premiums, design upgrades, and backyard landscaping that may not be included in the base price. Always ask the builder for your total monthly and annual carrying costs, not just the mortgage payment, before you commit."
       },
       {
-        q: "Is it better to buy new or resale in a guard-gated luxury community?",
-        a: "It depends on what you value most. New construction in communities like The Ridges, MacDonald Highlands, and Ascaya often gives access to the best remaining view lots and full customization, but on a longer timeline. Resale in those same communities lets you buy an established estate with mature landscaping and see exactly what you're getting. Both are strong paths at the luxury level, and the right one comes down to your priorities and timing."
+        q: "Is it better to buy new or resale in a guard-gated community?",
+        a: "It depends on what you value most. New construction in communities like The Ridges, MacDonald Highlands, and Ascaya often gives access to the best remaining view lots and full customization, but on a longer timeline. Resale in those same communities lets you buy an established home with mature landscaping and see exactly what you're getting. Both are strong paths, and the right one comes down to your priorities and timing."
       },
       {
         q: "Can I finance new construction with any lender, or must I use the builder's?",
@@ -441,7 +441,7 @@ export const blogPosts: BlogPost[] = [
         body: [
           "The exterior sets the buyer's expectation before they ever step inside, and in Las Vegas that means desert landscaping done well rather than a lush lawn done poorly. Xeriscaping — decorative rock, drought-tolerant plants, clean bed lines, and well-placed accent boulders — is both the regional aesthetic and a genuine selling point, since it signals low water bills and low maintenance in a climate where both matter. A tired yard, by contrast, tells buyers the whole property may have been let go.",
           "Focus your effort where the buyer's eye lands. Refresh the gravel by raking it smooth and topping off thin spots, trim palms and shrubs, pull weeds, and remove any dead or heat-scorched plants. A freshly painted or restained front door, updated house numbers, a clean light fixture, and a simple potted plant or two create an inviting entry for very little money. If you have grass, keep it green and edged; a patchy lawn draws more criticism than no lawn at all.",
-          "Don't forget the backyard, which in Southern Nevada is often a primary living space rather than an afterthought. Stage the patio as an outdoor room with clean furniture and a shaded seating area, and if you have a pool, make sure the water is crystal clear and the deck is spotless. For homes in view-oriented or resort-style neighborhoods, the outdoor living space can be the feature that closes the sale — a point that carries real weight across [Las Vegas luxury real estate](/las-vegas-luxury-real-estate)."
+          "Don't forget the backyard, which in Southern Nevada is often a primary living space rather than an afterthought. Stage the patio as an outdoor room with clean furniture and a shaded seating area, and if you have a pool, make sure the water is crystal clear and the deck is spotless. For homes in view-oriented or resort-style neighborhoods, the outdoor living space can be the feature that closes the sale — a point that carries real weight across [Las Vegas communities](/communities)."
         ],
         bullets: [
           "Rake and top off decorative rock; remove weeds and dead plants",
@@ -514,7 +514,7 @@ export const blogPosts: BlogPost[] = [
         ],
         bullets: [
           "DIY declutter-and-clean: best for occupied, well-maintained homes on a budget",
-          "Professional stager: worth it for vacant homes, luxury listings, and tricky layouts",
+          "Professional stager: worth it for vacant homes, larger higher-priced listings, and tricky layouts",
           "Virtual staging: cheap online appeal — must be disclosed and backed by a clean real space",
           "Most sellers land on a smart blend guided by their agent's read of the market"
         ]
@@ -535,7 +535,7 @@ export const blogPosts: BlogPost[] = [
       },
       {
         q: "How much does it cost to stage a home in Las Vegas?",
-        a: "It varies widely depending on approach. A do-it-yourself declutter, deep clean, and neutral paint refresh can cost a few hundred to a couple thousand dollars and delivers most of the benefit for an occupied home. Full professional staging of a vacant or luxury home is a larger investment, typically involving furniture rental and a stager's design fee, but on the right property it can more than pay for itself in a faster sale and higher offers."
+        a: "It varies widely depending on approach. A do-it-yourself declutter, deep clean, and neutral paint refresh can cost a few hundred to a couple thousand dollars and delivers most of the benefit for an occupied home. Full professional staging of a vacant or larger higher-priced home is a larger investment, typically involving furniture rental and a stager's design fee, but on the right property it can more than pay for itself in a faster sale and higher offers."
       },
       {
         q: "What are the highest-impact, lowest-cost staging moves?",
@@ -564,53 +564,53 @@ export const blogPosts: BlogPost[] = [
     ]
   },
   {
-    slug: "how-to-sell-a-luxury-home-in-las-vegas",
-    title: "How to Sell a Luxury Home in Las Vegas",
+    slug: "how-to-sell-a-home-in-las-vegas",
+    title: "How to Sell a Home in Las Vegas",
     category: "Selling Guides",
-    excerpt: "Luxury homes play by different rules. Here's how to price, market, and sell a high-end Las Vegas property for its full value.",
+    excerpt: "Higher-priced and custom homes play by different rules. Here's how to price, market, and sell a Las Vegas home for its full value.",
     date: "2026-08-11",
     author: "The Roland Team",
     readMinutes: 17,
-    seoTitle: "How to Sell a Luxury Home in Las Vegas",
-    seoDescription: "Selling a luxury home in Las Vegas? How pricing, marketing, and negotiation differ at the high end — and how to get top dollar.",
-    coverImage: "/blog/how-to-sell-a-luxury-home-in-las-vegas.svg",
+    seoTitle: "How to Sell a Home in Las Vegas: Pricing to Closing",
+    seoDescription: "Selling a higher-value home in Las Vegas? How pricing, marketing, and negotiation work for custom and larger homes — and how to get top dollar.",
+    coverImage: "/blog/how-to-sell-a-home-in-las-vegas.svg",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_4aff30dc-84c6-4b2d-95bd-0ed51314f7f9.png",
     coverAlt: "Selling Guides — The Roland Team Las Vegas real estate",
     sections: [
       {
-        heading: "Why Selling Luxury Is a Different Game",
+        heading: "Why Selling a Higher-Value Home Is a Different Game",
         body: [
-          "If you have sold a home before, you already have a mental model of how the process works: price it near comparable sales, put it on the market, hold a few open houses, and field offers within a couple of weeks. At the top of the Las Vegas market, almost none of that plays out the same way. Luxury homes attract a smaller, more discerning pool of buyers, sell on a longer timeline, and depend far more on how the property is presented than on where it sits in a search filter. A $3 million estate in Ascaya is not competing on price per square foot with the house down the street; it is competing on view, architecture, privacy, and the story a buyer tells themselves about living there.",
-          "The stakes are also higher. A pricing mistake on a starter home might cost a few thousand dollars and a few extra weeks. The same mistake on a high-end property can leave hundreds of thousands of dollars on the table and stall the listing for months, after which it carries the stigma of having sat. Luxury buyers and their agents watch days on market closely, and a stale listing invites lowball offers rather than strong ones.",
-          "This guide walks through how pricing, marketing, negotiation, and timing actually work at the high end in Las Vegas and Henderson — the mechanics, the trade-offs, and the decisions that separate a home that sells for its full value from one that lingers. If you want to skip ahead to a personalized plan, you can request a confidential [home valuation](/home-value) or [reach out directly](/contact) at any point."
+          "If you have sold a home before, you already have a mental model of how the process works: price it near comparable sales, put it on the market, hold a few open houses, and field offers within a couple of weeks. For a larger, higher-priced home in the Las Vegas market, almost none of that plays out the same way. These homes attract a smaller, more selective pool of buyers, sell on a longer timeline, and depend far more on how the property is presented than on where it sits in a search filter. A $3 million custom home in Ascaya is not competing on price per square foot with the house down the street; it is competing on view, architecture, privacy, and the story a buyer tells themselves about living there.",
+          "The stakes are also higher. A pricing mistake on a starter home might cost a few thousand dollars and a few extra weeks. The same mistake on a higher-priced property can leave hundreds of thousands of dollars on the table and stall the listing for months, after which it carries the stigma of having sat. Buyers and their agents at this level watch days on market closely, and a stale listing invites lowball offers rather than strong ones.",
+          "This guide walks through how pricing, marketing, negotiation, and timing actually work for these homes in Las Vegas and Henderson — the mechanics, the trade-offs, and the decisions that separate a home that sells for its full value from one that lingers. If you want to skip ahead to a personalized plan, you can request a confidential [home valuation](/home-value) or [reach out directly](/contact) at any point."
         ]
       },
       {
-        heading: "What Actually Defines Luxury in Las Vegas",
+        heading: "What Makes a Home One of a Kind in Las Vegas",
         body: [
-          "There is no single price that turns a home into a luxury listing, and the threshold shifts as the market moves. In practice, the luxury tier in the Las Vegas Valley begins where a home stops being a commodity and starts being one of a kind — where the buyer is paying for something that cannot simply be replicated by a builder a few streets over. That usually means a guard-gated address, a custom or semi-custom build, elevated finishes, and a setting that carries its own value: a golf frontage, a Strip or mountain view, or waterfront exposure.",
-          "Geography matters enormously here. The valley's high end is concentrated in a handful of communities, each with its own buyer profile and pricing logic. Understanding where your home sits in that landscape is the first step in marketing it correctly, because a buyer shopping in [The Ridges](/communities/the-ridges-summerlin) is rarely the same buyer weighing a waterfront villa in [Lake Las Vegas](/communities/lake-las-vegas)."
+          "There is no single price that turns a home into a one-of-a-kind listing, and the threshold shifts as the market moves. In practice, a home moves into this category in the Las Vegas Valley when it stops being a commodity and starts being unique — where the buyer is paying for something that cannot simply be replicated by a builder a few streets over. That usually means a guard-gated address, a custom or semi-custom build, upgraded finishes, and a setting that carries its own value: a golf frontage, a Strip or mountain view, or waterfront exposure.",
+          "Geography matters enormously here. The valley's custom and guard-gated homes are concentrated in a handful of communities, each with its own buyer profile and pricing logic. Understanding where your home sits in that landscape is the first step in marketing it correctly, because a buyer shopping in [The Ridges](/communities/the-ridges-summerlin) is rarely the same buyer weighing a waterfront villa in [Lake Las Vegas](/communities/lake-las-vegas)."
         ],
         bullets: [
-          "Guard-gated exclusivity — communities like [MacDonald Highlands](/communities/macdonald-highlands), [Ascaya](/communities/ascaya), and [Seven Hills](/communities/seven-hills) where access and privacy are part of the value.",
-          "Custom architecture — one-of-a-kind estates rather than production floor plans, often with dramatic indoor-outdoor design suited to the desert.",
+          "Guard-gated access — communities like [MacDonald Highlands](/communities/macdonald-highlands), [Ascaya](/communities/ascaya), and [Seven Hills](/communities/seven-hills) where access and privacy are part of the value.",
+          "Custom architecture — one-of-a-kind homes rather than production floor plans, often with dramatic indoor-outdoor design suited to the desert.",
           "Irreplaceable views — Strip skyline, golf course frontage, or elevated hillside lots that command a premium no interior upgrade can match.",
           "Resort-grade amenities — infinity pools, casitas, wine rooms, home theaters, and outdoor living spaces built for entertaining year-round."
         ]
       },
       {
-        heading: "Pricing a Luxury Home the Right Way",
+        heading: "Pricing a Higher-Value Home the Right Way",
         body: [
-          "Pricing is where most luxury sales are won or lost, and it is harder than it looks. In a typical neighborhood, a home is one of dozens of near-identical properties, so recent sales give a tight, reliable range. Custom estates rarely have clean comparables. Two homes on the same street can differ by a million dollars because one has an unobstructed Strip view and the other looks at a rooftop. The right price comes from adjusting for those differences honestly, not from picking the highest recent sale and hoping.",
-          "The temptation to overprice is strong and understandable — the home is personal, and there is a belief that a high number leaves room to negotiate. At the high end, that logic backfires. Sophisticated buyers and their agents recognize an inflated price immediately and simply move on, which means the home gets fewer showings during the crucial first weeks when interest is highest. When it eventually reduces, the reduction itself signals weakness and invites offers below what a correctly priced home would have drawn.",
-          "A defensible price is built from current comparable sales, active competition, the pace of the specific market segment, and a clear-eyed read of the home's unique features and flaws. Because the luxury tier moves differently than the broader valley, it helps to look at a current [market report](/market-report) for your segment rather than relying on headline numbers for the metro as a whole. A confidential [home value analysis](/home-value) is the practical starting point for any serious seller."
+          "Pricing is where most sales of these homes are won or lost, and it is harder than it looks. In a typical neighborhood, a home is one of dozens of near-identical properties, so recent sales give a tight, reliable range. Custom homes rarely have clean comparables. Two homes on the same street can differ by a million dollars because one has an unobstructed Strip view and the other looks at a rooftop. The right price comes from adjusting for those differences honestly, not from picking the highest recent sale and hoping.",
+          "The temptation to overprice is strong and understandable — the home is personal, and there is a belief that a high number leaves room to negotiate. For a higher-priced home, that logic backfires. Experienced buyers and their agents recognize an inflated price immediately and simply move on, which means the home gets fewer showings during the crucial first weeks when interest is highest. When it eventually reduces, the reduction itself signals weakness and invites offers below what a correctly priced home would have drawn.",
+          "A defensible price is built from current comparable sales, active competition, the pace of the specific market segment, and a clear-eyed read of the home's unique features and flaws. Because larger and custom homes move differently than the broader valley, it helps to look at a current [market report](/market-report) for your segment rather than relying on headline numbers for the metro as a whole. A confidential [home value analysis](/home-value) is the practical starting point for any serious seller."
         ]
       },
       {
-        heading: "Preparing the Home to Show at the Top of the Market",
+        heading: "Preparing the Home to Show at Its Best",
         body: [
-          "Presentation carries more weight in luxury than in any other tier, because the buyer is paying for a feeling as much as for square footage. Deferred maintenance, dated finishes, and cluttered rooms don't just lower offers — they undercut the entire premise that this is a special property worth a premium. The preparation work you do before a single photo is taken has an outsized effect on the final number.",
-          "That does not mean a full renovation. It means presenting the home at its best version of itself: mechanically sound, spotless, depersonalized enough that a buyer can imagine their own life there, and staged to highlight the features that justify the price. In Las Vegas, that often means drawing attention outdoors — the pool, the covered patio, the view corridor — because the indoor-outdoor lifestyle is central to why people buy at this level. Our deeper guide on [preparing your home to sell](/sell) covers the full checklist.",
+          "Presentation carries extra weight on a higher-priced home, because the buyer is paying for a feeling as much as for square footage. Deferred maintenance, dated finishes, and cluttered rooms don't just lower offers — they undercut the entire premise that this is a special property worth a premium. The preparation work you do before a single photo is taken has an outsized effect on the final number.",
+          "That does not mean a full renovation. It means presenting the home at its best version of itself: mechanically sound, spotless, depersonalized enough that a buyer can imagine their own life there, and staged to highlight the features that justify the price. In Las Vegas, that often means drawing attention outdoors — the pool, the covered patio, the view corridor — because the indoor-outdoor lifestyle is central to why people buy at this price point. Our deeper guide on [preparing your home to sell](/sell) covers the full checklist.",
           "Invest where buyers notice and skip what they won't. A pre-listing inspection can surface issues you can fix on your own timeline rather than under the pressure of a buyer's contingency."
         ],
         bullets: [
@@ -622,41 +622,41 @@ export const blogPosts: BlogPost[] = [
         ]
       },
       {
-        heading: "Marketing That Reaches Genuine Luxury Buyers",
+        heading: "Marketing That Reaches the Right Buyers",
         body: [
-          "A luxury listing needs a marketing plan built for a small, hard-to-reach audience, not a generic one that assumes foot traffic will do the work. The buyer for a multimillion-dollar Henderson estate may live in California, may not be actively searching, and may only discover the home through their agent, a curated network, or a piece of content that reaches them where they already are. That reality shapes everything about how the property should be presented.",
+          "A higher-priced listing needs a marketing plan built for a small, hard-to-reach audience, not a generic one that assumes foot traffic will do the work. The buyer for a multimillion-dollar Henderson home may live in California, may not be actively searching, and may only discover the home through their agent, a curated network, or a piece of content that reaches them where they already are. That reality shapes everything about how the property should be presented.",
           "Professional media is the non-negotiable foundation. That means architectural photography, aerial and drone footage that captures the setting and view, cinematic video, and often a 3D walkthrough so a distant buyer can tour before they fly in. Thin or amateur photos are an instant signal that a home is not being taken seriously, and at this price point buyers read that signal quickly. Strong media also travels — it is what gets a listing shared, saved, and forwarded.",
-          "Beyond the media itself, distribution matters. A well-run luxury campaign syndicates broadly across the platforms buyers actually use, presents the home to a network of agents whose clients shop at this level, and, when it suits the seller's goals, leans on the interest that flows through an established [luxury real estate practice](/las-vegas-luxury-real-estate). Many serious buyers begin with the public [listings](/listings), so a polished, correctly positioned online presence is where most of the first impressions are formed."
+          "Beyond the media itself, distribution matters. A well-run campaign syndicates broadly across the platforms buyers actually use, presents the home to a network of agents whose clients shop at this price point, and, when it suits the seller's goals, leans on the interest that flows through an established team with [guard-gated community experience](/guard-gated-communities-las-vegas). Many serious buyers begin with the public [listings](/listings), so a polished, correctly positioned online presence is where most of the first impressions are formed."
         ]
       },
       {
         heading: "The Case for Discretion: Off-Market and Coming-Soon",
         body: [
-          "Not every luxury seller wants a sign in the yard and a public price history. Privacy is often part of the point — some owners are high-profile, some simply prefer to test the market quietly, and some want to avoid the exposure of a full public launch until the timing is right. This is where off-market and coming-soon strategies earn their place in the luxury toolkit.",
-          "An off-market or pocket listing is marketed privately, agent-to-agent and buyer-to-buyer, without appearing on the public portals. A coming-soon approach builds anticipation for a defined window before the full launch, letting a seller gauge interest and gather feedback without accumulating public days on market. Both can protect a seller's privacy and preserve negotiating leverage, and both are common at the top of the Las Vegas market.",
+          "Not every seller wants a sign in the yard and a public price history. Privacy is often part of the point — some owners are high-profile, some simply prefer to test the market quietly, and some want to avoid the exposure of a full public launch until the timing is right. This is where off-market and coming-soon strategies earn their place in the seller's toolkit.",
+          "An off-market or pocket listing is marketed privately, agent-to-agent and buyer-to-buyer, without appearing on the public portals. A coming-soon approach builds anticipation for a defined window before the full launch, letting a seller gauge interest and gather feedback without accumulating public days on market. Both can protect a seller's privacy and preserve negotiating leverage, and both are used for larger and custom homes in the Las Vegas market.",
           "The trade-off is reach. A private strategy inherently shows the home to fewer people, which can mean fewer competing offers and, sometimes, a lower final price than a full public campaign would produce. The right choice depends on the seller's priorities — maximum price versus maximum discretion — and on how much genuine demand exists for that specific property. It is a conversation worth having candidly with an agent who works both sides of that market."
         ]
       },
       {
-        heading: "Timing Your Sale in the Las Vegas Luxury Market",
+        heading: "Timing Your Sale in the Las Vegas Market",
         body: [
-          "Sellers often ask about the best season to list, and Las Vegas does have rhythms. The broader market tends to be most active in spring and early summer, and the extreme heat of high summer can slow local showings. But the luxury tier follows its own calendar more than the mass market does. A significant share of high-end buyers are relocating from out of state or buying a second home, and their timelines are driven by personal circumstances, tax planning, and lifestyle decisions rather than the school calendar.",
-          "That means seasonality matters less at the top than the health of your specific segment and the quality of your preparation. A well-prepared, well-priced estate that comes to market in the fall will outperform a rushed, overpriced one launched in peak spring. The winter months also bring buyers to Las Vegas for events and milder weather, and second-home shoppers frequently make decisions around year-end for tax reasons.",
-          "The most important timing factor is usually your own readiness. Listing before the home is truly show-ready to catch a season almost never pays off, because the lost first-impression weeks cost more than any seasonal tailwind provides. If you are weighing the calendar, a current [market report](/market-report) for the luxury segment will tell you more than any rule of thumb."
+          "Sellers often ask about the best season to list, and Las Vegas does have rhythms. The broader market tends to be most active in spring and early summer, and the extreme heat of high summer can slow local showings. But sales of larger, higher-priced homes follow their own calendar more than the mass market does. A significant share of these buyers are relocating from out of state or buying a second home, and their timelines are driven by personal circumstances, tax planning, and lifestyle decisions rather than the school calendar.",
+          "That means seasonality matters less than the health of your specific segment and the quality of your preparation. A well-prepared, well-priced custom home that comes to market in the fall will outperform a rushed, overpriced one launched in peak spring. The winter months also bring buyers to Las Vegas for events and milder weather, and second-home shoppers frequently make decisions around year-end for tax reasons.",
+          "The most important timing factor is usually your own readiness. Listing before the home is truly show-ready to catch a season almost never pays off, because the lost first-impression weeks cost more than any seasonal tailwind provides. If you are weighing the calendar, a current [market report](/market-report) for your segment will tell you more than any rule of thumb."
         ]
       },
       {
-        heading: "Negotiating at the High End",
+        heading: "Negotiating a Higher-Priced Sale",
         body: [
-          "Negotiation in luxury is less about a single price line and more about structuring a deal that works for a sophisticated buyer. Many high-end purchases are all-cash or involve substantial down payments, which changes the dynamics: financing contingencies may be weaker or absent, but appraisals, inspections, and due diligence become the real pressure points. A cash buyer still wants confidence they are not overpaying, and their agent will push on every defensible issue.",
-          "Terms often matter as much as price. Flexible closing dates, leaseback arrangements, the inclusion of furnishings or art, and how repair requests are handled can all move a deal forward or stall it. A furnished sale is far more common in the luxury and second-home market than in the mainstream, and the value of high-end furnishings can be a meaningful part of the negotiation. Keeping emotion out of these exchanges is critical; the seller who treats every counter as a personal slight tends to lose deals that a calmer approach would have closed.",
-          "The appraisal deserves special attention. Because custom estates lack clean comparables, an appraisal can come in below a legitimate contract price simply because the appraiser struggles to find matching sales. An experienced listing agent anticipates this, assembles supporting comparables and documentation for the appraiser in advance, and knows how to keep a deal together when the number is soft. This is one of the clearest places where high-end representation pays for itself."
+          "Negotiation on a higher-priced home is less about a single price line and more about structuring a deal that works for an experienced buyer. Many of these purchases are all-cash or involve substantial down payments, which changes the dynamics: financing contingencies may be weaker or absent, but appraisals, inspections, and due diligence become the real pressure points. A cash buyer still wants confidence they are not overpaying, and their agent will push on every defensible issue.",
+          "Terms often matter as much as price. Flexible closing dates, leaseback arrangements, the inclusion of furnishings or art, and how repair requests are handled can all move a deal forward or stall it. A furnished sale is far more common in the second-home market than in the mainstream, and the value of the furnishings can be a meaningful part of the negotiation. Keeping emotion out of these exchanges is critical; the seller who treats every counter as a personal slight tends to lose deals that a calmer approach would have closed.",
+          "The appraisal deserves special attention. Because custom homes lack clean comparables, an appraisal can come in below a legitimate contract price simply because the appraiser struggles to find matching sales. An experienced listing agent anticipates this, assembles supporting comparables and documentation for the appraiser in advance, and knows how to keep a deal together when the number is soft. This is one of the clearest places where experienced representation pays for itself."
         ]
       },
       {
         heading: "Understanding Your Net Proceeds",
         body: [
-          "Your list price is not your take-home, and the gap is worth understanding before you list. Between the sale price and the check you receive at closing sit several costs: brokerage fees, escrow and title charges, any transfer taxes, prorated property taxes and HOA dues, the payoff of any existing mortgage, and negotiated credits or repairs. On a luxury sale, the dollar amounts are large enough that small percentages translate into significant sums.",
+          "Your list price is not your take-home, and the gap is worth understanding before you list. Between the sale price and the check you receive at closing sit several costs: brokerage fees, escrow and title charges, any transfer taxes, prorated property taxes and HOA dues, the payoff of any existing mortgage, and negotiated credits or repairs. On a higher-priced sale, the dollar amounts are large enough that small percentages translate into significant sums.",
           "Nevada is relatively seller-friendly on the tax side. There is no state income tax, which is a major draw for relocating owners, and property tax rates in the Las Vegas Valley are moderate compared with many coastal markets. That said, the real estate transfer tax, escrow fees, and title costs are real line items, and prorations at closing can swing the final number in either direction depending on timing.",
           "Federal capital gains treatment is a separate and important consideration on a high-value sale, especially if the home has appreciated substantially or is a second property rather than a primary residence. This is a question for your CPA or tax advisor, not your agent, but it should be part of your planning early. A clear net-proceeds estimate, prepared alongside your [valuation](/home-value), lets you make decisions with real numbers instead of guesses."
         ]
@@ -664,16 +664,16 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Choosing the Right Listing Agent",
         body: [
-          "The single most consequential decision a luxury seller makes is who represents them. The high end is not a place to experiment with an agent who mostly works mainstream transactions, because the pricing judgment, marketing budget, network, and negotiation experience simply don't transfer. A luxury specialist brings comparable-sales insight for one-of-a-kind properties, relationships with the agents whose clients buy at this level, and the willingness to invest in professional media and distribution that a lower-priced listing would never justify.",
+          "The single most consequential decision a seller of a higher-priced home makes is who represents them. This is not the place to experiment with an agent who has never handled custom or guard-gated properties, because the pricing judgment, marketing budget, network, and negotiation experience simply don't transfer. An agent with real experience here brings comparable-sales insight for one-of-a-kind properties, relationships with the agents whose clients buy at this price point, and the willingness to invest in professional media and distribution that a lower-priced listing would never justify.",
           "Be wary of the agent who wins the listing by promising the highest price. That is the oldest tactic in the business, and it serves the agent — who gets the sign in the yard — far more than the seller, who is left with an overpriced home that eventually reduces from a position of weakness. The right agent gives you an honest, defensible number and a concrete plan, even when the honest number is lower than you hoped to hear.",
-          "Ask specific questions: How will you price this home, and against what comparables? What exactly does your marketing include, and what is the budget? What is your experience with off-market and coming-soon strategies? How do you handle a soft appraisal on a custom estate? The answers reveal quickly whether you are talking to a true luxury professional. You can start that conversation with our team through the [contact page](/contact) whenever you're ready."
+          "Ask specific questions: How will you price this home, and against what comparables? What exactly does your marketing include, and what is the budget? What is your experience with off-market and coming-soon strategies? How do you handle a soft appraisal on a custom home? The answers reveal quickly whether you are talking to a true professional. You can start that conversation with our team through the [contact page](/contact) whenever you're ready."
         ]
       },
       {
-        heading: "Common Mistakes That Cost Luxury Sellers Money",
+        heading: "Common Mistakes That Cost Sellers Money",
         body: [
-          "Most of the value lost in a luxury sale traces back to a short list of avoidable errors. They tend to compound: an overpriced launch leads to weak early interest, which leads to a stale listing, which leads to reductions and lowball offers. Recognizing these patterns in advance is the cheapest insurance a seller can buy.",
-          "The good news is that every item on this list is within the seller's control. With honest pricing, real preparation, professional marketing, and experienced representation, a high-end Las Vegas home can sell efficiently and for its full value even in a selective market."
+          "Most of the value lost in a higher-priced sale traces back to a short list of avoidable errors. They tend to compound: an overpriced launch leads to weak early interest, which leads to a stale listing, which leads to reductions and lowball offers. Recognizing these patterns in advance is the cheapest insurance a seller can buy.",
+          "The good news is that every item on this list is within the seller's control. With honest pricing, real preparation, professional marketing, and experienced representation, a Las Vegas home can sell efficiently and for its full value even in a selective market."
         ],
         bullets: [
           "Overpricing at launch and burning the critical first-impression weeks when buyer interest peaks.",
@@ -681,49 +681,49 @@ export const blogPosts: BlogPost[] = [
           "Listing before the home is truly show-ready to chase a season or a deadline.",
           "Hiring on the promise of the highest price rather than the soundest plan.",
           "Treating negotiation as personal and losing workable deals over pride.",
-          "Ignoring the appraisal risk on a custom estate until it derails escrow."
+          "Ignoring the appraisal risk on a custom home until it derails escrow."
         ]
       },
       {
         heading: "Your Next Step",
         body: [
-          "Selling a luxury home in Las Vegas rewards preparation and punishes shortcuts. Get the price right, present the home at its best, market it to the right buyers through the right channels, and negotiate with a clear head, and a high-end property will find its buyer at a strong number. Cut corners on any of those, and the market will let you know quickly.",
-          "The most useful thing you can do before making any decision is to understand what your home is genuinely worth in today's luxury segment and what your net proceeds would look like. That analysis costs nothing and commits you to nothing. Request a confidential [home valuation](/home-value), review a current [luxury market report](/market-report), or [contact our team](/contact) directly to talk through your goals and your timeline. Whether you're ready to list this month or simply planning ahead, the right conversation now protects your equity later."
+          "Selling a home in Las Vegas rewards preparation and punishes shortcuts. Get the price right, present the home at its best, market it to the right buyers through the right channels, and negotiate with a clear head, and your property will find its buyer at a strong number. Cut corners on any of those, and the market will let you know quickly.",
+          "The most useful thing you can do before making any decision is to understand what your home is genuinely worth in today's market and what your net proceeds would look like. That analysis costs nothing and commits you to nothing. Request a confidential [home valuation](/home-value), review a current [market report](/market-report), or [contact our team](/contact) directly to talk through your goals and your timeline. Whether you're ready to list this month or simply planning ahead, the right conversation now protects your equity later."
         ]
       }
     ],
     faqs: [
       {
-        q: "What price point is considered a luxury home in Las Vegas?",
-        a: "There is no fixed line, and the threshold moves with the market, but the luxury tier generally begins where a home stops being a commodity and becomes one of a kind — typically a guard-gated address, custom construction, and a premium setting such as a Strip view, golf frontage, or waterfront lot. Rather than a single number, think of it as the point where a home's value comes from features a builder can't simply replicate nearby. A current valuation for your specific community is the most reliable way to know where your home sits."
+        q: "What price point is considered a higher-value home in Las Vegas?",
+        a: "There is no fixed line, and the threshold moves with the market, but a home generally moves into this category where it stops being a commodity and becomes one of a kind — typically a guard-gated address, custom construction, and a premium setting such as a Strip view, golf frontage, or waterfront lot. Rather than a single number, think of it as the point where a home's value comes from features a builder can't simply replicate nearby. A current valuation for your specific community is the most reliable way to know where your home sits."
       },
       {
-        q: "How long does it take to sell a luxury home in Las Vegas?",
-        a: "Luxury homes typically take longer to sell than mainstream properties because the buyer pool is smaller and more selective. Where a mid-market home might sell in weeks, a high-end estate often takes longer, and pricing and presentation heavily influence that timeline. A correctly priced, well-marketed home sells far faster than an overpriced one that lingers and eventually reduces from a position of weakness."
+        q: "How long does it take to sell a higher-priced home in Las Vegas?",
+        a: "Higher-priced homes typically take longer to sell than mainstream properties because the buyer pool is smaller and more selective. Where a mid-market home might sell in weeks, a custom home often takes longer, and pricing and presentation heavily influence that timeline. A correctly priced, well-marketed home sells far faster than an overpriced one that lingers and eventually reduces from a position of weakness."
       },
       {
-        q: "Should I sell my luxury home off-market or list it publicly?",
+        q: "Should I sell my home off-market or list it publicly?",
         a: "It depends on your priorities. An off-market or coming-soon strategy protects privacy and preserves negotiating leverage, which appeals to high-profile owners or sellers testing the market quietly. The trade-off is reach — fewer buyers see the home, which can mean fewer competing offers and sometimes a lower final price than a full public campaign. The right choice comes down to weighing maximum price against maximum discretion for your particular property."
       },
       {
-        q: "Do I really need professional photography and video for a luxury listing?",
-        a: "Yes. At the high end, professional media is a foundation, not an upgrade. Architectural photography, aerial and drone footage, cinematic video, and often a 3D walkthrough are what reach out-of-state and second-home buyers who tour online before they ever fly in. Amateur photos are an immediate signal that a home isn't being marketed seriously, and buyers at this level notice quickly."
+        q: "Do I really need professional photography and video for a higher-priced listing?",
+        a: "Yes. For a higher-priced home, professional media is a foundation, not an upgrade. Architectural photography, aerial and drone footage, cinematic video, and often a 3D walkthrough are what reach out-of-state and second-home buyers who tour online before they ever fly in. Amateur photos are an immediate signal that a home isn't being marketed seriously, and buyers at this price point notice quickly."
       },
       {
         q: "What are the tax implications of selling a high-value home in Nevada?",
         a: "Nevada has no state income tax and moderate property tax rates, which makes it relatively seller-friendly, but you'll still pay a real estate transfer tax plus escrow and title costs at closing. Federal capital gains treatment is a separate and important issue on a high-value sale, especially for a second home or a property that has appreciated substantially. Talk to your CPA or tax advisor early, because those decisions can affect timing and net proceeds."
       },
       {
-        q: "Why can appraisals be a problem on luxury homes?",
-        a: "Custom estates rarely have clean comparable sales, so an appraiser may struggle to find matching properties and come in below a legitimate contract price. This is one of the most common ways a high-end deal stalls. An experienced listing agent anticipates the risk, prepares supporting comparables and documentation for the appraiser in advance, and knows how to keep a deal together when the number comes in soft."
+        q: "Why can appraisals be a problem on higher-priced custom homes?",
+        a: "Custom homes rarely have clean comparable sales, so an appraiser may struggle to find matching properties and come in below a legitimate contract price. This is one of the most common ways a higher-priced deal stalls. An experienced listing agent anticipates the risk, prepares supporting comparables and documentation for the appraiser in advance, and knows how to keep a deal together when the number comes in soft."
       },
       {
-        q: "Is furniture usually included when selling a luxury home?",
-        a: "Furnished sales are far more common in the luxury and second-home market than in the mainstream. High-end furnishings, art, and custom pieces can represent meaningful value and are often part of the negotiation. Whether to include them depends on your plans and the buyer's preferences, and it's worth deciding your position before offers come in so it can be used strategically rather than reactively."
+        q: "Is furniture usually included when selling a home?",
+        a: "Furnished sales are far more common in the second-home market than in the mainstream. Furnishings, art, and custom pieces can represent meaningful value and are often part of the negotiation. Whether to include them depends on your plans and the buyer's preferences, and it's worth deciding your position before offers come in so it can be used strategically rather than reactively."
       },
       {
-        q: "How do I choose the right agent to sell my luxury home?",
-        a: "Choose a genuine luxury specialist, not an agent who mostly handles mainstream transactions, because pricing judgment, marketing budget, network, and negotiation experience don't transfer across price tiers. Be skeptical of anyone who wins the listing by promising the highest price — that tactic serves the agent, not you. Ask specifically how they'll price the home, what their marketing includes and costs, and how they handle off-market strategy and soft appraisals; the answers reveal quickly whether you're talking to a true professional."
+        q: "How do I choose the right agent to sell my home?",
+        a: "Choose an agent with real experience in your price range and community, not one who mostly handles a different kind of transaction, because pricing judgment, marketing budget, network, and negotiation experience don't transfer across price tiers. Be skeptical of anyone who wins the listing by promising the highest price — that tactic serves the agent, not you. Ask specifically how they'll price the home, what their marketing includes and costs, and how they handle off-market strategy and soft appraisals; the answers reveal quickly whether you're talking to a true professional."
       }
     ]
   },
@@ -768,7 +768,7 @@ export const blogPosts: BlogPost[] = [
         body: [
           "Las Vegas is bigger and more varied than first-time buyers expect, and \"near the Strip\" is rarely the best answer for a second home. The valley spreads across distinct areas, each with its own character. Summerlin, on the west side against the Red Rock foothills, is a master-planned favorite for its parks, trails, and newer construction. Henderson, to the southeast, is known for well-kept neighborhoods, strong amenities, and a slightly calmer pace. Waterfront living exists too, at Lake Las Vegas, about half an hour from the Strip.",
           "For part-time owners, three factors tend to matter most: how close you are to the airport, how self-contained your immediate area is, and how well the community handles maintenance. Henderson and the southwest keep you reasonably close to Harry Reid International without putting you in the middle of tourist traffic. Master-planned communities give you dining, grocery, and healthcare within a few minutes, which matters when you fly in for a short stay and do not want to spend it running errands across town.",
-          "Luxury-minded buyers often gravitate toward guard-gated enclaves for the security and lock-and-leave peace of mind they offer. Communities like [The Ridges in Summerlin](/communities/the-ridges-summerlin), [MacDonald Highlands](/communities/macdonald-highlands), [Ascaya](/communities/ascaya), and [Seven Hills](/communities/seven-hills) pair privacy with a staffed gate that keeps an eye on the neighborhood while you are away. If security is a priority, our overview of [guard-gated communities in Las Vegas](/guard-gated-communities-las-vegas) is a useful starting point, and you can browse every area from the [communities](/communities) page."
+          "Many buyers gravitate toward guard-gated enclaves for the security and lock-and-leave peace of mind they offer. Communities like [The Ridges in Summerlin](/communities/the-ridges-summerlin), [MacDonald Highlands](/communities/macdonald-highlands), [Ascaya](/communities/ascaya), and [Seven Hills](/communities/seven-hills) pair privacy with a staffed gate that keeps an eye on the neighborhood while you are away. If security is a priority, our overview of [guard-gated communities in Las Vegas](/guard-gated-communities-las-vegas) is a useful starting point, and you can browse every area from the [communities](/communities) page."
         ]
       },
       {
@@ -845,7 +845,7 @@ export const blogPosts: BlogPost[] = [
         body: [
           "Once you know how you will use the home and where you want to be, the property type usually chooses itself. High-rise and mid-rise condominium residences deliver the purest lock-and-leave experience, with building security, on-site staff, and zero exterior upkeep, which makes them a favorite for owners who visit for events and entertainment. The trade-off is less private outdoor space and monthly fees that reflect the services provided.",
           "Villas and townhomes in master-planned communities strike a middle ground: more room and privacy than a condo, with an HOA that still handles most of the exterior. Single-family homes in guard-gated communities suit owners who want space, a private pool, and a true residence they might eventually live in full-time, accepting a bit more maintenance in exchange. At the top of the market, custom estates in communities like [The Ridges](/communities/the-ridges-summerlin) and [Ascaya](/communities/ascaya) offer privacy and views that a shared building simply cannot, with the understanding that a larger property needs a more active management plan when you are away.",
-          "Our [Las Vegas luxury real estate](/las-vegas-luxury-real-estate) overview walks through the high-end options in more depth, and you can compare specific neighborhoods, from [Seven Hills](/communities/seven-hills) and [Southern Highlands](/communities/southern-highlands) to [Lake Las Vegas](/communities/lake-las-vegas), on the [communities](/communities) page."
+          "Our [guard-gated communities](/guard-gated-communities-las-vegas) overview walks through the gated options in more depth, and you can compare specific neighborhoods, from [Seven Hills](/communities/seven-hills) and [Southern Highlands](/communities/southern-highlands) to [Lake Las Vegas](/communities/lake-las-vegas), on the [communities](/communities) page."
         ]
       },
       {
@@ -869,7 +869,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Your Next Step Toward a Las Vegas Second Home",
         body: [
           "A second home in Las Vegas can be one of the most enjoyable and practical purchases you make, but the best outcomes come from planning, not impulse. Decide how you will use it, choose a location and property type that fit that use, verify the tax and rental rules for the specific address, and budget honestly for the cost of holding a home you visit part of the year. Do those things and you end up with a getaway you love and can comfortably keep.",
-          "This is exactly the kind of purchase where a knowledgeable local team earns its keep. As a Top 1% Las Vegas team, [The Roland Team](/las-vegas-luxury-real-estate) helps second-home and vacation-property buyers across Las Vegas and Henderson navigate financing, community rules, and carrying costs, and we handle the details that out-of-area buyers cannot manage from a distance. We will tell you honestly when a home fits your plan and when it does not.",
+          "This is exactly the kind of purchase where a knowledgeable local team earns its keep. As a Top 1% Las Vegas team, [The Roland Team](/about) helps second-home and vacation-property buyers across Las Vegas and Henderson navigate financing, community rules, and carrying costs, and we handle the details that out-of-area buyers cannot manage from a distance. We will tell you honestly when a home fits your plan and when it does not.",
           "When you are ready, reach out through the [contact](/contact) page to start a conversation, browse current [listings](/listings) to see what is available, or review the latest [market report](/market-report) to understand where prices stand today. Whether you want a lock-and-leave villa near the Strip or a private estate in the foothills, we will help you buy the right one."
         ]
       }
@@ -997,7 +997,7 @@ export const blogPosts: BlogPost[] = [
         body: [
           "Two features frequently overlap with active adult communities and are worth understanding on their own terms: golf and gated access. Both add lifestyle value, and both can add cost, so it helps to know how they interact with the 55+ model.",
           "Several of the valley's age-qualified communities are built around golf, with residents enjoying on-site courses and clubhouses. If the game is central to your retirement, it may be worth widening your search to include the broader set of [golf communities in Las Vegas](/golf-communities-las-vegas), some of which have age-qualified sections or nearby active adult options. Just be sure to separate the HOA dues from any golf membership fees, which are often billed independently.",
-          "Gated access is another layer. Some 55+ communities are fully gated, and a few are guard-gated with staffed entries. If security and controlled access rank high for you, our guide to [guard-gated communities in Las Vegas](/guard-gated-communities-las-vegas) explains the differences between a simple call-box gate and a staffed guardhouse. For buyers who want the full luxury tier, the valley's high-end market — covered in our [Las Vegas luxury real estate](/las-vegas-luxury-real-estate) overview — includes custom and semi-custom homes that can be a fit for discerning 55+ buyers."
+          "Gated access is another layer. Some 55+ communities are fully gated, and a few are guard-gated with staffed entries. If security and controlled access rank high for you, our guide to [guard-gated communities in Las Vegas](/guard-gated-communities-las-vegas) explains the differences between a simple call-box gate and a staffed guardhouse. For buyers who want a custom or semi-custom home, the valley's guard-gated communities — covered in our [guard-gated communities](/guard-gated-communities-las-vegas) overview — include options that can be a fit for 55+ buyers."
         ]
       },
       {
@@ -1130,7 +1130,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Henderson and the Southeast Valley",
         body: [
-          "Henderson, on the southeast side of the metro, has become one of the most desirable places in Southern Nevada to own a home, and its golf communities are a big part of that reputation. The area tends to offer slightly more space for the money than the western valley in some segments, along with easy access to the airport and a growing base of dining and retail. Our [Henderson-area luxury pages](/las-vegas-luxury-real-estate) give a broader view of what the southeast has to offer.",
+          "Henderson, on the southeast side of the metro, has become one of the most desirable places in Southern Nevada to own a home, and its golf communities are a big part of that reputation. The area tends to offer slightly more space for the money than the western valley in some segments, along with easy access to the airport and a growing base of dining and retail. Our [community pages](/communities) give a broader view of what the southeast has to offer.",
           "[Seven Hills](/communities/seven-hills) is a well-established, partially guard-gated master plan with the private Rio Secco course nearby and long-standing appeal among golf buyers who want a settled, tree-lined community. [Anthem](/communities/anthem), climbing the hills of Henderson, includes the private Anthem Country Club with its own gated golf enclave, plus a wider range of non-golf neighborhoods for buyers who want the location without the club.",
           "For those focused on the very top of the market, Henderson's crown jewels are [MacDonald Highlands](/communities/macdonald-highlands), home to the private DragonRidge Country Club and dramatic hillside estates, and [Ascaya](/communities/ascaya), a modern-architecture enclave carved into the McCullough Range. Ascaya is not built around its own championship course the way DragonRidge is, so if course frontage is essential, MacDonald Highlands is the more direct golf play of the two. We compare them in detail in our [MacDonald Highlands vs. Ascaya guide](/blog)."
         ]
@@ -1146,7 +1146,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Southern Highlands and the Southwest",
         body: [
-          "On the southwest side of the valley, [Southern Highlands](/communities/southern-highlands) is a large master-planned community anchored by a private, guard-gated golf club with a Robert Trent Jones Sr. and Jr. course. It has grown into one of the more prestigious addresses in that part of town, with a mix of gated golf enclaves and broader family neighborhoods. The location offers quick freeway access toward the airport and the Strip, which appeals to buyers who travel or commute.",
+          "On the southwest side of the valley, [Southern Highlands](/communities/southern-highlands) is a large master-planned community anchored by a private, guard-gated golf club with a Robert Trent Jones Sr. and Jr. course. It has grown into one of the best-known addresses in that part of town, with a mix of gated golf enclaves and broader family neighborhoods. The location offers quick freeway access toward the airport and the Strip, which appeals to buyers who travel or commute.",
           "The southwest corridor has also seen steady [new construction](/new-construction) activity, so buyers here sometimes have the option of building or buying a newer home rather than only shopping resale. That can matter for golf buyers who want a modern floor plan with the indoor-outdoor design that suits desert living, positioned near or on a course.",
           "As with Henderson, it is worth separating the club from the community. Southern Highlands has homes both inside and outside its golf gate, so you can choose the level of exclusivity and dues that fits. If you are weighing the southwest against Summerlin or Henderson overall, our [Summerlin vs. Henderson comparison](/blog) frames the wider lifestyle differences."
         ]
@@ -1155,7 +1155,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Established Golf Neighborhoods With Character",
         body: [
           "Not every strong golf community is a headline name. Several established neighborhoods offer mature landscaping, larger lots, and a settled feel that newer developments cannot replicate yet. [Spanish Trail](/communities/spanish-trail), one of the valley's original guard-gated golf communities, is a good example, built around a 27-hole private country club with tree-lined streets and a loyal base of long-term residents.",
-          "[Tournament Hills](/communities/tournament-hills), a gated enclave within the broader Summerlin area, offers custom homes in a quieter, more intimate setting for buyers who want exclusivity without the scale of a large master plan. These kinds of communities often deliver excellent value relative to the newest luxury enclaves, precisely because they are not the current fashion.",
+          "[Tournament Hills](/communities/tournament-hills), a gated enclave within the broader Summerlin area, offers custom homes in a quieter, more intimate setting for buyers who want exclusivity without the scale of a large master plan. These kinds of communities often deliver excellent value relative to the newest guard-gated enclaves, precisely because they are not the current fashion.",
           "The trade-off with established communities is usually age: homes may need updating, and architectural styles reflect the era they were built in. For many buyers that is an opportunity rather than a drawback, since a renovation lets you tailor a well-located home on a great lot to current tastes. A good agent can help you weigh renovation cost against the premium you would pay for comparable new construction."
         ]
       },
@@ -1179,13 +1179,13 @@ export const blogPosts: BlogPost[] = [
         body: [
           "Golf communities almost always carry HOA dues, and in guard-gated communities those dues fund the manned gate, patrols, and common-area upkeep in addition to any shared amenities. The range across the valley is wide, so ask for the exact current figure, what it covers, and the history of special assessments before you fall in love with a home. A community with lower dues is not automatically a better deal if it defers maintenance that later arrives as a special assessment.",
           "If you are buying specifically for course frontage, look closely at the lot. A home directly on a fairway carries a premium and delivers open views, but it can also mean occasional errant golf balls, early-morning course maintenance noise, and less backyard privacy depending on the hole. Homes set one street back often cost less while still offering community access and a quieter position. Neither is better in the abstract; it depends on how you will use the yard.",
-          "Read the CC&Rs carefully, especially rules on short-term rentals, landscaping, and architectural changes, which tend to be strict in upscale golf communities. If a second home or occasional rental is part of your plan, confirm the rules allow it before you write an offer. Our guide to [guard-gated versus master-planned living](/blog) explains how these governance structures typically differ."
+          "Read the CC&Rs carefully, especially rules on short-term rentals, landscaping, and architectural changes, which tend to be strict in many golf communities. If a second home or occasional rental is part of your plan, confirm the rules allow it before you write an offer. Our guide to [guard-gated versus master-planned living](/blog) explains how these governance structures typically differ."
         ]
       },
       {
         heading: "How to Choose the Right Golf Community for You",
         body: [
-          "Start with an honest read on how you actually play and live. A buyer who golfs several times a week and wants a tight-knit club atmosphere should weigh private country-club communities heavily, membership costs and all. A buyer who plays occasionally, travels often, or mainly wants the green-space views and prestige address may be far better served by a resort course or by simply buying on a course without joining the club.",
+          "Start with an honest read on how you actually play and live. A buyer who golfs several times a week and wants a tight-knit club atmosphere should weigh private country-club communities heavily, membership costs and all. A buyer who plays occasionally, travels often, or mainly wants the green-space views and a well-known address may be far better served by a resort course or by simply buying on a course without joining the club.",
           "Then layer in the non-golf factors that will shape daily life: commute to work or the airport, proximity to the dining and shopping you prefer, the school zone if that matters, and whether you want a full-time residence or a lock-and-leave second home. A stunning fairway lot in the wrong part of the valley for your routine will wear on you long after the novelty of the view fades.",
           "Finally, be realistic about budget across all its layers: purchase price, HOA dues, potential club membership, property taxes, and any renovation. Nevada's lack of a state income tax and its moderate property taxes make the overall carrying cost attractive relative to many other states, which is part of why so many buyers relocate here. If you are moving in from out of state, our [moving to Las Vegas guide](/moving-to-las-vegas) covers the practical side of the transition."
         ],
@@ -1240,7 +1240,7 @@ export const blogPosts: BlogPost[] = [
       },
       {
         q: "Can I buy in a golf community as a second or vacation home?",
-        a: "Yes, and communities like Lake Las Vegas are especially popular for lock-and-leave second homes because of their resort amenities. The key is to confirm the CC&Rs and HOA rules on short-term rentals and occupancy before you buy, since upscale golf communities often restrict them. If rental income is part of your plan, verify what is allowed in that specific community rather than assuming."
+        a: "Yes, and communities like Lake Las Vegas are especially popular for lock-and-leave second homes because of their resort amenities. The key is to confirm the CC&Rs and HOA rules on short-term rentals and occupancy before you buy, since many golf communities restrict them. If rental income is part of your plan, verify what is allowed in that specific community rather than assuming."
       },
       {
         q: "What is the difference between a private club course and a resort course?",
@@ -1252,7 +1252,7 @@ export const blogPosts: BlogPost[] = [
       },
       {
         q: "Do I need a real estate agent to buy in a golf community?",
-        a: "It is strongly advisable, because these purchases carry details a standard home sale does not, including membership terms, mandatory club fees, and community-specific CC&Rs. An agent who knows these particular communities can tell you which clubs have availability, how recent sales are trending, and what to verify during due diligence. Having that guidance often saves far more than it costs, especially at the luxury end of the market."
+        a: "It is strongly advisable, because these purchases carry details a standard home sale does not, including membership terms, mandatory club fees, and community-specific CC&Rs. An agent who knows these particular communities can tell you which clubs have availability, how recent sales are trending, and what to verify during due diligence. Having that guidance often saves far more than it costs, especially for custom homes and club memberships."
       }
     ]
   },
@@ -1260,12 +1260,12 @@ export const blogPosts: BlogPost[] = [
     slug: "the-ridges-in-summerlin-a-complete-guide",
     title: "The Ridges in Summerlin: A Complete Guide",
     category: "Buying Guides",
-    excerpt: "Inside one of Summerlin's most prestigious guard-gated communities — architecture, amenities, golf, and what buyers should know.",
+    excerpt: "Inside one of Summerlin's best-known guard-gated communities — architecture, amenities, golf, and what buyers should know.",
     date: "2026-08-11",
     author: "The Roland Team",
     readMinutes: 17,
     seoTitle: "The Ridges Summerlin: A Complete Buyer's Guide",
-    seoDescription: "A complete guide to The Ridges in Summerlin — guard-gated luxury, Bear's Best golf, contemporary custom estates, and what to know before you buy.",
+    seoDescription: "A complete guide to The Ridges in Summerlin — guard-gated living, Bear's Best golf, contemporary custom estates, and what to know before you buy.",
     coverImage: "/blog/the-ridges-in-summerlin-a-complete-guide.svg",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_19002596-0496-4803-bde2-d4430c7dec99.png",
     coverAlt: "Buying Guides — The Roland Team Las Vegas real estate",
@@ -1273,7 +1273,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "The Ridges at a Glance: Why This Corner of Summerlin Stands Apart",
         body: [
-          "If you have been researching luxury real estate in the western Las Vegas Valley, The Ridges keeps surfacing for a reason. Tucked into the highest, westernmost reaches of Summerlin against the red rock foothills, it is one of the most sought-after guard-gated communities in Southern Nevada. Buyers drawn here are usually weighing a specific question: is The Ridges the right fit for the way I actually want to live, or is another Summerlin or Henderson enclave a better match? This guide answers that honestly, from architecture and amenities to the practical realities of buying in a community like this one.",
+          "If you have been researching homes in the western Las Vegas Valley, The Ridges keeps surfacing for a reason. Tucked into the highest, westernmost reaches of Summerlin against the red rock foothills, it is one of the most sought-after guard-gated communities in Southern Nevada. Buyers drawn here are usually weighing a specific question: is The Ridges the right fit for the way I actually want to live, or is another Summerlin or Henderson enclave a better match? This guide answers that honestly, from architecture and amenities to the practical realities of buying in a community like this one.",
           "The Ridges occupies elevated terrain on the far west side of Summerlin, which gives many homesites long views back across the twinkling valley and, from other lots, a front-row seat to the sandstone escarpment of Red Rock Canyon National Conservation Area. That geography is the single biggest reason the community commands a premium. Land at elevation, close to protected open space, with true privacy and controlled access is genuinely scarce in a valley that keeps growing outward.",
           "What sets The Ridges apart from the broader master plan around it is the concentration of custom and semi-custom estates, a consistent modern desert-contemporary design language, and a private membership club at its center. It is not a place of repeating tract elevations. It reads as a collection of individual architectural statements held together by thoughtful design guidelines. You can explore the full community profile on our [The Ridges community page](/communities/the-ridges-summerlin), and see how it fits within the larger [Summerlin master plan](/communities/summerlin)."
         ]
@@ -1283,14 +1283,14 @@ export const blogPosts: BlogPost[] = [
         body: [
           "Location is where The Ridges earns much of its reputation. Sitting at the western edge of the valley, the community is minutes from the Red Rock Canyon scenic loop, the trailheads and climbing routes that draw outdoor enthusiasts from around the country, and the open desert that buffers Summerlin from further sprawl. For buyers who want their morning to start with a hike or a road-bike climb rather than a freeway on-ramp, the setting is hard to beat.",
           "Despite the sense of removal, day-to-day convenience is close at hand. Downtown Summerlin, with its shopping, dining, and entertainment, is a short drive away, as is the 215 Beltway that loops the valley and connects west-side residents to the airport, the Strip corridor, and Henderson. Top-tier medical facilities, private and public schools, and everyday services are all within the greater Summerlin footprint, so the elevation and privacy do not come at the cost of practicality.",
-          "The desert-contemporary character of the homes is a direct response to this landscape. Low, horizontal massing, floor-to-ceiling glass framing the views, natural stone, steel, and stucco in muted tones, and indoor-outdoor living that takes full advantage of the climate all reflect a community designed to belong to its surroundings. If proximity to protected open space and a genuine sense of the desert matter to you, The Ridges delivers it more completely than almost anywhere else in [Las Vegas luxury real estate](/las-vegas-luxury-real-estate)."
+          "The desert-contemporary character of the homes is a direct response to this landscape. Low, horizontal massing, floor-to-ceiling glass framing the views, natural stone, steel, and stucco in muted tones, and indoor-outdoor living that takes full advantage of the climate all reflect a community designed to belong to its surroundings. If proximity to protected open space and a genuine sense of the desert matter to you, The Ridges delivers it more completely than almost anywhere else in the [Las Vegas Valley](/communities)."
         ]
       },
       {
         heading: "Architecture and Home Styles: Modern Desert-Contemporary Done Right",
         body: [
           "The defining aesthetic of The Ridges is modern desert-contemporary, and the community's design guidelines keep that vision coherent without turning every home into a copy of its neighbor. Expect clean geometric lines, expansive glass, flat or low-slope rooflines, and a material palette that draws from the surrounding terrain. Many homes are oriented to capture strip and valley lights to the east or the sandstone cliffs to the west, and the best of them dissolve the boundary between interior living space and shaded outdoor rooms.",
-          "Homes here span a meaningful range. You will find semi-custom residences built by respected luxury builders alongside fully custom estates designed by individual architects for individual owners. That variety means the community can accommodate buyers looking for a beautifully finished move-in-ready home as well as those who want to secure a homesite and build something singular. Interior square footage, lot size, and level of finish vary widely, which is part of why pricing spans such a broad band.",
+          "Homes here span a meaningful range. You will find semi-custom residences built by respected builders alongside fully custom estates designed by individual architects for individual owners. That variety means the community can accommodate buyers looking for a beautifully finished move-in-ready home as well as those who want to secure a homesite and build something singular. Interior square footage, lot size, and level of finish vary widely, which is part of why pricing spans such a broad band.",
           "For buyers comparing modern architecture across the valley, it is worth noting how The Ridges differs from Henderson's hillside enclaves like [Ascaya](/communities/ascaya) and [MacDonald Highlands](/communities/macdonald-highlands). Those communities push dramatic, cliffside contemporary design on steep terrain, while The Ridges tends toward a more integrated, Summerlin-rooted interpretation with the amenities of an established master plan around it. None is objectively better; they simply suit different tastes."
         ],
         bullets: [
@@ -1305,7 +1305,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Bear's Best and Golf at The Ridges",
         body: [
           "Golf is woven into the identity of The Ridges through Bear's Best Las Vegas, a Jack Nicklaus Signature course that threads through and around the community. What makes Bear's Best distinctive is its concept: the course assembles replicas of some of Nicklaus's favorite holes from his celebrated designs around the world, set against dramatic desert backdrops and elevated views of the valley and the Strip. It is a public-access course, which means golf is available without the barrier of a private club initiation, though it plays and presents like a premium venue.",
-          "For golf-focused buyers, this arrangement offers real flexibility. You can enjoy a nationally regarded course essentially in your backyard without being locked into a mandatory golf membership as a condition of ownership. That is a different model than fully private golf communities, where equity or golf membership is central to the value proposition. If a private club experience is a priority, it is worth comparing The Ridges with communities like [Red Rock Country Club](/communities/red-rock-country-club) and the ultra-exclusive [Summit Club](/communities/the-summit-club) nearby.",
+          "For golf-focused buyers, this arrangement offers real flexibility. You can enjoy a nationally regarded course essentially in your backyard without being locked into a mandatory golf membership as a condition of ownership. That is a different model than fully private golf communities, where equity or golf membership is central to the value proposition. If a private club experience is a priority, it is worth comparing The Ridges with communities like [Red Rock Country Club](/communities/red-rock-country-club) and the private [Summit Club](/communities/the-summit-club) nearby.",
           "Golf in Southern Nevada is a year-round pursuit thanks to the climate, and the visual drama of desert courses is a genuine draw. If the sport is central to your lifestyle, our overview of [golf communities in Las Vegas](/golf-communities-las-vegas) lays out the full range of options, from public-access courses like Bear's Best to invitation-only private clubs."
         ]
       },
@@ -1313,14 +1313,14 @@ export const blogPosts: BlogPost[] = [
         heading: "Club Ridges and Community Amenities",
         body: [
           "At the social heart of the community sits Club Ridges, a private residents-only amenity center that gives the neighborhood a genuine sense of gathering. Rather than a golf clubhouse, this is a lifestyle facility oriented around fitness, recreation, and connection among neighbors. It typically includes amenities such as a resort-style pool, tennis and pickleball, a fitness center, and gathering and event spaces, with a calendar of community programming that helps residents actually meet one another.",
-          "This model matters because it shapes daily life. In many guard-gated luxury communities, the homes are spectacular but the shared life is thin. A well-run private amenity center changes that, giving families, couples, and individuals a reason to leave the house and a place to build relationships close to home. For buyers moving to the area from out of state, that built-in community can make the transition markedly easier.",
+          "This model matters because it shapes daily life. In many guard-gated communities, the homes are spectacular but the shared life is thin. A well-run private amenity center changes that, giving families, couples, and individuals a reason to leave the house and a place to build relationships close to home. For buyers moving to the area from out of state, that built-in community can make the transition markedly easier.",
           "Amenities, programming, and access rules evolve over time and are governed by the homeowners association, so if specific facilities matter to your decision, confirm the current offerings and any associated dues during your search. We are happy to walk you through exactly what is available today and how it compares to other communities you are considering. Just [reach out to our team](/contact) and we will pull the current details."
         ]
       },
       {
         heading: "Guard-Gated Security and Privacy",
         body: [
-          "The Ridges is a guard-gated community, and for most buyers at this level, that is not a minor detail. Staffed entry gates, controlled access, and patrol combine to create both real security and the psychological comfort of privacy. For high-profile owners, frequent travelers, and anyone who values discretion, controlled access is often a non-negotiable feature rather than a luxury add-on.",
+          "The Ridges is a guard-gated community, and for most buyers here, that is not a minor detail. Staffed entry gates, controlled access, and patrol combine to create both real security and the psychological comfort of privacy. For high-profile owners, frequent travelers, and anyone who values discretion, controlled access is often a non-negotiable feature rather than an optional add-on.",
           "It is worth understanding what guard-gated actually delivers and what it does not. A staffed gate meaningfully reduces casual and opportunistic traffic, screens visitors and deliveries, and supports a lock-and-leave lifestyle that suits second-home owners and executives who travel. It is not a guarantee against every risk, and the value it provides should be weighed against the HOA cost of staffing and maintaining that infrastructure. Our guide to [guard-gated communities in Las Vegas](/guard-gated-communities-las-vegas) explains the trade-offs in depth.",
           "Privacy at The Ridges is reinforced by the terrain itself. Elevation changes, generous lot spacing on many homesites, and the desert-contemporary emphasis on walled courtyards and private outdoor rooms mean that even within a gated community, individual homes can feel genuinely secluded. That layering of privacy, from the community gate down to the individual lot, is part of what buyers are paying for."
         ]
@@ -1330,7 +1330,7 @@ export const blogPosts: BlogPost[] = [
         body: [
           "Understanding the natural fit helps you decide quickly whether The Ridges belongs on your shortlist. The community tends to resonate with buyers who want contemporary architecture rather than traditional or Mediterranean styling, who place a high value on views and proximity to Red Rock, and who want the security of a guard gate paired with the amenities of an established master-planned setting. It appeals strongly to executives, entrepreneurs, and professionals relocating to a no-state-income-tax state, as well as to second-home buyers who want a lock-and-leave desert retreat.",
           "It is equally useful to name who might be better served elsewhere. Buyers set on a fully private, members-only golf club as the center of their lifestyle may prefer a dedicated golf community. Those seeking the most dramatic cliffside modern estates in the valley often look to Henderson's hillside communities. And buyers with more moderate budgets who still want gated living have excellent options across the valley, which we cover in detail elsewhere on the blog.",
-          "There is no single right answer, only the right answer for your priorities. If you are still mapping the landscape, our overview of [Las Vegas communities](/communities) and our comparison content can help you triangulate. When you are ready to get specific, browse current [luxury listings](/listings) to see what is actually available."
+          "There is no single right answer, only the right answer for your priorities. If you are still mapping the landscape, our overview of [Las Vegas communities](/communities) and our comparison content can help you triangulate. When you are ready to get specific, browse current [listings](/listings) to see what is actually available."
         ],
         bullets: [
           "Buyers who prefer modern desert-contemporary architecture over traditional styles",
@@ -1344,15 +1344,15 @@ export const blogPosts: BlogPost[] = [
         heading: "Understanding Pricing and Value in The Ridges",
         body: [
           "Pricing in The Ridges spans a wide range, and that is by design. Because the community includes everything from semi-custom homes to sprawling custom estates on premium view lots, the gap between the entry point and the top of the market is substantial. Rather than anchor to a specific number that will be outdated by the time you read it, it is more useful to understand what drives value here: lot position and views, square footage and land size, the quality and recency of the build, and the level of architectural distinction.",
-          "View premiums are real and significant. A homesite that captures unobstructed valley and Strip lights, or one that sits close to the Red Rock escarpment, will command more than an interior lot with comparable square footage. Similarly, homes with fully custom, architect-driven design and current high-end finishes tend to outperform dated or builder-standard interiors. When you evaluate a specific property, these factors matter far more than headline price per square foot.",
-          "For current, accurate pricing you need live data, not a blog estimate. We keep close watch on the west-side luxury tier and can share exactly what is selling, at what price, and how long it is taking. Start with our [Las Vegas market report](/market-report), and if you own in or near The Ridges and are curious about your position, request a [home value estimate](/home-value) for a professional read on your property."
+          "View premiums are real and significant. A homesite that captures unobstructed valley and Strip lights, or one that sits close to the Red Rock escarpment, will command more than an interior lot with comparable square footage. Similarly, homes with fully custom, architect-driven design and current upgraded finishes tend to outperform dated or builder-standard interiors. When you evaluate a specific property, these factors matter far more than headline price per square foot.",
+          "For current, accurate pricing you need live data, not a blog estimate. We keep close watch on west-side sales and can share exactly what is selling, at what price, and how long it is taking. Start with our [Las Vegas market report](/market-report), and if you own in or near The Ridges and are curious about your position, request a [home value estimate](/home-value) for a professional read on your property."
         ]
       },
       {
         heading: "The Buying Process: What to Know Before You Make an Offer",
         body: [
           "Buying in a community like The Ridges rewards preparation. At this level, many of the most compelling opportunities are custom homes with unique features, and some transactions happen quietly, off the public market, before they are ever widely advertised. Working with an agent who knows the community, the builders, and the owners gives you access and insight that a purely online search cannot. It also helps you read the difference between a home that is priced right and one that is simply expensive.",
-          "The mechanics of a Nevada purchase are straightforward but specific. Transactions close through escrow and title companies, earnest money is held in escrow, and inspections and due diligence periods are negotiated in the purchase agreement. For custom and high-end homes, inspections deserve extra care: specialized systems, pools and water features, roofing, and mechanical equipment all warrant qualified evaluation. If you are financing, a jumbo loan and an appraisal that accounts for custom features add steps worth planning for early.",
+          "The mechanics of a Nevada purchase are straightforward but specific. Transactions close through escrow and title companies, earnest money is held in escrow, and inspections and due diligence periods are negotiated in the purchase agreement. For custom and larger homes, inspections deserve extra care: specialized systems, pools and water features, roofing, and mechanical equipment all warrant qualified evaluation. If you are financing, a jumbo loan and an appraisal that accounts for custom features add steps worth planning for early.",
           "New-construction and build-to-suit opportunities follow a different path than resale, with builder contracts, design-center selections, and construction timelines to manage. If a from-the-ground-up home appeals to you, our [new construction](/new-construction) guidance covers what to expect. Whatever route you take, having representation focused on your interests, especially when a builder's sales team represents the builder, protects you. When you are ready, our [buyer services](/buy) walk you through every step."
         ],
         bullets: [
@@ -1364,17 +1364,17 @@ export const blogPosts: BlogPost[] = [
         ]
       },
       {
-        heading: "Selling in The Ridges: Positioning a West-Side Luxury Home",
+        heading: "Selling in The Ridges: Positioning a West-Side Home",
         body: [
-          "If you already own in The Ridges and are thinking about selling, the strategy differs from a typical valley resale. Luxury buyers at this level respond to precise positioning, exceptional marketing, and credible pricing grounded in current data. Overpricing a distinctive home and letting it sit erodes negotiating leverage; underpricing leaves real money on the table. The right list price comes from a careful read of recent comparable sales, current competition, and the specific attributes, views, architecture, and finish, that make your home stand out.",
+          "If you already own in The Ridges and are thinking about selling, the strategy differs from a typical valley resale. Buyers at this price point respond to precise positioning, exceptional marketing, and credible pricing grounded in current data. Overpricing a distinctive home and letting it sit erodes negotiating leverage; underpricing leaves real money on the table. The right list price comes from a careful read of recent comparable sales, current competition, and the specific attributes, views, architecture, and finish, that make your home stand out.",
           "Presentation carries outsized weight in this tier. Architectural photography, video, and increasingly aerial and twilight imagery that showcase the views and indoor-outdoor living are worth the investment. So is preparing the home to show at its best, from staging that suits contemporary interiors to addressing deferred maintenance before it becomes a buyer's negotiating point. The goal is to make the home's best qualities undeniable in the first thirty seconds of a listing and the first minute of a showing.",
-          "Reaching the right buyer often means going beyond the open market. A meaningful share of luxury activity moves through agent networks and qualified-buyer channels. Our team markets west-side luxury homes locally, nationally, and to relocating buyers, and we can advise on whether a discreet or a full-market approach fits your goals. Explore our [seller services](/sell) or request a confidential [valuation](/home-value) to start the conversation."
+          "Reaching the right buyer often means going beyond the open market. A meaningful share of sales here move through agent networks and qualified-buyer channels. Our team markets west-side homes locally, nationally, and to relocating buyers, and we can advise on whether a discreet or a full-market approach fits your goals. Explore our [seller services](/sell) or request a confidential [valuation](/home-value) to start the conversation."
         ]
       },
       {
         heading: "The Ridges in Context: How It Compares to Nearby Communities",
         body: [
-          "No community should be evaluated in isolation, and The Ridges makes the most sense when you see it against its neighbors. Within Summerlin, [Queensridge](/communities/queensridge) offers a more traditional, European-influenced luxury aesthetic with lush landscaping, a clear contrast to The Ridges' modern desert look. [Peccole Ranch](/communities/peccole-ranch) and other established west-side neighborhoods provide excellent value at more accessible price points for buyers who want the area without the guard-gated premium.",
+          "No community should be evaluated in isolation, and The Ridges makes the most sense when you see it against its neighbors. Within Summerlin, [Queensridge](/communities/queensridge) offers a more traditional, European-influenced aesthetic with lush landscaping, a clear contrast to The Ridges' modern desert look. [Peccole Ranch](/communities/peccole-ranch) and other established west-side neighborhoods provide excellent value at more accessible price points for buyers who want the area without the guard-gated premium.",
           "At the very top of the market, The Summit Club sits adjacent as one of the most exclusive private communities in the country, combining a private Tom Fazio golf course with strict membership. Red Rock Country Club, also nearby, centers life around private golf and a resort-style club. Across the valley in Henderson, Ascaya and MacDonald Highlands deliver dramatic hillside modern estates. Each represents a different balance of privacy, architecture, golf, and price.",
           "The point of comparison is not to rank these communities but to clarify your own priorities. If contemporary architecture, Red Rock proximity, views, and a well-rounded master-planned setting rank highest for you, The Ridges is likely near the top of your list. If a private golf club or the most extreme hillside architecture matters more, the comparison steers you elsewhere. That clarity is exactly what makes for a confident purchase, and it is where an experienced local team earns its keep."
         ]
@@ -1384,7 +1384,7 @@ export const blogPosts: BlogPost[] = [
         body: [
           "The Ridges rewards buyers who know what they want: modern architecture, elevated views, guard-gated privacy, and a genuine connection to the desert landscape at the western edge of Summerlin. The best way to know whether it is right for you is to walk the streets, tour a few homes across the price range, and feel the difference between an interior lot and a view lot in person. Data and photos only take you so far.",
           "If you are relocating to Southern Nevada, our [moving to Las Vegas](/moving-to-las-vegas) guide covers the practical side of the transition, from taxes to timelines. If you are comparing communities, we can build you a tailored shortlist and arrange private showings, including off-market opportunities you will not find online. And if you own here and want to understand your options, we will give you an honest, data-driven read on your home's value.",
-          "The Roland Team specializes in west-side and guard-gated luxury real estate, and we would be glad to help you make a confident, well-informed move. [Contact us](/contact) to start a conversation, browse current [listings](/listings), or request a complimentary [home valuation](/home-value). Whatever your timeline, we will meet you where you are."
+          "The Roland Team specializes in west-side and guard-gated communities, and we would be glad to help you make a confident, well-informed move. [Contact us](/contact) to start a conversation, browse current [listings](/listings), or request a complimentary [home valuation](/home-value). Whatever your timeline, we will meet you where you are."
         ]
       }
     ],
@@ -1399,7 +1399,7 @@ export const blogPosts: BlogPost[] = [
       },
       {
         q: "How much do homes in The Ridges cost?",
-        a: "Pricing spans a wide range because the community includes both semi-custom homes and large fully custom estates, with values driven heavily by lot position, views, square footage, and level of finish. Because luxury prices move and inventory changes, any specific figure would be outdated quickly. For current, accurate pricing on what is actually selling, check our Las Vegas market report or contact our team for a live picture of the west-side luxury tier."
+        a: "Pricing spans a wide range because the community includes both semi-custom homes and large fully custom estates, with values driven heavily by lot position, views, square footage, and level of finish. Because prices move and inventory changes, any specific figure would be outdated quickly. For current, accurate pricing on what is actually selling, check our Las Vegas market report or contact our team for a live picture of the west-side market."
       },
       {
         q: "What is the architectural style in The Ridges?",
@@ -1427,7 +1427,7 @@ export const blogPosts: BlogPost[] = [
     slug: "guard-gated-communities-in-las-vegas-under-1m",
     title: "Guard-Gated Communities in Las Vegas Under $1M",
     category: "Buying Guides",
-    excerpt: "Guard-gated living isn't only for ultra-luxury budgets. Here's where to find gated communities in the valley with homes attainable under $1M.",
+    excerpt: "Guard-gated living isn't only for the biggest budgets. Here's where to find gated communities in the valley with homes attainable under $1M.",
     date: "2026-08-11",
     author: "The Roland Team",
     readMinutes: 16,
@@ -1441,7 +1441,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Gated Living Without a Seven-Figure Budget",
         body: [
           "When most people picture guard-gated living in Las Vegas, they picture custom estates behind manned gatehouses in places like The Ridges or MacDonald Highlands, where prices climb well into the millions. That image is real, but it is only part of the story. Across the valley there are guard-gated communities where well-built, comfortable homes trade hands regularly under $1 million, and in several of them you can find single-family houses priced considerably below that line.",
-          "The question this guide answers is simple: where can you get the privacy, controlled access, and community feel of a gated neighborhood without stretching into ultra-luxury territory? The short answer is that you have more choices than you might expect, spread across Henderson, the southwest, and Summerlin. The longer answer depends on what you value most, because a lower price almost always means a trade-off somewhere else, and knowing which trade-offs you are comfortable with is the whole game.",
+          "The question this guide answers is simple: where can you get the privacy, controlled access, and community feel of a gated neighborhood without stretching to the top of the price range? The short answer is that you have more choices than you might expect, spread across Henderson, the southwest, and Summerlin. The longer answer depends on what you value most, because a lower price almost always means a trade-off somewhere else, and knowing which trade-offs you are comfortable with is the whole game.",
           "This is a practical walk through the neighborhoods worth knowing, what the sub-$1M inventory actually looks like inside them, and how to think about the true cost of gated living once HOA dues and amenities enter the picture. Pricing here is general and moves with the market, so treat everything as a framework rather than a quote. When you are ready to see what is genuinely available today, [reach out for current listings](/contact) or start browsing [active homes across the valley](/listings)."
         ]
       },
@@ -1472,15 +1472,15 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Southern Highlands and Anthem: Southwest and South Valley Value",
         body: [
-          "On the southwest side, Southern Highlands is a master-planned community built around a private golf club, and while its guard-gated custom sections reach into luxury pricing, the broader community includes many gated and semi-gated neighborhoods with homes attainable under $1 million. The location near the I-15 gives quick access to the airport and the Strip, which appeals to frequent travelers and second-home buyers alike. See our [Southern Highlands overview](/communities/southern-highlands) for how the neighborhoods are organized.",
+          "On the southwest side, Southern Highlands is a master-planned community built around a private golf club, and while its guard-gated custom sections reach well above $1 million, the broader community includes many gated and semi-gated neighborhoods with homes attainable under $1 million. The location near the I-15 gives quick access to the airport and the Strip, which appeals to frequent travelers and second-home buyers alike. See our [Southern Highlands overview](/communities/southern-highlands) for how the neighborhoods are organized.",
           "Anthem, in the Henderson foothills, is another strong candidate. It spans a large master plan with a mix of standard neighborhoods, gated sections, and the guard-gated Anthem Country Club at its higher end. Below the country club tier, Anthem offers a lot of well-built inventory at reasonable prices, plus parks and a trail network that make it popular with active households. The [Anthem community guide](/communities/anthem) gets into the differences between its neighborhoods.",
-          "Both of these communities illustrate a pattern worth remembering: the most prestigious, priciest section usually shares its name with more attainable neighborhoods nearby. Buyers who understand that distinction can capture much of the lifestyle and location for a fraction of the marquee price, especially when they lean on an agent who knows exactly which streets and subdivisions sit at which price tier."
+          "Both of these communities illustrate a pattern worth remembering: the priciest section usually shares its name with more attainable neighborhoods nearby. Buyers who understand that distinction can capture much of the lifestyle and location for a fraction of the marquee price, especially when they lean on an agent who knows exactly which streets and subdivisions sit at which price tier."
         ]
       },
       {
         heading: "Summerlin's Attainable Gated Pockets",
         body: [
-          "Summerlin is the valley's largest and best-known master plan, and it carries a premium for its trails, parks, retail, and proximity to Red Rock Canyon. Its most famous guard-gated community, [The Ridges](/communities/the-ridges-summerlin), is firmly luxury. But Summerlin is enormous and contains dozens of villages, and within them are gated neighborhoods where townhomes, patio homes, and mid-sized single-family houses can be found under $1 million.",
+          "Summerlin is the valley's largest and best-known master plan, and it carries a premium for its trails, parks, retail, and proximity to Red Rock Canyon. Its most famous guard-gated community, [The Ridges](/communities/the-ridges-summerlin), is priced well above $1 million. But Summerlin is enormous and contains dozens of villages, and within them are gated neighborhoods where townhomes, patio homes, and mid-sized single-family houses can be found under $1 million.",
           "Because Summerlin commands higher prices overall, the sub-$1M gated inventory here tends to skew toward attached product, smaller lots, and older villages rather than newer custom sections. That is not a knock; it is simply where the value sits inside a premium address. For many buyers, owning a lock-and-leave townhome behind a gate in Summerlin, with the whole master plan's amenities at their door, is exactly the right trade. Our broader [Summerlin community guide](/communities/summerlin) maps out the villages.",
           "If Summerlin's price floor feels high for what you get, this is a good moment to widen the search. The same budget often buys a larger home or a bigger lot in Henderson or the southwest, which is why comparing communities side by side, rather than anchoring on one name, tends to produce better outcomes. A quick conversation about your priorities can quickly narrow a valley-wide list to three or four neighborhoods that actually fit."
         ]
@@ -1488,7 +1488,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Red Rock Country Club and Rhodes Ranch: Golf Behind the Gate",
         body: [
-          "Golf-oriented buyers have their own attainable options. [Red Rock Country Club](/communities/red-rock-country-club) in Summerlin is guard-gated and built around two Arnold Palmer-designed courses. Its custom estates are luxury-priced, but the community also includes townhomes and smaller single-family homes, and the attached product in particular can land under $1 million while still offering the guarded entrance and club setting.",
+          "Golf-oriented buyers have their own attainable options. [Red Rock Country Club](/communities/red-rock-country-club) in Summerlin is guard-gated and built around two Arnold Palmer-designed courses. Its custom estates are priced well above $1 million, but the community also includes townhomes and smaller single-family homes, and the attached product in particular can land under $1 million while still offering the guarded entrance and club setting.",
           "On the far southwest side, [Rhodes Ranch](/communities/rhodes-ranch) is a guard-gated golf community with a more accessible overall price structure. Built around an 18-hole public course, it offers a community center, pools, and a genuine gated feel at price points that put single-family homes within reach for many buyers well under the million-dollar mark. It is one of the clearer answers to the question this article poses.",
           "Golf communities carry an important caveat: living on or near a course does not automatically include a club membership, and social or golf memberships usually cost extra on top of your HOA. If the golf lifestyle is central to your decision, read our guide to [golf communities in Las Vegas](/golf-communities-las-vegas) and confirm the membership structure before you buy, because two identical-looking homes can carry very different ongoing costs depending on the club arrangement."
         ]
@@ -1519,7 +1519,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "How to Search Smart in This Price Band",
         body: [
-          "Finding sub-$1M homes inside gated communities takes a more deliberate approach than a generic price search, because the best-value listings often blend into the broader inventory of a well-known luxury address. A blunt online filter will either bury them among far pricier custom estates or miss them entirely. A few habits make the search far more productive and keep you from overpaying for the name on the gate.",
+          "Finding sub-$1M homes inside gated communities takes a more deliberate approach than a generic price search, because the best-value listings often blend into the broader inventory of a well-known gated address. A blunt online filter will either bury them among far pricier custom estates or miss them entirely. A few habits make the search far more productive and keep you from overpaying for the name on the gate.",
           "The single most valuable move is to work with an agent who knows which specific subdivisions inside each master plan sit in your price band, because that local knowledge turns a valley-wide guessing game into a short, targeted list. Beyond that, staying ready to move matters, since attainable homes in desirable gated communities tend to draw interest quickly. Our team can set you up with alerts the moment matching homes hit the market.",
           "Keep these practical steps in mind as you go."
         ],
@@ -1545,7 +1545,7 @@ export const blogPosts: BlogPost[] = [
         body: [
           "Guard-gated living under $1 million is not a compromise fantasy; it is a real and repeatable outcome across Henderson, the southwest valley, and even parts of Summerlin, provided you stay flexible on home type and location and go in clear-eyed about HOA costs. The buyers who do best are the ones who define their priorities early, compare communities honestly, and move decisively when the right home appears.",
           "Because inventory and pricing shift constantly, the most useful thing we can do is show you exactly what is available in your budget right now and walk you through the true monthly cost of each option. If you are also weighing a sale to fund the move, a current [home value estimate](/home-value) and a look at the latest [Las Vegas market report](/market-report) will ground your plan in real numbers.",
-          "When you are ready, [contact The Roland Team](/contact) and we will build a short, tailored list of guard-gated homes under $1 million that fit how you actually want to live. You can also explore more of our [Las Vegas luxury and community guides](/las-vegas-luxury-real-estate) or browse [current listings](/listings) to get a feel for the market first."
+          "When you are ready, [contact The Roland Team](/contact) and we will build a short, tailored list of guard-gated homes under $1 million that fit how you actually want to live. You can also explore more of our [guard-gated community guides](/guard-gated-communities-las-vegas) or browse [current listings](/listings) to get a feel for the market first."
         ]
       }
     ],
@@ -1703,7 +1703,7 @@ export const blogPosts: BlogPost[] = [
         heading: "The Bottom Line and Your Next Step",
         body: [
           "So, is Lake Las Vegas a good place to live? For the right buyer, it is one of the most distinctive and rewarding places in the entire valley, a genuine waterfront retreat with resort amenities, walkable dining, championship golf, and a calm that is hard to find elsewhere in the desert. For a buyer who needs to be central, wants the lowest cost of ownership, or prefers a strictly residential street, other Henderson communities will serve better. The honest answer depends entirely on how you want to live.",
-          "The best way to know for sure is to experience it in person against a couple of alternatives, with someone who can give you straight answers on dues, resale, and which specific streets fit your goals. As a Top 1% Las Vegas team specializing in Henderson's premier communities and [Las Vegas luxury real estate](/las-vegas-luxury-real-estate), we can show you Lake Las Vegas honestly, the good and the trade-offs, and help you compare it fairly to everything else the valley offers.",
+          "The best way to know for sure is to experience it in person against a couple of alternatives, with someone who can give you straight answers on dues, resale, and which specific streets fit your goals. As a Top 1% Las Vegas team specializing in Henderson's guard-gated and master-planned communities, we can show you Lake Las Vegas honestly, the good and the trade-offs, and help you compare it fairly to everything else the valley offers.",
           "When you are ready, [reach out for a private consultation](/contact). We will talk through your priorities, budget, and timeline, line up the right homes to tour, and give you the local, no-pressure guidance you need to make a confident decision, whether that leads you to the water or somewhere else entirely."
         ]
       }
@@ -1777,7 +1777,7 @@ export const blogPosts: BlogPost[] = [
         heading: "What Your Housing Dollar Actually Buys Here",
         body: [
           "For most California movers, the single biggest financial shift is housing. Median home prices across coastal California metros sit well above the Las Vegas Valley, so buyers frequently find that the equity from a California sale purchases significantly more home in Nevada, often with room to spare. That might mean stepping up from a dated two-bedroom to a spacious single-story with a three-car garage, or moving from a modest lot to a home with a pool, mountain views, and a real backyard.",
-          "The valley also offers unusual range within a single metro. You can buy an efficient low-maintenance home in a gated enclave, a family home in a master-planned community built around schools and parks, or a custom estate in a guard-gated luxury neighborhood. Our [Las Vegas luxury real estate](/las-vegas-luxury-real-estate) overview is a good starting point if you are moving up in home, while browsing current [listings](/listings) gives you a feel for what your budget commands today. Because inventory and pricing shift constantly, always treat online figures as a snapshot and confirm current availability directly.",
+          "The valley also offers unusual range within a single metro. You can buy an efficient low-maintenance home in a gated enclave, a family home in a master-planned community built around schools and parks, or a custom home in a guard-gated neighborhood. Our [guard-gated communities](/guard-gated-communities-las-vegas) overview is a good starting point if you are moving up in home, while browsing current [listings](/listings) gives you a feel for what your budget commands today. Because inventory and pricing shift constantly, always treat online figures as a snapshot and confirm current availability directly.",
           "One planning note for sellers: coordinate your California sale and your Nevada purchase deliberately. If you have substantial equity, you have more flexibility than a first-time buyer, but the timing of when you list, when you close, and where you park proceeds all affect your buying power and your tax picture. If you want a grounded read on where the local market stands before you commit to a timeline, our [Las Vegas market report](/market-report) is updated to reflect current conditions."
         ]
       },
@@ -1801,7 +1801,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Choosing Your Landing Spot: Summerlin, Henderson, and Beyond",
         body: [
           "Where you land shapes your daily life more than almost any other decision, and the valley offers distinct areas with different personalities. On the west side, master-planned Summerlin is prized for its trail network, village-based layout, shopping and dining, and its most exclusive guard-gated enclaves. Our [guide to The Ridges in Summerlin](/communities/the-ridges-summerlin) is worth a read if contemporary custom estates and golf are on your list.",
-          "To the southeast, Henderson consistently ranks as one of the most livable cities in the region, with a suburban feel, well-regarded parks, and a spread of communities from approachable to ultra-luxury. Waterfront living at [Lake Las Vegas](/communities/lake-las-vegas) draws buyers who want resort scenery close to home, while established neighborhoods around [Green Valley](/communities/green-valley) offer convenience and maturity. Farther south, [Anthem](/communities/anthem), [Inspirada](/communities/inspirada), and [Southern Highlands](/communities/southern-highlands) each pair newer construction with strong amenities, and [Cadence](/communities/cadence) is one of the valley's fast-growing master plans.",
+          "To the southeast, Henderson consistently ranks as one of the most livable cities in the region, with a suburban feel, well-regarded parks, and a spread of communities from approachable to custom-home price points. Waterfront living at [Lake Las Vegas](/communities/lake-las-vegas) draws buyers who want resort scenery close to home, while established neighborhoods around [Green Valley](/communities/green-valley) offer convenience and maturity. Farther south, [Anthem](/communities/anthem), [Inspirada](/communities/inspirada), and [Southern Highlands](/communities/southern-highlands) each pair newer construction with strong amenities, and [Cadence](/communities/cadence) is one of the valley's fast-growing master plans.",
           "Because Californians relocate for so many different reasons, there is no single right answer. Some prioritize proximity to the airport for frequent travel, others want a short drive to specific employers or medical centers, and many simply fall in love with a particular community's feel. The practical move is to spend time in a few finalist areas, ideally across different times of day, and to lean on local guidance. Our full [communities](/communities) directory lays out the options so you can compare before you visit."
         ]
       },
@@ -1869,7 +1869,7 @@ export const blogPosts: BlogPost[] = [
       },
       {
         q: "Which areas do Californians usually move to?",
-        a: "Summerlin on the west side and Henderson to the southeast are the two most popular destinations, each with a range of communities from approachable to ultra-luxury. Buyers who want waterfront scenery look at Lake Las Vegas, while those wanting newer construction consider communities like Inspirada, Cadence, and Southern Highlands. The right fit depends on your commute, amenities, and lifestyle priorities."
+        a: "Summerlin on the west side and Henderson to the southeast are the two most popular destinations, each with a range of communities from approachable to custom-home price points. Buyers who want waterfront scenery look at Lake Las Vegas, while those wanting newer construction consider communities like Inspirada, Cadence, and Southern Highlands. The right fit depends on your commute, amenities, and lifestyle priorities."
       },
       {
         q: "Is the summer heat a dealbreaker?",
@@ -1882,24 +1882,24 @@ export const blogPosts: BlogPost[] = [
     ]
   },
   {
-    slug: "macdonald-highlands-vs-ascaya-which-luxury-community-fits-you",
-    title: "MacDonald Highlands vs. Ascaya: Which Luxury Community Fits You?",
+    slug: "macdonald-highlands-vs-ascaya-which-community-fits-you",
+    title: "MacDonald Highlands vs. Ascaya: Which Community Fits You?",
     category: "Buying Guides",
     excerpt: "Henderson's two crown-jewel guard-gated communities, compared — from architecture and views to amenities and price.",
     date: "2026-08-11",
     author: "The Roland Team",
     readMinutes: 16,
     seoTitle: "MacDonald Highlands vs. Ascaya: Which to Choose?",
-    seoDescription: "MacDonald Highlands or Ascaya? Compare Henderson's two premier guard-gated luxury communities — setting, homes, amenities, and price — to find your fit.",
-    coverImage: "/blog/macdonald-highlands-vs-ascaya-which-luxury-community-fits-you.svg",
+    seoDescription: "MacDonald Highlands or Ascaya? Compare Henderson's two guard-gated hillside communities — setting, homes, amenities, and price — to find your fit.",
+    coverImage: "/blog/macdonald-highlands-vs-ascaya-which-community-fits-you.svg",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163139_f2c86e9d-3c4a-4cb6-a3e2-e4796b89710f.png",
     coverAlt: "Buying Guides — The Roland Team Las Vegas real estate",
     sections: [
       {
         heading: "Two Crown Jewels on the Same Ridge",
         body: [
-          "Drive into the McCullough foothills on the southern edge of Henderson and you enter rarefied air. Perched against the same rising terrain, two guard-gated communities have come to define the top of the Southern Nevada luxury market: MacDonald Highlands and Ascaya. From a distance they can look like variations on a theme, both climbing the desert mountainside with commanding views back toward the Las Vegas valley and the Strip. Up close, they are two very different propositions, and choosing between them is one of the more consequential decisions a high-end buyer in this market will make.",
-          "The short version is this. MacDonald Highlands is an established, golf-anchored community built around DragonRidge Country Club, with a mature mix of custom estates, a full clubhouse, and a lived-in sense of neighborhood. Ascaya is a newer, architecturally curated enclave of dramatic homesites carved directly into the mountain, where a strict design ethos and a smaller footprint create a rarer, more sculptural feel. One leans social and traditional-luxury; the other leans private and design-forward.",
+          "Drive into the McCullough foothills on the southern edge of Henderson and the landscape changes. Perched against the same rising terrain, two guard-gated communities have come to define hillside living in Southern Nevada: MacDonald Highlands and Ascaya. From a distance they can look like variations on a theme, both climbing the desert mountainside with commanding views back toward the Las Vegas valley and the Strip. Up close, they are two very different propositions, and choosing between them is one of the more consequential decisions a buyer in this part of the market will make.",
+          "The short version is this. MacDonald Highlands is an established, golf-anchored community built around DragonRidge Country Club, with a mature mix of custom estates, a full clubhouse, and a lived-in sense of neighborhood. Ascaya is a newer, architecturally curated enclave of dramatic homesites carved directly into the mountain, where a strict design ethos and a smaller footprint create a rarer, more sculptural feel. One leans social and traditional; the other leans private and design-forward.",
           "This guide walks through the differences that actually matter when you are writing a check at this level: setting and views, architecture and lot character, the clubs and amenities, gate and security, price positioning, and the lifestyle each community quietly encourages. Neither is objectively better. The right answer depends entirely on how you want to live. If you would rather skip straight to touring both, our team lives in these two communities every week, and you can reach us anytime through the [contact page](/contact)."
         ]
       },
@@ -1908,7 +1908,7 @@ export const blogPosts: BlogPost[] = [
         body: [
           "Both communities sit in the southeastern reach of Henderson, minutes from the 215 Beltway and roughly 20 to 25 minutes from Harry Reid International Airport and the Las Vegas Strip depending on traffic and where your homesite falls. This is one of the practical joys of hillside Henderson living: you are removed and elevated, yet you are not truly far from anything. Dining, medical care, and the airport all remain within an easy drive, which matters for owners who travel often or split time between homes.",
           "MacDonald Highlands spreads across a broader, gentler slope. Its road network wraps around the DragonRidge golf course, and the community includes a wider range of elevations, from valley-floor lots to elevated ridgeline parcels. That variety means the community feels expansive and green in places, softened by the fairways and mature landscaping that come with age.",
-          "Ascaya takes the opposite approach. It sits higher and steeper, its homesites literally blasted and terraced into the McCullough Range so that each pad steps up the mountain. The result is a more vertical, more dramatic streetscape, where homes read as individual architectural objects against raw rock rather than as part of a continuous residential fabric. If you want to understand how these two fit within the broader high-end landscape, our overview of [Las Vegas luxury real estate](/las-vegas-luxury-real-estate) puts them in context alongside Summerlin's premier addresses."
+          "Ascaya takes the opposite approach. It sits higher and steeper, its homesites literally blasted and terraced into the McCullough Range so that each pad steps up the mountain. The result is a more vertical, more dramatic streetscape, where homes read as individual architectural objects against raw rock rather than as part of a continuous residential fabric. If you want to understand how these two fit within the broader landscape, our overview of [guard-gated communities in Las Vegas](/guard-gated-communities-las-vegas) puts them in context alongside Summerlin's gated addresses."
         ]
       },
       {
@@ -1938,7 +1938,7 @@ export const blogPosts: BlogPost[] = [
         body: [
           "The land itself lives differently in each place. Ascaya's signature is the engineered homesite: dramatic, terraced pads that have been carefully carved from the mountainside, many with substantial elevation change and bold rock outcroppings integrated into the design. These are not gentle suburban lots; they are architectural opportunities that reward ambitious, site-specific design. Buyers who want a home that feels genuinely one-of-a-kind are drawn to exactly this.",
           "MacDonald Highlands offers a wider menu of homesite types. You will find elevated view lots that rival anything in the valley, but also golf-frontage parcels, more level building pads, and finished estates ready for immediate occupancy. That range makes it easier to match a specific lifestyle need — say, a single-level floor plan on a flatter lot, or a home already built and landscaped so you can move in without a construction timeline.",
-          "There is also the question of readiness. MacDonald Highlands has a deeper inventory of completed, move-in-ready estates given its maturity, while opportunities in both communities include custom-build homesites. If your timeline is short, that resale depth matters. You can browse current high-end availability on our [listings page](/listings), and because much of the best product at this level trades quietly, ask us about off-market opportunities in both communities."
+          "There is also the question of readiness. MacDonald Highlands has a deeper inventory of completed, move-in-ready estates given its maturity, while opportunities in both communities include custom-build homesites. If your timeline is short, that resale depth matters. You can browse current availability on our [listings page](/listings), and because some of the best homes at this level trade quietly, ask us about off-market opportunities in both communities."
         ],
         bullets: [
           "Ascaya: dramatic terraced, mountain-carved homesites built for bold custom architecture",
@@ -1967,7 +1967,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Price Positioning and Value",
         body: [
           "Both communities occupy the upper end of the Southern Nevada market, and both include homes and homesites that rank among the most significant properties in the state. That said, they are not priced identically, and the drivers differ. Ascaya's rarity, strict architectural pedigree, and dramatic homesites tend to command a premium on a per-home basis, and its custom modern estates often represent some of the highest price points in Henderson. Its smaller scale also means fewer transactions, which can make pricing feel more bespoke and less formula-driven.",
-          "MacDonald Highlands, with its broader inventory and wider range of lot types and home styles, offers more entry points into the community. You will find a wider price spectrum here, from golf-frontage homes to trophy ridgeline estates, which means more buyers can find a foothold. For value-minded luxury buyers, that range is often the deciding factor — the ability to own in a premier guard-gated community without necessarily competing only at the very top of the market.",
+          "MacDonald Highlands, with its broader inventory and wider range of lot types and home styles, offers more entry points into the community. You will find a wider price spectrum here, from golf-frontage homes to trophy ridgeline estates, which means more buyers can find a foothold. For value-minded buyers, that range is often the deciding factor — the ability to own in a guard-gated community without necessarily competing only at the very top of the price range.",
           "Because both communities move partly through off-market and relationship-driven deals, published figures rarely tell the whole story, and pricing shifts with inventory and season. Rather than anchor to a number that may be stale, get a current read: request a private [market report](/market-report) for both communities, and if you are weighing a purchase against a sale, our instant [home value](/home-value) tool is a useful starting point for the equation."
         ]
       },
@@ -1990,7 +1990,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "How These Two Compare to the Rest of the Market",
         body: [
-          "MacDonald Highlands and Ascaya are Henderson's headline acts, but they are not the only ways to live at the top of the Las Vegas market, and it is worth knowing your alternatives before committing. On the Summerlin side of the valley, [The Ridges](/communities/the-ridges-summerlin) offers guard-gated contemporary estates with Bear's Best golf, and the ultra-exclusive [Summit Club](/communities/the-summit-club) sets its own rarefied standard. Each carries a distinct address value and lifestyle.",
+          "MacDonald Highlands and Ascaya are Henderson's headline acts, but they are not the only ways to live in a guard-gated hillside or golf community, and it is worth knowing your alternatives before committing. On the Summerlin side of the valley, [The Ridges](/communities/the-ridges-summerlin) offers guard-gated contemporary estates with Bear's Best golf, and the private [Summit Club](/communities/the-summit-club) offers its own invitation-oriented setting. Each carries a distinct address value and lifestyle.",
           "Closer to home in Henderson, communities like [Seven Hills](/communities/seven-hills) provide guard-gated living at a different price and scale, while waterfront-oriented [Lake Las Vegas](/communities/lake-las-vegas) trades mountain drama for lakeside resort living. Understanding where MacDonald Highlands and Ascaya sit relative to these options helps confirm that you are choosing the community for the right reasons, not simply the most famous name.",
           "You can explore all of these side by side on our [communities page](/communities). For most buyers, though, the choice really does come down to the two we have compared here — and the tie-breaker is almost always lifestyle rather than any single feature."
         ]
@@ -2007,7 +2007,7 @@ export const blogPosts: BlogPost[] = [
     faqs: [
       {
         q: "What is the main difference between MacDonald Highlands and Ascaya?",
-        a: "MacDonald Highlands is an established, golf-anchored community built around DragonRidge Country Club, with a wide range of home styles, lot types, and an active social scene. Ascaya is a newer, smaller, design-focused enclave of dramatic mountain-carved homesites governed by strict contemporary architectural guidelines. In short, one leans social and traditional-luxury, the other leans private and architecture-driven."
+        a: "MacDonald Highlands is an established, golf-anchored community built around DragonRidge Country Club, with a wide range of home styles, lot types, and an active social scene. Ascaya is a newer, smaller, design-focused enclave of dramatic mountain-carved homesites governed by strict contemporary architectural guidelines. In short, one leans social and traditional, the other leans private and architecture-driven."
       },
       {
         q: "Which community has better views?",
@@ -2065,14 +2065,14 @@ export const blogPosts: BlogPost[] = [
         heading: "Housing: The Biggest Line in Your Budget",
         body: [
           "Housing is where Henderson's cost of living rises or falls, and it is the number most newcomers fixate on. The city spans a wide range, from attainable townhomes and starter single-family homes in newer villages to sprawling custom estates with Strip and mountain views. Henderson generally carries a modest premium over some outlying parts of the valley, and that premium buys newer construction, strong schools, and well-kept master-planned infrastructure. Compared with coastal California, though, most relocating buyers find their dollar stretches dramatically further here.",
-          "Neighborhood is the deciding factor. Established, amenity-rich communities like [Green Valley](/communities/green-valley) offer mature landscaping and central convenience, while newer master plans such as [Cadence](/communities/cadence) and [Inspirada](/communities/inspirada) deliver modern floor plans and fresh parks. At the luxury end, guard-gated enclaves like [Seven Hills](/communities/seven-hills), [Anthem](/communities/anthem), [MacDonald Highlands](/communities/macdonald-highlands), and the waterfront setting of [Lake Las Vegas](/communities/lake-las-vegas) command a premium for privacy, views, and elevated finishes.",
+          "Neighborhood is the deciding factor. Established, amenity-rich communities like [Green Valley](/communities/green-valley) offer mature landscaping and central convenience, while newer master plans such as [Cadence](/communities/cadence) and [Inspirada](/communities/inspirada) deliver modern floor plans and fresh parks. For larger homes, guard-gated enclaves like [Seven Hills](/communities/seven-hills), [Anthem](/communities/anthem), [MacDonald Highlands](/communities/macdonald-highlands), and the waterfront setting of [Lake Las Vegas](/communities/lake-las-vegas) command a premium for privacy, views, and elevated finishes.",
           "If you are trying to gauge where prices sit today, the smartest move is to look at live inventory rather than dated averages. Browse current [Henderson and Las Vegas listings](/listings) to see what real homes cost in the neighborhoods you are considering, and if you already own, a [home value estimate](/home-value) gives you a starting point for the equity you can carry into your next purchase.",
           "Renters have options too. Henderson's rental market includes newer apartment communities, townhomes, and single-family rentals, and rents here generally track with or slightly above the valley average depending on the village. Many buyers rent for a season first to test-drive neighborhoods before committing."
         ],
         bullets: [
           "Attainable tier: townhomes and starter single-family homes in newer villages",
           "Move-up tier: established master plans with mature amenities and strong schools",
-          "Luxury tier: guard-gated estates, golf communities, and waterfront homes",
+          "Larger-home tier: guard-gated estates, golf communities, and waterfront homes",
           "Rentals: apartments, townhomes, and single-family homes across most villages"
         ]
       },
@@ -2126,7 +2126,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Groceries and Everyday Essentials",
         body: [
-          "Day-to-day spending on groceries and household goods in Henderson runs close to the national average — neither a bargain nor a burden. The city is well served by the full range of national grocery chains, warehouse clubs, and specialty markets, so you have options at every price point, from budget-focused stores to upscale grocers. Nevada does apply sales tax to most retail purchases, which nudges the checkout total, though many essential food items are treated favorably.",
+          "Day-to-day spending on groceries and household goods in Henderson runs close to the national average — neither a bargain nor a burden. The city is well served by the full range of national grocery chains, warehouse clubs, and specialty markets, so you have options at every price point, from budget-focused stores to specialty grocers. Nevada does apply sales tax to most retail purchases, which nudges the checkout total, though many essential food items are treated favorably.",
           "Because Henderson is a large, competitive retail market, you are rarely far from a big-box store, a pharmacy, or a warehouse club, and that competition helps keep prices in check. Relocating buyers from major coastal cities frequently comment that their regular grocery run costs noticeably less than what they were used to, while those coming from lower-cost rural areas may see prices tick up slightly.",
           "The bottom line: groceries are unlikely to make or break your Henderson budget. Housing and, seasonally, utilities carry far more weight. If you are building a month-by-month relocation budget, treat everyday essentials as a stable, predictable middle-of-the-road expense and focus your planning energy on the housing decision."
         ]
@@ -2152,7 +2152,7 @@ export const blogPosts: BlogPost[] = [
         body: [
           "Set against the broader valley, Henderson often carries a slight premium — and most buyers find it justified. The city is known for its master-planned polish, well-regarded schools, low crime relative to the metro, and abundant parks and trails. You are frequently paying a little more for newer, better-maintained infrastructure and a suburban feel that some other parts of the valley do not offer. For families and professionals, that trade tends to make sense.",
           "Compared with Summerlin on the valley's opposite side, Henderson and Summerlin sit in a similar tier for desirability and price, each with its own character; the choice usually comes down to which side of town fits your commute and lifestyle. Compared with more central or outlying areas, Henderson generally sits at the higher, more established end. Across every part of the valley, though, the same statewide advantages apply — no state income tax and moderate property taxes — so the differences are about neighborhood, not about the fundamentals.",
-          "The most useful comparison is always a current one. Our [Las Vegas market report](/market-report) tracks how prices and inventory are moving across the valley, and if luxury is your focus, our [Las Vegas luxury real estate](/las-vegas-luxury-real-estate) overview shows how the high end behaves differently from the broader market."
+          "The most useful comparison is always a current one. Our [Las Vegas market report](/market-report) tracks how prices and inventory are moving across the valley, and if guard-gated living is your focus, our [guard-gated communities](/guard-gated-communities-las-vegas) overview shows how those neighborhoods differ from the broader market."
         ]
       },
       {
@@ -2208,7 +2208,7 @@ export const blogPosts: BlogPost[] = [
     author: "The Roland Team",
     readMinutes: 17,
     seoTitle: "Summerlin vs. Henderson: Where Should You Buy?",
-    seoDescription: "Summerlin or Henderson? Compare Las Vegas's two premier areas — lifestyle, luxury communities, commute, and value — to decide where to buy your next home.",
+    seoDescription: "Summerlin or Henderson? Compare Las Vegas's two top areas — lifestyle, gated communities, commute, and value — to decide where to buy your next home.",
     coverImage: "/blog/summerlin-vs-henderson-where-should-you-buy-in-las-vegas.svg",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163757_3cd3b041-ca7e-425b-b400-4b009f81fe5c.png",
     coverAlt: "Buying Guides — The Roland Team Las Vegas real estate",
@@ -2253,7 +2253,7 @@ export const blogPosts: BlogPost[] = [
         bullets: [
           "Summerlin: standout trail connectivity, direct access to Red Rock, dense park and rec-center coverage.",
           "Henderson: large regional parks, an extensive municipal trail system, plus waterfront recreation at Lake Las Vegas.",
-          "Both: elite golf, resort-style community pools, and events programming throughout the year."
+          "Both: championship golf, resort-style community pools, and events programming throughout the year."
         ]
       },
       {
@@ -2267,7 +2267,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "New Construction vs. Established Neighborhoods",
         body: [
-          "If a brand-new home is the goal, both areas are active, but the newest inventory skews in predictable directions. Summerlin continues to build out its western and higher-elevation villages, where builders release fresh phases of single-family homes, and the foothills hold some of the valley's most sought-after custom and luxury lots. The trade-off is that the most established, tree-lined parts of Summerlin are largely resale, so the choice within Summerlin itself is often new-but-farther-out versus established-but-central.",
+          "If a brand-new home is the goal, both areas are active, but the newest inventory skews in predictable directions. Summerlin continues to build out its western and higher-elevation villages, where builders release fresh phases of single-family homes, and the foothills hold some of the valley's most sought-after custom lots. The trade-off is that the most established, tree-lined parts of Summerlin are largely resale, so the choice within Summerlin itself is often new-but-farther-out versus established-but-central.",
           "Henderson may offer the widest spread of new construction in the valley thanks to master plans like Inspirada and Cadence, which are still adding neighborhoods, parks, and amenities. At the same time, Green Valley provides deep, mature resale inventory for buyers who want established landscaping and proven neighborhoods, and Anthem blends both. That range lets Henderson buyers dial in almost any point on the new-to-established spectrum without leaving the city.",
           "New construction carries its own rules — builder incentives, upgrade decisions, timelines, and the importance of independent representation at the design center. Before you walk into a model home, read our guide to [new construction](/new-construction) and consider having an agent register with you on your first visit. For a wider look at where builders are most active right now, communities like [Skye Canyon](/communities/skye-canyon) on the northwest side are also worth knowing as you compare."
         ]
@@ -2276,21 +2276,21 @@ export const blogPosts: BlogPost[] = [
         heading: "Price Positioning and Value",
         body: [
           "Both Summerlin and Henderson span an enormous price range, from attainable townhomes and single-family starter homes to guard-gated custom estates. Generalizing about which is cheaper is a trap, because the answer depends entirely on the specific neighborhood, home age, lot, and view. A foothill custom home in Summerlin's most exclusive village and a tract home in an outer Henderson master plan are not competing for the same buyer, even though both carry a valley address.",
-          "That said, a few broad patterns help. Summerlin's central, most established villages and its foothill luxury enclaves tend to command premium pricing, reflecting location, views, and scarcity. Henderson's breadth means it often provides more entry points at a given budget, particularly in its newer master plans, while still offering ultra-luxury at the very top through communities in and around Anthem and the Henderson hillsides. The honest summary is that both areas have value and both have premium tiers — the right comparison is always home-to-home, not area-to-area.",
+          "That said, a few broad patterns help. Summerlin's central, most established villages and its foothill guard-gated enclaves tend to command premium pricing, reflecting location, views, and scarcity. Henderson's breadth means it often provides more entry points at a given budget, particularly in its newer master plans, while still offering custom homes at the top of the price range through communities in and around Anthem and the Henderson hillsides. The honest summary is that both areas have value and both have premium tiers — the right comparison is always home-to-home, not area-to-area.",
           "Because pricing moves with the market and with each micro-neighborhood, the smartest first step is grounding yourself in current conditions rather than yesterday's headlines. Review our latest [market report](/market-report) for where the valley stands now, and if you already own, a professional [home value](/home-value) estimate will tell you what your current property could contribute to your next move."
         ],
         bullets: [
           "Summerlin premiums: central established villages and foothill custom-home enclaves near Red Rock.",
-          "Henderson breadth: more entry points across newer master plans, plus top-tier luxury in the hillsides.",
+          "Henderson breadth: more entry points across newer master plans, plus custom homes in the hillsides.",
           "Every real comparison is home-to-home — lot, view, age, and finish drive price more than the area label."
         ]
       },
       {
-        heading: "Luxury and Guard-Gated Living",
+        heading: "Custom Homes and Guard-Gated Living",
         body: [
-          "At the high end, both areas deliver genuinely world-class options, and this is where many relocating buyers focus. Summerlin's foothills are home to some of the most prestigious guard-gated communities in Nevada, including [The Ridges](/communities/the-ridges-summerlin), known for contemporary custom estates, dramatic elevation, and golf. The village's elevated position produces sweeping views back across the valley lights, a signature of west-side luxury that is difficult to replicate elsewhere.",
-          "Henderson answers with its own crown jewels in the southeast hills, along with polished guard-gated enclaves in [Seven Hills](/communities/seven-hills) and the Mediterranean waterfront estates of Lake Las Vegas. Henderson's luxury tier tends to emphasize hillside privacy, big view corridors, and — uniquely — the option of true lakefront living. Buyers who want a resort atmosphere with a boat dock will find that only on the Henderson side.",
-          "The common thread is that neither area forces a compromise at the top of the market; they simply express luxury differently — west-side canyon-edge modernism versus southeast hillside and waterfront estates. If gated exclusivity is a must, start with our overview of [guard-gated communities in Las Vegas](/guard-gated-communities-las-vegas), then explore the broader [Las Vegas luxury real estate](/las-vegas-luxury-real-estate) landscape to see how the two areas stack up at the highest tier."
+          "For larger custom homes, both areas deliver genuinely strong options, and this is where many relocating buyers focus. Summerlin's foothills are home to some of the best-known guard-gated communities in Nevada, including [The Ridges](/communities/the-ridges-summerlin), known for contemporary custom estates, dramatic elevation, and golf. The village's elevated position produces sweeping views back across the valley lights, a signature of the west side that is difficult to replicate elsewhere.",
+          "Henderson answers with its own hillside homes in the southeast, along with polished guard-gated enclaves in [Seven Hills](/communities/seven-hills) and the Mediterranean waterfront homes of Lake Las Vegas. Henderson's custom and gated neighborhoods tend to emphasize hillside privacy, big view corridors, and — uniquely — the option of true lakefront living. Buyers who want a resort atmosphere with a boat dock will find that only on the Henderson side.",
+          "The common thread is that neither area forces a compromise for buyers of custom homes; they simply express it differently — west-side canyon-edge modernism versus southeast hillside and waterfront estates. If gated access is a must, start with our overview of [guard-gated communities in Las Vegas](/guard-gated-communities-las-vegas), then explore the [communities](/communities) pages to see how the two areas stack up."
         ]
       },
       {
@@ -2304,9 +2304,9 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Who Summerlin Tends to Fit",
         body: [
-          "Summerlin tends to suit buyers who want a single, unified master-planned environment with a strong town center and unmatched access to the mountains. If your ideal weekend starts with a trailhead five minutes from your driveway, if you work on the west or northwest side, or if you are drawn to a curated, consistent community feel, Summerlin makes a compelling case. Its foothill luxury enclaves also appeal to buyers seeking contemporary custom estates with big valley-light views.",
+          "Summerlin tends to suit buyers who want a single, unified master-planned environment with a strong town center and unmatched access to the mountains. If your ideal weekend starts with a trailhead five minutes from your driveway, if you work on the west or northwest side, or if you are drawn to a curated, consistent community feel, Summerlin makes a compelling case. Its foothill guard-gated enclaves also appeal to buyers seeking contemporary custom estates with big valley-light views.",
           "It is also a natural fit for those who prize cohesion and long-term master-plan governance — the sense that the community has been, and will continue to be, developed to a deliberate standard. Buyers relocating for a west-side medical, professional, or executive role frequently gravitate here for the commute and the amenity density.",
-          "If that description resonates, the [Summerlin community page](/communities/summerlin) is a good next stop, and the foothill luxury tier is covered in depth on our [The Ridges](/communities/the-ridges-summerlin) profile."
+          "If that description resonates, the [Summerlin community page](/communities/summerlin) is a good next stop, and the foothill custom-home neighborhoods are covered in depth on our [The Ridges](/communities/the-ridges-summerlin) profile."
         ],
         bullets: [
           "You want one cohesive master plan with a defined downtown core.",
@@ -2319,7 +2319,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Who Henderson Tends to Fit",
         body: [
           "Henderson tends to suit buyers who want choice — several distinct master plans under one well-run city, spanning established and brand-new, and a genuine option for waterfront living. If you work near the airport or the southern valley, if you fly often, or if you want to shop across multiple neighborhood personalities until one fits, Henderson's breadth is a real advantage. It is also the only side of the valley that offers true lakefront estates and marina life at Lake Las Vegas.",
-          "Buyers who want the widest spread of new construction, or who want mature, established resale with grown-in landscaping, can often find both within Henderson without changing cities. Its blend of hillside luxury, resort waterfront, and polished suburban cores makes it hard to outgrow — many owners move between Henderson communities over the years rather than leaving.",
+          "Buyers who want the widest spread of new construction, or who want mature, established resale with grown-in landscaping, can often find both within Henderson without changing cities. Its blend of hillside neighborhoods, resort waterfront, and polished suburban cores makes it hard to outgrow — many owners move between Henderson communities over the years rather than leaving.",
           "If Henderson sounds like your speed, start with the [Green Valley](/communities/green-valley), [Anthem](/communities/anthem), [Seven Hills](/communities/seven-hills), and [Lake Las Vegas](/communities/lake-las-vegas) profiles, or browse every neighborhood we cover on the [communities](/communities) page."
         ],
         bullets: [
@@ -2349,7 +2349,7 @@ export const blogPosts: BlogPost[] = [
       },
       {
         q: "Is Summerlin or Henderson more expensive?",
-        a: "Neither is uniformly more expensive; both span attainable homes to ultra-luxury estates. Summerlin's central established villages and foothill custom enclaves tend to carry premiums, while Henderson's breadth often provides more entry points at a given budget. The only meaningful comparison is home-to-home, factoring in lot, view, age, and finish."
+        a: "Neither is uniformly more expensive; both span attainable homes to large custom estates. Summerlin's central established villages and foothill custom enclaves tend to carry premiums, while Henderson's breadth often provides more entry points at a given budget. The only meaningful comparison is home-to-home, factoring in lot, view, age, and finish."
       },
       {
         q: "Where is the best new construction — Summerlin or Henderson?",
@@ -2360,8 +2360,8 @@ export const blogPosts: BlogPost[] = [
         a: "True waterfront living is a Henderson advantage, centered on Lake Las Vegas, a resort community built around a private lake with marina access and Mediterranean-styled estates. Summerlin does not offer lakefront homes, though it counters with direct access to Red Rock Canyon and an extensive trail network. If time on the water is a priority, Henderson is the side to focus on."
       },
       {
-        q: "Which area has better guard-gated luxury communities?",
-        a: "Both deliver elite guard-gated options. Summerlin's foothills include prestigious enclaves like The Ridges, known for contemporary custom estates and valley-light views. Henderson answers with hillside communities such as Seven Hills and the waterfront estates of Lake Las Vegas. The right choice comes down to whether you prefer west-side canyon-edge modernism or southeast hillside and waterfront living."
+        q: "Which area has better guard-gated communities?",
+        a: "Both deliver strong guard-gated options. Summerlin's foothills include well-known enclaves like The Ridges, known for contemporary custom estates and valley-light views. Henderson answers with hillside communities such as Seven Hills and the waterfront estates of Lake Las Vegas. The right choice comes down to whether you prefer west-side canyon-edge modernism or southeast hillside and waterfront living."
       },
       {
         q: "Do Summerlin and Henderson have similar HOA and community fees?",
@@ -2403,14 +2403,14 @@ export const blogPosts: BlogPost[] = [
           "Northwest and far north: [Skye Canyon](/communities/skye-canyon) continues to release new phases against the Sheep Mountains, and the northern reaches of [Summerlin](/communities/summerlin) keep opening fresh villages of production and semi-custom homes.",
           "Henderson and the east valley: [Cadence](/communities/cadence) remains one of the valley's most active master plans for new production homes, with a wide spread of price points and floor plans.",
           "Southwest: [Mountain's Edge](/communities/mountains-edge) and the surrounding southwest corridor still see infill and edge development, while nearby [Inspirada](/communities/inspirada) draws buyers toward the Henderson foothills.",
-          "Luxury and custom tiers: [Reverence](/communities/reverence) and [The Ridges](/communities/the-ridges-summerlin) anchor the higher end, where homesites and custom builds command premium settings against the mountains."
+          "Custom and larger-home tiers: [Reverence](/communities/reverence) and [The Ridges](/communities/the-ridges-summerlin) anchor the upper price range, where homesites and custom builds command premium settings against the mountains."
         ]
       },
       {
         heading: "New Construction Is Not One Thing",
         body: [
           "Buyers often say \"I want new construction\" as if it were a single product. In practice it spans at least three very different experiences, and the process, timeline, and price all shift depending on which you choose. Knowing the category you are shopping in prevents mismatched expectations later.",
-          "Production homes are the most common: a builder offers a fixed menu of floor plans, you select a homesite and a plan, and you personalize within defined options at a design center. Semi-custom homes give you more architectural latitude — larger lots, more elevation and structural choices — while still working from a builder's framework. True custom builds, most common in the guard-gated luxury tiers, start with a raw homesite and an architect, and the home is yours to design from the ground up.",
+          "Production homes are the most common: a builder offers a fixed menu of floor plans, you select a homesite and a plan, and you personalize within defined options at a design center. Semi-custom homes give you more architectural latitude — larger lots, more elevation and structural choices — while still working from a builder's framework. True custom builds, most common in the guard-gated communities, start with a raw homesite and an architect, and the home is yours to design from the ground up.",
           "Each path serves a different buyer. If you value speed and predictability, a move-in-ready or quick-delivery production home may be ideal. If you want a specific look and are willing to trade time for control, semi-custom or custom is the route. When you tour [our current listings](/listings), you will see resale homes that were once each of these — a useful way to preview how a plan lives once it is finished and landscaped."
         ]
       },
@@ -2470,11 +2470,11 @@ export const blogPosts: BlogPost[] = [
         ]
       },
       {
-        heading: "New Construction at the Luxury Tier",
+        heading: "New Construction for Custom and Larger Homes",
         body: [
-          "The dynamics shift at the top of the market. In the valley's premier guard-gated enclaves, new construction often means buying a homesite and building a true custom estate, or purchasing a builder's high-end spec home designed to showcase the setting. Land itself becomes a scarce, view-driven asset, and lot premiums on the best mountain-bench and golf-adjacent sites can rival the cost of the improvements.",
+          "The dynamics shift at the top of the price range. In the valley's guard-gated enclaves, new construction often means buying a homesite and building a true custom home, or purchasing a builder's spec home designed to showcase the setting. Land itself becomes a scarce, view-driven asset, and lot premiums on the best mountain-bench and golf-adjacent sites can rival the cost of the improvements.",
           "Communities like [The Ridges in Summerlin](/communities/the-ridges-summerlin), [Reverence](/communities/reverence), and the estate tiers of [Southern Highlands](/communities/southern-highlands) draw buyers who want contemporary desert architecture, privacy, and elevated views over the valley or the Strip. Building at this level is a longer, more design-intensive process, and the representation you bring matters even more, because the sums and the customization are far greater.",
-          "If a custom or luxury spec build is on your mind, it is worth understanding the full landscape of high-end options before committing to one path. Our overview of [Las Vegas luxury real estate](/las-vegas-luxury-real-estate) frames how the top tier behaves differently from the broader market — and why patience and representation pay off disproportionately at that level."
+          "If a custom or spec build is on your mind, it is worth understanding the full landscape of options before committing to one path. Our overview of [guard-gated communities in Las Vegas](/guard-gated-communities-las-vegas) frames how those neighborhoods differ from the broader market — and why patience and representation pay off disproportionately at that level."
         ]
       },
       {
@@ -2517,7 +2517,7 @@ export const blogPosts: BlogPost[] = [
       },
       {
         q: "Which Las Vegas communities have the most new construction right now?",
-        a: "Activity concentrates in the northwest around Skye Canyon and northern Summerlin, in Henderson and the east valley at Cadence, in the southwest near Mountain's Edge and Inspirada, and at the luxury tier in places like Reverence and The Ridges. The active builders rotate over time, so it is best to check current phases before you tour."
+        a: "Activity concentrates in the northwest around Skye Canyon and northern Summerlin, in Henderson and the east valley at Cadence, in the southwest near Mountain's Edge and Inspirada, and for custom homes in places like Reverence and The Ridges. The active builders rotate over time, so it is best to check current phases before you tour."
       },
       {
         q: "Should I use the builder's preferred lender?",
@@ -2545,7 +2545,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Where the Las Vegas Valley Market Stands Right Now",
         body: [
           "Ask ten people about the Las Vegas housing market and you will hear ten confident forecasts, most of them wrong. The honest truth is that no one prices a home by prediction. Value is set by what buyers are willing to pay and what sellers are willing to accept on a given weekend, in a given neighborhood, for a given house. Everything else is context. The most useful thing a market update can do is not hand you a number, but show you the levers that move those numbers so you can read the market for yourself.",
-          "This is written to be durable rather than disposable. Rather than fixate on a single month's headline, we walk through the forces that actually drive the Las Vegas and Henderson market: inventory, mortgage rates, in-migration, new construction, the luxury tier, and seasonality. Each one pushes prices and pace in a fairly predictable direction. When you understand how they interact, a confusing market becomes a legible one.",
+          "This is written to be durable rather than disposable. Rather than fixate on a single month's headline, we walk through the forces that actually drive the Las Vegas and Henderson market: inventory, mortgage rates, in-migration, new construction, larger-home price tiers, and seasonality. Each one pushes prices and pace in a fairly predictable direction. When you understand how they interact, a confusing market becomes a legible one.",
           "For the current figures, the ones that change week to week, we keep a live [Las Vegas market report](/market-report) updated with median prices, days on market, and inventory. Use this article to understand the machinery, and use that report to see where the dials are pointed today. If you want a read on your own home or your own search, you can always [reach out directly](/contact) and we will run the specific numbers for your street and price band."
         ]
       },
@@ -2554,7 +2554,7 @@ export const blogPosts: BlogPost[] = [
         body: [
           "If you learn to watch one thing, make it inventory, usually expressed as months of supply. It measures how long it would take to sell every home currently listed at the current pace of sales. Roughly speaking, a low months-of-supply figure favors sellers, because buyers compete for scarce homes, and a higher figure favors buyers, because homes sit longer and sellers negotiate. The Las Vegas Valley has spent much of the recent cycle on the tighter side of balanced, though that varies sharply by price point and neighborhood.",
           "Inventory is also the cleanest early warning system you have. When active listings start climbing month over month and homes take longer to go under contract, that is the market telling you leverage is shifting toward buyers before prices visibly move. When inventory tightens and well-priced homes go quickly, sellers are gaining ground. Prices are a lagging indicator; inventory and days on market move first.",
-          "The important caveat is that Las Vegas does not have one inventory number, it has dozens. Entry-level homes, move-up family homes, and [luxury properties](/las-vegas-luxury-real-estate) can each be in a completely different supply environment at the same moment. A buyer competing under a million dollars in a popular master-planned area may face fierce competition while a seller of a large custom estate waits patiently for the right buyer. Always ask what inventory looks like in your specific segment, not the valley overall."
+          "The important caveat is that Las Vegas does not have one inventory number, it has dozens. Entry-level homes, move-up family homes, and larger custom properties can each be in a completely different supply environment at the same moment. A buyer competing under a million dollars in a popular master-planned area may face fierce competition while a seller of a large custom estate waits patiently for the right buyer. Always ask what inventory looks like in your specific segment, not the valley overall."
         ],
         bullets: [
           "Rising active listings plus longer days on market usually signals leverage moving toward buyers.",
@@ -2588,11 +2588,11 @@ export const blogPosts: BlogPost[] = [
         ]
       },
       {
-        heading: "The Luxury Tier Plays by Different Rules",
+        heading: "Larger and Custom Homes Play by Different Rules",
         body: [
-          "The high end of the Las Vegas market does not move in lockstep with the median home. Luxury buyers are less rate-sensitive because many purchase with cash or large down payments, so the levers that cool the broader market can leave the top tier comparatively resilient. At the same time, the luxury pool of buyers is smaller and more selective, which means well-located, well-finished homes can command strong prices while dated or overbuilt properties linger regardless of address.",
-          "Guard-gated enclaves such as [The Ridges in Summerlin](/communities/the-ridges-summerlin) and the custom-estate corridors of Henderson operate almost as their own micro-markets. Inventory in these communities is thin by design, and a single notable sale can reset expectations for an entire street. Because comparable sales are scarce, pricing a luxury home is as much judgment as arithmetic, and small mistakes in either direction are expensive.",
-          "If you are buying or selling at the top of the market, valley-wide statistics are close to useless, what matters is the recent activity inside your specific community and price band. Our team tracks the [luxury and guard-gated](/guard-gated-communities-las-vegas) segment closely, including off-market and coming-soon activity that never shows up in public inventory counts. For a confidential read on where a specific enclave stands, that conversation is worth having before you list or write an offer."
+          "The upper end of the Las Vegas price range does not move in lockstep with the median home. Buyers of larger, higher-priced homes are often less rate-sensitive because many purchase with cash or large down payments, so the levers that cool the broader market can leave this tier comparatively resilient. At the same time, the pool of buyers is smaller and more selective, which means well-located, well-finished homes can command strong prices while dated or overbuilt properties linger regardless of address.",
+          "Guard-gated enclaves such as [The Ridges in Summerlin](/communities/the-ridges-summerlin) and the custom-home corridors of Henderson operate almost as their own micro-markets. Inventory in these communities is thin by design, and a single notable sale can reset expectations for an entire street. Because comparable sales are scarce, pricing a larger custom home is as much judgment as arithmetic, and small mistakes in either direction are expensive.",
+          "If you are buying or selling at the top of the price range, valley-wide statistics are close to useless, what matters is the recent activity inside your specific community and price band. Our team tracks the [guard-gated](/guard-gated-communities-las-vegas) segment closely, including off-market and coming-soon activity that never shows up in public inventory counts. For a confidential read on where a specific enclave stands, that conversation is worth having before you list or write an offer."
         ]
       },
       {
@@ -2622,7 +2622,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Reading Comps Like a Professional",
         body: [
-          "Whether you are buying or selling, comparable sales, the comps, are the foundation of any honest valuation, and reading them well is a skill. The strongest comps are recent, nearby, and genuinely similar in size, condition, and lot. A sale from eight months ago in a different phase of the community tells you far less than a closing from last month three doors down. As you move up in price and into custom and luxury homes, good comps get scarcer, and judgment increasingly fills the gap.",
+          "Whether you are buying or selling, comparable sales, the comps, are the foundation of any honest valuation, and reading them well is a skill. The strongest comps are recent, nearby, and genuinely similar in size, condition, and lot. A sale from eight months ago in a different phase of the community tells you far less than a closing from last month three doors down. As you move up in price and into custom homes, good comps get scarcer, and judgment increasingly fills the gap.",
           "Two traps catch amateurs repeatedly. The first is anchoring to list prices instead of sold prices, what a neighbor is asking is an opinion, what a home actually closed for is a fact. The second is ignoring condition and upgrades; two homes with identical square footage can be worth meaningfully different amounts based on renovations, view, and lot premium. A careful comp analysis adjusts for all of it rather than averaging blindly.",
           "This is where local expertise earns its keep. An experienced agent who has been inside the comparable homes knows things the public data never shows, which sale had a backyard oasis and which needed forty thousand dollars of work. That texture is the difference between a price that attracts offers and one that stalls. If you want that level of read on a specific home, that is exactly the kind of analysis we do before every listing and every offer."
         ]
@@ -2672,8 +2672,8 @@ export const blogPosts: BlogPost[] = [
         a: "Yes. Builders compete directly with resale sellers, and when they offer incentives like rate buydowns or closing-cost credits, they can pull buyers away from existing homes, especially in growing communities. Resale homes often win on location and mature landscaping, but they need to be priced with nearby builder offers in mind. Both buyers and sellers should know what the builders down the street are doing."
       },
       {
-        q: "Is the Las Vegas luxury market different from the rest of the valley?",
-        a: "Considerably. Luxury buyers are less rate-sensitive because many pay cash or put large sums down, so the top tier can stay resilient when the broader market cools. Inventory in guard-gated communities is thin, comparable sales are scarce, and a single sale can reset an entire street. For high-end decisions, community-level and price-band data matter far more than valley-wide averages."
+        q: "Do larger, higher-priced homes in Las Vegas behave differently from the rest of the valley?",
+        a: "Considerably. Buyers of higher-priced homes are often less rate-sensitive because many pay cash or put large sums down, so this tier can stay resilient when the broader market cools. Inventory in guard-gated communities is thin, comparable sales are scarce, and a single sale can reset an entire street. For these decisions, community-level and price-band data matter far more than valley-wide averages."
       },
       {
         q: "How much does seasonality affect buying or selling in Las Vegas?",
@@ -2803,7 +2803,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Your Next Step",
         body: [
           "Affordability in Las Vegas comes down to a handful of moving parts: your income and existing debt, your down payment, the rate you secure, and the full carrying cost of the home including Nevada's moderate property taxes, insurance, and the HOA dues common across the valley's master plans. Understand those levers and you can set a number you are genuinely comfortable with rather than borrowing to a ceiling that squeezes the rest of your life.",
-          "The most productive next step is a two-part conversation: get pre-approved with a trusted lender so you know your real ceiling, and talk with a local agent who can translate that ceiling into the right neighborhoods and homes. Southern Nevada offers an enormous range, from active-adult communities to guard-gated luxury, and the right fit depends on both your budget and your life. You can browse our [active adult communities](/active-adult-communities-las-vegas) and [Las Vegas luxury homes](/las-vegas-luxury-real-estate) to see how price maps to lifestyle.",
+          "The most productive next step is a two-part conversation: get pre-approved with a trusted lender so you know your real ceiling, and talk with a local agent who can translate that ceiling into the right neighborhoods and homes. Southern Nevada offers an enormous range, from active-adult communities to guard-gated custom homes, and the right fit depends on both your budget and your life. You can browse our [active adult communities](/active-adult-communities-las-vegas) and [guard-gated communities](/guard-gated-communities-las-vegas) to see how price maps to lifestyle.",
           "When you are ready to put real numbers to your search, [contact The Roland Team](/contact) and we will help you build a full affordability picture, connect you with a lender, and start touring homes that fit. You can also begin browsing our [current listings](/listings) or explore the [buying process](/buy) at your own pace. Know your number first, and the right home in Las Vegas becomes a much simpler decision."
         ]
       }
@@ -2932,7 +2932,7 @@ export const blogPosts: BlogPost[] = [
         body: [
           "Staging is the art of arranging a home so buyers see space, light, and possibility. It is not about expensive furniture; it is about editing what you own and positioning it to make each room feel intentional. Even simple staging, pulling furniture off the walls, adding a few fresh textiles, and letting in light, can measurably shorten days on market and lift the final price. Our [staging tips for Las Vegas homes](/blog) go deeper, but the fundamentals below carry most of the weight.",
           "Aim for a neutral, calm backdrop that appeals broadly. Soft, warm-neutral walls, uncluttered surfaces, and coordinated linens let buyers project their own style onto the home. Maximize the natural light Las Vegas is famous for by opening blinds, cleaning glass, and swapping in brighter, matched bulbs. In rooms that feel dark, add lamps so no corner reads as gloomy in photos or in person.",
-          "Give every room a single, obvious purpose. That spare room serving as a gym-slash-office-slash-storage-unit should become clearly one thing so buyers register the home's full bedroom or flex-space count. For higher-end properties, professional staging is often worth the investment because it helps buyers connect emotionally at a price point where feelings drive decisions. If you are preparing a high-end home, our guidance on [selling Las Vegas luxury real estate](/las-vegas-luxury-real-estate) covers what elevated presentation looks like."
+          "Give every room a single, obvious purpose. That spare room serving as a gym-slash-office-slash-storage-unit should become clearly one thing so buyers register the home's full bedroom or flex-space count. For larger, higher-priced properties, professional staging is often worth the investment because it helps buyers connect emotionally at a price point where feelings drive decisions. If you are preparing a larger home, our [seller resources](/sell) cover what polished presentation looks like."
         ]
       },
       {
@@ -3003,7 +3003,7 @@ export const blogPosts: BlogPost[] = [
       },
       {
         q: "Is professional staging worth it in Las Vegas?",
-        a: "Often, yes. Even light staging can shorten days on market and lift the final price by helping buyers see space and picture themselves living there. For higher-end homes, full professional staging is frequently worth the investment because emotion drives luxury decisions. At a minimum, declutter, depersonalize, and arrange each room around a single clear purpose."
+        a: "Often, yes. Even light staging can shorten days on market and lift the final price by helping buyers see space and picture themselves living there. For larger, higher-priced homes, full professional staging is frequently worth the investment because emotion drives buying decisions at that price point. At a minimum, declutter, depersonalize, and arrange each room around a single clear purpose."
       },
       {
         q: "How important is curb appeal for a desert home?",
@@ -3028,7 +3028,7 @@ export const blogPosts: BlogPost[] = [
     ]
   },
   {
-    slug: "las-vegas-luxury-seller-net-proceeds",
+    slug: "las-vegas-seller-net-proceeds",
     title: "Understanding Seller Net Proceeds on a Las Vegas Home",
     category: "Selling Guides",
     excerpt: "Your list price isn't your take-home. Here's how to think about net proceeds when selling a home in Las Vegas.",
@@ -3042,39 +3042,39 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Your List Price Is Not Your Take-Home",
         body: [
-          "When a luxury seller in Las Vegas or Henderson looks at a $2.5 million list price, it is easy to picture that number landing in a bank account. It never does. Between the price on the sign and the wire that hits your account weeks after closing sits a stack of costs, credits, and prorations that quietly reshape the figure. Understanding that gap before you list is one of the most valuable things a seller can do, because it turns a vague hope into a concrete plan.",
-          "The figure that actually matters is your net proceeds: the amount left after your mortgage is paid off and every cost of the sale is settled. On a high-end home, the dollars involved are large enough that even a small percentage swing can mean tens of thousands of dollars. A seller who understands the full picture negotiates from strength, sets a realistic reserve, and avoids the unpleasant surprise of a closing statement that reads very differently from the listing.",
-          "This guide walks through every line that stands between your sale price and your check, with a focus on the Las Vegas luxury market. Think of it as a map of the deductions and how to estimate them. One important note up front: this is general educational information, not legal, tax, or accounting advice. Your specific situation, especially anything involving capital gains, deserves a conversation with a qualified professional. When you are ready for numbers tailored to your property, we can prepare a personalized net sheet through our [sell](/sell) page."
+          "When a seller in Las Vegas or Henderson looks at a $2.5 million list price, it is easy to picture that number landing in a bank account. It never does. Between the price on the sign and the wire that hits your account weeks after closing sits a stack of costs, credits, and prorations that quietly reshape the figure. Understanding that gap before you list is one of the most valuable things a seller can do, because it turns a vague hope into a concrete plan.",
+          "The figure that actually matters is your net proceeds: the amount left after your mortgage is paid off and every cost of the sale is settled. On a higher-priced home, the dollars involved are large enough that even a small percentage swing can mean tens of thousands of dollars. A seller who understands the full picture negotiates from strength, sets a realistic reserve, and avoids the unpleasant surprise of a closing statement that reads very differently from the listing.",
+          "This guide walks through every line that stands between your sale price and your check, with a focus on higher-priced Las Vegas homes. Think of it as a map of the deductions and how to estimate them. One important note up front: this is general educational information, not legal, tax, or accounting advice. Your specific situation, especially anything involving capital gains, deserves a conversation with a qualified professional. When you are ready for numbers tailored to your property, we can prepare a personalized net sheet through our [sell](/sell) page."
         ]
       },
       {
         heading: "Start With an Honest Sale Price",
         body: [
-          "Every net calculation begins with the number at the top: what the home actually sells for, not what it lists for. In the luxury tier, the two can diverge more than they do at lower price points, because high-end buyers are fewer, more deliberate, and more attuned to value. An aspirational list price that sits on the market for months often ends up closing below a sharper price that generated competition early. Your net proceeds are built on the real, contracted number, so it pays to be honest about it from the start.",
-          "Pricing a luxury property well means studying genuine comparables, active competition, and the specific features that command a premium in guard-gated enclaves like [The Ridges in Summerlin](/communities/the-ridges-summerlin) or the hillside estates of [Ascaya](/communities/ascaya). A custom home with unobstructed Strip views, a resort pool, and a finished lower level does not price like the production home two streets over. Getting this anchor right is the single biggest lever on your final net.",
-          "A data-driven starting point helps. Our [home value](/home-value) tool gives you a preliminary read, and a current [market report](/market-report) shows where luxury inventory and absorption stand today. From there, a listing consultation refines the number against the details a formula cannot see: light, privacy, view corridors, and the quality of the finishes."
+          "Every net calculation begins with the number at the top: what the home actually sells for, not what it lists for. At higher price points, the two can diverge more than they do at lower ones, because buyers are fewer, more deliberate, and more attuned to value. An aspirational list price that sits on the market for months often ends up closing below a sharper price that generated competition early. Your net proceeds are built on the real, contracted number, so it pays to be honest about it from the start.",
+          "Pricing a larger custom property well means studying genuine comparables, active competition, and the specific features that command a premium in guard-gated enclaves like [The Ridges in Summerlin](/communities/the-ridges-summerlin) or the hillside estates of [Ascaya](/communities/ascaya). A custom home with unobstructed Strip views, a resort pool, and a finished lower level does not price like the production home two streets over. Getting this anchor right is the single biggest lever on your final net.",
+          "A data-driven starting point helps. Our [home value](/home-value) tool gives you a preliminary read, and a current [market report](/market-report) shows where inventory and absorption stand today. From there, a listing consultation refines the number against the details a formula cannot see: light, privacy, view corridors, and the quality of the finishes."
         ]
       },
       {
         heading: "Mortgage Payoff and Any Liens",
         body: [
           "For most sellers, the largest single deduction is the payoff of the existing mortgage. This is not simply the balance shown on your last statement. A payoff figure includes principal, interest accrued through the expected closing date, and sometimes a small processing or reconveyance fee. Because interest keeps accruing daily until the loan is satisfied, the escrow officer orders an official payoff demand from your lender with a good-through date, and that is the number used at closing.",
-          "Luxury sellers frequently carry more than one lien against the property. A home equity line of credit, a second mortgage, or a solar financing agreement must all be paid off or otherwise resolved before clear title transfers to the buyer. Contractor liens, unpaid HOA assessments, or judgment liens can also surface during the title search, and each one reduces your net until it is cleared. It is far better to identify these early than to discover them days before closing.",
+          "Sellers of higher-priced homes frequently carry more than one lien against the property. A home equity line of credit, a second mortgage, or a solar financing agreement must all be paid off or otherwise resolved before clear title transfers to the buyer. Contractor liens, unpaid HOA assessments, or judgment liens can also surface during the title search, and each one reduces your net until it is cleared. It is far better to identify these early than to discover them days before closing.",
           "If you own the home free and clear, this line simply disappears, and your net picture improves dramatically. Either way, the escrow and title process in Nevada exists specifically to make sure every recorded claim against the property is accounted for, so the buyer receives clean title and you receive an accurate accounting of what is owed."
         ]
       },
       {
         heading: "Real Estate Commissions",
         body: [
-          "Brokerage commissions are typically the second-largest cost of a sale and, on a luxury home, the largest in raw dollars after the mortgage payoff. Commission structures are negotiable and are set by agreement, not by law. Following recent industry-wide changes to how buyer-side compensation is handled, the way commissions are presented and negotiated has evolved, and the terms are spelled out in your listing agreement and in the purchase contract. There is no fixed or standard rate.",
-          "What luxury sellers should focus on is not simply the percentage but the value delivered for it. Marketing a multimillion-dollar estate well is expensive and specialized: professional architectural photography, aerial and twilight video, staging consultation, print and digital placement, targeted outreach to qualified buyers and their agents, and the negotiation experience to protect your price through inspection and appraisal. A discount that comes with thin marketing can cost far more in final sale price than it saves in commission.",
-          "Because commission is usually calculated as a percentage of the sale price, it scales directly with your number. That is one more reason pricing and marketing quality matter so much: they influence both the top line and, indirectly, how efficiently you reach the buyer willing to pay it. Our approach to luxury representation is outlined on the [Las Vegas luxury real estate](/las-vegas-luxury-real-estate) page."
+          "Brokerage commissions are typically the second-largest cost of a sale and, on a higher-priced home, the largest in raw dollars after the mortgage payoff. Commission structures are negotiable and are set by agreement, not by law. Following recent industry-wide changes to how buyer-side compensation is handled, the way commissions are presented and negotiated has evolved, and the terms are spelled out in your listing agreement and in the purchase contract. There is no fixed or standard rate.",
+          "What sellers should focus on is not simply the percentage but the value delivered for it. Marketing a multimillion-dollar estate well is expensive and specialized: professional architectural photography, aerial and twilight video, staging consultation, print and digital placement, targeted outreach to qualified buyers and their agents, and the negotiation experience to protect your price through inspection and appraisal. A discount that comes with thin marketing can cost far more in final sale price than it saves in commission.",
+          "Because commission is usually calculated as a percentage of the sale price, it scales directly with your number. That is one more reason pricing and marketing quality matter so much: they influence both the top line and, indirectly, how efficiently you reach the buyer willing to pay it. Our approach to representing sellers is outlined on our [sell](/sell) page."
         ]
       },
       {
         heading: "Nevada Real Property Transfer Tax",
         body: [
-          "Nevada charges a real property transfer tax when a deed changes hands, and in Southern Nevada practice this cost is customarily paid by the seller. It is assessed on the value of the property being transferred, calculated per increment of value, so the dollar amount rises with your sale price. On a luxury home, a per-value transfer tax can add up to a meaningful line on your closing statement, even though the rate itself is modest.",
+          "Nevada charges a real property transfer tax when a deed changes hands, and in Southern Nevada practice this cost is customarily paid by the seller. It is assessed on the value of the property being transferred, calculated per increment of value, so the dollar amount rises with your sale price. On a higher-priced home, a per-value transfer tax can add up to a meaningful line on your closing statement, even though the rate itself is modest.",
           "Because the tax is tied to value, a higher sale price means a higher transfer tax, but it is not a figure that should ever drive your pricing decision; it is simply a cost to plan for. The exact rate is set at the county level and can change, so rather than quote a specific number here, we recommend confirming the current rate with your escrow officer or title company, who calculates it precisely as part of preparing your settlement statement. They will apply the current Clark County figure to your specific sale price.",
           "Certain transfers can be exempt, such as some transfers between family members or into a trust, but a standard arm's-length sale of a residence generally is not. This is one of several areas where the escrow and title team earns its fee: they know the current rate, apply the correct exemptions, and make sure the tax is collected and remitted properly so nothing comes back to you later."
         ]
@@ -3082,7 +3082,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Title, Escrow, and Settlement Fees",
         body: [
-          "Nevada closes real estate transactions through neutral escrow and title companies rather than attorneys, and their services carry fees that appear on the seller's side of the ledger. The largest of these is usually the owner's title insurance policy, which in Southern Nevada is customarily paid by the seller to guarantee the buyer receives clear, insurable title. Because title premiums are based on the sale price, this cost also scales with a luxury number.",
+          "Nevada closes real estate transactions through neutral escrow and title companies rather than attorneys, and their services carry fees that appear on the seller's side of the ledger. The largest of these is usually the owner's title insurance policy, which in Southern Nevada is customarily paid by the seller to guarantee the buyer receives clear, insurable title. Because title premiums are based on the sale price, this cost also scales with a larger number.",
           "Beyond title insurance, expect escrow or settlement fees, which are often split between buyer and seller by custom, plus a handful of smaller charges: document preparation, recording fees for the deed and reconveyance, a wire or courier fee, and sometimes a notary charge. Individually these are minor; together they form a predictable block of a few thousand dollars that belongs in any honest net estimate.",
           "If you would like a plain-English walk-through of who does what in a Nevada closing and when each fee is incurred, our team is glad to explain it before you sign anything. The goal is that nothing on your final settlement statement is a surprise, because you saw every line coming."
         ],
@@ -3098,14 +3098,14 @@ export const blogPosts: BlogPost[] = [
         heading: "Prorated Property Taxes and HOA Dues",
         body: [
           "Property taxes and homeowners association dues are paid on a schedule that rarely lines up with your closing date, so escrow divides them fairly between you and the buyer. This is called proration. You are responsible for the taxes and dues covering the days you owned the home, and the buyer picks up the days after closing. Depending on where you fall in the payment cycle, proration can either be a small debit or a small credit on your statement.",
-          "In luxury communities, HOA figures deserve special attention because they can be substantial and because guard-gated associations often charge transfer or capital-contribution fees at closing. Communities such as [MacDonald Highlands](/communities/macdonald-highlands) and [Seven Hills](/communities/seven-hills) maintain significant amenities, and the association will typically require a resale or estoppel package, a document fee, and sometimes a one-time contribution to reserves. Each of these lands on the closing statement, and responsibility for them is negotiable in the contract.",
+          "In guard-gated communities, HOA figures deserve special attention because they can be substantial and because guard-gated associations often charge transfer or capital-contribution fees at closing. Communities such as [MacDonald Highlands](/communities/macdonald-highlands) and [Seven Hills](/communities/seven-hills) maintain significant amenities, and the association will typically require a resale or estoppel package, a document fee, and sometimes a one-time contribution to reserves. Each of these lands on the closing statement, and responsibility for them is negotiable in the contract.",
           "Nevada's overall property tax environment is relatively moderate, which works in a seller's favor at proration time compared with higher-tax states. Still, the exact proration depends on your county tax bill, your HOA's billing cycle, and the closing date, so it is calculated precisely by escrow rather than estimated with a rule of thumb."
         ]
       },
       {
         heading: "Seller Concessions and Repair Credits",
         body: [
-          "Few luxury sales close at exactly the contracted price with no adjustments. After the inspection, a buyer may request repairs or, more commonly at the high end, a credit in lieu of repairs so they can address items on their own terms. These concessions come directly out of your proceeds, and on a large estate with a pool, extensive landscaping, multiple HVAC systems, and specialized equipment, the inspection list can be longer than a seller expects.",
+          "Few sales close at exactly the contracted price with no adjustments. After the inspection, a buyer may request repairs or, more commonly on larger homes, a credit in lieu of repairs so they can address items on their own terms. These concessions come directly out of your proceeds, and on a large estate with a pool, extensive landscaping, multiple HVAC systems, and specialized equipment, the inspection list can be longer than a seller expects.",
           "Buyers may also ask for a credit toward their own closing costs or a rate buy-down, particularly when financing is involved. Whether you agree, and how much, is a negotiation, and it is one where experienced representation pays for itself. The distinction between a reasonable request and an opportunistic one is not always obvious, and defending your net through this stage is a core part of the job.",
           "The best defense against surprise concessions is preparation before listing. A pre-listing inspection, proactive maintenance, and clean, complete records of upgrades and warranties reduce the buyer's leverage to negotiate after the fact. Homes that present as meticulously maintained simply give up fewer dollars in the credit conversation."
         ]
@@ -3113,15 +3113,15 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Staging, Preparation, and Carrying Costs",
         body: [
-          "Getting a luxury home to show at its best usually requires investment before it ever hits the market. Professional staging, deep cleaning, touch-up paint, landscape refresh, and minor repairs are common, and at the high end staging a large home can be a meaningful expense on its own. These costs are generally paid up front rather than at closing, but they still reduce your net, so they belong in the full accounting.",
-          "There are also carrying costs during the marketing and escrow period: mortgage payments, property taxes, insurance, utilities, pool and landscape service, and HOA dues continue until the day you close. Luxury homes can take longer to sell than entry-level properties because the buyer pool is smaller, so a realistic timeline matters. Each extra month on the market is another month of carrying costs quietly working against your net.",
+          "Getting a larger home to show at its best usually requires investment before it ever hits the market. Professional staging, deep cleaning, touch-up paint, landscape refresh, and minor repairs are common, and staging a large home can be a meaningful expense on its own. These costs are generally paid up front rather than at closing, but they still reduce your net, so they belong in the full accounting.",
+          "There are also carrying costs during the marketing and escrow period: mortgage payments, property taxes, insurance, utilities, pool and landscape service, and HOA dues continue until the day you close. Larger, higher-priced homes can take longer to sell than entry-level properties because the buyer pool is smaller, so a realistic timeline matters. Each extra month on the market is another month of carrying costs quietly working against your net.",
           "The encouraging news is that thoughtful preparation typically returns more than it costs. Presentation drives both the speed of sale and the final price, which is why our [preparing your Las Vegas home to sell](/blog) resources emphasize front-loading the work. Spending strategically before listing is usually the highest-return money in the entire transaction."
         ]
       },
       {
         heading: "Capital Gains and Tax Considerations",
         body: [
-          "For many luxury sellers, the tax question looms largest, and it is the area where general guidance matters least and personalized advice matters most. In broad terms, the federal government may tax the gain on the sale of a home, which is roughly the difference between your adjusted cost basis and your net sale price. A primary-residence exclusion can shelter a portion of that gain for qualifying owners who have lived in the home as their main residence for a required period, but on a high-value home the gain can exceed the exclusion, leaving a taxable amount.",
+          "For many sellers of higher-priced homes, the tax question looms largest, and it is the area where general guidance matters least and personalized advice matters most. In broad terms, the federal government may tax the gain on the sale of a home, which is roughly the difference between your adjusted cost basis and your net sale price. A primary-residence exclusion can shelter a portion of that gain for qualifying owners who have lived in the home as their main residence for a required period, but on a high-value home the gain can exceed the exclusion, leaving a taxable amount.",
           "Nevada itself is attractive here: the state levies no personal income tax, so there is no state-level capital gains tax on the sale. Federal treatment still applies, and the details depend on your basis, how long you owned the property, whether it was a primary residence or an investment, and improvements you can document. Investment property sellers sometimes explore a like-kind exchange to defer gain, which is a specialized strategy with strict rules and deadlines.",
           "None of this is tax advice, and the stakes are high enough that you should not rely on a blog to plan around it. Before you list, talk with a CPA or tax attorney who can look at your basis records and your broader financial picture. We work alongside your tax professional so the real estate side of the transaction supports the strategy they recommend."
         ]
@@ -3150,8 +3150,8 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Get a Personalized Net Sheet Before You List",
         body: [
-          "The single most useful step a luxury seller can take is to see real numbers on their own property before making any decision. A generic percentage is a starting point, but your net depends on your exact payoff, your community's HOA structure, your closing timeline, and the current transfer tax and title rates. We can pull all of that together into a clean net sheet that shows your estimated take-home across a range of likely sale prices, so you can plan with confidence rather than guesswork.",
-          "That same conversation is the natural moment to align on pricing and strategy. We will review a current [market report](/market-report) for your community, discuss where your home fits among active [listings](/listings), and map out the preparation that returns the most at the high end. Whether you are in [Lake Las Vegas](/communities/lake-las-vegas), a Summerlin custom estate, or a Henderson hillside, the framework is the same and the numbers are specific to you.",
+          "The single most useful step a seller can take is to see real numbers on their own property before making any decision. A generic percentage is a starting point, but your net depends on your exact payoff, your community's HOA structure, your closing timeline, and the current transfer tax and title rates. We can pull all of that together into a clean net sheet that shows your estimated take-home across a range of likely sale prices, so you can plan with confidence rather than guesswork.",
+          "That same conversation is the natural moment to align on pricing and strategy. We will review a current [market report](/market-report) for your community, discuss where your home fits among active [listings](/listings), and map out the preparation that returns the most at your price point. Whether you are in [Lake Las Vegas](/communities/lake-las-vegas), a Summerlin custom estate, or a Henderson hillside, the framework is the same and the numbers are specific to you.",
           "When you are ready, [contact](/contact) our team for a private consultation and a personalized net sheet. There is no pressure and no obligation, just a clear picture of what your sale would actually net you, so the number in your head finally matches the number on the page."
         ]
       }
@@ -3163,14 +3163,14 @@ export const blogPosts: BlogPost[] = [
       },
       {
         q: "Roughly what percentage of my sale price goes to selling costs in Las Vegas?",
-        a: "It varies with your specific terms, so there is no fixed number, but transaction costs commonly land somewhere in the mid-to-high single digits of the sale price before your mortgage payoff, driven mostly by commissions. Luxury homes can differ because of larger staging budgets, HOA fees, and marketing. The only reliable answer is a personalized net sheet built on your actual numbers."
+        a: "It varies with your specific terms, so there is no fixed number, but transaction costs commonly land somewhere in the mid-to-high single digits of the sale price before your mortgage payoff, driven mostly by commissions. Larger homes can differ because of larger staging budgets, HOA fees, and marketing. The only reliable answer is a personalized net sheet built on your actual numbers."
       },
       {
         q: "Who pays the Nevada real property transfer tax?",
         a: "In Southern Nevada practice, the seller customarily pays the real property transfer tax, though this is negotiable in the contract. It is calculated on the value of the property per increment of value, so a higher sale price means a higher tax. Your escrow officer applies the current Clark County rate and any exemptions when preparing your settlement statement."
       },
       {
-        q: "Will I owe capital gains tax when I sell my luxury home?",
+        q: "Will I owe capital gains tax when I sell my home?",
         a: "You might, depending on your gain, your cost basis, how you used the property, and how long you owned it. A primary-residence exclusion can shelter part of the gain for qualifying owners, but on a high-value home the taxable gain can exceed it. Nevada has no state income tax, so any capital gains exposure is federal. This is general information, not tax advice, so consult a CPA before you list."
       },
       {
@@ -3269,7 +3269,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Opportunity Exists in Every Kind of Market",
         body: [
           "It is tempting to believe there is one right season to buy and that everything else is a mistake. In reality, different market conditions simply reward different strategies. A market with more inventory and less competition favors patient, selective buyers who can negotiate. A faster market with tight supply rewards buyers who are fully prepared and can move decisively when the right home appears.",
-          "The Las Vegas Valley is not one uniform market either. The dynamics in a guard-gated Summerlin enclave differ from those in an emerging master plan on the valley's northern or southern edge. Luxury and entry-level segments can move on different clocks. New construction and resale can behave differently in the same month. \"The market\" is really many smaller markets, and your opportunity lives inside the specific one you are shopping.",
+          "The Las Vegas Valley is not one uniform market either. The dynamics in a guard-gated Summerlin enclave differ from those in an emerging master plan on the valley's northern or southern edge. Larger-home and entry-level segments can move on different clocks. New construction and resale can behave differently in the same month. \"The market\" is really many smaller markets, and your opportunity lives inside the specific one you are shopping.",
           "This is where local guidance earns its keep. An agent who watches these segments daily can tell you where negotiating leverage sits right now, which communities have motivated sellers, and where competition is stiffest. Whether you are drawn to the amenities of [Summerlin](/communities/summerlin), the value and convenience of [Green Valley](/communities/green-valley) in Henderson, or newer neighborhoods like [Mountain's Edge](/communities/mountains-edge), [Skye Canyon](/communities/skye-canyon), and [Inspirada](/communities/inspirada), the smart move is matching your strategy to the conditions in that specific area."
         ]
       },
@@ -3278,7 +3278,7 @@ export const blogPosts: BlogPost[] = [
         body: [
           "Timing aside, it is worth understanding why so many buyers keep choosing Southern Nevada. Nevada has no state income tax, which meaningfully changes the math for relocating households, especially those arriving from higher-tax states. Property taxes in the valley are generally moderate compared with many large metros. Those structural advantages do not disappear when rates or prices wobble.",
           "The region has also diversified well beyond its resort roots, with growth in sports, healthcare, logistics, technology, and professional services. Steady in-migration, ongoing job growth, and constrained developable land ringed by federal territory and mountains all support housing demand over the long run. None of this guarantees any particular month's prices, but it explains the durable interest that has kept the valley growing for years.",
-          "For buyers relocating from out of state, these fundamentals are often the real reason \"now\" makes sense: the move improves their overall financial picture regardless of where rates happen to sit. If you are considering a move, our [relocation guide](/moving-to-las-vegas) covers taxes, neighborhoods, and logistics, and our overview of the [Las Vegas luxury market](/las-vegas-luxury-real-estate) explains how the high end plays by its own rules."
+          "For buyers relocating from out of state, these fundamentals are often the real reason \"now\" makes sense: the move improves their overall financial picture regardless of where rates happen to sit. If you are considering a move, our [relocation guide](/moving-to-las-vegas) covers taxes, neighborhoods, and logistics, and our [Las Vegas market report](/market-report) shows how different price ranges are moving."
         ]
       },
       {
@@ -3387,7 +3387,7 @@ export const blogPosts: BlogPost[] = [
         heading: "What 'Guard-Gated' Actually Means",
         body: [
           "Guard-gated describes access control, and specifically the highest common tier of it. At the entrance sits a staffed gatehouse where a live attendant verifies residents, logs visitors, and manages deliveries and service vehicles. This is the distinction that matters: a guard-gated community has people, not just a keypad. Many communities are simply gated — a rolling arm or sliding gate you open with a clicker or code — but that is not the same as having a guard physically present around the clock.",
-          "Within Las Vegas and Henderson, guard-gated status is closely associated with the luxury tier. [The Ridges in Summerlin](/communities/the-ridges-summerlin), [MacDonald Highlands](/communities/macdonald-highlands) in Henderson, [Seven Hills](/communities/seven-hills), and [Southern Highlands](/communities/southern-highlands) all built their reputations partly on the reassurance of a manned entrance. The guard becomes a first line of screening, a point of contact for residents, and a visible signal that the neighborhood is private. For a fuller list of options across price points, our [guard-gated communities guide](/guard-gated-communities-las-vegas) breaks down the valley's staffed enclaves.",
+          "Within Las Vegas and Henderson, guard-gated status is closely associated with larger custom homes. [The Ridges in Summerlin](/communities/the-ridges-summerlin), [MacDonald Highlands](/communities/macdonald-highlands) in Henderson, [Seven Hills](/communities/seven-hills), and [Southern Highlands](/communities/southern-highlands) all built their reputations partly on the reassurance of a manned entrance. The guard becomes a first line of screening, a point of contact for residents, and a visible signal that the neighborhood is private. For a fuller list of options across price points, our [guard-gated communities guide](/guard-gated-communities-las-vegas) breaks down the valley's staffed enclaves.",
           "It is worth being precise about what a guard does and does not provide. A gate attendant controls and records who enters; they are not a police force, and they do not guarantee that nothing will ever go wrong. What guard-gating reliably delivers is friction — casual through-traffic disappears, solicitors are turned away, and anyone entering leaves a record. For most buyers, that combination of privacy and deterrence is the real value, more than any promise of absolute safety."
         ]
       },
@@ -3395,14 +3395,14 @@ export const blogPosts: BlogPost[] = [
         heading: "Where the Two Overlap — and Where They Don't",
         body: [
           "The cleanest way to hold these two ideas in your head is to picture them as separate dials. One dial sets the development model, from a small standalone subdivision up to a sprawling master plan. The other dial sets access, from fully open, to gated with a clicker, up to staffed guard-gated with patrols. A given community can sit anywhere on each dial independently, which is exactly why the labels get tangled.",
-          "In practice, the valley gives you every combination. Summerlin is a master plan that contains many open villages and several guard-gated enclaves like The Ridges — so the same master-planned community holds both open and staffed neighborhoods. [Southern Highlands](/communities/southern-highlands) is a master plan with a prestigious guard-gated golf enclave inside it. Meanwhile, some guard-gated communities are relatively compact and are not part of any larger master plan at all — they are simply a walled neighborhood with a gatehouse. And the vast majority of homes in Henderson's big master plans sit on open, public streets with no guard in sight.",
+          "In practice, the valley gives you every combination. Summerlin is a master plan that contains many open villages and several guard-gated enclaves like The Ridges — so the same master-planned community holds both open and staffed neighborhoods. [Southern Highlands](/communities/southern-highlands) is a master plan with a well-known guard-gated golf enclave inside it. Meanwhile, some guard-gated communities are relatively compact and are not part of any larger master plan at all — they are simply a walled neighborhood with a gatehouse. And the vast majority of homes in Henderson's big master plans sit on open, public streets with no guard in sight.",
           "So when a listing says 'guard-gated community within a master-planned community,' it is describing both dials at once: a staffed private enclave that also enjoys the parks, trails, and retail of a larger planned development. That layered arrangement is common at the top of the Las Vegas market, and it is often the most desirable of all — but it is only one of several valid setups, and it typically carries the highest carrying costs."
         ],
         bullets: [
           "Open master plan — planned amenities, public streets, no gate (much of Summerlin, Green Valley)",
           "Gated (non-guarded) neighborhood — a clicker or keypad, no staff",
           "Standalone guard-gated community — a staffed gate, not part of a larger master plan",
-          "Guard-gated enclave inside a master plan — the layered luxury setup (The Ridges, Southern Highlands' golf enclave)"
+          "Guard-gated enclave inside a master plan — the layered setup (The Ridges, Southern Highlands' golf enclave)"
         ]
       },
       {
@@ -3447,7 +3447,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Resale and Long-Term Value",
         body: [
           "Both models tend to hold their appeal on resale, and for overlapping reasons. Master-planned communities benefit from strong, durable brand recognition; buyers relocating to Las Vegas often search by community name before they search by street, and a well-run master plan with mature amenities and consistent design standards stays in demand across market cycles. That recognition can translate into steadier interest when it is time to sell.",
-          "Guard-gated status adds a layer of exclusivity that appeals to a specific and consistent slice of buyers — those who prioritize privacy and are willing to pay a premium for a staffed entrance. In the luxury tier especially, guard-gating is often an expectation rather than a bonus, so the presence of a manned gate can keep a home competitive against comparable properties that lack one. You can get a feel for how these communities trade by browsing current [Las Vegas luxury listings](/las-vegas-luxury-real-estate) and watching how the gated addresses are positioned.",
+          "Guard-gated status adds a layer of privacy that appeals to a specific and consistent slice of buyers — those who prioritize privacy and are willing to pay a premium for a staffed entrance. For custom and larger homes especially, guard-gating is often an expectation rather than a bonus, so the presence of a manned gate can keep a home competitive against comparable properties that lack one. You can get a feel for how these communities trade by browsing current [Las Vegas listings](/listings) and watching how the gated addresses are positioned.",
           "That said, higher carrying costs are part of the resale conversation. A future buyer will weigh the same HOA dues, golf obligations, and gate fees you did, so an enclave with runaway dues or a thin reserve fund can be a harder sell. The healthiest communities pair genuine desirability with well-managed finances. If you are trying to gauge how a specific address might perform, a current [market report](/market-report) and a real [home value estimate](/home-value) are far more reliable than any general rule of thumb."
         ]
       },
@@ -3469,7 +3469,7 @@ export const blogPosts: BlogPost[] = [
         bullets: [
           "Lean guard-gated if privacy, controlled access, and lock-and-leave peace of mind top your list",
           "Lean master-planned if trails, parks, community life, and a strong resale name matter most",
-          "Consider the layered luxury enclaves if you want both — and can budget for both sets of dues",
+          "Consider the layered enclaves if you want both — and can budget for both sets of dues",
           "Match the specific community to your routine, not just the label on the listing"
         ]
       },
@@ -3648,7 +3648,7 @@ export const blogPosts: BlogPost[] = [
         body: [
           "For all its appeal, a new build is not automatically the best choice for every buyer, and a good advisor will tell you so. Resale homes come with established landscaping, finished neighborhoods, and often locations closer to the valley's core, and they can represent strong value against a comparable new build once you account for upgrades, landscaping, and window coverings that a new home may not include. New communities, by contrast, sometimes mean living amid ongoing construction for a while and completing your own backyard after closing.",
           "The right answer depends on your priorities: modern layouts and warranties and the ability to customize, versus mature surroundings, negotiating flexibility on price, and knowing exactly what you are getting. If you are still weighing the two paths, our companion guide on new construction versus resale on the [blog](/blog) lays the tradeoffs side by side, and if you are relocating to the valley, our [moving to Las Vegas](/moving-to-las-vegas) resource covers how the different areas compare.",
-          "For luxury buyers, the calculus adds another layer. Custom and semi-custom new homes in communities like [The Ridges](/communities/the-ridges-summerlin) and [Reverence](/communities/reverence) offer a level of personalization resale rarely matches, while established estates in the valley's premier [guard-gated communities](/guard-gated-communities-las-vegas) offer views, privacy, and finish levels that take years to replicate. Our [Las Vegas luxury real estate](/las-vegas-luxury-real-estate) practice works both sides of that decision every day."
+          "For buyers of larger homes, the calculus adds another layer. Custom and semi-custom new homes in communities like [The Ridges](/communities/the-ridges-summerlin) and [Reverence](/communities/reverence) offer a level of personalization resale rarely matches, while established estates in the valley's [guard-gated communities](/guard-gated-communities-las-vegas) offer views, privacy, and finish levels that take years to replicate. Our team works both sides of that decision every day."
         ]
       },
       {
@@ -3656,7 +3656,7 @@ export const blogPosts: BlogPost[] = [
         body: [
           "If there is one thing to take from this guide, it is this: the time to bring in your own agent is before your first model-home visit, not after you have fallen in love with a floor plan and signed a guest card. Representation costs you nothing in a new-construction purchase in the vast majority of cases, and it changes everything about how the process unfolds — from the contract you sign to the incentives you capture to the defects you catch before closing.",
           "The Roland Team works with new-home builders across Las Vegas and Henderson every week. We know which communities are releasing new phases, which builders stand behind their warranties, which lot premiums have paid off, and where the real negotiating room lives right now. We will register with you at the builder, review the contract line by line, benchmark the financing, walk the home at every stage, and make sure the home you take the keys to is the one you were promised.",
-          "Before you tour a single model, reach out. Whether you are buying your first new build, moving up, or exploring luxury new construction, we would be glad to represent you from the first handshake to the final walkthrough. [Contact us](/contact) to get started, or explore our [new construction](/new-construction) hub and [current listings](/listings) to see what is coming out of the ground across the valley."
+          "Before you tour a single model, reach out. Whether you are buying your first new build, moving up, or exploring a custom new build, we would be glad to represent you from the first handshake to the final walkthrough. [Contact us](/contact) to get started, or explore our [new construction](/new-construction) hub and [current listings](/listings) to see what is coming out of the ground across the valley."
         ]
       }
     ],
@@ -3696,37 +3696,37 @@ export const blogPosts: BlogPost[] = [
     ]
   },
   {
-    slug: "las-vegas-luxury-market-what-makes-it-unique",
-    title: "The Las Vegas Luxury Market: What Makes It Unique",
+    slug: "las-vegas-custom-and-guard-gated-homes-what-makes-them-unique",
+    title: "Custom and Guard-Gated Homes in Las Vegas: What Makes the Market Unique",
     category: "Market Updates",
-    excerpt: "Southern Nevada's luxury tier plays by its own rules. Here's what sets the Las Vegas high-end market apart from the rest of the valley.",
+    excerpt: "Southern Nevada's custom and guard-gated homes play by their own rules. Here's what sets this part of the market apart from the rest of the valley.",
     date: "2026-07-10",
     author: "The Roland Team",
     readMinutes: 15,
-    seoTitle: "The Las Vegas Luxury Real Estate Market: What Makes It Unique",
-    seoDescription: "What makes the Las Vegas luxury real estate market unique — guard-gated exclusivity, custom estates, no state income tax, and its own pricing dynamics.",
+    seoTitle: "Custom & Guard-Gated Homes in Las Vegas: What's Unique",
+    seoDescription: "What makes custom and guard-gated homes in Las Vegas different — staffed communities, view lots, no state income tax, and their own pricing dynamics.",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_163757_ab481f6e-1147-49b4-9611-ac4d1b096fd2.png",
     sections: [
       {
-        heading: "A Luxury Market That Answers to No One Else",
+        heading: "A Part of the Market That Answers to Its Own Rules",
         body: [
-          "Most people assume the top of a housing market is simply a more expensive version of everything below it. In Las Vegas, that assumption breaks down almost immediately. The valley's luxury tier operates on its own schedule, draws its buyers from a different pool, and prices its homes against a logic that has little to do with the median sale down the street. A guard-gated custom estate with unobstructed Strip views is not competing with tract homes three miles away; it is competing with a handful of comparable estates that may not come up for sale twice in the same year.",
-          "That distinction matters enormously when you are buying or selling at the high end. The strategies that move a mid-market home quickly can leave a luxury property sitting, and the timing signals that guide a first-time buyer are often noise at the top. Southern Nevada's high-end market rewards patience, discretion, and a deep knowledge of individual communities rather than broad statistics.",
-          "This is a look at what actually sets the Las Vegas luxury market apart, and why understanding those differences is the difference between a smooth transaction and a costly misread. For a broader overview of the segment, our [Las Vegas luxury real estate](/las-vegas-luxury-real-estate) hub is a good companion to this piece."
+          "Most people assume the top of a housing market is simply a more expensive version of everything below it. In Las Vegas, that assumption breaks down almost immediately. The valley's larger custom and guard-gated homes operate on their own schedule, draw their buyers from a different pool, and are priced against a logic that has little to do with the median sale down the street. A guard-gated custom home with unobstructed Strip views is not competing with tract homes three miles away; it is competing with a handful of comparable homes that may not come up for sale twice in the same year.",
+          "That distinction matters enormously when you are buying or selling a larger custom home. The strategies that move a mid-market home quickly can leave a one-of-a-kind property sitting, and the timing signals that guide a first-time buyer are often noise at higher price points. This part of the Southern Nevada market rewards patience, discretion, and a deep knowledge of individual communities rather than broad statistics.",
+          "This is a look at what actually sets Las Vegas custom and guard-gated homes apart, and why understanding those differences is the difference between a smooth transaction and a costly misread. For a broader overview, our [guard-gated communities](/guard-gated-communities-las-vegas) guide is a good companion to this piece."
         ]
       },
       {
         heading: "No State Income Tax Reshapes Who Buys Here",
         body: [
-          "The single most powerful force behind Las Vegas luxury demand is not a view or an amenity. It is Nevada's lack of a state income tax. For a high earner relocating from a high-tax state, the annual savings can rival the cost of a significant home upgrade, and that math changes behavior. Buyers who might have settled for a comfortable home in California or the Northeast arrive in Southern Nevada with the budget for a true estate.",
-          "This tax advantage does more than expand individual budgets. It steadily feeds the top of the market with entrepreneurs, executives, professional athletes, entertainers, and business owners who establish Nevada residency and want a primary home that reflects their new position. The result is durable demand for the finest properties, often insulated from the interest-rate swings that dominate headlines, because a meaningful share of these purchases are made with cash or with financing that is a convenience rather than a necessity.",
+          "The single most powerful force behind demand for larger Las Vegas homes is not a view or an amenity. It is Nevada's lack of a state income tax. For an earner relocating from a high-tax state, the annual savings can rival the cost of a significant home upgrade, and that math changes behavior. Buyers who might have settled for a comfortable home in California or the Northeast arrive in Southern Nevada with the budget for a larger custom home.",
+          "This tax advantage does more than expand individual budgets. It steadily brings entrepreneurs, executives, professional athletes, entertainers, and business owners who establish Nevada residency and want a primary home that fits their new situation. The result is durable demand for larger custom homes, often less affected by the interest-rate swings that dominate headlines, because a meaningful share of these purchases are made with cash or with financing that is a convenience rather than a necessity.",
           "If you are weighing a move driven partly by tax considerations, the decision is rarely only about the home itself. It touches residency, timing, and how you structure the purchase. A private conversation early in the process tends to save money later, and you can start one through our [contact](/contact) page."
         ]
       },
       {
         heading: "Guard-Gated Enclaves Set the Standard",
         body: [
-          "Nowhere is the character of Las Vegas luxury clearer than in its guard-gated communities. These are not simply neighborhoods with a fence and a code pad. The valley's premier enclaves staff their entries around the clock, control access to residents and approved guests, and build entire lifestyles around privacy, clubhouses, and curated amenities. For many high-end buyers, the community is as much the purchase as the house.",
+          "Nowhere is the character of this part of the market clearer than in its guard-gated communities. These are not simply neighborhoods with a fence and a code pad. The valley's guard-gated enclaves staff their entries around the clock, control access to residents and approved guests, and build entire lifestyles around privacy, clubhouses, and shared amenities. For many buyers, the community is as much the purchase as the house.",
           "The names carry weight for a reason. Communities such as [The Ridges in Summerlin](/communities/the-ridges-summerlin), [MacDonald Highlands](/communities/macdonald-highlands), [The Summit Club](/communities/the-summit-club), and [Ascaya](/communities/ascaya) each cultivate a distinct architectural identity and a specific kind of setting, from contemporary hillside modernism to established golf-course elegance. Choosing among them is less about price and more about fit.",
           "Because so much of the value sits in the community itself, the smartest way to evaluate these addresses is to understand what each one actually offers day to day. Our [guard-gated communities](/guard-gated-communities-las-vegas) guide breaks down the differences in security, amenities, and lifestyle so you can narrow the field before you ever tour a home."
         ],
@@ -3734,39 +3734,39 @@ export const blogPosts: BlogPost[] = [
           "Staffed, credentialed entry rather than an unmanned gate",
           "Private amenities such as clubhouses, fitness facilities, and social calendars",
           "Architectural review that protects design consistency and long-term value",
-          "A layer of privacy that appeals to high-profile and privacy-conscious buyers"
+          "A layer of privacy that appeals to privacy-conscious buyers"
         ]
       },
       {
         heading: "Custom Hillside Estates and the Value of a View",
         body: [
-          "Las Vegas has a geographic gift that few luxury markets can match: elevation. The valley is ringed by hillside parcels that look out over the lights of the Strip, the sweep of the basin, and the surrounding mountains. On these lots, the view is not an amenity. It is the asset. Two homes of nearly identical square footage can trade at very different levels based purely on what the windows frame at night.",
-          "This is why so much of the top end is custom rather than production-built. Hillside communities like Ascaya and MacDonald Highlands attract owners who want architecture designed around a specific vantage point, with disappearing glass walls, infinity-edge pools, and rooflines shaped to capture the horizon. These are homes conceived as singular statements, and each one has to be understood on its own terms rather than by a price-per-foot shortcut.",
-          "Evaluating a custom estate takes a different eye than evaluating a resale in a standard subdivision. Orientation, privacy from neighboring pads, the quality of the build, and the durability of the view all factor into value. When you are ready to see what is available at this level, our [luxury listings](/listings) are the place to start."
+          "Las Vegas has a geographic gift that few markets can match: elevation. The valley is ringed by hillside parcels that look out over the lights of the Strip, the sweep of the basin, and the surrounding mountains. On these lots, the view is not an amenity. It is the asset. Two homes of nearly identical square footage can trade at very different levels based purely on what the windows frame at night.",
+          "This is why so many of the larger homes here are custom rather than production-built. Hillside communities like Ascaya and MacDonald Highlands attract owners who want architecture designed around a specific vantage point, with disappearing glass walls, infinity-edge pools, and rooflines shaped to capture the horizon. These are homes conceived as singular statements, and each one has to be understood on its own terms rather than by a price-per-foot shortcut.",
+          "Evaluating a custom home takes a different eye than evaluating a resale in a standard subdivision. Orientation, privacy from neighboring pads, the quality of the build, and the durability of the view all factor into value. When you are ready to see what is available, our [listings](/listings) are the place to start."
         ]
       },
       {
-        heading: "An Entertainment and Sports Economy Feeds the Top",
+        heading: "An Entertainment and Sports Economy Adds Demand",
         body: [
-          "Las Vegas is no longer only a gaming town. Over the past decade it has become a genuine professional sports city and a global entertainment capital, and that transformation flows directly into the luxury housing market. Franchises, arenas, residencies, and a constant calendar of marquee events bring high-earning talent, executives, and support professionals to the valley, many of whom want a home base rather than a hotel.",
-          "This economy creates a steady, renewing source of luxury demand that is somewhat distinct from traditional relocation. Athletes and performers often need move-in-ready privacy on a compressed timeline. Owners and executives want proximity to venues without sacrificing seclusion. The effect is a high-end market with more year-round energy than you would expect from a city its size, and with pockets of intense, quiet competition for the right property.",
-          "It also means the luxury market can hold its footing even when broader conditions cool, because its demand is tied to industries that keep drawing people to Southern Nevada. To see how the high end is behaving relative to the overall valley, our [market report](/market-report) tracks the trends that matter."
+          "Las Vegas is no longer only a gaming town. Over the past decade it has become a genuine professional sports city and a global entertainment capital, and that transformation flows directly into the housing market. Franchises, arenas, residencies, and a constant calendar of marquee events bring athletes, performers, executives, and support professionals to the valley, many of whom want a home base rather than a hotel.",
+          "This economy creates a steady, renewing source of demand that is somewhat distinct from traditional relocation. Athletes and performers often need move-in-ready privacy on a compressed timeline. Owners and executives want proximity to venues without sacrificing seclusion. The effect is a market with more year-round energy than you would expect from a city its size, and with pockets of intense, quiet competition for the right property.",
+          "It also means demand for these homes can hold its footing even when broader conditions cool, because it is tied to industries that keep drawing people to Southern Nevada. To see how this segment is behaving relative to the overall valley, our [market report](/market-report) tracks the trends that matter."
         ]
       },
       {
         heading: "Privacy and Discretion Are Part of the Product",
         body: [
-          "At the top of the Las Vegas market, privacy is not a preference. It is a requirement. A significant share of high-end buyers are recognizable, are protecting their families, or simply expect that a purchase of this size will not become public conversation. That expectation shapes how these homes are shown, marketed, and negotiated in ways that surprise buyers coming from lower price points.",
+          "For larger custom and guard-gated homes in Las Vegas, privacy is not a preference. It is often a requirement. A significant share of buyers are recognizable, are protecting their families, or simply expect that a purchase of this size will not become public conversation. That expectation shapes how these homes are shown, marketed, and negotiated in ways that surprise buyers coming from lower price points.",
           "Discretion touches everything: how a listing is described, who is allowed to tour, how identities are shielded during negotiation, and whether a property is advertised at all. Confidentiality agreements, controlled showings, and careful handling of records are routine tools rather than exceptions. A sale can close without the wider market ever knowing the home changed hands.",
-          "For sellers, this culture of privacy is an advantage when it is handled well and a liability when it is not. Working with representation that understands how to protect an owner's identity while still reaching qualified buyers is essential, and it is a core part of how we approach a high-end [sell](/sell) engagement."
+          "For sellers, this culture of privacy is an advantage when it is handled well and a liability when it is not. Working with representation that understands how to protect an owner's identity while still reaching qualified buyers is essential, and it is a core part of how we approach a larger-home [sell](/sell) engagement."
         ]
       },
       {
         heading: "The Off-Market Culture You Won't See Online",
         body: [
-          "Perhaps the most misunderstood feature of the Las Vegas luxury market is how much of it never appears on a public search. Off-market and coming-soon listings are a normal part of doing business at the top, driven by owners who value privacy, want to test interest quietly, or prefer not to signal that they are selling. A buyer relying only on public portals is, by definition, seeing an incomplete picture.",
-          "These opportunities move through relationships rather than advertising. Agents who are active in the luxury tier know which owners might sell at the right number, which homes are being prepared for a quiet debut, and which sellers would entertain an unsolicited offer. That network is not something a buyer can access from the outside; it is earned through years of working in the segment.",
-          "The practical takeaway is simple. If you are serious about buying at the high end, you need representation with genuine reach into off-market inventory, not just access to the same feeds everyone else sees. That is often where the best homes, and the best terms, are found."
+          "Perhaps the most misunderstood feature of the Las Vegas custom-home market is how much of it never appears on a public search. Off-market and coming-soon listings are a normal part of doing business here, driven by owners who value privacy, want to test interest quietly, or prefer not to signal that they are selling. A buyer relying only on public portals is, by definition, seeing an incomplete picture.",
+          "These opportunities move through relationships rather than advertising. Agents who are active in this segment know which owners might sell at the right number, which homes are being prepared for a quiet debut, and which sellers would entertain an unsolicited offer. That network is not something a buyer can access from the outside; it is earned through years of working in the segment.",
+          "The practical takeaway is simple. If you are serious about buying a custom or guard-gated home, you need representation with genuine reach into off-market inventory, not just access to the same feeds everyone else sees. That is often where the best homes, and the best terms, are found."
         ],
         bullets: [
           "Coming-soon homes shown privately before any public launch",
@@ -3776,107 +3776,107 @@ export const blogPosts: BlogPost[] = [
         ]
       },
       {
-        heading: "New-Build Ultra-Luxury and the Land Behind It",
+        heading: "New-Build Custom Homes and the Land Behind Them",
         body: [
-          "Alongside its established estates, Las Vegas has a thriving pipeline of brand-new ultra-luxury, and that is unusual for a mature high-end market. Master developers continue to release premium homesites in guard-gated settings, and custom builders are delivering contemporary estates with the latest in design, technology, and energy systems. For buyers who want turnkey modern living without a renovation, this supply is a real advantage.",
-          "The land itself is a defining factor. Premium pads, especially those with protected views or hillside elevation, are finite, and communities like [The Summit Club](/communities/the-summit-club) and Ascaya have built their reputations partly on the scarcity and quality of their lots. As the best parcels are claimed, the balance between existing estates and new builds shifts, and that dynamic quietly influences pricing at the very top.",
-          "Whether a new-construction estate or a custom build on a purchased homesite makes more sense depends on your timeline, your appetite for the building process, and what is actually available. Our [new construction](/new-construction) resources are a useful starting point for weighing the trade-offs."
+          "Alongside its established homes, Las Vegas has a thriving pipeline of brand-new custom construction, and that is unusual for a mature market. Master developers continue to release premium homesites in guard-gated settings, and custom builders are delivering contemporary homes with the latest in design, technology, and energy systems. For buyers who want turnkey modern living without a renovation, this supply is a real advantage.",
+          "The land itself is a defining factor. Premium pads, especially those with protected views or hillside elevation, are finite, and communities like [The Summit Club](/communities/the-summit-club) and Ascaya have built their reputations partly on the scarcity and quality of their lots. As the best parcels are claimed, the balance between existing homes and new builds shifts, and that dynamic quietly influences pricing.",
+          "Whether a new-construction home or a custom build on a purchased homesite makes more sense depends on your timeline, your appetite for the building process, and what is actually available. Our [new construction](/new-construction) resources are a useful starting point for weighing the trade-offs."
         ]
       },
       {
         heading: "Golf, Water, and Lifestyle-Defined Neighborhoods",
         body: [
-          "Luxury in Las Vegas is rarely just about the house. It is organized around a way of living, and the valley's most desirable addresses tend to be anchored by a defining lifestyle feature. Golf is the most established of these, with private and championship courses woven into communities like [Queensridge](/communities/queensridge), [Spanish Hills](/communities/spanish-hills), and [Seven Hills](/communities/seven-hills), where the fairways are as much a part of the appeal as the architecture.",
+          "In Las Vegas, the best-known neighborhoods are rarely just about the house. They are organized around a way of living, and the valley's most desirable addresses tend to be anchored by a defining lifestyle feature. Golf is the most established of these, with private and championship courses woven into communities like [Queensridge](/communities/queensridge), [Spanish Hills](/communities/spanish-hills), and [Seven Hills](/communities/seven-hills), where the fairways are as much a part of the appeal as the architecture.",
           "Water is the rarer draw. [Lake Las Vegas](/communities/lake-las-vegas) offers waterfront living in the desert, a genuinely unusual proposition that attracts buyers looking for something the rest of the valley cannot provide. These lifestyle anchors create micro-markets, each with its own buyer profile and its own supply-and-demand rhythm that can diverge from the valley as a whole.",
           "Because these communities behave differently from one another, choosing among them is really about matching a lifestyle to a place. Our guides to [golf communities](/golf-communities-las-vegas) and the broader set of valley [communities](/communities) can help you understand which environment fits how you actually want to live."
         ]
       },
       {
-        heading: "Why the Luxury Market Moves on Its Own Timeline",
+        heading: "Why This Part of the Market Moves on Its Own Timeline",
         body: [
-          "One of the most important things to understand about the Las Vegas high end is that it does not track the broader market in real time. When rising rates cool entry-level demand, the luxury tier, with its heavy share of cash and equity buyers, often keeps moving. When the overall market slows, prized estates can still trade at strong numbers because the pool of comparable homes is so small that scarcity outweighs sentiment.",
-          "This independence cuts both ways. Luxury inventory can sit longer simply because the right buyer for a singular home is rare, not because the property is mispriced. A six-month marketing period at the top is not the warning sign it would be for a median-priced home. Conversely, the perfect estate can generate quiet, competitive interest even in a quiet season. Days-on-market and price-per-foot, the metrics buyers lean on lower down, lose much of their meaning here.",
-          "The lesson for both buyers and sellers is to resist reading the luxury market through mass-market headlines. What is happening to the valley median tells you very little about what a specific guard-gated estate is worth. For a grounded read on where things actually stand, keep an eye on our ongoing [blog](/blog) and market coverage."
+          "One of the most important things to understand about larger custom and guard-gated homes is that they do not track the broader market in real time. When rising rates cool entry-level demand, this segment, with its heavy share of cash and equity buyers, often keeps moving. When the overall market slows, standout homes can still trade at strong numbers because the pool of comparable homes is so small that scarcity outweighs sentiment.",
+          "This independence cuts both ways. Inventory can sit longer simply because the right buyer for a singular home is rare, not because the property is mispriced. A six-month marketing period here is not the warning sign it would be for a median-priced home. Conversely, the perfect home can generate quiet, competitive interest even in a quiet season. Days-on-market and price-per-foot, the metrics buyers lean on lower down, lose much of their meaning here.",
+          "The lesson for both buyers and sellers is to resist reading this segment through mass-market headlines. What is happening to the valley median tells you very little about what a specific guard-gated home is worth. For a grounded read on where things actually stand, keep an eye on our ongoing [blog](/blog) and market coverage."
         ]
       },
       {
-        heading: "How to Buy at the Top End Without Missing the Best Homes",
+        heading: "How to Buy a Custom Home Without Missing the Best Options",
         body: [
-          "Buying luxury in Las Vegas is a relationship-driven process, not a search-and-scroll one. The best homes are frequently spoken for before they are ever advertised, which means your representation matters more than your search filters. A well-connected agent can surface off-market opportunities, arrange discreet showings, and give you honest guidance on which communities and lots hold value over time.",
-          "Financial preparation looks different too. Even cash buyers benefit from having proof of funds and a clear structure ready, because sellers of premium homes want certainty and discretion, and a well-prepared buyer is taken more seriously. Understanding the true cost of ownership, from community dues to the realities of maintaining a hillside estate, belongs in the conversation from the start.",
-          "Above all, patience is a strategy at this level. The right property may take time to appear, and the discipline to wait for it, backed by representation that can move quickly when it does, is what separates buyers who land the home they want from those who settle. When you are ready to begin, our [buy](/buy) resources outline how the process works at the high end."
+          "Buying a custom or guard-gated home in Las Vegas is a relationship-driven process, not a search-and-scroll one. The best homes are frequently spoken for before they are ever advertised, which means your representation matters more than your search filters. A well-connected agent can surface off-market opportunities, arrange discreet showings, and give you honest guidance on which communities and lots hold value over time.",
+          "Financial preparation looks different too. Even cash buyers benefit from having proof of funds and a clear structure ready, because sellers of premium homes want certainty and discretion, and a well-prepared buyer is taken more seriously. Understanding the true cost of ownership, from community dues to the realities of maintaining a hillside home, belongs in the conversation from the start.",
+          "Above all, patience is a strategy in this part of the market. The right property may take time to appear, and the discipline to wait for it, backed by representation that can move quickly when it does, is what separates buyers who land the home they want from those who settle. When you are ready to begin, our [buy](/buy) resources outline how the process works."
         ]
       },
       {
-        heading: "How to Sell a Luxury Home for Its Full Value",
+        heading: "How to Sell a Custom Home for Its Full Value",
         body: [
-          "Selling at the top of the Las Vegas market is an exercise in reaching a very small, very specific audience without compromising privacy or diluting the property's positioning. Broad, aggressive exposure that works for a mid-market home can actually cheapen a luxury listing. Instead, the goal is precise, high-quality marketing that puts the home in front of genuinely qualified buyers, often through private channels first.",
-          "Pricing is its own discipline. With so few true comparables, establishing value at the top requires judgment about what makes the home singular, how its view and community position it, and what a motivated buyer would actually pay. Overpricing on hope can strand a property; underpricing can leave real money on the table. This is where deep, community-specific experience earns its keep, and where a data-informed but nuanced approach matters. Knowing your likely net before you list starts with a realistic [home value](/home-value) assessment.",
-          "The through-line is representation that understands the top of this market from the inside, protects your privacy, and knows how to find the one buyer who will pay full value. That is the standard we hold ourselves to on every luxury engagement."
+          "Selling a larger custom home in Las Vegas is an exercise in reaching a very small, very specific audience without compromising privacy or diluting the property's positioning. Broad, aggressive exposure that works for a mid-market home can actually undercut a one-of-a-kind listing. Instead, the goal is precise, high-quality marketing that puts the home in front of genuinely qualified buyers, often through private channels first.",
+          "Pricing is its own discipline. With so few true comparables, establishing value requires judgment about what makes the home singular, how its view and community position it, and what a motivated buyer would actually pay. Overpricing on hope can strand a property; underpricing can leave real money on the table. This is where deep, community-specific experience earns its keep, and where a data-informed but nuanced approach matters. Knowing your likely net before you list starts with a realistic [home value](/home-value) assessment.",
+          "The through-line is representation that understands this part of the market from the inside, protects your privacy, and knows how to find the one buyer who will pay full value. That is the standard we hold ourselves to on every engagement."
         ]
       },
       {
         heading: "Your Next Step: A Private Consultation",
         body: [
-          "The Las Vegas luxury market rewards those who understand its quirks and quietly frustrates those who treat it like everywhere else. Whether you are relocating to take advantage of Nevada's tax climate, searching for a hillside estate with a view worth building a home around, or preparing to sell a property that deserves its full value, the path forward is the same: work with a team that lives in this segment every day.",
-          "The Roland Team with LPT Realty works at this level across Las Vegas and Henderson. We know the guard-gated communities from the inside, we have genuine reach into off-market inventory, and we handle every engagement with the discretion the top of this market demands.",
-          "If you are considering a move at the high end, the best first step is a private, no-pressure conversation about your goals. Reach out through our [contact](/contact) page and we will map out what makes sense for your situation."
+          "The market for custom and guard-gated homes in Las Vegas rewards those who understand its quirks and quietly frustrates those who treat it like everywhere else. Whether you are relocating to take advantage of Nevada's tax climate, searching for a hillside home with a view worth building a home around, or preparing to sell a property that deserves its full value, the path forward is the same: work with a team that lives in this segment every day.",
+          "The Roland Team with LPT Realty works across Las Vegas and Henderson. We know the guard-gated communities from the inside, we have genuine reach into off-market inventory, and we handle every engagement with the discretion this part of the market demands.",
+          "If you are considering a move, the best first step is a private, no-pressure conversation about your goals. Reach out through our [contact](/contact) page and we will map out what makes sense for your situation."
         ]
       }
     ],
     faqs: [
       {
-        q: "What price point is considered luxury in Las Vegas?",
-        a: "The luxury threshold shifts with the broader market, but the segment is generally defined by the top tier of the valley's price range rather than a single fixed number. More useful than a dollar cutoff is the type of property: guard-gated estates, custom hillside homes with premium views, and residences in the valley's most exclusive communities. We can give you a current, specific read for the community you are considering during a private consultation."
+        q: "What price point counts as a larger custom home in Las Vegas?",
+        a: "The threshold shifts with the broader market, and this segment is generally defined by the upper part of the valley's price range rather than a single fixed number. More useful than a dollar cutoff is the type of property: guard-gated homes, custom hillside homes with premium views, and residences in the valley's gated communities. We can give you a current, specific read for the community you are considering during a private consultation."
       },
       {
-        q: "Why does the Las Vegas luxury market behave differently from the overall market?",
-        a: "The high end draws heavily on cash and equity buyers, many relocating for Nevada's tax advantages, which insulates it from the rate-driven swings that move entry-level demand. It also has very few comparable properties, so scarcity often matters more than broad market sentiment. As a result, luxury homes can hold strong values even when the overall valley cools, and metrics like days-on-market mean far less at this level."
+        q: "Why do larger custom and guard-gated homes behave differently from the overall market?",
+        a: "This segment draws heavily on cash and equity buyers, many relocating for Nevada's tax advantages, which insulates it from the rate-driven swings that move entry-level demand. It also has very few comparable properties, so scarcity often matters more than broad market sentiment. As a result, these homes can hold strong values even when the overall valley cools, and metrics like days-on-market mean far less here."
       },
       {
-        q: "How does no state income tax affect luxury buyers?",
-        a: "Nevada's lack of a state income tax can produce substantial annual savings for high earners, which effectively expands their housing budgets and steadily draws entrepreneurs, executives, and other high-net-worth individuals to the valley. This creates durable, renewing demand at the top of the market. Because the decision often involves residency and timing, it is worth planning the move and the purchase together."
+        q: "How does no state income tax affect buyers of larger homes?",
+        a: "Nevada's lack of a state income tax can produce substantial annual savings for high earners, which effectively expands their housing budgets and steadily draws entrepreneurs, executives, and other relocating buyers to the valley. This creates durable, renewing demand for larger homes. Because the decision often involves residency and timing, it is worth planning the move and the purchase together."
       },
       {
-        q: "What are off-market luxury listings and why do they matter?",
-        a: "Off-market and coming-soon homes are properties available for sale but not advertised publicly, often because the owner values privacy or wants to test interest quietly. A large share of the best luxury inventory moves this way, through agent relationships rather than public portals. Buyers relying only on online searches miss these opportunities, which is why well-connected representation is essential at the high end."
+        q: "What are off-market listings and why do they matter?",
+        a: "Off-market and coming-soon homes are properties available for sale but not advertised publicly, often because the owner values privacy or wants to test interest quietly. A large share of the best custom-home inventory moves this way, through agent relationships rather than public portals. Buyers relying only on online searches miss these opportunities, which is why well-connected representation is essential in this segment."
       },
       {
-        q: "Which guard-gated communities are best for luxury buyers?",
-        a: "It depends on the lifestyle and setting you want. The Ridges and The Summit Club offer premier addresses within Summerlin, while MacDonald Highlands and Ascaya are known for dramatic hillside estates and Strip views in Henderson. Golf-focused buyers often look at Queensridge, Spanish Hills, or Seven Hills. The right choice is about fit, and our guard-gated communities guide details the differences."
+        q: "Which guard-gated communities are best for buyers of larger homes?",
+        a: "It depends on the lifestyle and setting you want. The Ridges and The Summit Club offer well-known addresses within Summerlin, while MacDonald Highlands and Ascaya are known for dramatic hillside homes and Strip views in Henderson. Golf-focused buyers often look at Queensridge, Spanish Hills, or Seven Hills. The right choice is about fit, and our guard-gated communities guide details the differences."
       },
       {
-        q: "Do luxury homes take longer to sell in Las Vegas?",
-        a: "They can, and a longer marketing period is not the warning sign it would be for a median-priced home. Because the pool of qualified buyers for a singular estate is small, it may take time for the right one to appear. With precise, discreet marketing and realistic pricing, a well-positioned luxury home reaches its buyer without sacrificing value."
+        q: "Do larger custom homes take longer to sell in Las Vegas?",
+        a: "They can, and a longer marketing period is not the warning sign it would be for a median-priced home. Because the pool of qualified buyers for a singular home is small, it may take time for the right one to appear. With precise, discreet marketing and realistic pricing, a well-positioned home reaches its buyer without sacrificing value."
       },
       {
-        q: "Why is privacy so important in luxury transactions here?",
-        a: "Many high-end buyers are recognizable, are protecting their families, or simply expect discretion on a purchase of this size. That shapes how homes are shown, marketed, and negotiated, with confidentiality agreements, controlled showings, and careful handling of records being routine. Working with representation that knows how to protect an owner's identity while still reaching qualified buyers is critical."
+        q: "Why is privacy so important in transactions for larger custom homes?",
+        a: "Many buyers of these homes are recognizable, are protecting their families, or simply expect discretion on a purchase of this size. That shapes how homes are shown, marketed, and negotiated, with confidentiality agreements, controlled showings, and careful handling of records being routine. Working with representation that knows how to protect an owner's identity while still reaching qualified buyers is critical."
       },
       {
-        q: "Should I buy new construction or an existing luxury estate?",
-        a: "Both have real advantages in Las Vegas. New-build ultra-luxury offers turnkey modern design, current technology, and the chance to select a premium homesite, while existing estates may offer established communities, mature settings, and singular architecture. The right answer depends on your timeline, your appetite for the building process, and what is actually available. We are happy to walk through the trade-offs with you."
+        q: "Should I buy new construction or an existing custom home?",
+        a: "Both have real advantages in Las Vegas. New-build custom construction offers turnkey modern design, current technology, and the chance to select a premium homesite, while existing homes may offer established communities, mature settings, and singular architecture. The right answer depends on your timeline, your appetite for the building process, and what is actually available. We are happy to walk through the trade-offs with you."
       }
     ]
   },
   {
-    slug: "off-market-luxury-homes-las-vegas",
-    title: "Off-Market Luxury Homes in Las Vegas: How to Find Them",
+    slug: "off-market-homes-las-vegas",
+    title: "Off-Market Homes in Las Vegas: How to Find Them",
     category: "Buying Guides",
-    excerpt: "Some of the best luxury homes never hit the public market. Here's how off-market and coming-soon opportunities work — and how to access them.",
+    excerpt: "Some of the best homes never hit the public market. Here's how off-market and coming-soon opportunities work — and how to access them.",
     date: "2026-07-08",
     author: "The Roland Team",
     readMinutes: 17,
-    seoTitle: "Off-Market Luxury Homes in Las Vegas: How to Find Them",
-    seoDescription: "How off-market and coming-soon luxury homes work in Las Vegas — why sellers use them, and how buyers access these private opportunities.",
+    seoTitle: "Off-Market Homes in Las Vegas: How to Find Them",
+    seoDescription: "How off-market and coming-soon homes work in Las Vegas — why sellers use them, and how buyers access these private opportunities.",
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_164600_752df05a-1175-4ebb-8d45-e9c67d5d9fe6.png",
     sections: [
       {
         heading: "The Homes You Never See Online",
         body: [
           "Somewhere in a guard-gated enclave off a quiet Summerlin ridge, a custom estate just changed hands. The owners never planted a sign in the yard, never opened their doors to a public open house, and never appeared on a single real estate portal. The right buyer heard about it through a private conversation, toured it on a weekday afternoon, and signed before most of the market knew the home was even available. This happens more often than most people realize in the upper tiers of the Las Vegas market.",
-          "Off-market and coming-soon luxury homes are a real and meaningful slice of high-end inventory in Las Vegas and Henderson. In the most exclusive communities, a notable share of the best properties trade quietly, changing hands through relationships and reputation rather than mass exposure. For a buyer chasing a specific street, a specific view, or a specific floor plan, these private opportunities can be the difference between waiting a year and moving in this season.",
-          "This guide explains how off-market luxury real estate actually works: what these listings are, why sophisticated sellers choose discretion, the genuine trade-offs for both sides of the deal, and how a well-connected team surfaces homes that never touch the open market. If you are already searching, our current [luxury listings](/listings) are only part of the picture, and understanding the rest is what separates informed buyers from everyone else."
+          "Off-market and coming-soon homes are a real and meaningful slice of inventory in Las Vegas and Henderson. In the tightest guard-gated communities, a notable share of the best properties trade quietly, changing hands through relationships and reputation rather than mass exposure. For a buyer chasing a specific street, a specific view, or a specific floor plan, these private opportunities can be the difference between waiting a year and moving in this season.",
+          "This guide explains how off-market real estate actually works: what these listings are, why sellers choose discretion, the genuine trade-offs for both sides of the deal, and how a well-connected team surfaces homes that never touch the open market. If you are already searching, our current [listings](/listings) are only part of the picture, and understanding the rest is what separates informed buyers from everyone else."
         ]
       },
       {
@@ -3888,9 +3888,9 @@ export const blogPosts: BlogPost[] = [
         ]
       },
       {
-        heading: "Why Luxury Sellers Choose Discretion",
+        heading: "Why Sellers Choose Discretion",
         body: [
-          "At the high end, a home is rarely just an asset. It is where a family lives, where their children go to school, and often where their financial standing is on display. That reality drives much of the demand for privacy. A seller who lists publicly invites a stream of showings, online speculation, and neighbors watching the price history. For many affluent owners, the ability to sell without that spotlight is worth a great deal.",
+          "For many owners, a home is rarely just an asset. It is where a family lives, where their children go to school, and often where their financial standing is on display. That reality drives much of the demand for privacy. A seller who lists publicly invites a stream of showings, online speculation, and neighbors watching the price history. For many owners, the ability to sell without that spotlight is worth a great deal.",
           "Sellers also use off-market strategies to test price without leaving a public trail. When a home appears on the MLS and then sits, its accumulating days-on-market and any price reductions become permanent, visible history that can weigh on future negotiations. A quiet launch lets a seller float an ambitious number to a select audience, read the response, and adjust without ever creating a paper trail that signals weakness. If they later choose to go public, they do so with cleaner data and a sharper price.",
           "There are practical motivations too. A public figure, an executive, or anyone with security considerations may simply not want strangers walking through their home and photographing every room. Others are only 'sort of' selling: they would move for the right offer but are not committed enough to endure a full public campaign. Discretion lets them explore the market on their own terms. Understanding what a home might command in these conditions starts with an honest [home valuation](/home-value), whether you are the one considering a quiet sale or the buyer trying to gauge fair value."
         ],
@@ -3905,7 +3905,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "The Case For Buyers: Real Advantages",
         body: [
-          "For buyers, the appeal of off-market homes comes down to access and calm. In a competitive luxury segment, the best homes on the most desirable streets can attract intense interest the moment they go public. Seeing a property before that crowd arrives means fewer competing offers, more room to think, and a negotiation that feels like a conversation rather than a bidding war. In tightly held communities like [The Ridges in Summerlin](/communities/the-ridges-summerlin) or [Ascaya](/communities/ascaya) in Henderson, where inventory is limited and demand is durable, that head start is genuinely valuable.",
+          "For buyers, the appeal of off-market homes comes down to access and calm. In a competitive segment, the best homes on the most desirable streets can attract intense interest the moment they go public. Seeing a property before that crowd arrives means fewer competing offers, more room to think, and a negotiation that feels like a conversation rather than a bidding war. In tightly held communities like [The Ridges in Summerlin](/communities/the-ridges-summerlin) or [Ascaya](/communities/ascaya) in Henderson, where inventory is limited and demand is durable, that head start is genuinely valuable.",
           "Off-market access also expands the universe of what is possible. If you are set on a particular guard-gated community and nothing suitable is listed publicly, a connected agent can quietly ask around, reach owners who might sell for the right price, and occasionally produce a home that was never officially on the market at all. Buyers who insist on a specific view corridor or a rare single-story custom estate often find their match this way rather than by waiting for a portal alert.",
           "Finally, the pace of an off-market transaction tends to be more deliberate. Without a public deadline forcing everyone to move at once, serious buyers can complete thorough due diligence, walk the property more than once, and structure terms thoughtfully. That measured environment suits the complexity of a high-value purchase, where inspections, financing, and title work all deserve careful attention rather than a rushed weekend decision."
         ]
@@ -3938,18 +3938,18 @@ export const blogPosts: BlogPost[] = [
         body: [
           "Finding homes that are not advertised is, by definition, a relationship business. The homes surface through years of trust built with other top agents, with past clients, with builders, and with the professional network that surrounds high-net-worth families: estate attorneys, wealth managers, and the contractors who know when a custom home is nearing completion. A team that has closed transactions across the valley's premier communities hears about movement long before it becomes public.",
           "The mechanics are less glamorous than the outcome. It looks like a standing list of what serious buyers are seeking, matched against a mental and written inventory of owners who have signaled they might sell. It looks like a phone call to a listing agent in [MacDonald Highlands](/communities/macdonald-highlands) asking whether a particular estate might come available, or a quiet note to a homeowner in [The Summit Club](/communities/the-summit-club) whose neighbor just sold for a strong number. Reputation is the currency; agents share their best pocket listings with people they trust to bring qualified, discreet buyers.",
-          "This is also where local specialization pays off. The Las Vegas luxury market is concentrated in a handful of communities, each with its own culture and cadence. A team steeped in [Las Vegas luxury real estate](/las-vegas-luxury-real-estate) and the specific dynamics of the valley's [guard-gated communities](/guard-gated-communities-las-vegas) can move quickly and credibly when a quiet opportunity appears, rather than starting cold. That fluency is difficult to fake and impossible to replicate through a portal alert."
+          "This is also where local specialization pays off. Guard-gated and custom homes in Las Vegas are concentrated in a handful of communities, each with its own culture and cadence. A team steeped in the specific dynamics of the valley's [guard-gated communities](/guard-gated-communities-las-vegas) can move quickly and credibly when a quiet opportunity appears, rather than starting cold. That fluency is difficult to fake and impossible to replicate through a portal alert."
         ]
       },
       {
         heading: "How Buyers Get Access",
         body: [
-          "If off-market inventory runs on relationships, the path to access is to build one before you need it. The single most important step is to work with an agent who is genuinely plugged into the luxury segment and to give them a clear, specific brief. Vague searches produce vague results; a precise picture of your must-haves, your community preferences, your budget range, and your timeline lets an agent match you to homes the moment they surface, sometimes days before anyone else.",
+          "If off-market inventory runs on relationships, the path to access is to build one before you need it. The single most important step is to work with an agent who is genuinely plugged into your target communities and to give them a clear, specific brief. Vague searches produce vague results; a precise picture of your must-haves, your community preferences, your budget range, and your timeline lets an agent match you to homes the moment they surface, sometimes days before anyone else.",
           "Preparation also signals that you are a serious, qualified buyer, which matters enormously in a world built on discretion. Sellers who choose privacy do not want a parade of unvetted lookers. A buyer who is pre-approved or has proof of funds ready, who understands the communities, and who can move decisively is exactly the kind of person an agent feels comfortable introducing to a quiet listing. That readiness is your entry ticket.",
-          "From there, staying informed keeps you sharp. Following the broader [market report](/market-report) and understanding pricing trends in your target communities means that when an off-market home appears, you can evaluate it quickly and confidently. If you would rather browse what is openly available first, start with our [luxury listings](/listings) and our community pages, then layer private access on top by beginning a [buyer](/buy) conversation with our team."
+          "From there, staying informed keeps you sharp. Following the broader [market report](/market-report) and understanding pricing trends in your target communities means that when an off-market home appears, you can evaluate it quickly and confidently. If you would rather browse what is openly available first, start with our [listings](/listings) and our community pages, then layer private access on top by beginning a [buyer](/buy) conversation with our team."
         ],
         bullets: [
-          "Partner early with an agent active in the luxury segment, before you urgently need a home",
+          "Partner early with an agent active in your target communities, before you urgently need a home",
           "Give a specific brief: communities, must-haves, budget range, and timeline",
           "Get financing lined up so proof of funds or pre-approval is ready on request",
           "Learn the communities so you can assess a quiet opportunity fast",
@@ -3967,7 +3967,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Off-Market in the Context of New Construction",
         body: [
-          "The quiet-inventory dynamic is not limited to resale estates. In the Las Vegas luxury market, custom homes on premium lots often trade before they are ever finished, and builders sometimes release their best homesites to a short list of relationships rather than the open market. A buyer working with a connected team can occasionally step into a build-in-progress or claim a coveted lot that never appears in a public sales gallery.",
+          "The quiet-inventory dynamic is not limited to resale estates. In Las Vegas, custom homes on premium lots often trade before they are ever finished, and builders sometimes release their best homesites to a short list of relationships rather than the open market. A buyer working with a connected team can occasionally step into a build-in-progress or claim a coveted lot that never appears in a public sales gallery.",
           "This overlaps with the broader world of [new construction](/new-construction) in the valley's guard-gated communities, where the most desirable view lots are scarce and demand is steady. Knowing which custom projects are underway, which owners are considering a sale before completion, and which builder allocations are quietly available requires the same network that surfaces off-market resale homes. The two channels feed each other.",
           "For buyers who want the certainty of a brand-new home but the access advantage of off-market timing, this intersection is worth exploring deliberately. It rewards early engagement, because the best opportunities are claimed long before a model home opens or a listing goes live. Exploring the valley's [communities](/communities) with a team that tracks both resale and new-build movement gives you the widest possible field of play."
         ]
@@ -3975,15 +3975,15 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Communities Where Quiet Deals Are Common",
         body: [
-          "Off-market activity concentrates where inventory is tightest and privacy matters most. In Summerlin, [The Ridges](/communities/the-ridges-summerlin) sees a meaningful share of its custom estates change hands quietly, and the ultra-exclusive [Summit Club](/communities/the-summit-club) operates with discretion as a matter of culture. Nearby, the established elegance of [Queensridge](/communities/queensridge) attracts buyers who often prefer to transact privately.",
-          "Across the valley in Henderson, the modern desert architecture of [Ascaya](/communities/ascaya) and the golf-centered luxury of [MacDonald Highlands](/communities/macdonald-highlands) are both known for homes that trade through relationships as much as through public listings. Even in more attainable guard-gated settings like [Seven Hills](/communities/seven-hills), quiet coming-soon opportunities appear regularly for buyers who are watching closely and working with the right advisor.",
+          "Off-market activity concentrates where inventory is tightest and privacy matters most. In Summerlin, [The Ridges](/communities/the-ridges-summerlin) sees a meaningful share of its custom estates change hands quietly, and the private [Summit Club](/communities/the-summit-club) operates with discretion as a matter of culture. Nearby, the established, traditional character of [Queensridge](/communities/queensridge) attracts buyers who often prefer to transact privately.",
+          "Across the valley in Henderson, the modern desert architecture of [Ascaya](/communities/ascaya) and the golf-centered setting of [MacDonald Highlands](/communities/macdonald-highlands) are both known for homes that trade through relationships as much as through public listings. Even in more attainable guard-gated settings like [Seven Hills](/communities/seven-hills), quiet coming-soon opportunities appear regularly for buyers who are watching closely and working with the right advisor.",
           "The common thread is scarcity plus discretion. Where there are only so many view lots, only so many single-story custom floor plans, and owners who value privacy, the off-market channel thrives. A buyer targeting any of these communities is well served by pairing public search with private access, because in these enclaves the best homes genuinely do change hands before the rest of the market notices."
         ]
       },
       {
         heading: "Your Next Step: A Private Buyer Consultation",
         body: [
-          "Off-market luxury homes reward preparation, relationships, and clarity of purpose. They are not a secret trick or a guaranteed discount; they are a channel that a well-connected, disciplined buyer can use to see the right homes sooner, negotiate with more room, and occasionally acquire a property that was never truly available to the public at all. The trade-offs are real, but for many buyers in the Las Vegas luxury market, the access is worth it.",
+          "Off-market homes reward preparation, relationships, and clarity of purpose. They are not a secret trick or a guaranteed discount; they are a channel that a well-connected, disciplined buyer can use to see the right homes sooner, negotiate with more room, and occasionally acquire a property that was never truly available to the public at all. The trade-offs are real, but for many buyers in Las Vegas, the access is worth it.",
           "The way to unlock that access is simple: start a conversation before you need it. A private buyer consultation lets us understand exactly what you are looking for, calibrate to your timeline and budget, and begin matching you to both listed and unlisted opportunities across Summerlin, Henderson, and the valley's premier guard-gated communities. Preparation today is what puts you first in line tomorrow.",
           "When you are ready, reach out through our [contact page](/contact) to schedule a discreet, no-pressure consultation with The Roland Team. Whether you are buying, selling, or simply exploring what is possible, we will give you an honest read on the market and open the door to opportunities most buyers never see. You can also keep learning on our [blog](/blog) while you decide, and browse current [listings](/listings) to sharpen your sense of the market."
         ]
@@ -3995,20 +3995,20 @@ export const blogPosts: BlogPost[] = [
         a: "An off-market or pocket listing is a home that is genuinely for sale but is not published on the MLS or public portals, marketed instead through private networks. A coming-soon home is one the seller plans to list publicly on a specific future date, but is quietly promoted beforehand to build early interest. The key difference is intent: coming-soon homes are headed to the open market, while off-market homes may never appear there at all."
       },
       {
-        q: "Why would a luxury seller keep their home off the market?",
-        a: "The most common reasons are privacy, security, and price testing. Affluent sellers often prefer to avoid public showings, yard signs, and online speculation about their home and finances. A quiet sale also lets them gauge demand at an ambitious price without creating permanent days-on-market history that could weaken future negotiations."
+        q: "Why would a seller keep their home off the market?",
+        a: "The most common reasons are privacy, security, and price testing. Some sellers prefer to avoid public showings, yard signs, and online speculation about their home and finances. A quiet sale also lets them gauge demand at an ambitious price without creating permanent days-on-market history that could weaken future negotiations."
       },
       {
         q: "Do buyers get a better deal on off-market homes?",
         a: "Not necessarily. Off-market homes can mean less competition and more room to negotiate, but the absence of public exposure also removes the competing bids and comparable data that help establish fair value. The real advantage is access and a calmer, more deliberate process, which is why independent valuation and a knowledgeable agent matter so much."
       },
       {
-        q: "How do I find off-market luxury homes in Las Vegas?",
-        a: "The reliable path is to work with an agent who is genuinely active in the luxury segment and has strong relationships across the valley's premier communities. Give them a specific brief of your must-haves, target communities, budget, and timeline, and have your financing ready. Off-market inventory travels through trusted networks, so being a prepared, qualified buyer is your entry point."
+        q: "How do I find off-market homes in Las Vegas?",
+        a: "The reliable path is to work with an agent who is genuinely active in your target communities and has strong relationships across the valley. Give them a specific brief of your must-haves, target communities, budget, and timeline, and have your financing ready. Off-market inventory travels through trusted networks, so being a prepared, qualified buyer is your entry point."
       },
       {
         q: "Is it legal to sell a home off-market?",
-        a: "Yes. Selling a home privately is legal, and off-market and coming-soon strategies are common in luxury real estate. That said, industry rules such as the National Association of Realtors' Clear Cooperation Policy govern how and when publicly marketed homes must be entered into the MLS, and local MLS and Nevada practice apply. A reputable brokerage handles these arrangements in a way that respects both the seller's wishes and the current rules."
+        a: "Yes. Selling a home privately is legal, and off-market and coming-soon strategies are common in real estate. That said, industry rules such as the National Association of Realtors' Clear Cooperation Policy govern how and when publicly marketed homes must be entered into the MLS, and local MLS and Nevada practice apply. A reputable brokerage handles these arrangements in a way that respects both the seller's wishes and the current rules."
       },
       {
         q: "What is the Clear Cooperation Policy?",
@@ -4037,7 +4037,7 @@ export const blogPosts: BlogPost[] = [
     coverPhoto: "https://d8j0ntlcm91z4.cloudfront.net/user_3H5zrMXWk643Nzx2pR0XgLxvYxu/hf_20260811_164600_d1c8be69-b279-41bb-99fc-383a17d81911.png",
     sections: [
       {
-        heading: "The Question Every Las Vegas Luxury Buyer Eventually Asks",
+        heading: "The Question Every Las Vegas Buyer Eventually Asks",
         body: [
           "Drive through Summerlin or the hills of Henderson and you'll pass them constantly: manned entry gates, uniformed attendants, and a road that curves out of sight behind a wall. From the outside, guard-gated communities look like a different world. And in some ways they are. But once you start shopping seriously, the romance gives way to a practical question that deserves a straight answer: are guard-gated communities actually worth it in Las Vegas?",
           "It's a fair thing to ask, because the premium is real. Homes inside a staffed gate typically carry higher HOA dues, and often a higher price per square foot, than comparable homes just outside the wall. You are paying for something. The honest job of this guide is to lay out exactly what that something is — the security, the privacy, the amenities, the resale dynamics — and weigh it against the costs and trade-offs, so you can decide whether it fits your life and your budget.",
@@ -4063,7 +4063,7 @@ export const blogPosts: BlogPost[] = [
         body: [
           "Security is the headline benefit, and it's a legitimate one. A staffed gate changes the basic math of who can reach your front door. Solicitors, unfamiliar delivery drivers, and opportunistic traffic simply don't get in without being cleared. For buyers who travel often, own a high-value home, or value knowing exactly who is on their street, that controlled access has genuine day-to-day value.",
           "It's worth being honest about what a gate does and doesn't do. A guardhouse is not a police force, and no wall makes a home impervious. What staffed access reliably delivers is deterrence and friction — it removes the casual, drive-by element that accounts for a large share of everyday property crime, and it creates a record of who entered. Many residents say the real payoff isn't a statistic; it's the way the street feels. Kids ride bikes, packages sit on porches, and the ambient sense of who belongs there is simply different.",
-          "There's also a quieter security dividend that matters at the high end: privacy from unwanted attention. Executives, physicians, entertainers, and business owners often choose staffed gates specifically because the entrance filters out curiosity as much as crime. If security and discretion rank near the top of your list, gated living tends to earn its keep — and it's a defining feature of the valley's [luxury real estate](/las-vegas-luxury-real-estate) market for exactly that reason."
+          "There's also a quieter security dividend: privacy from unwanted attention. Executives, physicians, entertainers, and business owners often choose staffed gates specifically because the entrance filters out curiosity as much as crime. If security and discretion rank near the top of your list, gated living tends to earn its keep — and it's a defining feature of the valley's [guard-gated communities](/guard-gated-communities-las-vegas) for exactly that reason."
         ]
       },
       {
@@ -4100,7 +4100,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Resale and Appreciation Considerations",
         body: [
-          "Does gated living hold its value? Generally, the most established guard-gated addresses in Las Vegas have a durable appeal that supports resale. Scarcity is part of it: there are a finite number of homes behind any given gate, and the security, privacy, and amenities that attract you as a buyer attract the next buyer too. Prestige communities with recognized names and strong amenity packages tend to draw a consistent pool of relocating executives, second-home buyers, and move-up purchasers.",
+          "Does gated living hold its value? Generally, the most established guard-gated addresses in Las Vegas have a durable appeal that supports resale. Scarcity is part of it: there are a finite number of homes behind any given gate, and the security, privacy, and amenities that attract you as a buyer attract the next buyer too. Communities with recognized names and strong amenity packages tend to draw a consistent pool of relocating executives, second-home buyers, and move-up purchasers.",
           "That said, gated status is not a guarantee of outperformance, and it's not a substitute for the fundamentals. Location within the community, the specific home, the condition, the view, and broader market conditions still drive price. A well-run association with healthy reserves is an asset at resale; a community with deferred maintenance or a troubled budget can be a drag. This is exactly why reviewing the HOA's financial health before you buy protects your future resale as much as your monthly cost.",
           "If you want a grounded read on how a specific community and home have held value, that's a conversation worth having with data in front of you. We can pull recent activity and a tailored [market report](/market-report) for any gated community you're weighing, and if you already own, a current [home value](/home-value) estimate is a useful baseline for your next move."
         ]
@@ -4139,7 +4139,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "How to Decide Without Overthinking It",
         body: [
-          "The cleanest way to reach a confident decision is to make the trade-offs concrete rather than abstract. Start by ranking what you're actually buying for — security, privacy, amenities, prestige, peace of mind — and be honest about which of those you'll feel every day. Then get the real numbers for two or three specific communities: current dues, the budget, the reserve study, and the rules. Abstract worry evaporates fast once you're looking at actual figures and documents for actual addresses.",
+          "The cleanest way to reach a confident decision is to make the trade-offs concrete rather than abstract. Start by ranking what you're actually buying for — security, privacy, amenities, name recognition, peace of mind — and be honest about which of those you'll feel every day. Then get the real numbers for two or three specific communities: current dues, the budget, the reserve study, and the rules. Abstract worry evaporates fast once you're looking at actual figures and documents for actual addresses.",
           "Next, spend time inside. Tour at different times of day, sit with how the street feels, watch how the gate handles guests, and picture your own routines against it. A community that's perfect on paper can feel wrong in person, and vice versa. The homes themselves matter too — browse current [listings](/listings) inside the gates you're considering, and compare them honestly to strong options in open neighborhoods at the same price.",
           "Finally, weigh resale and long-term cost with data, not assumptions. A community with a healthy association, durable demand, and amenities you'll use is a defensible long-term hold. One where you're paying mostly for a gate you'll rarely think about may not be. When you can see the security, the lifestyle, the dues, and the resale picture side by side for real homes, the worth-it question tends to answer itself."
         ]
@@ -4164,7 +4164,7 @@ export const blogPosts: BlogPost[] = [
       },
       {
         q: "Will a guard-gated home hold its value better at resale?",
-        a: "The most established gated addresses tend to enjoy durable demand thanks to scarcity, prestige, and amenities, which supports resale. But gated status isn't a guarantee — location, condition, view, the specific home, and the association's financial health all still drive price. A well-run community with healthy reserves is an asset when you sell; a poorly managed one can be a drag."
+        a: "The most established gated addresses tend to enjoy durable demand thanks to scarcity, name recognition, and amenities, which supports resale. But gated status isn't a guarantee — location, condition, view, the specific home, and the association's financial health all still drive price. A well-run community with healthy reserves is an asset when you sell; a poorly managed one can be a drag."
       },
       {
         q: "How do guests and deliveries get in?",
@@ -4175,8 +4175,8 @@ export const blogPosts: BlogPost[] = [
         a: "They describe different things. Master-planned refers to a large, professionally designed community with its own parks, schools, and amenities — Summerlin is a classic example, and much of it is not gated. Guard-gated refers specifically to controlled, staffed access. A community can be one, the other, or both, so it's worth clarifying which features a given neighborhood actually offers."
       },
       {
-        q: "Can I find guard-gated homes without an ultra-luxury budget?",
-        a: "Yes. Guard-gated living spans a wide price range in the valley, and there are staffed-gate communities where homes can be attainable well below the luxury ceiling. Dues and amenities vary, so the trade-offs differ from the marquee estate communities. We can point you to gated options that fit a range of budgets — just tell us your target and priorities."
+        q: "Can I find guard-gated homes on a more modest budget?",
+        a: "Yes. Guard-gated living spans a wide price range in the valley, and there are staffed-gate communities where homes can be attainable well below the top of the price range. Dues and amenities vary, so the trade-offs differ from the marquee estate communities. We can point you to gated options that fit a range of budgets — just tell us your target and priorities."
       },
       {
         q: "Are the rules and CC&Rs in gated communities too restrictive?",
@@ -4305,7 +4305,7 @@ export const blogPosts: BlogPost[] = [
         body: [
           "Property taxes should never be the reason a great home slips through your fingers, and in Las Vegas and Henderson they rarely are, because the numbers tend to work in a buyer's favor. The key is to replace guesswork with the real figures for the specific property you want, confirmed with the Clark County Assessor and, where it matters, a tax professional who knows Nevada.",
           "That is where a knowledgeable local team earns its keep. When we represent you, we pull the actual tax records, flag any special district assessments, help you understand which abatement cap applies, and fold a realistic all-in monthly cost into your search so there are no surprises at closing. Whether you are drawn to Summerlin, Henderson, or a guard-gated enclave, we will make the tax picture clear before you write an offer.",
-          "If you are ready to explore homes with the full cost of ownership in view, browse current [luxury listings](/las-vegas-luxury-real-estate), start a [home value estimate](/home-value) on a property you own, or simply [reach out to our team](/contact). We will help you buy or [sell](/sell) with confidence, and make sure the tax side of the equation is one more reason Las Vegas feels like the right move."
+          "If you are ready to explore homes with the full cost of ownership in view, browse current [listings](/listings), start a [home value estimate](/home-value) on a property you own, or simply [reach out to our team](/contact). We will help you buy or [sell](/sell) with confidence, and make sure the tax side of the equation is one more reason Las Vegas feels like the right move."
         ]
       }
     ],
@@ -4376,7 +4376,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Summer in the Desert: Heat Reshapes the Showing Day",
         body: [
           "Summer is where Las Vegas stops resembling other markets. When afternoons climb well past 100 degrees, the shopping day doesn't disappear, it simply shifts. Showings cluster into early mornings and evenings, open houses lean on cool interiors and shaded outdoor living, and buyers move a little more deliberately between air-conditioned stops. The demand is still there; it just keeps different hours.",
-          "This is also when a home's desert-smart features earn their keep. Efficient cooling, energy-conscious windows, mature shade trees, covered patios, and a well-designed pool read as necessities in July, not luxuries. Sellers who lean into those details, and who keep the interior genuinely comfortable for every showing, give summer buyers a reason to slow down and picture living there. A pool that sparkles in the heat can be the emotional hook that closes the visit.",
+          "This is also when a home's desert-smart features earn their keep. Efficient cooling, energy-conscious windows, mature shade trees, covered patios, and a well-designed pool read as necessities in July, not extras. Sellers who lean into those details, and who keep the interior genuinely comfortable for every showing, give summer buyers a reason to slow down and picture living there. A pool that sparkles in the heat can be the emotional hook that closes the visit.",
           "Buyers who are willing to tour through the hottest stretch often face a thinner crowd of competitors, which can mean more negotiating room and less pressure to rush a decision. Summer isn't a dead season in Las Vegas so much as a filtered one: the casual lookers thin out, and the serious buyers who remain tend to transact. If the heat doesn't deter you, the reduced competition can be a quiet advantage."
         ]
       },
@@ -4425,11 +4425,11 @@ export const blogPosts: BlogPost[] = [
         ]
       },
       {
-        heading: "The Luxury and Guard-Gated Tier Plays by Different Rules",
+        heading: "Larger and Guard-Gated Homes Play by Different Rules",
         body: [
-          "Timing logic loosens even further at the top of the market. Luxury and guard-gated homes trade in a smaller, more selective pool where the right buyer matters more than the right month. A distinctive estate can sit patiently until the person who values its particular views, architecture, or privacy comes along, and that buyer arrives on their own schedule, not the season's.",
-          "Because the audience for a high-end home is narrower, exposure, presentation, and precise positioning carry more weight than seasonal timing. Many premium properties also change hands quietly through off-market and coming-soon channels, which means the public listing calendar tells only part of the story. A slow month on paper can still be an active one behind the scenes for the right home.",
-          "For sellers of distinctive homes, the question is less about waiting for a season and more about reaching the specific buyer who will pay for what makes the property special. Explore how the high end is marketed on our [Las Vegas luxury real estate](/las-vegas-luxury-real-estate) page, and see how privacy and exclusivity drive demand across the valley's [guard-gated communities](/guard-gated-communities-las-vegas), where timing bends to the buyer rather than the buyer to the timing."
+          "Timing logic loosens even further for larger homes. Custom and guard-gated homes trade in a smaller, more selective pool where the right buyer matters more than the right month. A distinctive estate can sit patiently until the person who values its particular views, architecture, or privacy comes along, and that buyer arrives on their own schedule, not the season's.",
+          "Because the audience for a larger custom home is narrower, exposure, presentation, and precise positioning carry more weight than seasonal timing. Many premium properties also change hands quietly through off-market and coming-soon channels, which means the public listing calendar tells only part of the story. A slow month on paper can still be an active one behind the scenes for the right home.",
+          "For sellers of distinctive homes, the question is less about waiting for a season and more about reaching the specific buyer who will pay for what makes the property special. See how privacy and controlled access drive demand across the valley's [guard-gated communities](/guard-gated-communities-las-vegas), where timing bends to the buyer rather than the buyer to the timing."
         ]
       },
       {
@@ -4541,7 +4541,7 @@ export const blogPosts: BlogPost[] = [
         body: [
           "A title search is thorough, but public records are imperfect, and some risks are simply undiscoverable through a search: a forged signature generations back, an unknown heir, a recording error. Title insurance exists to protect against exactly those hidden defects. Unlike the insurance you renew every year, a title policy is paid once and protects for as long as you hold your interest in the property.",
           "Two policies are usually in play. The lender's policy protects the mortgage lender's interest and is generally required as a condition of financing. The owner's policy protects you, the buyer, and while it is not legally mandatory, declining it means shouldering the risk of a title defect entirely on your own. For most buyers, the one-time premium is modest peace of mind against a category of problem that can be financially devastating.",
-          "Which party pays for which policy is a matter of negotiation and regional custom, and it is one of the line items your escrow officer will reconcile on the settlement statement. Your agent can explain what is typical for the area and the price band you are shopping, whether that is an entry point or the upper reaches of [Las Vegas luxury real estate](/las-vegas-luxury-real-estate)."
+          "Which party pays for which policy is a matter of negotiation and regional custom, and it is one of the line items your escrow officer will reconcile on the settlement statement. Your agent can explain what is typical for the area and the price band you are shopping, whether that is an entry point or the upper end of the [Las Vegas](/communities) market."
         ]
       },
       {
@@ -4665,16 +4665,16 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Why a Pool Means More in the Desert",
         body: [
-          "In much of the country, a backyard pool is a summer luxury that sits covered and unused for half the year. In Las Vegas, it is closer to a second living room. Our long, dry season stretches from late spring deep into fall, and on the days when the thermometer refuses to drop, a pool turns an otherwise unusable backyard into the coolest, most sought-after spot on the property. For many buyers relocating here, the question is not whether they want a pool but how quickly they can find a home that already has one.",
+          "In much of the country, a backyard pool is a summer extra that sits covered and unused for half the year. In Las Vegas, it is closer to a second living room. Our long, dry season stretches from late spring deep into fall, and on the days when the thermometer refuses to drop, a pool turns an otherwise unusable backyard into the coolest, most sought-after spot on the property. For many buyers relocating here, the question is not whether they want a pool but how quickly they can find a home that already has one.",
           "That lifestyle value is real, and it shows up in how homes are searched, shown, and sold. Weekend gatherings, morning laps before the heat builds, evenings floating under desert stars — a pool reshapes how a family uses its home for a large part of the year. In neighborhoods built around indoor-outdoor living, the pool and its surrounding patio, shade structure, and outdoor kitchen often become the true center of the house.",
-          "Still, a pool is a system, not just an amenity. It carries ongoing care, seasonal rhythms, safety obligations, and costs that a first-time desert buyer may not anticipate. This guide walks through what actually matters when you buy — or add — a pool home in the Las Vegas Valley, so the dream doesn't come with surprises. When you're ready to see what's available, you can start browsing current [pool homes and luxury listings](/listings) and refine from there."
+          "Still, a pool is a system, not just an amenity. It carries ongoing care, seasonal rhythms, safety obligations, and costs that a first-time desert buyer may not anticipate. This guide walks through what actually matters when you buy — or add — a pool home in the Las Vegas Valley, so the dream doesn't come with surprises. When you're ready to see what's available, you can start browsing current [pool homes](/listings) and refine from there."
         ]
       },
       {
         heading: "In-Ground Pools, Spas, and What Buyers Usually Want",
         body: [
           "The vast majority of pool homes in Las Vegas and Henderson feature in-ground gunite or shotcrete pools finished with plaster, quartz aggregate, or pebble surfaces. These are durable, custom-shaped, and built to last decades with proper care. Many are paired with an attached spa — a raised, heated section that spills into the main pool — which extends usefulness into the cooler months and adds a resort feel that photographs beautifully.",
-          "Beyond the basic pool-and-spa combination, luxury backyards in the valley often layer in features that shape both enjoyment and price. Understanding what you're actually paying for helps you compare two homes that both simply list 'pool' in the description.",
+          "Beyond the basic pool-and-spa combination, backyards in the valley often layer in features that shape both enjoyment and price. Understanding what you're actually paying for helps you compare two homes that both simply list 'pool' in the description.",
           "As you tour homes, notice which features are genuinely functional for your household versus which add cost and maintenance without matching how you'll live. A negative-edge pool is stunning, but it also means more equipment and more upkeep than a clean rectangular lap pool."
         ],
         bullets: [
@@ -4771,8 +4771,8 @@ export const blogPosts: BlogPost[] = [
         heading: "Where Pool Homes Shine Across the Valley",
         body: [
           "Pool homes exist throughout the Las Vegas Valley, but certain communities are especially associated with resort-style backyards and the indoor-outdoor lifestyle that makes a pool sing. Master-planned Summerlin offers an enormous range, from family pool homes to custom estates, and you can explore the area on our [Summerlin community page](/communities/summerlin). Henderson's hillside enclaves are prized for view lots where negative-edge pools take full advantage of the elevation.",
-          "In the luxury tier, communities like [The Ridges in Summerlin](/communities/the-ridges-summerlin) and [Seven Hills](/communities/seven-hills) feature contemporary estates where the pool is part of a fully designed outdoor experience. Guard-gated [Southern Highlands](/communities/southern-highlands) and Henderson's [Anthem](/communities/anthem) offer polished pool homes across a range of price points, while waterfront-oriented [Lake Las Vegas](/communities/lake-las-vegas) pairs pools with a resort setting unlike anywhere else in the region.",
-          "If golf and privacy rank high on your list, our overviews of [guard-gated communities](/guard-gated-communities-las-vegas) and [golf communities](/golf-communities-las-vegas) are a good next stop, and you can browse the valley's high-end inventory on our [Las Vegas luxury real estate](/las-vegas-luxury-real-estate) page. Prefer something never lived in? Many builders offer pool-ready lots and packages through [new construction](/new-construction)."
+          "At the custom-home end, communities like [The Ridges in Summerlin](/communities/the-ridges-summerlin) and [Seven Hills](/communities/seven-hills) feature contemporary estates where the pool is part of a fully designed outdoor experience. Guard-gated [Southern Highlands](/communities/southern-highlands) and Henderson's [Anthem](/communities/anthem) offer polished pool homes across a range of price points, while waterfront-oriented [Lake Las Vegas](/communities/lake-las-vegas) pairs pools with a resort setting unlike anywhere else in the region.",
+          "If golf and privacy rank high on your list, our overviews of [guard-gated communities](/guard-gated-communities-las-vegas) and [golf communities](/golf-communities-las-vegas) are a good next stop, and you can browse current pool homes on our [listings](/listings) page. Prefer something never lived in? Many builders offer pool-ready lots and packages through [new construction](/new-construction)."
         ]
       },
       {
@@ -4786,7 +4786,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Your Next Step Toward a Pool Home",
         body: [
-          "A pool home in Las Vegas can be one of the most rewarding purchases you make — the backdrop for years of gatherings, quiet mornings, and the kind of everyday luxury that makes desert living special. The key is to buy with clear eyes: understand the maintenance rhythm, budget for real costs, confirm the safety and code details for the specific property, and inspect the pool as carefully as you'd inspect the roof.",
+          "A pool home in Las Vegas can be one of the most rewarding purchases you make — the backdrop for years of gatherings, quiet mornings, and the kind of everyday enjoyment that makes desert living special. The key is to buy with clear eyes: understand the maintenance rhythm, budget for real costs, confirm the safety and code details for the specific property, and inspect the pool as carefully as you'd inspect the roof.",
           "That's exactly where working with a knowledgeable local team pays off. We help buyers separate a great pool home from a costly one, negotiate around inspection findings, and match the right backyard to the way you actually live. Whether you're relocating, upgrading, or planning to build your own resort backyard, we'll help you get it right.",
           "Ready to start? Browse current [pool homes and listings](/listings), read more buyer and market insights on our [blog](/blog), or reach out directly through our [contact page](/contact) to tell us what you're looking for. If you're on the other side of the transaction and thinking about selling a pool home, our [seller resources](/sell) are a great place to begin."
         ]

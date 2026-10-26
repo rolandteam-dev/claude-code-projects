@@ -33,7 +33,7 @@ export default function CalculatorsHub() {
       />
 
       <section className="relative overflow-hidden bg-[var(--color-graphite)] text-white">
-        <HeroBg src={heroImages.luxuryEstate} priority />
+        <HeroBg src={heroImages.featuredEstate} priority />
         <Container size="wide" className="relative z-10 py-16 md:py-20">
           <div className="font-sans text-[0.76rem] uppercase tracking-[0.24em] text-[var(--color-gold-2)]">
             Tools

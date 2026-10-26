@@ -167,7 +167,7 @@ export default async function CommunityPage({
           <h2 className="text-[1.7rem] text-white">Explore {c.name} Homes for Sale</h2>
           <p className="mx-auto mt-2 max-w-[520px] text-[#cfd3da]">
             Ready to see current {c.name} listings and homesites? The Roland Team specializes in {c.city}&apos;s
-            luxury and guard-gated communities.
+            guard-gated and master-planned communities.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-4">
             <Link href={`/listings?community=${encodeURIComponent(c.slug)}`} className="btn">

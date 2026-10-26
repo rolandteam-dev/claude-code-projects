@@ -1,7 +1,7 @@
 /**
  * Branding for the homeowner experience (dashboards + value emails). This is
  * the Roland Team brand, shared with the marketing site —
- * the homeowner engine is aimed at the full database, not just luxury buyers.
+ * the homeowner engine is aimed at the full database, not just one buyer segment.
  * Contact details are shared with the marketing site config; the name,
  * positioning, and public base URL differ.
  */
@@ -18,7 +18,7 @@ export const HOMEOWNER_ORIGIN = "https://home.therolandteam.com";
  * Resolve the public origin for homeowner links. Uses HOMEOWNER_BASE_URL when
  * it's set to a real http(s) origin, otherwise HOMEOWNER_ORIGIN. Defensive on
  * purpose: a blank/whitespace value, or one that isn't a valid absolute URL,
- * falls back to the homeowner host — never to the luxury site.
+ * falls back to the homeowner host — never to the marketing site.
  */
 function resolveBaseUrl(): string {
   const raw = (process.env.HOMEOWNER_BASE_URL ?? "").trim();
@@ -40,7 +40,7 @@ export const homeownerBrand = {
   founderPhoto: site.founderPhoto,
   /**
    * The Roland Team's main line. NOT site.phone — that is the rolandluxury.com
-   * tracking number and must stay on the luxury site. Every homeowner email,
+   * tracking number and must stay on the marketing site. Every homeowner email,
    * dashboard, unsubscribe page and client-portal card reads this.
    * HOMEOWNER_PHONE overrides it (e.g. a dedicated call-tracking number for the
    * email channel) without a code change.

@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 const cards = [
   { title: "Search Homes for Sale", desc: "Browse available homes across the valley's top communities.", href: "/listings" },
-  { title: "Explore Communities", desc: "18 luxury, guard-gated, and master-planned communities.", href: "/communities" },
+  { title: "Explore Communities", desc: "18 guard-gated and master-planned communities.", href: "/communities" },
   { title: "Areas We Serve", desc: "Henderson, Las Vegas, Boulder City, and beyond.", href: "/areas" },
   { title: "Buyer Guides", desc: "Step-by-step guides for every kind of buyer.", href: "/guides" },
   { title: "First-Time Buyer Guide", desc: "Down payment help, loans, and the process explained.", href: "/guides/first-time-home-buyer-las-vegas" },

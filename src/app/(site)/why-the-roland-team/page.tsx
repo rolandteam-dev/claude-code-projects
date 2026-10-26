@@ -29,7 +29,7 @@ const reasons = [
   },
   {
     h: "Deep local expertise",
-    p: "We know every gate on the hill — luxury, guard-gated, master-planned, golf, and active-adult communities across Las Vegas and Henderson.",
+    p: "We know every gate on the hill — guard-gated, master-planned, golf, and active-adult communities across Las Vegas and Henderson.",
   },
   {
     h: "Sharp negotiation",
@@ -64,7 +64,7 @@ export default function WhyPage() {
       />
 
       <header className="relative overflow-hidden bg-[var(--color-graphite)] text-white">
-        <HeroBg src={heroImages.luxuryEstate} priority />
+        <HeroBg src={heroImages.featuredEstate} priority />
         <Container size="wide" className="relative z-10 py-20 md:py-28">
           <div className="max-w-[680px]">
             <div className="font-sans text-[0.76rem] uppercase tracking-[0.24em] text-[var(--color-gold-2)]">

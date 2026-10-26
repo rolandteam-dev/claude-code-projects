@@ -310,7 +310,7 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
         <div className="font-serif text-[1.4rem] text-[var(--color-ink)]">Let&apos;s run this one by hand</div>
         <p className="mt-2 font-sans text-[0.9rem] text-[var(--color-ink-soft)]">
           There aren&apos;t enough recent sold comparables in {f.zip || "that ZIP"} that match your home to give a
-          defensible instant range — which is common for unique or luxury properties. {site.founder.split(" ")[0]}&apos;s
+          defensible instant range — which is common for unique or custom properties. {site.founder.split(" ")[0]}&apos;s
           team will pull the full comp set and prepare a precise CMA.
         </p>
         <a href="#request-cma" className={`btn mt-5 w-full${showCmaButton ? "" : " hidden"}`}>

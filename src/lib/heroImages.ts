@@ -1,5 +1,5 @@
 /**
- * Hero background imagery (AI-generated, luxury desert real estate).
+ * Hero background imagery (AI-generated, desert real estate).
  * Served via next/image optimization from the Higgsfield CDN.
  * NOTE: these are aspirational backgrounds — NOT photos of specific real
  * listings or the exact named communities. Swap for real photography when
@@ -16,7 +16,7 @@ const img = (file: string) => `${BASE}/${file}`;
  */
 export const heroImages = {
   home: img("hf_20260804_181905_9dfefe13-3c28-434e-8ee3-7ebe33637c2c.png"),
-  luxuryEstate: img("hf_20260804_181905_97f8f2b0-5e12-4c47-a905-e5e07bfd211f.png"),
+  featuredEstate: img("hf_20260804_181905_97f8f2b0-5e12-4c47-a905-e5e07bfd211f.png"),
   redRock: img("hf_20260804_181905_9b9d36b0-253d-48eb-9790-6541fb265fb1.png"),
   henderson: img("hf_20260804_181905_9267fd92-1824-47a8-af6a-54c9f532a21c.png"),
   lake: img("hf_20260804_181905_bc502e1a-49a4-45a7-b690-45cd5e078e68.png"),
@@ -31,7 +31,7 @@ export const heroImages = {
  * a new community is added to src/content/communities.ts.
  */
 const communityImages: Record<string, string> = {
-  // Featured luxury communities
+  // Featured communities
   ascaya: img("hf_20260808_200423_2ca9b205-ba2b-4135-9520-a82c12920795.png"),
   "macdonald-highlands": img("hf_20260808_200423_de28cf76-9da0-4022-95d6-b743d1a25cd3.png"),
   "seven-hills": img("hf_20260808_201950_b4173b97-dc61-4461-98fa-d2f3445377d9.png"),
@@ -63,7 +63,7 @@ const communityImages: Record<string, string> = {
   "the-lakes": img("hf_20260810_145032_21bedf28-5edc-45ee-a35b-07979bb7b48f.png"),
   "roma-hills": img("hf_20260810_145032_3a779b2e-5710-4c26-bd5b-b82427a3e008.png"),
   "peccole-ranch": img("hf_20260810_145032_ca6f04bc-d0a1-41fa-8fd2-6d551e35e0f9.png"),
-  // New signature luxury communities
+  // New signature communities
   "spanish-trail": img("hf_20260810_145032_6438b67b-9329-4099-8d1d-8d3fcb458c9e.png"),
   "spanish-hills": img("hf_20260810_145032_ec190858-f199-4cac-90d1-04873d899770.png"),
   reverence: img("hf_20260810_145547_2f13d62b-2e36-47ce-8fbe-a5c6295f081f.png"),
@@ -78,11 +78,11 @@ const communityImages: Record<string, string> = {
   "the-cliffs": heroImages.redRock,
   "stonebridge": heroImages.newConstruction,
   "lone-mountain": heroImages.home,
-  "the-willows": heroImages.luxuryEstate,
+  "the-willows": heroImages.featuredEstate,
 };
 
 export function communityHero(slug: string): string {
-  return communityImages[slug] ?? heroImages.luxuryEstate;
+  return communityImages[slug] ?? heroImages.featuredEstate;
 }
 
 const areaHeroMap: Record<string, keyof typeof heroImages> = {

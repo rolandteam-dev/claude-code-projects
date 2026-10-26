@@ -27,15 +27,15 @@ export const areas: Area[] = [
     name: "Henderson",
     seoTitle: "Henderson, NV Homes for Sale | Communities & Real Estate",
     seoDescription:
-      "Explore Henderson, NV real estate — luxury and guard-gated communities, master plans, and homes for sale, with local expertise from The Roland Team.",
+      "Explore Henderson, NV real estate — guard-gated communities, master plans, and homes for sale, with local expertise from The Roland Team.",
     h1: "Henderson, NV Homes for Sale & Communities",
     eyebrow: "Southern Nevada · City Guide",
     intro:
-      "One of America's most livable cities — master-planned communities, guard-gated luxury, and amenities minutes from the Strip.",
+      "One of America's most livable cities — master-planned communities, guard-gated communities, and amenities minutes from the Strip.",
     lead:
-      "Henderson consistently ranks among the best places to live in the country, and it's easy to see why: beautifully planned communities, extensive parks and trails, strong amenities, and a range of homes from approachable master plans to ultra-luxury guard-gated estates like Ascaya and MacDonald Highlands. Just southeast of Las Vegas, Henderson offers the best of Southern Nevada living.",
+      "Henderson consistently ranks among the best places to live in the country, and it's easy to see why: beautifully planned communities, extensive parks and trails, strong amenities, and a range of homes from approachable master plans to guard-gated hillside estates like Ascaya and MacDonald Highlands. Just southeast of Las Vegas, Henderson offers the best of Southern Nevada living.",
     highlights: [
-      "Home to ultra-luxury guard-gated communities including Ascaya and MacDonald Highlands",
+      "Home to guard-gated communities including Ascaya and MacDonald Highlands",
       "Established master plans like Green Valley, Seven Hills, and Anthem",
       "Newer communities such as Inspirada and Cadence with modern construction",
       "Waterfront resort living at Lake Las Vegas",
@@ -48,16 +48,16 @@ export const areas: Area[] = [
     name: "Las Vegas",
     seoTitle: "Las Vegas Homes for Sale | Communities & Real Estate",
     seoDescription:
-      "Explore Las Vegas real estate — from Summerlin master plans to guard-gated luxury and southwest-valley communities — with The Roland Team.",
+      "Explore Las Vegas real estate — from Summerlin master plans to guard-gated communities and southwest-valley communities — with The Roland Team.",
     h1: "Las Vegas Homes for Sale & Communities",
     eyebrow: "Southern Nevada · City Guide",
     intro:
-      "From Summerlin's master plans to guard-gated luxury and southwest-valley growth — the full range of Las Vegas living.",
+      "From Summerlin's master plans to guard-gated communities and southwest-valley growth — the full range of Las Vegas living.",
     lead:
-      "Las Vegas is far more than the Strip. The city spans the celebrated master-planned community of Summerlin on the west side, ultra-exclusive enclaves like The Summit Club and The Ridges, established golf communities, and fast-growing southwest and northwest neighborhoods. Whatever your price point or lifestyle, Las Vegas offers the widest range of communities in the valley.",
+      "Las Vegas is far more than the Strip. The city spans the celebrated master-planned community of Summerlin on the west side, guard-gated enclaves like The Summit Club and The Ridges, established golf communities, and fast-growing southwest and northwest neighborhoods. Whatever your price point or lifestyle, Las Vegas offers the widest range of communities in the valley.",
     highlights: [
       "Summerlin — one of the nation's top-selling master-planned communities",
-      "Ultra-luxury enclaves including The Summit Club and The Ridges",
+      "Guard-gated enclaves including The Summit Club and The Ridges",
       "Golf communities like Red Rock Country Club, Southern Highlands, and Rhodes Ranch",
       "Growing areas such as Skye Canyon and Mountain's Edge with new construction",
       "Quick access to Red Rock Canyon, Downtown Summerlin, and the Strip",

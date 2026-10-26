@@ -62,7 +62,7 @@ export function HomeDetailsForm({ token }: { token: string }) {
     return (
       <p className="mt-5 font-sans text-[0.9rem] text-[var(--color-ink-soft)]">
         Thanks — there aren&apos;t enough recent sold comparables that match your home for a defensible
-        instant number, which is common for unique or luxury properties. Our team will prepare a precise
+        instant number, which is common for unique or custom properties. Our team will prepare a precise
         valuation by hand.
       </p>
     );

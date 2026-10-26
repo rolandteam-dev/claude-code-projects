@@ -30,7 +30,7 @@ const GATED_SLUGS = [
 const faqs = [
   {
     q: "What guard-gated communities are in Las Vegas and Henderson?",
-    a: "The valley's guard-gated communities include Ascaya, MacDonald Highlands, and Tuscany in Henderson, and The Ridges, The Summit Club, Red Rock Country Club, Southern Highlands, and Rhodes Ranch in the Las Vegas area — ranging from ultra-luxury custom-estate enclaves to gated golf communities at more accessible price points.",
+    a: "The valley's guard-gated communities include Ascaya, MacDonald Highlands, and Tuscany in Henderson, and The Ridges, The Summit Club, Red Rock Country Club, Southern Highlands, and Rhodes Ranch in the Las Vegas area — ranging from custom-estate enclaves to gated golf communities at more accessible price points.",
   },
   {
     q: "What is the difference between guard-gated and gated?",
@@ -46,7 +46,7 @@ const faqs = [
   },
   {
     q: "What is the most exclusive guard-gated community in Las Vegas?",
-    a: "Ascaya in Henderson and The Summit Club and The Ridges in Summerlin are among the most exclusive guard-gated communities in the Las Vegas Valley, featuring ultra-luxury custom estates, dramatic elevation, and resort-caliber private amenities.",
+    a: "Ascaya in Henderson and The Summit Club and The Ridges in Summerlin are among the largest-lot guard-gated communities in the Las Vegas Valley, featuring custom estates, dramatic elevation, and resort-caliber private amenities.",
   },
 ];
 
@@ -89,7 +89,7 @@ export default function GuardGatedPillar() {
               Guard-Gated Communities in Las Vegas
             </h1>
             <p className="mt-5 max-w-[580px] text-[1.15rem] leading-relaxed text-[#d9dbe0]">
-              The valley&apos;s most private, secure neighborhoods — from ultra-luxury custom-estate enclaves to
+              The valley&apos;s most private, secure neighborhoods — from custom-estate enclaves to
               gated golf communities — and how to find the right one.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
@@ -140,7 +140,7 @@ export default function GuardGatedPillar() {
           <div className="eyebrow">Featured</div>
           <h2 className="mt-2 text-[1.9rem]">Guard-gated communities in the valley</h2>
           <p className="mt-3 max-w-[660px] text-[var(--color-ink-soft)]">
-            Explore the valley&apos;s premier guard-gated neighborhoods, from ultra-luxury to gated golf.
+            Explore the valley&apos;s premier guard-gated neighborhoods, from custom-estate enclaves to gated golf.
           </p>
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {gatedCommunities.map((c) => (

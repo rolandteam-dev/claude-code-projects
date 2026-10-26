@@ -42,15 +42,15 @@ export const communities: Community[] = [
     city: "Henderson",
     zip: "89012",
     featured: true,
-    seoTitle: "Ascaya Homes for Sale | Luxury Henderson, NV Real Estate",
+    seoTitle: "Ascaya Homes for Sale | Henderson, NV Custom Estates",
     seoDescription:
-      "Explore Ascaya homes for sale in Henderson, NV — an ultra-luxury, guard-gated community of just 313 custom estates on Black Mountain with Las Vegas Strip views.",
+      "Explore Ascaya homes for sale in Henderson, NV — a guard-gated community of just 313 custom estates on Black Mountain with Las Vegas Strip views.",
     h1: "Ascaya Homes for Sale in Henderson, NV",
-    eyebrow: "Henderson, Nevada · Guard-Gated Luxury",
+    eyebrow: "Henderson, Nevada · Guard-Gated Estates",
     intro:
-      "Ultra-luxury custom estates carved into Black Mountain — where world-class architecture meets panoramic views of the Las Vegas Strip.",
+      "Custom estates carved into Black Mountain — where world-class architecture meets panoramic views of the Las Vegas Strip.",
     lead:
-      "Carved dramatically into the slopes of Black Mountain, Ascaya is Southern Nevada's most exclusive ultra-luxury custom home community — a breathtaking hillside sanctuary where world-class architecture meets the raw beauty of the desert. Limited to just 313 residences terraced into the McCullough Range foothills, Ascaya real estate in Henderson, NV is often described as a living architectural gallery, with each home integrated into the landscape to frame unobstructed views of the Las Vegas Strip, valley, and surrounding mountains.",
+      "Carved dramatically into the slopes of Black Mountain, Ascaya is Southern Nevada's signature hillside custom home community — a breathtaking hillside sanctuary where world-class architecture meets the raw beauty of the desert. Limited to just 313 residences terraced into the McCullough Range foothills, Ascaya real estate in Henderson, NV is often described as a living architectural gallery, with each home integrated into the landscape to frame unobstructed views of the Las Vegas Strip, valley, and surrounding mountains.",
     quickFacts: [
       { label: "Location", value: "Henderson, NV 89012" },
       { label: "Community Type", value: "Guard-gated, all ages" },
@@ -65,8 +65,8 @@ export const communities: Community[] = [
       {
         heading: "About the Ascaya Community",
         body: [
-          "Developed as one of the most ambitious luxury projects in the American Southwest, Ascaya required blasting and terracing homesites directly into the face of Black Mountain — creating a series of elevated pads that give nearly every residence a commanding, unobstructed view of the Las Vegas Valley below.",
-          "With only 313 homesites in total, Ascaya offers a level of exclusivity and privacy that is exceptionally rare in Southern Nevada. Homes are designed to honor the natural terrain, emphasizing clean lines, walls of glass, indoor-outdoor living, and materials that echo the surrounding desert.",
+          "Developed as one of the most ambitious residential projects in the American Southwest, Ascaya required blasting and terracing homesites directly into the face of Black Mountain — creating a series of elevated pads that give nearly every residence a commanding, unobstructed view of the Las Vegas Valley below.",
+          "With only 313 homesites in total, Ascaya offers a level of privacy that is exceptionally rare in Southern Nevada. Homes are designed to honor the natural terrain, emphasizing clean lines, walls of glass, indoor-outdoor living, and materials that echo the surrounding desert.",
         ],
       },
       {
@@ -78,13 +78,13 @@ export const communities: Community[] = [
         bullets: [
           "Custom Estate & Cloud Rock Homesites — premium lots ranging from roughly 0.4 to 3.35 acres, ready for a fully bespoke, ground-up build.",
           "Desert Design Study Homes — completed, architect-designed custom residences showcasing striking modern desert design.",
-          "Canyon Residences — beautifully appointed three- to four-bedroom luxury condominiums for a lower-maintenance lifestyle within the gates.",
+          "Canyon Residences — beautifully appointed three- to four-bedroom condominiums for a lower-maintenance lifestyle within the gates.",
         ],
       },
       {
-        heading: "Luxury Amenities & The Ascaya Clubhouse",
+        heading: "Amenities & The Ascaya Clubhouse",
         body: [
-          "At the heart of the community sits a stunning $25 million private clubhouse reserved exclusively for residents. This world-class amenity center rivals a five-star resort and includes:",
+          "At the heart of the community sits a stunning $25 million private clubhouse reserved for residents. This world-class amenity center rivals a five-star resort and includes:",
         ],
         bullets: [
           "Resort-style, lap, and hot-tub pools",
@@ -112,11 +112,11 @@ export const communities: Community[] = [
       },
       {
         q: "Is Ascaya a guard-gated community?",
-        a: "Yes. Ascaya is a fully guard-gated, ultra-luxury community with 24-hour security, offering residents exceptional privacy and exclusivity.",
+        a: "Yes. Ascaya is a fully guard-gated community with 24-hour security, offering residents exceptional privacy.",
       },
       {
         q: "How many homes are in Ascaya?",
-        a: "Ascaya is limited to just 313 residences, making it one of the most exclusive luxury communities in the entire Las Vegas Valley.",
+        a: "Ascaya is limited to just 313 residences, making it one of the smallest guard-gated communities in the Las Vegas Valley.",
       },
       {
         q: "Can I build a custom home in Ascaya?",
@@ -131,20 +131,20 @@ export const communities: Community[] = [
     city: "Henderson",
     zip: "89012",
     featured: true,
-    seoTitle: "MacDonald Highlands Homes for Sale | Henderson, NV Luxury",
+    seoTitle: "MacDonald Highlands Homes for Sale | Henderson, NV",
     seoDescription:
-      "MacDonald Highlands homes for sale in Henderson, NV — a guard-gated luxury community with the private DragonRidge Country Club and sweeping Strip and valley views.",
+      "MacDonald Highlands homes for sale in Henderson, NV — a guard-gated golf community with the private DragonRidge Country Club and Strip views.",
     h1: "MacDonald Highlands Homes for Sale in Henderson, NV",
     eyebrow: "Henderson, Nevada · Guard-Gated Golf Community",
     intro:
       "Elevated custom estates and modern desert architecture surrounding the private DragonRidge Country Club.",
     lead:
-      "MacDonald Highlands is one of Henderson's premier guard-gated luxury communities, set into the foothills above the Las Vegas Valley with dramatic elevation, custom estates, and the private DragonRidge Country Club at its center. Known for its striking contemporary architecture and expansive Strip and mountain views, MacDonald Highlands real estate appeals to buyers seeking privacy, prestige, and a golf-and-club lifestyle just minutes from the amenities of Henderson.",
+      "MacDonald Highlands is one of Henderson's best-known guard-gated communities, set into the foothills above the Las Vegas Valley with dramatic elevation, custom estates, and the private DragonRidge Country Club at its center. Known for its striking contemporary architecture and expansive Strip and mountain views, MacDonald Highlands real estate appeals to buyers seeking privacy and a golf-and-club lifestyle just minutes from the amenities of Henderson.",
     quickFacts: [
       { label: "Location", value: "Henderson, NV 89012" },
-      { label: "Community Type", value: "Guard-gated, custom & luxury" },
+      { label: "Community Type", value: "Guard-gated, custom & golf" },
       { label: "Signature Amenity", value: "DragonRidge Country Club" },
-      { label: "Home Types", value: "Custom estates & luxury homes" },
+      { label: "Home Types", value: "Custom estates & larger homes" },
       { label: "Price Range", value: "Approx. $1.5M – $10M+" },
       { label: "Distance to Strip", value: "~12 miles / 18 minutes" },
     ],
@@ -152,21 +152,21 @@ export const communities: Community[] = [
       {
         heading: "About MacDonald Highlands",
         body: [
-          "Perched on the western slopes of the McCullough Range, MacDonald Highlands offers some of the most elevated homesites in the Las Vegas Valley — a setting that delivers panoramic views of the Strip, the valley floor, and the surrounding mountains. The community blends custom estates, luxury production homes, and premium homesites for those who want to build.",
+          "Perched on the western slopes of the McCullough Range, MacDonald Highlands offers some of the most elevated homesites in the Las Vegas Valley — a setting that delivers panoramic views of the Strip, the valley floor, and the surrounding mountains. The community blends custom estates, production homes, and premium homesites for those who want to build.",
           "At its heart is DragonRidge Country Club, a private club featuring a championship golf course, a modern clubhouse, dining, tennis, and fitness — the social and recreational anchor of the neighborhood.",
         ],
       },
       {
         heading: "Homes & Homesites for Sale",
         body: [
-          "MacDonald Highlands real estate spans a wide range, from luxury single-family homes to sprawling custom estates and vacant homesites. Pricing generally starts in the seven figures and climbs well into eight figures for the largest custom estates. Because homesites and finished homes vary widely in elevation, size, and finish, working with a local specialist is the best way to match the right property to your goals.",
+          "MacDonald Highlands real estate spans a wide range, from single-family homes to sprawling custom estates and vacant homesites. Pricing generally starts in the seven figures and climbs well into eight figures for the largest custom estates. Because homesites and finished homes vary widely in elevation, size, and finish, working with a local specialist is the best way to match the right property to your goals.",
         ],
       },
     ],
     faqs: [
       {
         q: "Where is MacDonald Highlands located?",
-        a: "MacDonald Highlands is a guard-gated luxury community in Henderson, Nevada (ZIP 89012), set in the McCullough Range foothills about 12 miles from the Las Vegas Strip.",
+        a: "MacDonald Highlands is a guard-gated golf community in Henderson, Nevada (ZIP 89012), set in the McCullough Range foothills about 12 miles from the Las Vegas Strip.",
       },
       {
         q: "Does MacDonald Highlands have a golf course?",
@@ -206,7 +206,7 @@ export const communities: Community[] = [
       {
         heading: "About Seven Hills",
         body: [
-          "Seven Hills is a large, established master plan in southern Henderson known for its manicured landscaping, parks, and gently rising topography that gives many homes elevated valley views. The community includes several guard-gated enclaves alongside more accessible neighborhoods, making it one of the most versatile luxury-leaning areas in Henderson.",
+          "Seven Hills is a large, established master plan in southern Henderson known for its manicured landscaping, parks, and gently rising topography that gives many homes elevated valley views. The community includes several guard-gated enclaves alongside more accessible neighborhoods, making it one of the most versatile areas in Henderson.",
         ],
       },
       {
@@ -238,18 +238,18 @@ export const communities: Community[] = [
     city: "Las Vegas",
     zip: "89135",
     featured: true,
-    seoTitle: "The Ridges Summerlin Homes for Sale | Las Vegas Luxury",
+    seoTitle: "The Ridges Summerlin Homes for Sale | Las Vegas, NV",
     seoDescription:
-      "The Ridges homes for sale in Summerlin, Las Vegas — a guard-gated luxury community with the private Bear's Best golf course and stunning contemporary estates.",
+      "The Ridges homes for sale in Summerlin, Las Vegas — a guard-gated community with the private Bear's Best golf course and stunning contemporary estates.",
     h1: "The Ridges Homes for Sale in Summerlin, Las Vegas",
-    eyebrow: "Summerlin, Las Vegas · Guard-Gated Luxury",
+    eyebrow: "Summerlin, Las Vegas · Guard-Gated Estates",
     intro:
-      "Contemporary luxury estates in the elevated western reaches of Summerlin, anchored by Bear's Best golf.",
+      "Contemporary estates in the elevated western reaches of Summerlin, anchored by Bear's Best golf.",
     lead:
-      "The Ridges is Summerlin's flagship luxury community — a collection of guard-gated enclaves set against the Spring Mountains and Red Rock Canyon on the far western edge of the Las Vegas Valley. Renowned for its modern architecture, custom estates, and the private Bear's Best Las Vegas golf course, The Ridges real estate represents some of the most prestigious addresses in all of Summerlin.",
+      "The Ridges is one of Summerlin's signature guard-gated communities — a collection of guard-gated enclaves set against the Spring Mountains and Red Rock Canyon on the far western edge of the Las Vegas Valley. Renowned for its modern architecture, custom estates, and the private Bear's Best Las Vegas golf course, The Ridges real estate is among the most recognized addresses in Summerlin.",
     quickFacts: [
       { label: "Location", value: "Summerlin, Las Vegas, NV 89135" },
-      { label: "Community Type", value: "Guard-gated luxury enclaves" },
+      { label: "Community Type", value: "Guard-gated enclaves" },
       { label: "Signature Amenity", value: "Bear's Best golf & Club Ridges" },
       { label: "Home Types", value: "Custom & contemporary estates" },
       { label: "Price Range", value: "Approx. $2M – $15M+" },
@@ -263,16 +263,16 @@ export const communities: Community[] = [
         ],
       },
       {
-        heading: "Luxury Homes for Sale in The Ridges",
+        heading: "Homes for Sale in The Ridges",
         body: [
-          "Homes in The Ridges range from luxury single-family residences to expansive custom estates, with pricing that reflects its status as one of the valley's premier addresses. Buyers value the blend of natural beauty, architectural pedigree, and easy access to Downtown Summerlin's shopping, dining, and entertainment.",
+          "Homes in The Ridges range from single-family residences to expansive custom estates, with pricing that reflects its status as one of the valley's premier addresses. Buyers value the blend of natural beauty, architectural pedigree, and easy access to Downtown Summerlin's shopping, dining, and entertainment.",
         ],
       },
     ],
     faqs: [
       {
         q: "Where is The Ridges located?",
-        a: "The Ridges is a guard-gated luxury community in the Summerlin area of Las Vegas, Nevada (ZIP 89135), near Red Rock Canyon on the western edge of the valley.",
+        a: "The Ridges is a guard-gated community in the Summerlin area of Las Vegas, Nevada (ZIP 89135), near Red Rock Canyon on the western edge of the valley.",
       },
       {
         q: "Does The Ridges have a golf course?",
@@ -299,7 +299,7 @@ export const communities: Community[] = [
     intro:
       "Mediterranean-inspired waterfront living around a 320-acre lake — resort amenities, golf, and gated enclaves minutes from the Strip.",
     lead:
-      "Lake Las Vegas is one of Southern Nevada's most distinctive communities — a Mediterranean-inspired resort destination built around a 320-acre man-made lake in eastern Henderson. With waterfront dining and shops at the Village, two Jack Nicklaus-designed golf courses, luxury resorts, and a mix of condominiums, townhomes, and custom estates across gated enclaves, Lake Las Vegas real estate offers a lifestyle unlike anywhere else in the valley.",
+      "Lake Las Vegas is one of Southern Nevada's most distinctive communities — a Mediterranean-inspired resort destination built around a 320-acre man-made lake in eastern Henderson. With waterfront dining and shops at the Village, two Jack Nicklaus-designed golf courses, resorts, and a mix of condominiums, townhomes, and custom estates across gated enclaves, Lake Las Vegas real estate offers a lifestyle unlike anywhere else in the valley.",
     quickFacts: [
       { label: "Location", value: "Henderson, NV 89011" },
       { label: "Community Type", value: "Master-planned resort, gated enclaves" },
@@ -348,19 +348,19 @@ export const communities: Community[] = [
     featured: true,
     seoTitle: "Summerlin Homes for Sale | Las Vegas Master-Planned Living",
     seoDescription:
-      "Summerlin homes for sale in Las Vegas — a premier master-planned community with parks, trails, Downtown Summerlin, top schools, and luxury villages near Red Rock.",
+      "Summerlin homes for sale in Las Vegas — a premier master-planned community with parks, trails, Downtown Summerlin, top schools, and villages near Red Rock.",
     h1: "Summerlin Homes for Sale in Las Vegas, NV",
     eyebrow: "Las Vegas, Nevada · Master-Planned Community",
     intro:
-      "One of the nation's top-selling master plans — parks, trails, Downtown Summerlin, and luxury villages against the backdrop of Red Rock Canyon.",
+      "One of the nation's top-selling master plans — parks, trails, Downtown Summerlin, and villages against the backdrop of Red Rock Canyon.",
     lead:
-      "Summerlin is one of the most celebrated master-planned communities in the country, spanning the western edge of the Las Vegas Valley along Red Rock Canyon. With more than a dozen villages, an extensive trail and park system, Downtown Summerlin's shopping and entertainment, the Las Vegas Ballpark, and highly regarded schools, Summerlin real estate ranges from approachable move-up homes to the ultra-luxury estates of The Ridges and The Summit.",
+      "Summerlin is one of the most celebrated master-planned communities in the country, spanning the western edge of the Las Vegas Valley along Red Rock Canyon. With more than a dozen villages, an extensive trail and park system, Downtown Summerlin's shopping and entertainment, the Las Vegas Ballpark, and highly regarded schools, Summerlin real estate ranges from approachable move-up homes to the custom estates of The Ridges and The Summit.",
     quickFacts: [
       { label: "Location", value: "Las Vegas, NV (89135, 89138, 89144)" },
       { label: "Community Type", value: "Large master-planned community" },
       { label: "Developer", value: "The Howard Hughes Corporation" },
       { label: "Highlights", value: "Downtown Summerlin, parks & trails" },
-      { label: "Home Types", value: "Condos to ultra-luxury estates" },
+      { label: "Home Types", value: "Condos to custom estates" },
       { label: "Price Range", value: "Approx. $400K – $10M+" },
       { label: "Nearby", value: "Red Rock Canyon" },
     ],
@@ -375,7 +375,7 @@ export const communities: Community[] = [
       {
         heading: "Homes for Sale in Summerlin",
         body: [
-          "Because Summerlin is so large, its real estate covers nearly every price point — from condominiums and townhomes to single-family homes and the guard-gated luxury enclaves of The Ridges and The Summit Club. Newer villages like Summerlin West and The Cliffs continue to add modern construction, giving buyers a wide range of options.",
+          "Because Summerlin is so large, its real estate covers nearly every price point — from condominiums and townhomes to single-family homes and the guard-gated enclaves of The Ridges and The Summit Club. Newer villages like Summerlin West and The Cliffs continue to add modern construction, giving buyers a wide range of options.",
         ],
       },
     ],
@@ -390,7 +390,7 @@ export const communities: Community[] = [
       },
       {
         q: "How much do homes in Summerlin cost?",
-        a: "Prices range from around $400,000 for condos and townhomes to more than $10 million for luxury estates in enclaves like The Ridges and The Summit. Contact The Roland Team for current listings.",
+        a: "Prices range from around $400,000 for condos and townhomes to more than $10 million for custom estates in enclaves like The Ridges and The Summit. Contact The Roland Team for current listings.",
       },
     ],
   },
@@ -458,9 +458,9 @@ export const communities: Community[] = [
     h1: "Southern Highlands Homes for Sale in Las Vegas, NV",
     eyebrow: "Las Vegas, Nevada · Master-Planned Golf Community",
     intro:
-      "A prestigious southwest-valley master plan anchored by a private championship golf club and guard-gated luxury estates.",
+      "A southwest-valley master plan anchored by a private championship golf club and guard-gated estates.",
     lead:
-      "Southern Highlands is a master-planned community in the southwest Las Vegas Valley, best known for the private Southern Highlands Golf Club and its guard-gated luxury enclaves. Combining custom estates, gated neighborhoods, and more accessible homes with strong amenities and easy freeway access, Southern Highlands real estate has become one of the area's most desirable addresses.",
+      "Southern Highlands is a master-planned community in the southwest Las Vegas Valley, best known for the private Southern Highlands Golf Club and its guard-gated enclaves. Combining custom estates, gated neighborhoods, and more accessible homes with strong amenities and easy freeway access, Southern Highlands real estate has become one of the area's most desirable addresses.",
     quickFacts: [
       { label: "Location", value: "Las Vegas, NV 89141" },
       { label: "Community Type", value: "Master-planned; guard-gated enclaves" },
@@ -479,7 +479,7 @@ export const communities: Community[] = [
       {
         heading: "Homes for Sale in Southern Highlands",
         body: [
-          "The community offers a broad selection — from single-family homes to expansive gated custom estates with golf-course and mountain views. Pricing spans widely, with the guard-gated luxury sections commanding a premium. Convenient access to the freeway makes commuting to the Strip and beyond straightforward.",
+          "The community offers a broad selection — from single-family homes to expansive gated custom estates with golf-course and mountain views. Pricing spans widely, with the guard-gated sections commanding a premium. Convenient access to the freeway makes commuting to the Strip and beyond straightforward.",
         ],
       },
     ],
@@ -558,13 +558,13 @@ export const communities: Community[] = [
     zip: "89052",
     seoTitle: "Green Valley Homes for Sale | Henderson, NV Real Estate",
     seoDescription:
-      "Green Valley homes for sale in Henderson, NV — an established master-planned area with The District at Green Valley Ranch, parks, and guard-gated luxury enclaves.",
+      "Green Valley homes for sale in Henderson, NV — an established master-planned area with The District at Green Valley Ranch, parks, and guard-gated enclaves.",
     h1: "Green Valley Homes for Sale in Henderson, NV",
     eyebrow: "Henderson, Nevada · Established Master Plan",
     intro:
       "Henderson's original master-planned community — mature, amenity-rich, and home to The District at Green Valley Ranch.",
     lead:
-      "Green Valley is the community that helped put Henderson on the map — one of the valley's original master-planned areas, now mature and highly established. Encompassing both Green Valley and the upscale Green Valley Ranch, it offers tree-lined neighborhoods, extensive parks, top amenities including The District at Green Valley Ranch, and guard-gated luxury enclaves, making Green Valley real estate a perennial favorite for buyers who want established value and convenience.",
+      "Green Valley is the community that helped put Henderson on the map — one of the valley's original master-planned areas, now mature and highly established. Encompassing both Green Valley and Green Valley Ranch, it offers tree-lined neighborhoods, extensive parks, top amenities including The District at Green Valley Ranch, and guard-gated enclaves, making Green Valley real estate a perennial favorite for buyers who want established value and convenience.",
     quickFacts: [
       { label: "Location", value: "Henderson, NV (89052, 89012, 89014)" },
       { label: "Community Type", value: "Established master plan; gated enclaves" },
@@ -578,7 +578,7 @@ export const communities: Community[] = [
         heading: "About Green Valley",
         body: [
           "Green Valley set the template for Henderson's master-planned growth, and decades later it remains one of the most established and convenient places to live in the valley. The area offers mature landscaping, extensive parks and trails, and standout amenities — most notably The District at Green Valley Ranch, an open-air shopping and dining destination beside the Green Valley Ranch Resort.",
-          "Green Valley Ranch, the upscale successor plan, adds guard-gated enclaves and custom estates for buyers seeking a more luxury-oriented setting.",
+          "Green Valley Ranch, the successor plan, adds guard-gated enclaves and custom estates for buyers seeking more privacy and larger homes.",
         ],
       },
       {
@@ -664,20 +664,20 @@ export const communities: Community[] = [
     city: "Las Vegas",
     zip: "89135",
     featured: true,
-    seoTitle: "The Summit Club Homes for Sale | Summerlin Ultra-Luxury",
+    seoTitle: "The Summit Club Homes for Sale | Summerlin, NV Estates",
     seoDescription:
-      "The Summit Club homes for sale in Summerlin, Las Vegas — an ultra-exclusive private club community with a Tom Fazio golf course and custom estates against Red Rock.",
+      "The Summit Club homes for sale in Summerlin, Las Vegas — a private club community with a Tom Fazio golf course and custom estates against Red Rock.",
     h1: "The Summit Club Homes for Sale in Summerlin, Las Vegas",
     eyebrow: "Summerlin, Las Vegas · Private Club Community",
     intro:
-      "One of the most exclusive private-club communities in the country — custom estates and a Tom Fazio course set against Red Rock Canyon.",
+      "A private-club community — custom estates and a Tom Fazio course set against Red Rock Canyon.",
     lead:
-      "The Summit Club is among the most exclusive addresses in the United States — a private, guard-gated club community developed within Summerlin against the dramatic backdrop of Red Rock Canyon. Home to a Tom Fazio-designed golf course and an ultra-luxury membership lifestyle, The Summit Club real estate consists of bespoke custom estates for buyers seeking the pinnacle of privacy, design, and service in Las Vegas.",
+      "The Summit Club is a private, guard-gated club community developed within Summerlin against the dramatic backdrop of Red Rock Canyon. Home to a Tom Fazio-designed golf course and a private membership lifestyle, The Summit Club real estate consists of bespoke custom estates for buyers seeking the pinnacle of privacy, design, and service in Las Vegas.",
     quickFacts: [
       { label: "Location", value: "Summerlin, Las Vegas, NV 89135" },
       { label: "Community Type", value: "Private, guard-gated club community" },
       { label: "Signature Amenity", value: "Tom Fazio golf course" },
-      { label: "Home Types", value: "Ultra-luxury custom estates" },
+      { label: "Home Types", value: "Bespoke custom estates" },
       { label: "Price Range", value: "Approx. $4M – $20M+" },
       { label: "Setting", value: "Adjacent to Red Rock Canyon" },
     ],
@@ -691,7 +691,7 @@ export const communities: Community[] = [
       {
         heading: "Homes for Sale in The Summit Club",
         body: [
-          "Residences are custom estates, and availability is limited by design. Pricing reflects the community's exclusivity, generally ranging from several million dollars into the double digits for the largest custom homes. Buyers work with a specialist to navigate the membership and purchase process.",
+          "Residences are custom estates, and availability is limited by design. Pricing generally ranges from several million dollars into the double digits for the largest custom homes. Buyers work with a specialist to navigate the membership and purchase process.",
         ],
       },
     ],
@@ -702,7 +702,7 @@ export const communities: Community[] = [
       },
       {
         q: "Is The Summit Club a private community?",
-        a: "Yes. The Summit Club is an ultra-exclusive, membership-based private club community with a guard-gated setting and a Tom Fazio golf course.",
+        a: "Yes. The Summit Club is a membership-based private club community with a guard-gated setting and a Tom Fazio golf course.",
       },
       {
         q: "How much do homes in The Summit Club cost?",
@@ -724,12 +724,12 @@ export const communities: Community[] = [
     intro:
       "A guard-gated Summerlin golf community with two Arnold Palmer Signature courses and a full-service private club.",
     lead:
-      "Red Rock Country Club is a guard-gated golf community within Summerlin, built around two Arnold Palmer Signature championship courses and a full-service country club. Offering everything from luxury single-family homes to custom estates with golf and mountain views, Red Rock Country Club real estate is a favorite for buyers who want a private, amenity-rich lifestyle on the valley's scenic west side.",
+      "Red Rock Country Club is a guard-gated golf community within Summerlin, built around two Arnold Palmer Signature championship courses and a full-service country club. Offering everything from single-family homes to custom estates with golf and mountain views, Red Rock Country Club real estate is a favorite for buyers who want a private, amenity-rich lifestyle on the valley's scenic west side.",
     quickFacts: [
       { label: "Location", value: "Summerlin, Las Vegas, NV 89135" },
       { label: "Community Type", value: "Guard-gated golf community" },
       { label: "Signature Amenity", value: "Two Arnold Palmer Signature courses" },
-      { label: "Home Types", value: "Luxury homes to custom estates" },
+      { label: "Home Types", value: "Single-family homes to custom estates" },
       { label: "Price Range", value: "Approx. $600K – $6M+" },
       { label: "Nearby", value: "Red Rock Canyon, Downtown Summerlin" },
     ],
@@ -743,7 +743,7 @@ export const communities: Community[] = [
       {
         heading: "Homes for Sale in Red Rock Country Club",
         body: [
-          "The community offers a mix of luxury single-family homes and larger custom estates, many with golf-course or mountain views. Pricing varies by location and finish, with premier estate homes commanding the top of the range.",
+          "The community offers a mix of single-family homes and larger custom estates, many with golf-course or mountain views. Pricing varies by location and finish, with premier estate homes commanding the top of the range.",
         ],
       },
     ],
@@ -847,7 +847,7 @@ export const communities: Community[] = [
       {
         heading: "Homes for Sale in Mountain's Edge",
         body: [
-          "The community is composed primarily of single-family homes across many builders and floor plans, offering approachable pricing relative to the valley's luxury enclaves. It's a practical choice for buyers who want space, parks, and convenient freeway access.",
+          "The community is composed primarily of single-family homes across many builders and floor plans, offering approachable pricing relative to the valley's guard-gated enclaves. It's a practical choice for buyers who want space, parks, and convenient freeway access.",
         ],
       },
     ],
@@ -1088,7 +1088,7 @@ export const communities: Community[] = [
     intro:
       "A convenient, established northwest-valley area with parks, shopping, and a broad range of homes.",
     lead:
-      "Centennial Hills is one of the northwest Las Vegas Valley's most established and convenient communities, offering parks, shopping, and a wide selection of single-family homes. With quick access to the 215 Beltway and US-95 and a range of price points, Centennial Hills real estate appeals to buyers who want space and amenities without a luxury-only price tag.",
+      "Centennial Hills is one of the northwest Las Vegas Valley's most established and convenient communities, offering parks, shopping, and a wide selection of single-family homes. With quick access to the 215 Beltway and US-95 and a range of price points, Centennial Hills real estate appeals to buyers who want space and amenities at a wide range of price points.",
     quickFacts: [
       { label: "Location", value: "Northwest Las Vegas, NV 89149 / 89131" },
       { label: "Community Type", value: "Established master-planned area" },
@@ -1429,20 +1429,20 @@ export const communities: Community[] = [
     city: "Las Vegas",
     zip: "89145",
     featured: false,
-    seoTitle: "Queensridge Homes for Sale | West Las Vegas Luxury",
+    seoTitle: "Queensridge Homes for Sale | West Las Vegas, NV",
     seoDescription:
-      "Queensridge homes for sale in west Las Vegas — an upscale, European-inspired guard-gated community and home to the One Queensridge Place luxury towers.",
+      "Queensridge homes for sale in west Las Vegas — a European-inspired guard-gated community and home to the One Queensridge Place high-rise towers.",
     h1: "Queensridge Homes for Sale in Las Vegas, NV",
-    eyebrow: "West Las Vegas · Guard-Gated Luxury",
+    eyebrow: "West Las Vegas · Guard-Gated Estates",
     intro:
-      "European-inspired luxury on the west side — elegant estates and the landmark One Queensridge Place towers.",
+      "European-inspired design on the west side — elegant estates and the landmark One Queensridge Place towers.",
     lead:
-      "Queensridge is an upscale, European-inspired community on the west side of the Las Vegas Valley, known for its elegant architecture, mature landscaping, and guard-gated enclaves. It's also home to One Queensridge Place, a pair of landmark luxury high-rise towers offering full-service condominium living. Queensridge real estate appeals to buyers seeking refined luxury close to Summerlin and Downtown Summerlin.",
+      "Queensridge is a European-inspired community on the west side of the Las Vegas Valley, known for its elegant architecture, mature landscaping, and guard-gated enclaves. It's also home to One Queensridge Place, a pair of landmark high-rise towers offering full-service condominium living. Queensridge real estate appeals to buyers seeking a refined setting close to Summerlin and Downtown Summerlin.",
     quickFacts: [
       { label: "Location", value: "West Las Vegas, NV 89145" },
-      { label: "Community Type", value: "Guard-gated luxury; luxury high-rise" },
+      { label: "Community Type", value: "Guard-gated; high-rise" },
       { label: "Landmark", value: "One Queensridge Place towers" },
-      { label: "Home Types", value: "Estates & luxury condominiums" },
+      { label: "Home Types", value: "Estates & condominiums" },
       { label: "Price Range", value: "Approx. $700K – $5M+" },
       { label: "Nearby", value: "Summerlin, Downtown Summerlin" },
     ],
@@ -1450,28 +1450,28 @@ export const communities: Community[] = [
       {
         heading: "About Queensridge",
         body: [
-          "Queensridge stands out for its European-inspired design, lush landscaping, and mix of guard-gated estate enclaves and full-service luxury condominium living at One Queensridge Place. Its west-side location keeps residents close to Summerlin's shopping, dining, and entertainment.",
+          "Queensridge stands out for its European-inspired design, lush landscaping, and mix of guard-gated estate enclaves and full-service condominium living at One Queensridge Place. Its west-side location keeps residents close to Summerlin's shopping, dining, and entertainment.",
         ],
       },
       {
         heading: "Homes for Sale in Queensridge",
         body: [
-          "Buyers can choose from elegant single-family estates to luxury high-rise residences with concierge services. Pricing spans a wide range depending on home type, size, and view.",
+          "Buyers can choose from elegant single-family estates to high-rise residences with concierge services. Pricing spans a wide range depending on home type, size, and view.",
         ],
       },
     ],
     faqs: [
       {
         q: "Where is Queensridge located?",
-        a: "Queensridge is an upscale community on the west side of Las Vegas, Nevada (ZIP 89145), near Summerlin and Downtown Summerlin.",
+        a: "Queensridge is a guard-gated community on the west side of Las Vegas, Nevada (ZIP 89145), near Summerlin and Downtown Summerlin.",
       },
       {
         q: "What is One Queensridge Place?",
-        a: "One Queensridge Place is a landmark pair of luxury high-rise towers within Queensridge, offering full-service, concierge condominium living.",
+        a: "One Queensridge Place is a landmark pair of high-rise towers within Queensridge, offering full-service, concierge condominium living.",
       },
       {
         q: "How much do homes in Queensridge cost?",
-        a: "Prices generally range from around $700,000 to more than $5 million depending on whether it's an estate or a luxury condominium, plus size and views. Contact The Roland Team for current listings.",
+        a: "Prices generally range from around $700,000 to more than $5 million depending on whether it's an estate or a condominium, plus size and views. Contact The Roland Team for current listings.",
       },
     ],
   },
@@ -1541,7 +1541,7 @@ export const communities: Community[] = [
     intro:
       "An intimate guard-gated community of custom and semi-custom homes in the Henderson foothills.",
     lead:
-      "Roma Hills is a smaller guard-gated community in the Henderson foothills, offering custom and semi-custom homes with elevated valley views and a private, exclusive feel. For buyers seeking guard-gated privacy in an intimate setting close to Henderson's amenities, Roma Hills real estate is a distinctive option.",
+      "Roma Hills is a smaller guard-gated community in the Henderson foothills, offering custom and semi-custom homes with elevated valley views and a private feel. For buyers seeking guard-gated privacy in an intimate setting close to Henderson's amenities, Roma Hills real estate is a distinctive option.",
     quickFacts: [
       { label: "Location", value: "Henderson, NV 89052" },
       { label: "Community Type", value: "Guard-gated, custom & semi-custom" },
@@ -1553,7 +1553,7 @@ export const communities: Community[] = [
       {
         heading: "About Roma Hills",
         body: [
-          "Roma Hills offers guard-gated privacy in an intimate, elevated setting. Its custom and semi-custom homes enjoy valley views and a quiet, exclusive atmosphere, all within easy reach of Henderson's shopping, dining, and freeways.",
+          "Roma Hills offers guard-gated privacy in an intimate, elevated setting. Its custom and semi-custom homes enjoy valley views and a quiet atmosphere, all within easy reach of Henderson's shopping, dining, and freeways.",
         ],
       },
       {
@@ -1635,13 +1635,13 @@ export const communities: Community[] = [
     featured: true,
     seoTitle: "Spanish Trail Homes for Sale | West Las Vegas Country Club",
     seoDescription:
-      "Spanish Trail homes for sale in west Las Vegas — an established guard-gated country-club community with golf, tennis, lakes, and mature luxury estates.",
+      "Spanish Trail homes for sale in west Las Vegas — an established guard-gated country-club community with golf, tennis, lakes, and mature estates.",
     h1: "Spanish Trail Homes for Sale in Las Vegas, NV",
     eyebrow: "West Las Vegas · Guard-Gated Country Club",
     intro:
       "One of Las Vegas's original guard-gated country-club communities — mature, elegant, and centrally located minutes from the Strip.",
     lead:
-      "Spanish Trail is one of the Las Vegas Valley's original guard-gated country-club communities, a mature and prestigious enclave on the west side built around the private Spanish Trail Country Club. Known for its lush landscaping, tree-lined streets, lakes, and Mediterranean architecture, Spanish Trail real estate ranges from luxury condominiums and townhomes to custom estates, all behind 24-hour guard gates just minutes from the Strip and Chinatown.",
+      "Spanish Trail is one of the Las Vegas Valley's original guard-gated country-club communities, a mature enclave on the west side built around the private Spanish Trail Country Club. Known for its lush landscaping, tree-lined streets, lakes, and Mediterranean architecture, Spanish Trail real estate ranges from condominiums and townhomes to custom estates, all behind 24-hour guard gates just minutes from the Strip and Chinatown.",
     quickFacts: [
       { label: "Location", value: "West Las Vegas, NV 89147" },
       { label: "Community Type", value: "Guard-gated country club" },
@@ -1654,7 +1654,7 @@ export const communities: Community[] = [
       {
         heading: "About Spanish Trail",
         body: [
-          "Established as a pioneering guard-gated golf community, Spanish Trail has matured into one of the most established and centrally located luxury addresses in the valley. Its 27-hole private country club, lakes, tennis, and mature landscaping give the community a settled, resort-like feel that newer developments can't yet match.",
+          "Established as a pioneering guard-gated golf community, Spanish Trail has matured into one of the most established and centrally located communities in the valley. Its 27-hole private country club, lakes, tennis, and mature landscaping give the community a settled, resort-like feel that newer developments can't yet match.",
           "Behind its guarded gates, Spanish Trail offers a range of neighborhoods — from lock-and-leave condominiums and townhomes to larger custom estates on the golf course — making it versatile for buyers seeking gated privacy close to the center of the valley.",
         ],
       },
@@ -1687,20 +1687,20 @@ export const communities: Community[] = [
     city: "Las Vegas",
     zip: "89148",
     featured: true,
-    seoTitle: "Spanish Hills Homes for Sale | Las Vegas Luxury Estates",
+    seoTitle: "Spanish Hills Homes for Sale | Las Vegas Custom Estates",
     seoDescription:
-      "Spanish Hills homes for sale in Las Vegas — an exclusive guard-gated community of custom luxury estates on large lots with sweeping Strip and valley views.",
+      "Spanish Hills homes for sale in Las Vegas — a guard-gated community of custom estates on on large lots with sweeping Strip and valley views.",
     h1: "Spanish Hills Homes for Sale in Las Vegas, NV",
-    eyebrow: "Southwest Las Vegas · Guard-Gated Luxury",
+    eyebrow: "Southwest Las Vegas · Guard-Gated Estates",
     intro:
-      "An exclusive guard-gated enclave of grand custom estates on oversized lots with commanding valley and Strip views.",
+      "A guard-gated enclave of grand custom estates on oversized lots with commanding valley and Strip views.",
     lead:
-      "Spanish Hills is one of the southwest valley's most prestigious guard-gated communities — an exclusive enclave of grand custom estates set on unusually large lots, many with sweeping views of the Las Vegas Strip and surrounding mountains. Known for its stately Mediterranean and modern architecture, privacy, and space, Spanish Hills real estate appeals to luxury buyers seeking an established estate address close to the 215 Beltway and Summerlin.",
+      "Spanish Hills is one of the southwest valley's established guard-gated communities — an enclave of grand custom estates set on unusually large lots, many with sweeping views of the Las Vegas Strip and surrounding mountains. Known for its stately Mediterranean and modern architecture, privacy, and space, Spanish Hills real estate appeals to buyers seeking an established estate address close to the 215 Beltway and Summerlin.",
     quickFacts: [
       { label: "Location", value: "Southwest Las Vegas, NV 89148" },
       { label: "Community Type", value: "Guard-gated custom estates" },
       { label: "Homesites", value: "Oversized lots (often 0.5–1+ acre)" },
-      { label: "Home Types", value: "Grand custom luxury estates" },
+      { label: "Home Types", value: "Grand custom estates" },
       { label: "Price Range", value: "Approx. $1.5M – $10M+" },
       { label: "Views", value: "Strip, valley & mountain views" },
     ],
@@ -1708,20 +1708,20 @@ export const communities: Community[] = [
       {
         heading: "About Spanish Hills",
         body: [
-          "Spanish Hills stands apart for the scale of its homesites and homes — grand custom estates on large, private lots, many elevated to capture Strip and valley views. The guard-gated community has long been favored by luxury buyers, executives, and public figures seeking privacy and space within easy reach of the freeway and Summerlin.",
+          "Spanish Hills stands apart for the scale of its homesites and homes — grand custom estates on large, private lots, many elevated to capture Strip and valley views. The guard-gated community has long been favored by buyers seeking privacy and space within easy reach of the freeway and Summerlin.",
         ],
       },
       {
         heading: "Homes for Sale in Spanish Hills",
         body: [
-          "Inventory in Spanish Hills is limited and estate-focused, with pricing that reflects the community's exclusivity, lot sizes, and custom finishes. Because homes rarely come available, working with a local luxury specialist is the best way to access opportunities here.",
+          "Inventory in Spanish Hills is limited and estate-focused, with pricing that reflects the community's lot sizes, and custom finishes. Because homes rarely come available, working with a local specialist is the best way to access opportunities here.",
         ],
       },
     ],
     faqs: [
       {
         q: "Where is Spanish Hills located?",
-        a: "Spanish Hills is a guard-gated luxury community in the southwest Las Vegas Valley (ZIP 89148), near the 215 Beltway.",
+        a: "Spanish Hills is a guard-gated community in the southwest Las Vegas Valley (ZIP 89148), near the 215 Beltway.",
       },
       {
         q: "What kind of homes are in Spanish Hills?",
@@ -1740,20 +1740,20 @@ export const communities: Community[] = [
     city: "Las Vegas",
     zip: "89138",
     featured: true,
-    seoTitle: "Reverence Homes for Sale | Summerlin West Guard-Gated Luxury",
+    seoTitle: "Reverence Homes for Sale | Summerlin West Guard-Gated Estates",
     seoDescription:
-      "Reverence homes for sale in Summerlin West, Las Vegas — a guard-gated Toll Brothers community of luxury hillside homes with panoramic valley and Strip views.",
+      "Reverence homes for sale in Summerlin West, Las Vegas — a guard-gated Toll Brothers community of hillside homes with panoramic valley and Strip views.",
     h1: "Reverence Homes for Sale in Summerlin West, Las Vegas",
-    eyebrow: "Summerlin West, Las Vegas · Guard-Gated Luxury",
+    eyebrow: "Summerlin West, Las Vegas · Guard-Gated Estates",
     intro:
-      "A guard-gated Summerlin West community of contemporary luxury homes perched on the valley's western hillsides.",
+      "A guard-gated Summerlin West community of contemporary homes perched on the valley's western hillsides.",
     lead:
-      "Reverence is a guard-gated luxury community by Toll Brothers in Summerlin West, set dramatically into the elevated western edge of the Las Vegas Valley near Red Rock Canyon. With contemporary architecture, hillside homesites, and panoramic views of the valley and Strip, Reverence real estate offers newer luxury construction and a private, amenity-rich lifestyle within the acclaimed Summerlin master plan.",
+      "Reverence is a guard-gated community by Toll Brothers in Summerlin West, set dramatically into the elevated western edge of the Las Vegas Valley near Red Rock Canyon. With contemporary architecture, hillside homesites, and panoramic views of the valley and Strip, Reverence real estate offers newer construction and a private, amenity-rich lifestyle within the acclaimed Summerlin master plan.",
     quickFacts: [
       { label: "Location", value: "Summerlin West, Las Vegas, NV 89138" },
-      { label: "Community Type", value: "Guard-gated luxury (Toll Brothers)" },
+      { label: "Community Type", value: "Guard-gated (Toll Brothers)" },
       { label: "Setting", value: "Elevated hillsides near Red Rock Canyon" },
-      { label: "Home Types", value: "Contemporary luxury single-family homes" },
+      { label: "Home Types", value: "Contemporary single-family homes" },
       { label: "Price Range", value: "Approx. $900K – $4M+" },
       { label: "Amenities", value: "Private clubhouse, pools & trails" },
     ],
@@ -1767,18 +1767,18 @@ export const communities: Community[] = [
       {
         heading: "Homes for Sale in Reverence",
         body: [
-          "Homes in Reverence are contemporary luxury residences from a range of collections, many on elevated or view homesites. Pricing reflects the community's newer construction, gated exclusivity, and Summerlin West location, with view lots commanding a premium.",
+          "Homes in Reverence are contemporary residences from a range of collections, many on elevated or view homesites. Pricing reflects the community's newer construction, guard gates, and Summerlin West location, with view lots commanding a premium.",
         ],
       },
     ],
     faqs: [
       {
         q: "Where is Reverence located?",
-        a: "Reverence is a guard-gated luxury community in Summerlin West, Las Vegas, Nevada (ZIP 89138), on the elevated western edge of the valley near Red Rock Canyon.",
+        a: "Reverence is a guard-gated community in Summerlin West, Las Vegas, Nevada (ZIP 89138), on the elevated western edge of the valley near Red Rock Canyon.",
       },
       {
         q: "Who built Reverence?",
-        a: "Reverence is a Toll Brothers guard-gated community within the Summerlin West master plan, featuring contemporary luxury homes and a private amenity center.",
+        a: "Reverence is a Toll Brothers guard-gated community within the Summerlin West master plan, featuring contemporary homes and a private amenity center.",
       },
       {
         q: "How much do homes in Reverence cost?",
@@ -1793,20 +1793,20 @@ export const communities: Community[] = [
     city: "Las Vegas",
     zip: "89144",
     featured: true,
-    seoTitle: "Tournament Hills Homes for Sale | Summerlin Guard-Gated Luxury",
+    seoTitle: "Tournament Hills Homes for Sale | Summerlin Guard-Gated Estates",
     seoDescription:
-      "Tournament Hills homes for sale in Summerlin, Las Vegas — an established guard-gated luxury enclave of custom estates near TPC Summerlin with mountain views.",
+      "Tournament Hills homes for sale in Summerlin, Las Vegas — an established guard-gated enclave of custom estates near TPC Summerlin with mountain views.",
     h1: "Tournament Hills Homes for Sale in Summerlin, Las Vegas",
-    eyebrow: "Summerlin, Las Vegas · Guard-Gated Luxury",
+    eyebrow: "Summerlin, Las Vegas · Guard-Gated Estates",
     intro:
-      "An established guard-gated enclave of custom luxury estates in the heart of Summerlin near TPC Summerlin.",
+      "An established guard-gated enclave of custom estates in the heart of Summerlin near TPC Summerlin.",
     lead:
-      "Tournament Hills is a prestigious guard-gated luxury enclave in the established heart of Summerlin, known for its custom estates, mature landscaping, and proximity to the private TPC Summerlin golf course. With larger lots, refined architecture, and a central Summerlin location, Tournament Hills real estate appeals to luxury buyers who want an established, guard-gated address close to Downtown Summerlin and top schools.",
+      "Tournament Hills is a guard-gated enclave in the established heart of Summerlin, known for its custom estates, mature landscaping, and proximity to the private TPC Summerlin golf course. With larger lots, refined architecture, and a central Summerlin location, Tournament Hills real estate appeals to buyers who want an established, guard-gated address close to Downtown Summerlin and top schools.",
     quickFacts: [
       { label: "Location", value: "Summerlin, Las Vegas, NV 89144" },
       { label: "Community Type", value: "Guard-gated custom estates" },
       { label: "Nearby Golf", value: "TPC Summerlin (private)" },
-      { label: "Home Types", value: "Custom luxury estates" },
+      { label: "Home Types", value: "Custom estates" },
       { label: "Price Range", value: "Approx. $1.2M – $6M+" },
       { label: "Setting", value: "Established central Summerlin" },
     ],
@@ -1814,24 +1814,24 @@ export const communities: Community[] = [
       {
         heading: "About Tournament Hills",
         body: [
-          "Tournament Hills is one of Summerlin's established guard-gated luxury communities, prized for its custom estates, mature streetscapes, and location beside the private TPC Summerlin course. Its central Summerlin position puts residents minutes from Downtown Summerlin, parks and trails, and highly regarded schools.",
+          "Tournament Hills is one of Summerlin's established guard-gated communities, prized for its custom estates, mature streetscapes, and location beside the private TPC Summerlin course. Its central Summerlin position puts residents minutes from Downtown Summerlin, parks and trails, and highly regarded schools.",
         ],
       },
       {
         heading: "Homes for Sale in Tournament Hills",
         body: [
-          "Homes in Tournament Hills are predominantly custom luxury estates on generous lots, with pricing that reflects the community's gated exclusivity and prime Summerlin setting. Availability is limited, so a local specialist is the best way to find opportunities.",
+          "Homes in Tournament Hills are predominantly custom estates on generous lots, with pricing that reflects the community's guard gates and prime Summerlin setting. Availability is limited, so a local specialist is the best way to find opportunities.",
         ],
       },
     ],
     faqs: [
       {
         q: "Where is Tournament Hills located?",
-        a: "Tournament Hills is a guard-gated luxury community in the established heart of Summerlin, Las Vegas, Nevada (ZIP 89144), near TPC Summerlin.",
+        a: "Tournament Hills is a guard-gated community in the established heart of Summerlin, Las Vegas, Nevada (ZIP 89144), near TPC Summerlin.",
       },
       {
         q: "Is Tournament Hills a gated community?",
-        a: "Yes. Tournament Hills is a guard-gated enclave of custom luxury estates within Summerlin.",
+        a: "Yes. Tournament Hills is a guard-gated enclave of custom estates within Summerlin.",
       },
       {
         q: "How much do homes in Tournament Hills cost?",
@@ -1937,8 +1937,8 @@ export const communities: Community[] = [
     seoDescription: "Explore Anthem Country Club homes for sale in Henderson, NV — a guard-gated private golf community with mountain and Strip views. Contact The Roland Team.",
     h1: "Anthem Country Club Homes for Sale in Henderson, NV",
     eyebrow: "Henderson, Nevada · Guard-Gated Golf",
-    intro: "Custom and semi-custom luxury homes wrapped around a private championship golf course in the guard-gated hills of Anthem.",
-    lead: "Anthem Country Club sits within the master-planned community of Anthem in Henderson, Nevada, offering a guard-gated, membership-based lifestyle built around a private championship golf course. The elevated terrain here gives many home sites sweeping views of the surrounding mountains and the Las Vegas Strip skyline in the distance. Residences range from spacious semi-custom estates to fully custom luxury homes, many finished with courtyard entries, resort-style pools, and multi-car garages. A full-service clubhouse anchors the community with dining, fitness, tennis, and social programming for members. For buyers seeking privacy, architectural variety, and an established golf-club setting close to the Las Vegas Strip, Anthem Country Club remains one of Henderson's most recognized addresses.",
+    intro: "Custom and semi-custom homes wrapped around a private championship golf course in the guard-gated hills of Anthem.",
+    lead: "Anthem Country Club sits within the master-planned community of Anthem in Henderson, Nevada, offering a guard-gated, membership-based lifestyle built around a private championship golf course. The elevated terrain here gives many home sites sweeping views of the surrounding mountains and the Las Vegas Strip skyline in the distance. Residences range from spacious semi-custom estates to fully custom homes, many finished with courtyard entries, resort-style pools, and multi-car garages. A full-service clubhouse anchors the community with dining, fitness, tennis, and social programming for members. For buyers seeking privacy, architectural variety, and an established golf-club setting close to the Las Vegas Strip, Anthem Country Club remains one of Henderson's most recognized addresses.",
     quickFacts: [
       { label: "Location", value: "Anthem, Henderson, NV 89052" },
       { label: "Community Type", value: "Guard-gated golf community" },
@@ -1946,7 +1946,7 @@ export const communities: Community[] = [
       { label: "Approx. Price Range", value: "Approx. $900K – $3M+" },
       { label: "Distance to Strip", value: "Approx. 20–25 minutes" },
       { label: "Signature Amenity", value: "Private championship golf course" },
-      { label: "Home Style", value: "Custom & semi-custom luxury estates" },
+      { label: "Home Style", value: "Custom & semi-custom estates" },
       { label: "Club Access", value: "Membership-based private club" },
     ],
     sections: [
@@ -2010,7 +2010,7 @@ export const communities: Community[] = [
       },
       {
         q: "What types of homes are available in Anthem Country Club?",
-        a: "Anthem Country Club offers both semi-custom and fully custom single- and two-story luxury homes, including options with golf course, mountain, or city-light views. Contact The Roland Team for current availability and pricing.",
+        a: "Anthem Country Club offers both semi-custom and fully custom single- and two-story homes, including options with golf course, mountain, or city-light views. Contact The Roland Team for current availability and pricing.",
       },
     ],
   },
@@ -2053,7 +2053,7 @@ export const communities: Community[] = [
           "Single-family homes on a range of lot sizes",
           "Select gated enclaves within the larger community",
           "Mix of resale and periodically updated properties",
-          "Options spanning starter to move-up and luxury price points",
+          "Options spanning starter, move-up and custom-home price points",
         ],
       },
       {

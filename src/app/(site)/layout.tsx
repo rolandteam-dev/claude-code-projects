@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   keywords: [
     "Las Vegas real estate",
     "Henderson NV homes for sale",
-    "luxury homes Las Vegas",
+    "homes for sale Las Vegas",
     "guard-gated communities Henderson",
     "Summerlin homes for sale",
     "The Roland Team",

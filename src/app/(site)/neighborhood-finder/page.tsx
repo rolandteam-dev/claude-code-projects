@@ -25,7 +25,7 @@ const faqs = [
   },
   {
     q: "How many neighborhoods does it compare?",
-    a: `It matches you against ${communityAttrs.length} Las Vegas and Henderson communities — from value-priced master plans to ultra-luxury guard-gated enclaves — across Henderson, Summerlin, the southwest and northwest valley, North Las Vegas, and Boulder City.`,
+    a: `It matches you against ${communityAttrs.length} Las Vegas and Henderson communities — from value-priced master plans to guard-gated enclaves — across Henderson, Summerlin, the southwest and northwest valley, North Las Vegas, and Boulder City.`,
   },
   {
     q: "What happens after I get my matches?",
@@ -47,7 +47,7 @@ export default function NeighborhoodFinderPage() {
       />
 
       <section className="relative overflow-hidden bg-[var(--color-graphite)] text-white">
-        <HeroBg src={heroImages.luxuryEstate} priority />
+        <HeroBg src={heroImages.featuredEstate} priority />
         <Container size="wide" className="relative z-10 py-14 md:py-16">
           <div className="font-sans text-[0.76rem] uppercase tracking-[0.24em] text-[var(--color-gold-2)]">
             Buyer Tool

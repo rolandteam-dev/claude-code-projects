@@ -57,10 +57,10 @@ export const site = {
   areaServed: ["Las Vegas", "Henderson", "Summerlin", "North Las Vegas", "Boulder City", "Clark County"],
   // Entity topics — reinforces what the brand is known for (for AI + Google).
   knowsAbout: [
-    "Las Vegas luxury real estate",
+    "Las Vegas real estate",
     "Henderson guard-gated communities",
     "Summerlin homes for sale",
-    "Ascaya and MacDonald Highlands luxury estates",
+    "Ascaya and MacDonald Highlands homes",
     "new construction homes in Las Vegas",
     "selling a home in Las Vegas",
     "relocating to Las Vegas",
@@ -81,7 +81,6 @@ export const site = {
       children: [
         { label: "Search Homes for Sale", href: "/listings" },
         { label: "Neighborhood Finder", href: "/neighborhood-finder" },
-        { label: "Luxury Real Estate", href: "/las-vegas-luxury-real-estate" },
         { label: "Communities", href: "/communities" },
         { label: "Areas We Serve", href: "/areas" },
         { label: "Moving to Las Vegas", href: "/moving-to-las-vegas" },
@@ -112,7 +111,6 @@ export const site = {
       href: "/communities",
       children: [
         { label: "All Communities", href: "/communities" },
-        { label: "Luxury Real Estate", href: "/las-vegas-luxury-real-estate" },
         { label: "Guard-Gated Communities", href: "/guard-gated-communities-las-vegas" },
         { label: "55+ / Active Adult", href: "/active-adult-communities-las-vegas" },
         { label: "Golf Communities", href: "/golf-communities-las-vegas" },

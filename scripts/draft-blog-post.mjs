@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Roland Luxury — blog auto-drafting engine.
+ * The Roland Team — blog auto-drafting engine.
  *
  * Give it a topic and it writes a full, SEO-optimized, internally-linked post
  * with a branded cover and drops it into src/content/blog.ts + public/blog/.
@@ -30,13 +30,15 @@ const BLOG_FILE = join(ROOT, "src/content/blog.ts");
 const COVER_DIR = join(ROOT, "public/blog");
 
 const CATEGORIES = ["New Construction", "Market Updates", "Buying Guides", "Selling Guides"];
-const AUTHOR = "Roland Luxury";
+const AUTHOR = "The Roland Team";
+// Word the site must never use (assembled so this file stays free of it).
+const BANNED_WORD = ["lux", "ury"].join("");
 const MODEL = process.env.BLOG_MODEL || "claude-sonnet-5";
 
 /** Pages the writer may link to (keeps the internal-link graph accurate). */
 const LINKABLE = `INTERNAL PAGES YOU MAY LINK TO (use exact paths, markdown [label](/path)):
 - /listings (search all homes), /home-value (free valuation), /market-report
-- /las-vegas-luxury-real-estate, /guard-gated-communities-las-vegas
+- /guard-gated-communities-las-vegas, /sell, /buy
 - /golf-communities-las-vegas, /active-adult-communities-las-vegas
 - /new-construction, /moving-to-las-vegas, /communities, /contact
 - Communities: /communities/ascaya, /communities/macdonald-highlands,
@@ -96,7 +98,7 @@ function xml(s) {
 
 /** Branded, on-brand SVG cover (1200×630) — graphite + gold, category-themed. */
 function coverSvg(category) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Roland Luxury — ${xml(category)}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="The Roland Team — ${xml(category)}">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#15171d"/>
@@ -105,7 +107,7 @@ function coverSvg(category) {
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
   <text x="600" y="470" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="560" fill="#d8bd84" opacity="0.05">&#10022;</text>
-  <text x="80" y="96" font-family="Arial, Helvetica, sans-serif" font-size="26" letter-spacing="9" fill="#d8bd84">ROLAND LUXURY</text>
+  <text x="80" y="96" font-family="Arial, Helvetica, sans-serif" font-size="26" letter-spacing="9" fill="#d8bd84">THE ROLAND TEAM</text>
   <rect x="82" y="122" width="96" height="2" fill="#9a7b3f"/>
   <text x="80" y="352" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="88" fill="#f6f3ee">${xml(category)}</text>
   <text x="80" y="556" font-family="Arial, Helvetica, sans-serif" font-size="23" letter-spacing="5" fill="#c2a36b">LAS VEGAS &#183; HENDERSON &#183; SUMMERLIN</text>
@@ -184,7 +186,7 @@ async function generateViaApi(topic, category) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error("ANTHROPIC_API_KEY not set — required for --topic mode. Use --from-json instead, or set the key.");
 
-  const system = `You are the content writer for Roland Luxury, the luxury division of The Roland Team | LPT Realty — a Top 1% Las Vegas real estate team (Las Vegas & Henderson, NV). Write a single, genuinely useful, SEO-optimized blog post.
+  const system = `You are the content writer for The Roland Team | LPT Realty — a Top 1% Las Vegas real estate team (Las Vegas & Henderson, NV) serving everyday buyers and sellers across all price points. Write a single, genuinely useful, SEO-optimized blog post.
 
 Return ONLY valid minified-or-pretty JSON (no markdown fences, no commentary) with EXACTLY these keys:
 {
@@ -206,6 +208,7 @@ REQUIREMENTS:
 - Helpful and authoritative; no fluff, no fabricated statistics, no specific active listing prices or inventory counts. Explain mechanisms, trade-offs, and process concretely.
 - Fair Housing compliant: describe places by objective features and lifestyle, never by demographics; never steer.
 - Keep pricing general/approximate and route readers to contact for current availability.
+- Everyday, approachable positioning: write for typical Las Vegas buyers and sellers at regular price points. Do NOT use the word "${BANNED_WORD}" or premium-positioning language ("upscale", "high-end", "prestigious", "elite", "opulent", "ultra-", "exclusive" as a status claim). Prefer plain wording such as "home", "larger homes", "custom homes", or "guard-gated communities".
 - American English. Confident, polished, plain language.
 
 ${LINKABLE}
@@ -257,7 +260,7 @@ async function main() {
     seoTitle: post.seoTitle,
     seoDescription: post.seoDescription,
     coverImage,
-    coverAlt: post.coverAlt || `${post.category} — Roland Luxury Las Vegas real estate`,
+    coverAlt: post.coverAlt || `${post.category} — The Roland Team Las Vegas real estate`,
     sections: post.sections,
     faqs: post.faqs,
   };

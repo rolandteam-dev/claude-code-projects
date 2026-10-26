@@ -54,6 +54,6 @@ export const marketReport: MarketReport = {
     "Prices continue a steady, moderate climb year-over-year — a healthy market rather than a runaway one.",
     "Homes are still moving in well under two months on average, so well-priced, well-presented listings sell.",
     "Inventory remains below the ~5–6 months that signals a balanced market, keeping conditions favorable for sellers in most price bands.",
-    "Luxury and guard-gated segments move on their own timeline — pricing and marketing strategy matter more there than valley-wide averages.",
+    "Guard-gated and custom-home segments move on their own timeline — pricing and marketing strategy matter more there than valley-wide averages.",
   ],
 };

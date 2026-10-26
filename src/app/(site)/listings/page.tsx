@@ -14,7 +14,7 @@ import type { ListingFilters, PropertyType } from "@/lib/idx/types";
 export const metadata: Metadata = {
   title: "Homes for Sale in Las Vegas & Henderson",
   description:
-    "Search live MLS homes for sale in Las Vegas, Henderson, North Las Vegas, and Summerlin — luxury estates, guard-gated communities, condos, and more with The Roland Team.",
+    "Search live MLS homes for sale in Las Vegas, Henderson, North Las Vegas, and Summerlin — estates, guard-gated communities, condos, and more with The Roland Team.",
   alternates: { canonical: "/listings" },
 };
 
@@ -22,14 +22,14 @@ const PROPERTY_TYPES: PropertyType[] = ["Single Family", "Condo", "Townhouse", "
 const CITIES = ["Henderson", "Las Vegas", "North Las Vegas", "Boulder City"];
 const PAGE_SIZE = 24;
 
-// Luxury price policy: default the Min to $400k when the visitor hasn't chosen
+// Price floor policy: default the Min to $400k when the visitor hasn't chosen
 // one, and never show anything below $300k (even via a hand-edited URL). Keeps
 // the site curated without turning away legitimate mid-market leads — a visitor
 // can still opt down to $300k via the Min dropdown.
 const DEFAULT_MIN_PRICE = 400_000;
 const HARD_MIN_PRICE = 300_000;
 
-// Price tiers span entry-level to ultra-luxury so both ends of the valley's
+// Price tiers span entry-level to high-end so both ends of the valley's
 // market are covered. Used for the Min and Max price dropdowns.
 const PRICE_POINTS = [
   300_000, 400_000, 500_000, 600_000, 750_000, 900_000, 1_000_000, 1_250_000,
@@ -89,7 +89,7 @@ export default async function ListingsPage({
   }
   const communityParam = str(sp.community);
   const community = communityParam ? getCommunity(communityParam) : undefined;
-  // Apply the luxury floor: default to $400k, clamp anything lower to $300k.
+  // Apply the price floor: default to $400k, clamp anything lower to $300k.
   const minPrice = Math.max(HARD_MIN_PRICE, num(sp.minPrice) ?? DEFAULT_MIN_PRICE);
   // "New construction" means built in the previous calendar year or newer.
   const newConYear = new Date().getFullYear() - 1;

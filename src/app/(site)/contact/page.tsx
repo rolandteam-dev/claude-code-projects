@@ -8,7 +8,7 @@ import { site } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Contact The Roland Team",
   description:
-    "Get in touch with The Roland Team for luxury Las Vegas and Henderson real estate — buying, selling, or exploring guard-gated communities.",
+    "Get in touch with The Roland Team for Las Vegas and Henderson real estate — buying, selling, or exploring guard-gated communities.",
   alternates: { canonical: "/contact" },
 };
 

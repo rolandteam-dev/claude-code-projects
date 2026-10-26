@@ -21,7 +21,7 @@ import type { JourneyKind } from "@/content/portal";
 
 const KEY = "rt.portal.v1";
 /**
- * Previous key, from when this shipped on the Roland Luxury site. Read once on
+ * Previous key, from when this shipped on the previous marketing site. Read once on
  * first access and copied forward so an existing client keeps their saved
  * homes, notes and progress; the old key is then left alone rather than
  * deleted, so rolling back doesn't strand anyone.

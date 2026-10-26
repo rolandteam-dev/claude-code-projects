@@ -12,13 +12,13 @@ import { testimonials } from "@/content/testimonials";
 export const metadata: Metadata = {
   title: "Sell Your Las Vegas Home | The Roland Team",
   description:
-    "Sell your Las Vegas or Henderson home for more, with less stress. Precision pricing, luxury marketing, and expert negotiation from a Top 1% team with 1,000+ homes sold.",
+    "Sell your Las Vegas or Henderson home for more, with less stress. Precision pricing, strategic marketing, and expert negotiation from a Top 1% team with 1,000+ homes sold.",
   alternates: { canonical: "/sell" },
 };
 
 const whyPoints = [
   { h: "Precision pricing", p: "We price to the current market using real comparable sales — not guesswork — so your home attracts serious buyers fast and sells for its full value." },
-  { h: "Luxury marketing", p: "Professional photography, video, a custom property website, and targeted digital campaigns put your home in front of the right buyers from day one." },
+  { h: "Strategic marketing", p: "Professional photography, video, a custom property website, and targeted digital campaigns put your home in front of the right buyers from day one." },
   { h: "Expert negotiation", p: "We protect your equity and your timeline, negotiating price, contingencies, and terms that maximize your net proceeds." },
 ];
 
@@ -95,7 +95,7 @@ export default function SellHub() {
               Sell your Las Vegas home for more
             </h1>
             <p className="mt-5 max-w-[600px] text-[1.15rem] leading-relaxed text-[#d9dbe0]">
-              Precision pricing, luxury marketing, and expert negotiation from a Top 1% Las Vegas team with 1,000+
+              Precision pricing, strategic marketing, and expert negotiation from a Top 1% Las Vegas team with 1,000+
               homes sold. Start with your instant home value — then a precise, human CMA.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
@@ -236,7 +236,7 @@ export default function SellHub() {
           {[
             { title: "Selling Your Home in Las Vegas", desc: "The full step-by-step guide.", href: "/guides/selling-your-home-in-las-vegas" },
             { title: "Preparing Your Home to Sell", desc: "Where to focus before you list.", href: "/blog/preparing-your-las-vegas-home-to-sell" },
-            { title: "Seller Net Proceeds", desc: "What you'll actually take home.", href: "/blog/las-vegas-luxury-seller-net-proceeds" },
+            { title: "Seller Net Proceeds", desc: "What you'll actually take home.", href: "/blog/las-vegas-seller-net-proceeds" },
             { title: "Market Report", desc: "Where prices and inventory stand now.", href: "/market-report" },
           ].map((r) => (
             <Link

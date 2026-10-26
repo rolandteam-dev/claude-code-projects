@@ -10,7 +10,7 @@ import { site } from "@/lib/site";
 export const metadata: Metadata = {
   title: "About The Roland Team",
   description:
-    "Meet The Roland Team — a Las Vegas & Henderson luxury real estate group specializing in guard-gated communities, custom estates, and expert local representation.",
+    "Meet The Roland Team — a Las Vegas & Henderson real estate group specializing in guard-gated communities, custom estates, and expert local representation.",
   alternates: { canonical: "/about" },
 };
 
@@ -32,7 +32,7 @@ export default function AboutPage() {
               About Us
             </div>
             <h1 className="mt-3 font-serif text-[2.8rem] font-semibold leading-[1.05] text-white md:text-[3.6rem]">
-              Local expertise, luxury standards
+              Local expertise, personal service
             </h1>
             <p className="mt-5 max-w-[560px] text-[1.12rem] text-[#d9dbe0]">
               The Roland Team | LPT Realty helps buyers and sellers
@@ -46,7 +46,7 @@ export default function AboutPage() {
       <Container size="narrow" className="prose-body py-14">
         <p className="text-[1.2rem] leading-relaxed text-[var(--color-ink-soft)]">
           We&apos;re a Las Vegas and Henderson real estate group focused on the communities that define Southern
-          Nevada living — from ultra-luxury, guard-gated enclaves like Ascaya and The Ridges to established
+          Nevada living — from guard-gated enclaves like Ascaya and The Ridges to established
           family master plans across the valley. The Roland Team is one of
           the valley&apos;s top-producing brokerage teams.
         </p>

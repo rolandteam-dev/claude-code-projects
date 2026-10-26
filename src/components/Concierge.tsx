@@ -78,7 +78,7 @@ function RichText({ text }: { text: string }) {
 const GREETING: Msg = {
   role: "assistant",
   content:
-    "Welcome to The Roland Team. I'm your private concierge — ask me about our communities, the Las Vegas luxury market, or tell me what you're looking for and I'll pull live listings. How may I help?",
+    "Welcome to The Roland Team. I'm your private concierge — ask me about our communities, the Las Vegas housing market, or tell me what you're looking for and I'll pull live listings. How may I help?",
 };
 
 const SUGGESTIONS = [

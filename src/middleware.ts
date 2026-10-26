@@ -51,7 +51,7 @@ const ALWAYS_ALLOWED = ["/admin", "/dashboard"];
 /**
  * Homeowner-facing pages. On a marketing (rolandluxury.com) host these 308 to
  * the same path + query on the homeowner host, so an old or stray link can
- * never show a homeowner — or the team — a luxury-site URL for the homeowner
+ * never show a homeowner — or the team — a marketing-site URL for the homeowner
  * engine. API routes never reach middleware (see the matcher), so cron jobs,
  * webhooks and the estimator are never redirected.
  */

@@ -10,7 +10,7 @@
  */
 
 export type Area = "henderson" | "summerlin" | "sw-lv" | "nw-lv" | "w-lv" | "n-lv" | "boulder-city";
-export type BudgetTier = "value" | "mid" | "luxury" | "ultra";
+export type BudgetTier = "value" | "mid" | "upper" | "ultra";
 export type Lifestyle =
   | "guardGated"
   | "golf"
@@ -18,7 +18,7 @@ export type Lifestyle =
   | "family"
   | "newBuild"
   | "waterfront"
-  | "luxury"
+  | "views"
   | "space";
 
 export type CommunityAttr = {
@@ -35,8 +35,8 @@ export type CommunityAttr = {
 /* ---- Quiz question options (labels shown to the buyer) ---- */
 
 export const AREA_OPTIONS: { value: Area | "any"; label: string; sub: string }[] = [
-  { value: "henderson", label: "Henderson", sub: "Master plans, luxury & 55+" },
-  { value: "summerlin", label: "Summerlin", sub: "West-side villages & luxury" },
+  { value: "henderson", label: "Henderson", sub: "Master plans, golf & 55+" },
+  { value: "summerlin", label: "Summerlin", sub: "West-side villages & views" },
   { value: "sw-lv", label: "Southwest LV", sub: "Newer master plans & golf" },
   { value: "nw-lv", label: "Northwest LV", sub: "Newer communities & space" },
   { value: "w-lv", label: "West LV", sub: "Established & guard-gated" },
@@ -48,8 +48,8 @@ export const AREA_OPTIONS: { value: Area | "any"; label: string; sub: string }[]
 export const BUDGET_OPTIONS: { value: BudgetTier | "any"; label: string; sub: string }[] = [
   { value: "value", label: "Under $500K", sub: "Entry & value" },
   { value: "mid", label: "$500K – $1M", sub: "Move-up" },
-  { value: "luxury", label: "$1M – $3M", sub: "Luxury" },
-  { value: "ultra", label: "$3M+", sub: "Ultra-luxury" },
+  { value: "upper", label: "$1M – $3M", sub: "Larger homes & views" },
+  { value: "ultra", label: "$3M+", sub: "Estates & custom homes" },
   { value: "any", label: "Not sure yet", sub: "Show a range" },
 ];
 
@@ -61,7 +61,7 @@ export const LIFESTYLE_OPTIONS: { value: Lifestyle; label: string; icon: string 
   { value: "family", label: "Family & master-planned", icon: "🏡" },
   { value: "waterfront", label: "Lake / waterfront", icon: "🌊" },
   { value: "space", label: "Space & larger lots", icon: "🌵" },
-  { value: "luxury", label: "Luxury & views", icon: "✨" },
+  { value: "views", label: "Hillside & views", icon: "✨" },
 ];
 
 const AREA_LABEL: Record<Area, string> = {
@@ -81,64 +81,64 @@ const LIFESTYLE_LABEL: Record<Lifestyle, string> = {
   family: "Family-friendly",
   newBuild: "New construction",
   waterfront: "Waterfront",
-  luxury: "Luxury",
+  views: "Views",
   space: "Larger lots",
 };
 
 const BUDGET_LABEL: Record<BudgetTier, string> = {
   value: "Under $500K",
   mid: "$500K–$1M",
-  luxury: "$1M–$3M",
+  upper: "$1M–$3M",
   ultra: "$3M+",
 };
 
-const TIER_ORDER: BudgetTier[] = ["value", "mid", "luxury", "ultra"];
+const TIER_ORDER: BudgetTier[] = ["value", "mid", "upper", "ultra"];
 
 /* ---- Attribute table (all 42 communities) ---- */
 
 export const communityAttrs: CommunityAttr[] = [
-  { slug: "ascaya", name: "Ascaya", city: "Henderson", note: "Guard-gated ultra-luxury", area: "henderson", tiers: ["ultra"], tags: ["guardGated", "luxury"] },
-  { slug: "macdonald-highlands", name: "MacDonald Highlands", city: "Henderson", note: "Guard-gated golf luxury", area: "henderson", tiers: ["luxury", "ultra"], tags: ["guardGated", "golf", "luxury"] },
-  { slug: "seven-hills", name: "Seven Hills", city: "Henderson", note: "Hillside master-planned", area: "henderson", tiers: ["mid", "luxury"], tags: ["family", "luxury"] },
-  { slug: "the-ridges-summerlin", name: "The Ridges", city: "Las Vegas", note: "Summerlin guard-gated luxury", area: "summerlin", tiers: ["ultra"], tags: ["guardGated", "luxury"] },
-  { slug: "lake-las-vegas", name: "Lake Las Vegas", city: "Henderson", note: "Waterfront resort living", area: "henderson", tiers: ["mid", "luxury", "ultra"], tags: ["waterfront", "luxury", "golf"] },
-  { slug: "summerlin", name: "Summerlin", city: "Las Vegas", note: "Flagship master plan", area: "summerlin", tiers: ["mid", "luxury"], tags: ["family", "newBuild"] },
+  { slug: "ascaya", name: "Ascaya", city: "Henderson", note: "Guard-gated hillside estates", area: "henderson", tiers: ["ultra"], tags: ["guardGated", "views"] },
+  { slug: "macdonald-highlands", name: "MacDonald Highlands", city: "Henderson", note: "Guard-gated golf community", area: "henderson", tiers: ["upper", "ultra"], tags: ["guardGated", "golf", "views"] },
+  { slug: "seven-hills", name: "Seven Hills", city: "Henderson", note: "Hillside master-planned", area: "henderson", tiers: ["mid", "upper"], tags: ["family", "views"] },
+  { slug: "the-ridges-summerlin", name: "The Ridges", city: "Las Vegas", note: "Summerlin guard-gated estates", area: "summerlin", tiers: ["ultra"], tags: ["guardGated", "views"] },
+  { slug: "lake-las-vegas", name: "Lake Las Vegas", city: "Henderson", note: "Waterfront resort living", area: "henderson", tiers: ["mid", "upper", "ultra"], tags: ["waterfront", "views", "golf"] },
+  { slug: "summerlin", name: "Summerlin", city: "Las Vegas", note: "Flagship master plan", area: "summerlin", tiers: ["mid", "upper"], tags: ["family", "newBuild"] },
   { slug: "anthem", name: "Anthem", city: "Henderson", note: "Hillside master-planned", area: "henderson", tiers: ["value", "mid"], tags: ["family"] },
-  { slug: "southern-highlands", name: "Southern Highlands", city: "Las Vegas", note: "Master-planned golf", area: "sw-lv", tiers: ["mid", "luxury"], tags: ["golf", "family"] },
+  { slug: "southern-highlands", name: "Southern Highlands", city: "Las Vegas", note: "Master-planned golf", area: "sw-lv", tiers: ["mid", "upper"], tags: ["golf", "family"] },
   { slug: "inspirada", name: "Inspirada", city: "Henderson", note: "Newer master-planned", area: "henderson", tiers: ["mid"], tags: ["family", "newBuild"] },
   { slug: "green-valley", name: "Green Valley", city: "Henderson", note: "Established master plan", area: "henderson", tiers: ["value", "mid"], tags: ["family"] },
   { slug: "boulder-city", name: "Boulder City", city: "Boulder City", note: "Historic small-town", area: "boulder-city", tiers: ["value", "mid"], tags: ["family", "space"] },
-  { slug: "the-summit-club", name: "The Summit Club", city: "Las Vegas", note: "Private club, ultra-luxury", area: "summerlin", tiers: ["ultra"], tags: ["guardGated", "golf", "luxury"] },
-  { slug: "red-rock-country-club", name: "Red Rock Country Club", city: "Las Vegas", note: "Guard-gated golf", area: "summerlin", tiers: ["luxury", "ultra"], tags: ["guardGated", "golf", "luxury"] },
+  { slug: "the-summit-club", name: "The Summit Club", city: "Las Vegas", note: "Private golf club community", area: "summerlin", tiers: ["ultra"], tags: ["guardGated", "golf", "views"] },
+  { slug: "red-rock-country-club", name: "Red Rock Country Club", city: "Las Vegas", note: "Guard-gated golf", area: "summerlin", tiers: ["upper", "ultra"], tags: ["guardGated", "golf", "views"] },
   { slug: "sun-city-summerlin", name: "Sun City Summerlin", city: "Las Vegas", note: "55+ active adult", area: "summerlin", tiers: ["value", "mid"], tags: ["active55"] },
   { slug: "mountains-edge", name: "Mountain's Edge", city: "Las Vegas", note: "Southwest master plan", area: "sw-lv", tiers: ["value", "mid"], tags: ["family", "newBuild"] },
   { slug: "skye-canyon", name: "Skye Canyon", city: "Las Vegas", note: "Newer outdoorsy master plan", area: "nw-lv", tiers: ["value", "mid"], tags: ["family", "newBuild"] },
   { slug: "cadence", name: "Cadence", city: "Henderson", note: "Newer master-planned", area: "henderson", tiers: ["value", "mid"], tags: ["family", "newBuild"] },
-  { slug: "rhodes-ranch", name: "Rhodes Ranch", city: "Las Vegas", note: "Guard-gated golf", area: "sw-lv", tiers: ["mid", "luxury"], tags: ["guardGated", "golf", "family"] },
+  { slug: "rhodes-ranch", name: "Rhodes Ranch", city: "Las Vegas", note: "Guard-gated golf", area: "sw-lv", tiers: ["mid", "upper"], tags: ["guardGated", "golf", "family"] },
   { slug: "providence", name: "Providence", city: "Las Vegas", note: "Northwest master plan", area: "nw-lv", tiers: ["value", "mid"], tags: ["family", "newBuild"] },
   { slug: "centennial-hills", name: "Centennial Hills", city: "Las Vegas", note: "Established northwest", area: "nw-lv", tiers: ["value", "mid"], tags: ["family"] },
   { slug: "aliante", name: "Aliante", city: "North Las Vegas", note: "Master-planned value", area: "n-lv", tiers: ["value", "mid"], tags: ["family"] },
-  { slug: "tuscany", name: "Tuscany", city: "Henderson", note: "Guard-gated community", area: "henderson", tiers: ["mid", "luxury"], tags: ["guardGated", "family"] },
+  { slug: "tuscany", name: "Tuscany", city: "Henderson", note: "Guard-gated community", area: "henderson", tiers: ["mid", "upper"], tags: ["guardGated", "family"] },
   { slug: "silverado-ranch", name: "Silverado Ranch", city: "Las Vegas", note: "Established value", area: "sw-lv", tiers: ["value", "mid"], tags: ["family"] },
   { slug: "spring-valley", name: "Spring Valley", city: "Las Vegas", note: "Central-west established", area: "w-lv", tiers: ["value", "mid"], tags: ["family"] },
   { slug: "solera-at-anthem", name: "Solera at Anthem", city: "Henderson", note: "Guard-gated 55+", area: "henderson", tiers: ["mid"], tags: ["active55", "guardGated"] },
   { slug: "sun-city-aliante", name: "Sun City Aliante", city: "North Las Vegas", note: "55+ active adult", area: "n-lv", tiers: ["value", "mid"], tags: ["active55"] },
-  { slug: "queensridge", name: "Queensridge", city: "Las Vegas", note: "Guard-gated luxury", area: "w-lv", tiers: ["luxury", "ultra"], tags: ["guardGated", "luxury"] },
-  { slug: "the-lakes", name: "The Lakes", city: "Las Vegas", note: "Waterfront community", area: "w-lv", tiers: ["mid", "luxury"], tags: ["waterfront", "family"] },
-  { slug: "roma-hills", name: "Roma Hills", city: "Henderson", note: "Guard-gated hillside", area: "henderson", tiers: ["luxury"], tags: ["guardGated", "luxury"] },
+  { slug: "queensridge", name: "Queensridge", city: "Las Vegas", note: "Guard-gated estates", area: "w-lv", tiers: ["upper", "ultra"], tags: ["guardGated", "views"] },
+  { slug: "the-lakes", name: "The Lakes", city: "Las Vegas", note: "Waterfront community", area: "w-lv", tiers: ["mid", "upper"], tags: ["waterfront", "family"] },
+  { slug: "roma-hills", name: "Roma Hills", city: "Henderson", note: "Guard-gated hillside", area: "henderson", tiers: ["upper"], tags: ["guardGated", "views"] },
   { slug: "peccole-ranch", name: "Peccole Ranch", city: "Las Vegas", note: "Established master plan", area: "w-lv", tiers: ["mid"], tags: ["family"] },
-  { slug: "spanish-trail", name: "Spanish Trail", city: "Las Vegas", note: "Guard-gated country club", area: "w-lv", tiers: ["mid", "luxury"], tags: ["guardGated", "golf", "luxury"] },
-  { slug: "spanish-hills", name: "Spanish Hills", city: "Las Vegas", note: "Guard-gated luxury", area: "sw-lv", tiers: ["luxury", "ultra"], tags: ["guardGated", "luxury"] },
-  { slug: "reverence", name: "Reverence", city: "Las Vegas", note: "Summerlin guard-gated, newer", area: "summerlin", tiers: ["luxury"], tags: ["guardGated", "newBuild", "luxury"] },
-  { slug: "tournament-hills", name: "Tournament Hills", city: "Las Vegas", note: "Summerlin guard-gated luxury", area: "summerlin", tiers: ["luxury", "ultra"], tags: ["guardGated", "luxury", "golf"] },
+  { slug: "spanish-trail", name: "Spanish Trail", city: "Las Vegas", note: "Guard-gated country club", area: "w-lv", tiers: ["mid", "upper"], tags: ["guardGated", "golf", "views"] },
+  { slug: "spanish-hills", name: "Spanish Hills", city: "Las Vegas", note: "Guard-gated estates", area: "sw-lv", tiers: ["upper", "ultra"], tags: ["guardGated", "views"] },
+  { slug: "reverence", name: "Reverence", city: "Las Vegas", note: "Summerlin guard-gated, newer", area: "summerlin", tiers: ["upper"], tags: ["guardGated", "newBuild", "views"] },
+  { slug: "tournament-hills", name: "Tournament Hills", city: "Las Vegas", note: "Summerlin guard-gated estates", area: "summerlin", tiers: ["upper", "ultra"], tags: ["guardGated", "views", "golf"] },
   { slug: "sun-city-anthem", name: "Sun City Anthem", city: "Henderson", note: "55+ active adult", area: "henderson", tiers: ["value", "mid"], tags: ["active55"] },
-  { slug: "anthem-country-club", name: "Anthem Country Club", city: "Henderson", note: "Guard-gated golf", area: "henderson", tiers: ["mid", "luxury", "ultra"], tags: ["guardGated", "golf", "luxury"] },
-  { slug: "green-valley-ranch", name: "Green Valley Ranch", city: "Henderson", note: "Master-planned, The District", area: "henderson", tiers: ["mid", "luxury"], tags: ["family"] },
+  { slug: "anthem-country-club", name: "Anthem Country Club", city: "Henderson", note: "Guard-gated golf", area: "henderson", tiers: ["mid", "upper", "ultra"], tags: ["guardGated", "golf", "views"] },
+  { slug: "green-valley-ranch", name: "Green Valley Ranch", city: "Henderson", note: "Master-planned, The District", area: "henderson", tiers: ["mid", "upper"], tags: ["family"] },
   { slug: "whitney-ranch", name: "Whitney Ranch", city: "Henderson", note: "Established value", area: "henderson", tiers: ["value"], tags: ["family"] },
-  { slug: "the-cliffs", name: "The Cliffs", city: "Las Vegas", note: "Modern desert village", area: "summerlin", tiers: ["mid", "luxury"], tags: ["newBuild", "luxury"] },
-  { slug: "stonebridge", name: "Stonebridge", city: "Las Vegas", note: "Newer Summerlin village", area: "summerlin", tiers: ["mid", "luxury"], tags: ["newBuild", "family"] },
-  { slug: "lone-mountain", name: "Lone Mountain", city: "Las Vegas", note: "Larger lots & custom homes", area: "nw-lv", tiers: ["mid", "luxury"], tags: ["space"] },
-  { slug: "the-willows", name: "The Willows", city: "Las Vegas", note: "Established Summerlin village", area: "summerlin", tiers: ["mid", "luxury"], tags: ["family"] },
+  { slug: "the-cliffs", name: "The Cliffs", city: "Las Vegas", note: "Modern desert village", area: "summerlin", tiers: ["mid", "upper"], tags: ["newBuild", "views"] },
+  { slug: "stonebridge", name: "Stonebridge", city: "Las Vegas", note: "Newer Summerlin village", area: "summerlin", tiers: ["mid", "upper"], tags: ["newBuild", "family"] },
+  { slug: "lone-mountain", name: "Lone Mountain", city: "Las Vegas", note: "Larger lots & custom homes", area: "nw-lv", tiers: ["mid", "upper"], tags: ["space"] },
+  { slug: "the-willows", name: "The Willows", city: "Las Vegas", note: "Established Summerlin village", area: "summerlin", tiers: ["mid", "upper"], tags: ["family"] },
 ];
 
 export type MatchAnswers = {

@@ -46,11 +46,11 @@ export const guides: Guide[] = [
       {
         heading: "2. Choose the Right Area",
         body: [
-          "The valley is a patchwork of distinct communities, each with its own character and price point. Summerlin and Henderson anchor the luxury and family markets, while areas closer to the Strip and Downtown appeal to buyers who want walkability and nightlife.",
+          "The valley is a patchwork of distinct communities, each with its own character and price point. Summerlin and Henderson anchor the master-planned and family markets, while areas closer to the Strip and Downtown appeal to buyers who want walkability and nightlife.",
         ],
         bullets: [
-          "Henderson — family-friendly master plans, top schools, and guard-gated luxury like Ascaya and MacDonald Highlands.",
-          "Summerlin — a large master-planned community on the west side with parks, trails, and The Ridges at its luxury tier.",
+          "Henderson — family-friendly master plans, top schools, and guard-gated communities like Ascaya and MacDonald Highlands.",
+          "Summerlin — a large master-planned community on the west side with parks, trails, and guard-gated enclaves like The Ridges.",
           "Southwest & Mountain's Edge — newer construction and strong value for move-up buyers.",
           "Lake Las Vegas — resort-style living around the water in eastern Henderson.",
         ],
@@ -71,7 +71,7 @@ export const guides: Guide[] = [
     faqs: [
       {
         q: "How much do I need for a down payment in Las Vegas?",
-        a: "It depends on your loan program. Conventional loans often start around 3–5% down, FHA around 3.5%, and VA loans can be zero down for eligible buyers. Luxury and jumbo purchases typically require more. A local lender can outline your options.",
+        a: "It depends on your loan program. Conventional loans often start around 3–5% down, FHA around 3.5%, and VA loans can be zero down for eligible buyers. Jumbo purchases typically require more. A local lender can outline your options.",
       },
       {
         q: "How long does it take to buy a home in Las Vegas?",
@@ -113,7 +113,7 @@ export const guides: Guide[] = [
       {
         heading: "3. Market to the Right Buyers",
         body: [
-          "A strong plan combines MLS syndication, targeted digital advertising, and your agent's local network. For luxury and guard-gated homes, reaching the right buyer pool matters as much as broad exposure — a specialist who knows the community's buyers has a real edge.",
+          "A strong plan combines MLS syndication, targeted digital advertising, and your agent's local network. For larger and guard-gated homes, reaching the right buyer pool matters as much as broad exposure — a specialist who knows the community's buyers has a real edge.",
         ],
       },
       {
@@ -162,10 +162,10 @@ export const guides: Guide[] = [
       {
         heading: "Where to Live",
         body: [
-          "The valley is a collection of distinct areas. Henderson and Summerlin are the anchors for master-planned and luxury living, while newer southwest communities offer modern construction and value. Consider commute, amenities, and the character of each community.",
+          "The valley is a collection of distinct areas. Henderson and Summerlin are the anchors for master-planned and guard-gated living, while newer southwest communities offer modern construction and value. Consider commute, amenities, and the character of each community.",
         ],
         bullets: [
-          "Henderson — master-planned communities, established amenities, and guard-gated luxury like Ascaya and MacDonald Highlands.",
+          "Henderson — master-planned communities, established amenities, and guard-gated communities like Ascaya and MacDonald Highlands.",
           "Summerlin — west-side master plan with parks, trails, and Downtown Summerlin.",
           "Lake Las Vegas — waterfront resort living in eastern Henderson.",
           "Southwest & Southern Highlands — newer construction and golf-community options.",
@@ -217,7 +217,7 @@ export const guides: Guide[] = [
       {
         heading: "Consider Henderson If…",
         body: [
-          "You want established master-planned communities, a wide range of amenities, and access to guard-gated luxury like Ascaya, MacDonald Highlands, and Lake Las Vegas. Henderson is frequently recognized for its parks, trails, and community planning.",
+          "You want established master-planned communities, a wide range of amenities, and access to guard-gated communities like Ascaya, MacDonald Highlands, and Lake Las Vegas. Henderson is frequently recognized for its parks, trails, and community planning.",
         ],
       },
       {
@@ -482,7 +482,7 @@ export const guides: Guide[] = [
           "Conventional — flexible terms, often as little as 3–5% down for qualified buyers.",
           "FHA — lower credit and down-payment thresholds (commonly 3.5% down).",
           "VA — zero down and no PMI for eligible veterans and military.",
-          "Jumbo — for luxury purchases above conforming loan limits, with stricter qualifying.",
+          "Jumbo — for purchases above conforming loan limits, with stricter qualifying.",
         ],
       },
       {
@@ -499,7 +499,7 @@ export const guides: Guide[] = [
       },
       {
         q: "How much down payment do I need?",
-        a: "It varies: conventional loans can start around 3–5%, FHA around 3.5%, and VA can be zero down for eligible buyers. Luxury and jumbo purchases typically require more.",
+        a: "It varies: conventional loans can start around 3–5%, FHA around 3.5%, and VA can be zero down for eligible buyers. Jumbo purchases typically require more.",
       },
       {
         q: "Should I get pre-approved before house hunting?",
@@ -531,7 +531,7 @@ export const guides: Guide[] = [
       {
         heading: "Budgeting for HOA Dues",
         body: [
-          "HOA dues are a real part of your monthly cost, and they vary widely — modest in some master plans, higher in luxury guard-gated communities with extensive amenities. Always factor dues into your affordability math, and review what they cover so you understand the value you're getting.",
+          "HOA dues are a real part of your monthly cost, and they vary widely — modest in some master plans, higher in guard-gated communities with extensive amenities. Always factor dues into your affordability math, and review what they cover so you understand the value you're getting.",
         ],
       },
       {
@@ -544,7 +544,7 @@ export const guides: Guide[] = [
     faqs: [
       {
         q: "How much are HOA fees in Las Vegas?",
-        a: "They vary widely by community and amenities — from modest monthly dues in some master plans to higher fees in luxury guard-gated communities. Always confirm the current dues for any specific home.",
+        a: "They vary widely by community and amenities — from modest monthly dues in some master plans to higher fees in guard-gated communities. Always confirm the current dues for any specific home.",
       },
       {
         q: "What do HOA dues cover?",
@@ -929,7 +929,7 @@ export const guides: Guide[] = [
     seoDescription: "Compare Henderson's best neighborhoods by price, amenities, and lifestyle — from Green Valley and Seven Hills to Lake Las Vegas and MacDonald Highlands.",
     h1: "Best Neighborhoods in Henderson, NV",
     eyebrow: "Neighborhood Guide",
-    intro: "Henderson spans a wide range of master-planned communities in the southeast Las Vegas Valley, from value-priced neighborhoods to ultra-luxury guard-gated enclaves. Here is how the most-searched Henderson areas compare on price, amenities, and setting.",
+    intro: "Henderson spans a wide range of master-planned communities in the southeast Las Vegas Valley, from value-priced neighborhoods to guard-gated hillside enclaves. Here is how the most-searched Henderson areas compare on price, amenities, and setting.",
     readMinutes: 9,
     sections: [
       {
@@ -972,13 +972,13 @@ export const guides: Guide[] = [
       {
         heading: "Lake Las Vegas",
         body: [
-          "[Lake Las Vegas](/communities/lake-las-vegas) is built around a private lake and offers a resort-style setting with waterfront homes, condos, golf courses, and a pedestrian village. It's a distinct lifestyle choice within Henderson, with pricing spanning from condos to high-end waterfront estates.",
+          "[Lake Las Vegas](/communities/lake-las-vegas) is built around a private lake and offers a resort-style setting with waterfront homes, condos, golf courses, and a pedestrian village. It's a distinct lifestyle choice within Henderson, with pricing spanning from condos to waterfront custom estates.",
         ],
       },
       {
-        heading: "MacDonald Highlands & Ascaya (Luxury, Guard-Gated)",
+        heading: "MacDonald Highlands & Ascaya (Guard-Gated)",
         body: [
-          "For buyers focused on Henderson's ultra-luxury tier, [MacDonald Highlands](/communities/macdonald-highlands) and [Ascaya](/communities/ascaya) are the two premier guard-gated hillside enclaves, both offering sweeping Strip and valley views and custom estate homes.",
+          "For buyers interested in Henderson's hillside custom homes, [MacDonald Highlands](/communities/macdonald-highlands) and [Ascaya](/communities/ascaya) are the two best-known guard-gated hillside enclaves, both offering sweeping Strip and valley views and custom estate homes.",
           "These communities represent the top of the Henderson price range, with lot premiums tied to view corridors and elevation.",
         ],
         bullets: [
@@ -997,13 +997,13 @@ export const guides: Guide[] = [
       {
         heading: "Whitney Ranch (Value)",
         body: [
-          "[Whitney Ranch](/communities/whitney-ranch) sits in southeast Henderson and is often highlighted by buyers looking for relative value, with parks, trails, and a mix of home sizes at generally lower price points than the hillside luxury communities.",
+          "[Whitney Ranch](/communities/whitney-ranch) sits in southeast Henderson and is often highlighted by buyers looking for relative value, with parks, trails, and a mix of home sizes at generally lower price points than the hillside communities.",
         ],
       },
       {
         heading: "How to Choose the Right Henderson Neighborhood",
         body: [
-          "Start by ranking your priorities: budget, commute, gated privacy, golf access, lake or view lots, or a newer build. Established areas like Green Valley trade newer finishes for location and price; luxury enclaves like MacDonald Highlands and Ascaya trade higher cost for views and privacy.",
+          "Start by ranking your priorities: budget, commute, gated privacy, golf access, lake or view lots, or a newer build. Established areas like Green Valley trade newer finishes for location and price; guard-gated hillside communities like MacDonald Highlands and Ascaya trade higher cost for views and privacy.",
           "Once you have a shortlist, get a current sense of what your existing home could sell for with a free [home value estimate](/home-value), and reach out through our [contact page](/contact) to schedule tours and get up-to-date pricing across any of these Henderson neighborhoods.",
         ],
       },
@@ -1015,7 +1015,7 @@ export const guides: Guide[] = [
       },
       {
         q: "What is a more affordable area to buy in Henderson?",
-        a: "Whitney Ranch and parts of Green Valley tend to offer relative value compared to Henderson's hillside luxury communities, while still providing parks, trails, and community amenities.",
+        a: "Whitney Ranch and parts of Green Valley tend to offer relative value compared to Henderson's hillside communities, while still providing parks, trails, and community amenities.",
       },
       {
         q: "Is Lake Las Vegas part of Henderson?",

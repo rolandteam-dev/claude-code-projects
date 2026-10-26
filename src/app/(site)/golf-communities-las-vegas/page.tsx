@@ -85,7 +85,7 @@ export default function GolfPillar() {
               Golf Communities in Las Vegas
             </h1>
             <p className="mt-5 max-w-[580px] text-[1.15rem] leading-relaxed text-[#d9dbe0]">
-              Private country clubs and golf-course homes across the valley — from guard-gated luxury to
+              Private country clubs and golf-course homes across the valley — from guard-gated estates to
               approachable public-course living.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">

@@ -6,9 +6,9 @@ import { JsonLd } from "@/components/JsonLd";
 import { breadcrumbSchema } from "@/lib/schema";
 
 export const metadata: Metadata = {
-  title: "Las Vegas & Henderson Luxury Communities",
+  title: "Las Vegas & Henderson Communities",
   description:
-    "Explore the top luxury and guard-gated communities in Las Vegas and Henderson, NV — Ascaya, MacDonald Highlands, Seven Hills, The Ridges, and more.",
+    "Explore the top guard-gated and master-planned communities in Las Vegas and Henderson, NV — Ascaya, MacDonald Highlands, Seven Hills, The Ridges, and more.",
   alternates: { canonical: "/communities" },
 };
 
@@ -28,7 +28,7 @@ export default function CommunitiesIndex() {
             Las Vegas &amp; Henderson&apos;s finest communities
           </h1>
           <p className="mt-4 max-w-[640px] text-[var(--color-ink-soft)]">
-            From ultra-luxury guard-gated estates to established master plans, explore the neighborhoods that
+            From guard-gated estates to established master plans, explore the neighborhoods that
             define Southern Nevada living — with local insight on each.
           </p>
         </Container>

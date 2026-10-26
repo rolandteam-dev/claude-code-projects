@@ -13,15 +13,15 @@ import { site } from "@/lib/site";
 const homeFaqs = [
   {
     q: "Who is The Roland Team?",
-    a: "The Roland Team | LPT Realty is a Top 1% Las Vegas real estate team led by Mike Roland, with 1,000+ homes sold. We serve buyers and sellers at every price point, including luxury and guard-gated communities across Southern Nevada — including Ascaya, MacDonald Highlands, The Ridges, and Summerlin — and helps buyers and sellers across every price point in the Las Vegas Valley.",
+    a: "The Roland Team | LPT Realty is a Top 1% Las Vegas real estate team led by Mike Roland, with 1,000+ homes sold. We serve buyers and sellers at every price point, including guard-gated and master-planned communities across Southern Nevada — including Ascaya, MacDonald Highlands, The Ridges, and Summerlin.",
   },
   {
     q: "What areas does The Roland Team serve?",
-    a: "The Roland Team serves the entire Las Vegas Valley, including Las Vegas, Henderson, Summerlin, North Las Vegas, and Boulder City, with deep expertise in the region's luxury, guard-gated, and master-planned communities.",
+    a: "The Roland Team serves the entire Las Vegas Valley, including Las Vegas, Henderson, Summerlin, North Las Vegas, and Boulder City, with deep expertise in the region's guard-gated and master-planned communities.",
   },
   {
-    q: "Does The Roland Team specialize in luxury and guard-gated communities?",
-    a: "Yes. The team focuses on Southern Nevada's most sought-after luxury and guard-gated communities — such as Ascaya and MacDonald Highlands in Henderson and The Ridges and The Summit Club in Summerlin — while also representing buyers and sellers of family homes and new construction throughout the valley.",
+    q: "Does The Roland Team specialize in guard-gated communities?",
+    a: "Yes. The team focuses on Southern Nevada's guard-gated communities — such as Ascaya and MacDonald Highlands in Henderson and The Ridges and The Summit Club in Summerlin — while also representing buyers and sellers of family homes and new construction throughout the valley.",
   },
   {
     q: "How do I choose the right real estate team in Las Vegas or Henderson?",
@@ -138,7 +138,7 @@ export default function Home() {
             {/* Buyers */}
             <div className="group relative overflow-hidden rounded-[4px] border border-[var(--color-line-dark)]">
               <div className="img-zoom relative h-[420px]">
-                <Image src={heroImages.luxuryEstate} alt="Luxury estate in Las Vegas" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
+                <Image src={heroImages.featuredEstate} alt="Estate home in Las Vegas" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[rgba(14,16,20,0.94)] via-[rgba(14,16,20,0.55)] to-[rgba(14,16,20,0.25)]" />
               </div>
               <div className="absolute inset-x-0 bottom-0 p-8">
@@ -154,7 +154,7 @@ export default function Home() {
             {/* Sellers */}
             <div className="group relative overflow-hidden rounded-[4px] border border-[var(--color-line-dark)]">
               <div className="img-zoom relative h-[420px]">
-                <Image src={heroImages.estate} alt="Selling a luxury home in Henderson" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
+                <Image src={heroImages.estate} alt="Selling a home in Henderson" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[rgba(14,16,20,0.94)] via-[rgba(14,16,20,0.55)] to-[rgba(14,16,20,0.25)]" />
               </div>
               <div className="absolute inset-x-0 bottom-0 p-8">
@@ -238,7 +238,7 @@ export default function Home() {
       <Container size="narrow" className="py-24">
         <JsonLd data={faqSchema(homeFaqs)} />
         <div className="eyebrow">About The Roland Team</div>
-        <h2 className="mt-3 text-[2.2rem]">Las Vegas &amp; Henderson luxury, answered</h2>
+        <h2 className="mt-3 text-[2.2rem]">Las Vegas &amp; Henderson real estate, answered</h2>
         <div className="mt-8">
           {homeFaqs.map((f) => (
             <details key={f.q} className="border-b border-[var(--color-line)] py-5">
