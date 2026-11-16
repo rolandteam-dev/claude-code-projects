@@ -23,6 +23,12 @@ import {
   yearsSince,
 } from "../../src/lib/distress/parse.ts";
 import { scoreParcel, looksInstitutional, liveSignals, WEIGHTS, STACK_BONUS } from "../../src/lib/distress/score.ts";
+import {
+  parseRecorderCsv,
+  classifyDocument,
+  pickOwner,
+  FORECLOSURE_SIGNALS,
+} from "../../src/lib/distress/recorder.ts";
 
 let passed = 0;
 function test(name, fn) {
@@ -207,6 +213,79 @@ test("several code violations", () => {
     NOW,
   );
   assert.equal(r.score, WEIGHTS.code_violation + 10);
+});
+
+/* ------------------------------------------------- treasurer delinquent list */
+test("treasurer list: owner of record and amount due", () => {
+  const m = mapHeaders(["Parcel Number", "Owner of Record", "Amount Due"]);
+  assert.equal(m.fields.apn, 0);
+  assert.equal(m.fields.ownerName, 1);
+  const row = mapRow(["999-99-999-002", "SAMPLE, PAT", "$1,234.5"], m);
+  assert.equal(row.apn, "99999999002");
+  assert.equal(row.ownerName, "SAMPLE, PAT");
+  assert.equal(row.detail, "$1,234.50 due");
+  assert.equal(row.eventDate, undefined); // the import's asOf date fills this in
+});
+
+/* ----------------------------------------------------- recorder documents */
+// Header row as the Recorder's results grid titles it. All rows are made up.
+const REC_HEADERS = "First Party Name,First Cross Party Name,# Pages,Instrument#,Document Type,Modifier,Record Date,Parcel #,Remarks,Total Value";
+
+test("recorder: owner is whichever party isn't the lienholder", () => {
+  assert.deepEqual(pickOwner("SAMPLE, PAT", "EXAMPLE RIDGE HOMEOWNERS ASSOCIATION"), {
+    owner: "SAMPLE, PAT",
+    lienholder: "EXAMPLE RIDGE HOMEOWNERS ASSOCIATION",
+  });
+  assert.equal(pickOwner("EXAMPLE DEFAULT SERVICES LLC", "SAMPLE, LEE").owner, "SAMPLE, LEE");
+  assert.equal(pickOwner("EXAMPLE TRUSTEE CORP", "SAMPLE FAMILY TRUST").owner, "SAMPLE FAMILY TRUST");
+});
+
+test("recorder: document types map to signals", () => {
+  assert.deepEqual(classifyDocument("DEFAULT", "", "EXAMPLE HOMEOWNERS ASSOCIATION"), {
+    kind: "add",
+    type: "hoa_default",
+    label: "HOA default",
+  });
+  assert.equal(classifyDocument("DEFAULT & ELECTION TO SELL", "", "EXAMPLE TRUSTEE SERVICES").type, "nod");
+  assert.equal(classifyDocument("NOTICE OF TRUSTEE SALE", "", "").type, "trustee_sale");
+  assert.equal(classifyDocument("LIS PENDENS", "", "").type, "lis_pendens");
+  assert.deepEqual(classifyDocument("DEFAULT", "RESCISSION", "").types, ["nod", "hoa_default"]);
+  assert.deepEqual(classifyDocument("NOTICE OF TRUSTEE SALE", "CANCELLATION", "").types, ["trustee_sale"]);
+  assert.deepEqual(classifyDocument("TRUSTEE DEED", "", "").types, FORECLOSURE_SIGNALS);
+  assert.equal(classifyDocument("BETS/DETS REFUND", "", "").kind, "ignore");
+  assert.equal(classifyDocument("DEED OF TRUST", "", "").kind, "ignore");
+});
+
+test("recorder: parse an export", () => {
+  const csv = [
+    REC_HEADERS,
+    '"SAMPLE, PAT",EXAMPLE RIDGE HOMEOWNERS ASSOCIATION,4,209911130000001,DEFAULT,,11/13/2026,999-99-999-003,,$0.00',
+    'EXAMPLE DEFAULT SERVICES LLC,"SAMPLE, LEE",2,209911130000002,DEFAULT,RESCISSION,11/13/2026,999-99-999-004,,$0.00',
+    '"SAMPLE, KIM",EXAMPLE BANK NA,30,209911130000003,DEED OF TRUST,,11/13/2026,999-99-999-005,,$0.00',
+    '"SAMPLE, ROBIN",EXAMPLE TRUSTEE CORP,2,209911130000004,NOTICE OF TRUSTEE SALE,,11/13/2026,,,$0.00',
+  ].join("\n");
+  const p = parseRecorderCsv(csv);
+  assert.deepEqual(p.missing, []);
+  assert.equal(p.rows, 4);
+  assert.equal(p.records.length, 2);
+  assert.equal(p.ignored, 1);
+  assert.deepEqual(p.ignoredTypes, ["DEED OF TRUST"]);
+  assert.equal(p.skippedNoApn, 1);
+  const [hoa, rescind] = p.records;
+  assert.equal(hoa.apn, "99999999003");
+  assert.equal(hoa.recordDate, "2026-11-13");
+  assert.equal(hoa.action.type, "hoa_default");
+  assert.equal(rescind.action.kind, "clear");
+});
+
+test("recorder: missing columns are reported", () => {
+  assert.deepEqual(parseRecorderCsv("Name,Date\nX,1/1/2026").missing, ["docType", "recordDate", "apn"]);
+});
+
+test("HOA default scores below a lender default and still stacks with a sale", () => {
+  assert.ok(WEIGHTS.hoa_default < WEIGHTS.nod);
+  const r = scoreParcel([sig("hoa_default", "2026-10-01"), sig("trustee_sale", "2026-11-01")], {}, NOW);
+  assert.equal(r.score, WEIGHTS.hoa_default + WEIGHTS.trustee_sale + 20 + STACK_BONUS);
 });
 
 console.log(`${passed} passed${process.exitCode ? ", some FAILED" : ""}`);

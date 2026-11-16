@@ -35,7 +35,13 @@ export const MAX_IMPORT_ROWS = 20_000;
 
 export async function importList(
   csv: string,
-  opts: { list: SignalType; source: string; blankDnc: BlankDncPolicy },
+  opts: {
+    list: SignalType;
+    source: string;
+    blankDnc: BlankDncPolicy;
+    /** YYYY-MM-DD the whole list is current as of, used when a row has no date of its own. */
+    asOf?: string;
+  },
 ): Promise<ImportResult> {
   const table = parseCsv(csv);
   const warnings: string[] = [];
@@ -113,7 +119,7 @@ export async function importList(
     signals.push({
       parcelKey: key,
       ref: `${opts.source}:${opts.list}`,
-      signal: { type: opts.list, source: opts.source, eventDate: row.eventDate, detail: row.detail },
+      signal: { type: opts.list, source: opts.source, eventDate: row.eventDate ?? opts.asOf, detail: row.detail },
     });
     for (const p of row.phones) {
       phones.push({ parcelKey: key, phone: p, source: opts.source });

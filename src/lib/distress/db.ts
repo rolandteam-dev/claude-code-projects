@@ -294,6 +294,31 @@ export async function upsertSignalsBulk(list: SignalUpsert[]): Promise<void> {
   }
 }
 
+/**
+ * Remove signals of the given types from a parcel when they were recorded on
+ * or before `before` (YYYY-MM-DD): a rescinded default, a cancelled sale, a
+ * completed foreclosure. Undated signals are left alone. Returns rows removed.
+ */
+export async function clearSignalsBefore(
+  list: { parcelKey: string; types: SignalType[]; before: string }[],
+): Promise<number> {
+  if (list.length === 0) return 0;
+  await ensureSchema();
+  const s = sql();
+  let n = 0;
+  for (const c of list) {
+    const res = await s`
+      DELETE FROM distress_signals
+      WHERE parcel_key = ${c.parcelKey}
+        AND type = ANY(${c.types})
+        AND event_date IS NOT NULL
+        AND event_date <= ${c.before}
+    `;
+    n += res.count;
+  }
+  return n;
+}
+
 export type PhoneUpsert = { parcelKey: string; phone: PhoneRecord; source: string };
 
 const DNC_RANK: Record<DncStatus, number> = { unknown: 0, clear: 1, listed: 2 };

@@ -6,10 +6,12 @@
  * ("stacked") score highest. See docs/seller-engine.md.
  */
 export type SignalType =
-  | "nod" // notice of default recorded
+  | "nod" // lender notice of default recorded
+  | "hoa_default" // HOA / community association notice of default (NRS 116)
   | "trustee_sale" // notice of trustee's sale recorded / auction scheduled
   | "probate" // probate case opened for the owner
   | "tax_delinquent" // on the Treasurer's delinquent list
+  | "lis_pendens" // lawsuit affecting title recorded against the parcel
   | "code_violation" // open code-enforcement case
   | "vacant" // vendor vacancy flag
   | "expired" // MLS listing expired / withdrawn
@@ -17,9 +19,11 @@ export type SignalType =
 
 export const SIGNAL_TYPES: readonly SignalType[] = [
   "nod",
+  "hoa_default",
   "trustee_sale",
   "probate",
   "tax_delinquent",
+  "lis_pendens",
   "code_violation",
   "vacant",
   "expired",

@@ -131,7 +131,8 @@ type Field =
   | "mailZip"
   | "lastSaleDate"
   | "eventDate"
-  | "detail";
+  | "detail"
+  | "amountDue";
 
 /** Accepted header spellings, compared after lowercasing and stripping symbols. */
 const ALIASES: Record<Field, string[]> = {
@@ -141,7 +142,23 @@ const ALIASES: Record<Field, string[]> = {
   zip: ["propertyzip", "propertyzipcode", "zip", "zipcode", "situszip", "sitezip", "postalcode"],
   ownerFirst: ["owner1firstname", "ownerfirstname", "firstname", "owner1first"],
   ownerLast: ["owner1lastname", "ownerlastname", "lastname", "owner1last"],
-  ownerName: ["owner1fullname", "ownerfullname", "ownername", "owner", "owner1name", "owner1", "ownernames"],
+  ownerName: [
+    "owner1fullname",
+    "ownerfullname",
+    "ownername",
+    "owner",
+    "owner1name",
+    "owner1",
+    "ownernames",
+    // County Treasurer delinquent list
+    "ownerofrecord",
+    "nameofownerofrecord",
+    "ownerofrecordname",
+    "nameofowner",
+    "ownersname",
+    "taxpayer",
+    "taxpayername",
+  ],
   mailAddress: ["mailingaddress", "mailaddress", "ownermailingaddress", "mailingstreet", "mailingstreetaddress"],
   mailCity: ["mailingcity", "mailcity", "ownermailingcity"],
   mailState: ["mailingstate", "mailstate", "ownermailingstate"],
@@ -165,6 +182,17 @@ const ALIASES: Record<Field, string[]> = {
     "statusdate",
   ],
   detail: ["detail", "description", "violation", "casenumber", "documentnumber", "instrumentnumber", "notes"],
+  amountDue: [
+    "amountdue",
+    "totaldue",
+    "totalamountdue",
+    "amountowed",
+    "balancedue",
+    "delinquentamount",
+    "totaldelinquent",
+    "taxesdue",
+    "amount",
+  ],
 };
 
 const DNC_LISTED = new Set(["y", "yes", "true", "1", "dnc", "listed", "on", "x"]);
@@ -271,6 +299,20 @@ export function readDnc(values: string[], hasColumn: boolean, blank: BlankDncPol
   return "clear";
 }
 
+/** "$1,234.5" or "1234.50" -> "$1,234.50 due"; anything else -> "". */
+export function formatAmount(raw: string): string {
+  const s = raw.replace(/[$,\s]/g, "");
+  if (!/^\d+(\.\d+)?$/.test(s)) return "";
+  const n = Number(s);
+  if (!Number.isFinite(n) || n <= 0) return "";
+  return `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} due`;
+}
+
+function joinDetail(...parts: string[]): string | undefined {
+  const out = parts.filter(Boolean).join(" · ");
+  return out || undefined;
+}
+
 function cell(r: string[], i: number | undefined): string {
   return i === undefined ? "" : (r[i] ?? "").trim();
 }
@@ -309,7 +351,7 @@ export function mapRow(r: string[], m: ImportMapping, blank: BlankDncPolicy = "u
     mailZip: cell(r, f.mailZip).slice(0, 5),
     lastSaleDate: normalizeDate(cell(r, f.lastSaleDate)),
     eventDate: normalizeDate(cell(r, f.eventDate)),
-    detail: cell(r, f.detail) || undefined,
+    detail: joinDetail(cell(r, f.detail), formatAmount(cell(r, f.amountDue))),
     phones,
   };
 }
