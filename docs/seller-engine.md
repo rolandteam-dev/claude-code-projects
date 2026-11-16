@@ -23,8 +23,8 @@ program (TCPA, federal + NV Do Not Call, NRS 228.590/600, NRS 645F) before
      "https://home.therolandteam.com/api/admin/distress/import?key=$ADMIN_TOKEN&list=nod&source=propstream"
    ```
 
-   `list` is one of `nod`, `trustee_sale`, `probate`, `tax_delinquent`,
-   `code_violation`, `vacant`, `expired`, `fsbo`. Re-uploading the same list
+   `list` is one of `nod`, `hoa_default`, `trustee_sale`, `probate`,
+   `tax_delinquent`, `lis_pendens`, `code_violation`, `vacant`, `expired`, `fsbo`. Re-uploading the same list
    refreshes it instead of duplicating it. An owner on several lists stacks.
    Keep files under ~4 MB (Vercel's request limit) and 20,000 rows; split bigger
    exports. The response lists which columns were recognised and warns when
@@ -35,7 +35,53 @@ program (TCPA, federal + NV Do Not Call, NRS 228.590/600, NRS 645F) before
    `&blankDnc=clear` only after you've confirmed that your export leaves the cell
    blank for clean numbers (and fills it for listed ones).
 
-2. **City of Las Vegas code violations** (`/api/cron/distress-code-sync`, weekly,
+2. **County Recorder default notices (free, daily, by hand).** Each weekday
+   morning, on the Recorder's public record search (AcclaimWeb → Search →
+   Document Type), pick these document types and set From/To to the last
+   recording day:
+
+   - DEFAULT (DEF)
+   - DEFAULT & ELECTION TO SELL (DETS)
+   - BREACH & ELECTION TO SELL (BETS)
+   - NOTICE OF TRUSTEE SALE (NTS)
+   - LIS PENDENS (LISP)
+   - TRUSTEE DEED (TSD)
+
+   Click **Export to CSV**, then upload the file:
+
+   ```
+   curl -X POST -H "Content-Type: text/csv" --data-binary @recorder.csv \
+     "https://home.therolandteam.com/api/admin/distress/recorder?key=$ADMIN_TOKEN&dryRun=1"
+   ```
+
+   Drop `&dryRun=1` to save. A default becomes `nod` (lender) or `hoa_default`
+   (filed by an association or its collection agent); a trustee-sale notice
+   becomes `trustee_sale`; a lis pendens becomes `lis_pendens`. A row whose
+   Modifier says RESCISSION (or a cancellation/release) removes the matching
+   notice, and a trustee's deed or deed in lieu removes every foreclosure signal,
+   because the owner no longer owns the home. The homeowner is whichever party
+   isn't a lender, trustee, servicer or HOA. These rows carry an APN and owner
+   name but **no address or phone**: they become callable when the same APN
+   comes in on a phone-bearing upload (PropStream). Re-uploading a day is safe.
+
+   Why by hand: the Recorder publishes no bulk feed and no terms for automated
+   access. Get the attorney's view before anyone scripts this search.
+
+3. **County Treasurer delinquent-tax list (free, once a year).** The Treasurer
+   publishes the list each May (parcel number, owner of record, amount due) as
+   PDF and Excel. Save the Excel file as CSV and upload it with the list's
+   "as of" date, so it ages out on schedule:
+
+   ```
+   curl -X POST -H "Content-Type: text/csv" --data-binary @delinquent.csv \
+     "https://home.therolandteam.com/api/admin/distress/import?key=$ADMIN_TOKEN&list=tax_delinquent&source=treasurer&asOf=2026-05-06"
+   ```
+
+   The amount due goes into the signal's detail. Owners who have since paid stay
+   on the list until it ages out (540 days), so check the Treasurer's site before
+   a caller leans on it.
+
+4. **City of Las Vegas code violations** (`/api/cron/distress-code-sync`, weekly,
    off unless `DISTRESS_ENGINE_ENABLED=true`). Free ArcGIS feed. **As of Nov 2026
    its newest case is Feb 27 2024**, so it adds almost nothing today. These
    parcels carry no phones; they only matter when the same APN also arrives on a
@@ -44,8 +90,9 @@ program (TCPA, federal + NV Do Not Call, NRS 228.590/600, NRS 645F) before
 ## Scoring (`src/lib/distress/score.ts`)
 
 Points per live signal (older signals age out): trustee sale 60, NOD 40,
-probate 30, tax delinquent 20, code violation 15, expired 15, vacant 10, FSBO 10.
-Bonuses: +15 per extra list stacked, +20 NOD + trustee sale, +10 several code
+probate 30, HOA default 25, tax delinquent 20, lis pendens 20, code violation
+15, expired 15, vacant 10, FSBO 10. Bonuses: +15 per extra list stacked, +20
+default (lender or HOA) + trustee sale, +10 several code
 cases, +10 absentee owner, +10 owned 10+ years. Banks, GSEs, HOAs and
 government owners score 0. Trusts and LLCs are kept.
 

@@ -9,9 +9,13 @@ import type { ParcelFacts, Signal, SignalType } from "./types";
 
 export const WEIGHTS: Record<SignalType, number> = {
   nod: 40,
+  // Most HOA defaults are a few months of unpaid dues and get paid off, so they
+  // count for less than a lender default until the pilot says otherwise.
+  hoa_default: 25,
   trustee_sale: 60,
   probate: 30,
   tax_delinquent: 20,
+  lis_pendens: 20,
   code_violation: 15,
   vacant: 10,
   expired: 15,
@@ -35,9 +39,11 @@ export const LONG_OWNERSHIP_YEARS = 10;
  */
 export const MAX_AGE_DAYS: Record<SignalType, number> = {
   nod: 270,
+  hoa_default: 270,
   trustee_sale: 120,
   probate: 730,
   tax_delinquent: 540,
+  lis_pendens: 365,
   code_violation: 730,
   vacant: 365,
   expired: 365,
@@ -46,9 +52,11 @@ export const MAX_AGE_DAYS: Record<SignalType, number> = {
 
 const SIGNAL_LABEL: Record<SignalType, string> = {
   nod: "Notice of default",
+  hoa_default: "HOA notice of default",
   trustee_sale: "Trustee sale scheduled",
   probate: "Probate",
   tax_delinquent: "Tax delinquent",
+  lis_pendens: "Lis pendens (lawsuit on title)",
   code_violation: "Open code violation",
   vacant: "Vacant",
   expired: "Expired listing",
@@ -97,7 +105,7 @@ export function scoreParcel(signals: Signal[], facts: ParcelFacts = {}, now: Dat
   for (const t of lists) {
     parts.push({ points: WEIGHTS[t], reason: signalLabel(t) });
   }
-  if (lists.includes("nod") && lists.includes("trustee_sale")) {
+  if ((lists.includes("nod") || lists.includes("hoa_default")) && lists.includes("trustee_sale")) {
     parts.push({ points: NOD_PLUS_SALE_BONUS, reason: "Default and sale both recorded" });
   }
   const violations = new Set(
