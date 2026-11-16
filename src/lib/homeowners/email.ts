@@ -81,6 +81,21 @@ function html(h: Homeowner): string {
   </div>`;
 }
 
+/** Subject for the value email — leads with the change when meaningful, never a
+ * loss. Exported so the admin value-email test route can show the real subject. */
+export function valueEmailSubject(h: Homeowner): string {
+  const appr = appreciation(h);
+  const city = h.city || "Las Vegas";
+  return appr && appr.abs >= 1000
+    ? `Your ${city} home is up about ${money(appr.abs)}`
+    : `Your ${city} home — my latest estimate`;
+}
+
+/** The value-email body HTML, exposed for the admin value-email preview/test. */
+export function renderValueEmailHtml(h: Homeowner): string {
+  return html(h);
+}
+
 function welcomeHtml(h: Homeowner, reason: "requested" | "seller-lead" = "requested"): string {
   const latest = latestEstimate(h);
   const url = dashboardUrl(h.token);
@@ -255,14 +270,7 @@ export async function sendValueEmail(h: Homeowner): Promise<{ sent: boolean; rea
   const from = fromAddress(); // e.g. "Mike Roland <mike@therolandteam.com>"
   if (!key || !from) return { sent: false, reason: "email not configured" };
   if (!h.email || !latestEstimate(h)) return { sent: false, reason: "missing email or estimate" };
-  // Lead the subject with the change when it's meaningful; a static dollar figure
-  // that's even a little off kills trust before they open. Never lead with a loss.
-  const appr = appreciation(h);
-  const city = h.city || "Las Vegas";
-  const subject =
-    appr && appr.abs >= 1000
-      ? `Your ${city} home is up about ${money(appr.abs)}`
-      : `Your ${city} home — my latest estimate`;
+  const subject = valueEmailSubject(h);
   try {
     const resend = new Resend(key);
     const { error } = await resend.emails.send({
