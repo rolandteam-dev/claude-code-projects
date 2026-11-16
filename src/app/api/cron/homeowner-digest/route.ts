@@ -65,12 +65,22 @@ async function run(req: Request) {
   const sourceParam = (url.searchParams.get("source") ?? "").trim();
   const sources = sourceParam ? new Set(sourceParam.split(",").map((s) => s.trim()).filter(Boolean)) : null;
   const engagedOnly = url.searchParams.get("engaged") === "1";
-  const hasSegment = !!sources || engagedOnly;
+
+  // Warm-first (default): stop the recurring blast to people who never engage —
+  // they tank deliverability for everyone else. A contact who has already had
+  // HOMEOWNER_DIGEST_COLD_CAP digests (default 3) and has NEVER opened their
+  // dashboard is held back until a deliberate win-back. Engaged contacts, and
+  // newer ones still inside their first few touches, keep going. `?all=1` ignores
+  // this and reaches the whole eligible list.
+  const includeCold = url.searchParams.get("all") === "1";
+  const coldCap = Math.max(1, Math.trunc(Number(process.env.HOMEOWNER_DIGEST_COLD_CAP ?? 3)) || 3);
+  const warmFirst = !includeCold && !engagedOnly;
 
   // Push the batch cap into the query so we don't load ~22k eligible rows just to
-  // send 50 (SQL also orders engaged-first + filters obvious ineligibles). When
-  // a segment filter is active, over-fetch a bounded working set so the in-app
-  // filter can still fill the batch.
+  // send 50 (SQL also orders engaged-first + filters obvious ineligibles). When a
+  // filter is active, over-fetch a bounded working set so it can still fill the
+  // batch after the in-app filters run.
+  const hasSegment = !!sources || engagedOnly || warmFirst;
   const fetchLimit = hasSegment ? Math.min(2000, Math.max(limit * 20, 500)) : limit;
   const due = await store.listDueForEmail(Number.isFinite(days) ? days : 14, fetchLimit);
 
@@ -80,6 +90,15 @@ async function run(req: Request) {
   const skippedIneligible = due.length - eligibleList.length;
   if (sources) eligibleList = eligibleList.filter((h) => sources.has(h.source));
   if (engagedOnly) eligibleList = eligibleList.filter((h) => (h.views?.length ?? 0) > 0);
+
+  // Hold back the chronically-unengaged (engaged OR still within the first
+  // coldCap touches survive).
+  let skippedCold = 0;
+  if (warmFirst) {
+    const before = eligibleList.length;
+    eligibleList = eligibleList.filter((h) => (h.views?.length ?? 0) > 0 || (h.emailCount ?? 0) < coldCap);
+    skippedCold = before - eligibleList.length;
+  }
 
   const batch = eligibleList.slice(0, limit);
   const remaining = Math.max(0, eligibleList.length - batch.length);
@@ -117,7 +136,8 @@ async function run(req: Request) {
     due: due.length,
     eligible: eligibleList.length,
     skippedIneligible,
-    segment: { source: sourceParam || null, engagedOnly },
+    skippedCold,
+    segment: { source: sourceParam || null, engagedOnly, warmFirst, coldCap },
     limit,
     attempted: batch.length,
     refreshed,
