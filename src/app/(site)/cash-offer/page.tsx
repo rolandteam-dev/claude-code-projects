@@ -5,6 +5,7 @@ import { HeroBg } from "@/components/HeroBg";
 import { heroImages } from "@/lib/heroImages";
 import { breadcrumbSchema, faqSchema } from "@/lib/schema";
 import { CashOfferForm } from "@/components/CashOfferForm";
+import { ProofBlock } from "@/components/ProofBlock";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -71,7 +72,7 @@ export default function CashOfferPage() {
         <Container size="wide" className="relative z-10 grid items-center gap-10 py-16 md:grid-cols-2 md:py-20">
           <div className="max-w-[540px]">
             <div className="font-sans text-[0.76rem] uppercase tracking-[0.24em] text-[var(--color-gold-2)]">
-              Sellers
+              Sellers · The Roland Team · {site.brokerage}
             </div>
             <h1 className="mt-3 font-serif text-[2.9rem] font-semibold leading-[1.03] text-white md:text-[3.5rem]">
               Get a cash offer on your home
@@ -89,6 +90,10 @@ export default function CashOfferPage() {
           <CashOfferForm />
         </Container>
       </section>
+
+      <Container size="wide" className="py-8">
+        <ProofBlock />
+      </Container>
 
       <section className="bg-[var(--color-sand)]">
         <Container size="wide" className="py-16">
