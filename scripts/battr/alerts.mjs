@@ -21,7 +21,7 @@ export const ADMIN_MESSAGE = "At risk leads need to be worked ASAP or they will 
  */
 export function buildAgentDigests(
   results,
-  { sendWhen = "any_non_compliant", excludeGroupIds = [], sweepDays, sweptIds = new Set(), unanswered = [] } = {}
+  { sendWhen = "any_non_compliant", excludeGroupIds = [], sweepDays, sweptIds = new Set(), unanswered = [], sweepsStartOn = null } = {}
 ) {
   const byAgent = new Map();
   const excluded = new Set(excludeGroupIds.map(Number));
@@ -69,10 +69,23 @@ export function buildAgentDigests(
   const digests = [...byAgent.values()];
   const total = (d) => d.atRisk.length + d.neglected.length + d.swept.length + d.unanswered.length;
   if (sendWhen === "any_non_compliant") {
-    return digests.filter((d) => total(d) > 0).map((d) => ({ ...d, sweepDays }));
+    return digests.filter((d) => total(d) > 0).map((d) => ({ ...d, sweepDays, sweepsStartOn }));
   }
-  return digests.map((d) => ({ ...d, sweepDays }));
+  return digests.map((d) => ({ ...d, sweepDays, sweepsStartOn }));
 }
+
+/**
+ * "Sweeping next run" is only true once sweeping has started. While it is held
+ * (rules.sweepsStartOn) the digest names the day instead, so agents are not told
+ * their leads go tonight when they do not.
+ */
+const sweepWhen = (digest) => {
+  if (!digest.sweepsStartOn) return "next run";
+  const day = new Date(`${digest.sweepsStartOn}T12:00:00Z`).toLocaleDateString("en-US", {
+    weekday: "short", month: "short", day: "numeric", timeZone: "UTC",
+  });
+  return `from ${day}`;
+};
 
 const line = (r) =>
   `  • ${r.name}${r.daysSinceTouch !== undefined ? ` — ${r.daysSinceTouch} days quiet` : ""}${r.source ? ` (${r.source})` : ""}`;
@@ -92,7 +105,7 @@ export function renderDigestText(digest) {
     parts.push(...digest.unanswered.map(waitLine), "");
   }
   if (digest.neglected.length) {
-    parts.push(`SWEEPING NEXT RUN (${digest.neglected.length}) — reach out today to keep these:`);
+    parts.push(`SWEEPING ${sweepWhen(digest).toUpperCase()} (${digest.neglected.length}) — reach out today to keep these:`);
     parts.push(...digest.neglected.map(line), "");
   }
   if (digest.atRisk.length) {
@@ -126,7 +139,7 @@ export function renderDigestHtml(digest) {
     digest.unanswered?.length
       ? `<h3>They contacted you, nobody came back (${digest.unanswered.length})</h3><p style="color:#666">Call these first.</p>${waitList(digest.unanswered)}</p>`
       : "",
-    digest.neglected.length ? `<h3>Sweeping next run (${digest.neglected.length})</h3>${list(digest.neglected)}` : "",
+    digest.neglected.length ? `<h3>Sweeping ${sweepWhen(digest)} (${digest.neglected.length})</h3>${list(digest.neglected)}` : "",
     digest.atRisk.length ? `<h3>At risk (${digest.atRisk.length})</h3>${list(digest.atRisk)}` : "",
     digest.swept?.length
       ? `<h3>Moved to the pond tonight (${digest.swept.length})</h3><p style="color:#666">No longer assigned to you.</p>${list(digest.swept)}`
@@ -184,7 +197,7 @@ export async function deliverDigests(digests, { channel = "report_only", fub, us
         const total = digest.atRisk.length + digest.neglected.length + (digest.unanswered?.length ?? 0);
         const name =
           `Battr: ${total} of your leads need outreach` +
-          (digest.neglected.length ? ` (${digest.neglected.length} sweeping next run)` : "");
+          (digest.neglected.length ? ` (${digest.neglected.length} sweeping ${sweepWhen(digest)})` : "");
 
         if (!dry) {
           await fub.request("POST", "/tasks", {

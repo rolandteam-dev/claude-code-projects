@@ -24,7 +24,7 @@ import { normalizeContact } from "./contact.mjs";
 import { isDayAllowed } from "./schedule.mjs";
 import { lists, listById, memberListsOf, reportOnlyLists, TIMEFRAMES, TIMEFRAME_IDS } from "./lists.mjs";
 import { detectAtBats, summarizeAgents, formatRate } from "./atbats.mjs";
-import { buildAgentDigests, deliverDigests, renderDigestText, digestSubject } from "./alerts.mjs";
+import { buildAgentDigests, deliverDigests, renderDigestText, renderDigestHtml, digestSubject } from "./alerts.mjs";
 import { describeError, fromAddress, mailConfigured } from "./email.mjs";
 import { parseCsv, findColumn, mapRows } from "./import-atbats.mjs";
 import { bucketForSource, bucketName, isSourceAudited, leadBuckets, unmappedPolicy } from "./sources.mjs";
@@ -551,6 +551,15 @@ check("the backfill cap cannot ration a normal night", () => {
   );
   // And our own run audited 909, more than any Battr night on record.
   assert.ok(rules.maxTextBackfill >= 909, "our own 14 Sep run audited 909; the cap must clear that too");
+});
+
+check("agent digests say when sweeping starts while it is held, and 'next run' once it has", () => {
+  const base = { agent: "A", agentId: 1, atRisk: [], neglected: [{ id: 1, name: "X Lead", daysSinceTouch: 20 }], swept: [], unanswered: [] };
+  const held = renderDigestText({ ...base, sweepsStartOn: "2026-11-20" });
+  assert.match(held, /SWEEPING FROM FRI, NOV 20 \(1\)/);
+  assert.doesNotMatch(held, /NEXT RUN/);
+  assert.match(renderDigestHtml({ ...base, sweepsStartOn: "2026-11-20" }), /Sweeping from Fri, Nov 20 \(1\)/);
+  assert.match(renderDigestText({ ...base, sweepsStartOn: null }), /SWEEPING NEXT RUN \(1\)/);
 });
 
 check("sweeping has a start date: nudges only before it, and the gate sits beside the pinned ones", () => {
