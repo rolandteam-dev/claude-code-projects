@@ -48,6 +48,9 @@ function ensureSchema(): Promise<void> {
         last_emailed_at timestamptz,
         first_emailed_at timestamptz,
         email_count int NOT NULL DEFAULT 0,
+        email_consent boolean,
+        call_text_consent boolean,
+        dnc boolean,
         estimates jsonb NOT NULL DEFAULT '[]'::jsonb,
         views jsonb NOT NULL DEFAULT '[]'::jsonb
       )
@@ -55,6 +58,10 @@ function ensureSchema(): Promise<void> {
       // Migrate tables created before send-count tracking was added.
       .then(() => s`ALTER TABLE homeowners ADD COLUMN IF NOT EXISTS first_emailed_at timestamptz`)
       .then(() => s`ALTER TABLE homeowners ADD COLUMN IF NOT EXISTS email_count int NOT NULL DEFAULT 0`)
+      // Consent / DNC (nullable: NULL = unknown, honored as an existing relationship).
+      .then(() => s`ALTER TABLE homeowners ADD COLUMN IF NOT EXISTS email_consent boolean`)
+      .then(() => s`ALTER TABLE homeowners ADD COLUMN IF NOT EXISTS call_text_consent boolean`)
+      .then(() => s`ALTER TABLE homeowners ADD COLUMN IF NOT EXISTS dnc boolean`)
       .then(() => undefined);
   }
   return ready;
@@ -84,6 +91,9 @@ function rowToHomeowner(r: any): Homeowner {
     lastEmailedAt: r.last_emailed_at ? new Date(r.last_emailed_at).toISOString() : undefined,
     firstEmailedAt: r.first_emailed_at ? new Date(r.first_emailed_at).toISOString() : undefined,
     emailCount: r.email_count != null ? Number(r.email_count) : 0,
+    emailConsent: r.email_consent ?? undefined,
+    callTextConsent: r.call_text_consent ?? undefined,
+    dnc: r.dnc ?? undefined,
     estimates: (r.estimates ?? []) as EstimatePoint[],
     views: (r.views ?? []) as string[],
   };
@@ -143,6 +153,7 @@ export const postgresStore: HomeownerStore = {
               AND email LIKE '%@%.%'
               AND email NOT LIKE 'noemail-%'
               AND email NOT LIKE '%@notvalidemail.com'
+              AND (email_consent IS DISTINCT FROM false)
             ORDER BY (jsonb_array_length(COALESCE(views, '[]'::jsonb)) > 0) DESC, updated_at DESC
             LIMIT ${limit}
           `
@@ -154,6 +165,7 @@ export const postgresStore: HomeownerStore = {
               AND email LIKE '%@%.%'
               AND email NOT LIKE 'noemail-%'
               AND email NOT LIKE '%@notvalidemail.com'
+              AND (email_consent IS DISTINCT FROM false)
             ORDER BY (jsonb_array_length(COALESCE(views, '[]'::jsonb)) > 0) DESC, updated_at DESC
           `;
     return rows.map(rowToHomeowner);
@@ -165,12 +177,13 @@ export const postgresStore: HomeownerStore = {
       INSERT INTO homeowners (
         id, token, first_name, last_name, email, phone, address, city, state, zip,
         beds, baths, sqft, subscribed, source, fub_person_id, created_at, updated_at,
-        last_emailed_at, estimates, views
+        last_emailed_at, email_consent, call_text_consent, dnc, estimates, views
       ) VALUES (
         ${h.id}, ${h.token}, ${h.firstName}, ${h.lastName}, ${h.email}, ${h.phone ?? null},
         ${h.address}, ${h.city}, ${h.state}, ${h.zip}, ${h.beds ?? null}, ${h.baths ?? null},
         ${h.sqft ?? null}, ${h.subscribed}, ${h.source}, ${h.fubPersonId ?? null},
         ${h.createdAt}, now(), ${h.lastEmailedAt ?? null},
+        ${h.emailConsent ?? null}, ${h.callTextConsent ?? null}, ${h.dnc ?? null},
         ${sql().json(h.estimates)}, ${sql().json(h.views)}
       )
       ON CONFLICT (token) DO UPDATE SET
@@ -178,7 +191,11 @@ export const postgresStore: HomeownerStore = {
         email = EXCLUDED.email, phone = EXCLUDED.phone, address = EXCLUDED.address,
         city = EXCLUDED.city, state = EXCLUDED.state, zip = EXCLUDED.zip,
         beds = EXCLUDED.beds, baths = EXCLUDED.baths, sqft = EXCLUDED.sqft,
-        source = EXCLUDED.source, fub_person_id = EXCLUDED.fub_person_id, updated_at = now()
+        source = EXCLUDED.source, fub_person_id = EXCLUDED.fub_person_id, updated_at = now(),
+        -- never let a blank form submission erase a consent we already captured
+        email_consent = COALESCE(EXCLUDED.email_consent, homeowners.email_consent),
+        call_text_consent = COALESCE(EXCLUDED.call_text_consent, homeowners.call_text_consent),
+        dnc = COALESCE(EXCLUDED.dnc, homeowners.dnc)
     `;
     const saved = await this.getByToken(h.token);
     return saved ?? h;

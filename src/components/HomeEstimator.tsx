@@ -147,6 +147,8 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
           beds: Number(f.beds) || undefined,
           sqft: Number(f.sqft) || undefined,
           source: "home-value",
+          // Requesting value updates is the explicit opt-in to that email stream.
+          emailConsent: true,
           initialEstimate: estimate ? { value: estimate.mid, low: estimate.low, high: estimate.high } : undefined,
         }),
       });
@@ -255,7 +257,8 @@ export function HomeEstimator({ showCmaButton = true }: { showCmaButton?: boolea
               {trackStatus === "sending" ? "Setting up…" : estimate ? "Track my home value" : "Create my dashboard"}
             </button>
             <p className="text-center font-sans text-[0.62rem] text-[var(--color-muted)]">
-              Periodic value updates from {site.name}. Unsubscribe anytime.
+              By creating your dashboard you agree to receive periodic home-value emails from {site.name}.
+              Unsubscribe anytime. We never sell your information.
             </p>
           </div>
         </form>

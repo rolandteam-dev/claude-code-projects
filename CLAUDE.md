@@ -78,6 +78,12 @@ organically for community/neighborhood and buyer/seller search terms.
 - Every homeowner-facing link, page and email uses `homeownerBrand.baseUrl`, which falls back to `https://home.therolandteam.com` (`HOMEOWNER_ORIGIN`) — **never** `site.url`. `site.url` is the rolandluxury.com marketing site and stays that way; do not point homeowner links, phone numbers or admin checks at it.
 - With `MARKETING_HOSTS` set, `/dashboard`, `/embed` and `/admin` on a rolandluxury.com host 308 to the homeowner host (middleware). API routes are never redirected.
 
+## Consent & contact permissions
+- The homeowner model carries three nullable consent fields (`emailConsent`, `callTextConsent`, `dnc` — `src/lib/homeowners/store.ts`). **`undefined`/NULL = unknown**, treated as an existing relationship and still mailable (so the imported database and legacy rows are unaffected). `false` is an explicit opt-out.
+- **The value digest honors an explicit email opt-out:** `listDueForEmail` excludes `emailConsent === false` (memory) / `email_consent IS DISTINCT FROM false` (Postgres). It does **not** gate on `dnc` — DNC is a calls/texts flag; CAN-SPAM email with an unsubscribe link is still allowed.
+- **Web forms capture consent as separate, optional, unchecked checkboxes** (Fair-Housing / TCPA-aligned): `LeadForm` and `CashOfferForm` collect an ongoing-email opt-in and a call/text opt-in. The "track my home" step (`HomeEstimator`) sets `emailConsent: true` because requesting value updates *is* the opt-in to that stream.
+- **Consent reflects to FUB as tags** the team's automations/agents can key on: **`Email Opt-In`** and **`Call/Text OK`** (added in `/api/lead` and `/api/homeowners/cash-offer`). `dnc` is set by a DNC scrub / import / admin, not a public form.
+
 ## Roadmap (next)
 - Client Portal on real auth + a database (hubs that follow a client across devices; per-agent dashboard access)
 - Live IDX/MLS listing search integration

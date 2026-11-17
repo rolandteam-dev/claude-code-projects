@@ -24,6 +24,9 @@ type LeadInput = {
   tag?: string; // single tag (back-compat)
   tags?: string[] | string; // one or more tags (array or comma-separated)
   source?: string;
+  // Consent checkboxes (FormData sends "on" when checked; absent when not).
+  emailConsent?: boolean | string;
+  callTextConsent?: boolean | string;
 };
 
 const CORS = {
@@ -63,10 +66,17 @@ export async function POST(req: Request) {
     lastName = parts.slice(1).join(" ");
   }
 
-  // Merge single `tag` and/or `tags` (array or comma-separated) into a unique list.
+  // Consent capture → CRM tags the team's FUB automations and agents can honor.
+  const emailConsent = data.emailConsent === true || data.emailConsent === "on";
+  const callTextConsent = data.callTextConsent === true || data.callTextConsent === "on";
+
+  // Merge single `tag` and/or `tags` (array or comma-separated) + consent tags
+  // into a unique list.
   const rawTags = [
     ...(Array.isArray(data.tags) ? data.tags : typeof data.tags === "string" ? data.tags.split(",") : []),
     ...(data.tag ? [data.tag] : []),
+    ...(emailConsent ? ["Email Opt-In"] : []),
+    ...(callTextConsent ? ["Call/Text OK"] : []),
   ].map((t) => String(t).trim());
   const tags = [...new Set(rawTags.filter(Boolean))];
 
