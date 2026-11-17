@@ -329,7 +329,8 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     // Reported, not logged. The last two times a number like this went to
     // stderr only, it took days to notice it was wrong.
     lines.push(
-      `- Paused agents: **${passedOver.pausedAgents}** on \`${rules.excludeOwnerTeamNames.join(", ")}\`, ` +
+      `- Paused agents: **${passedOver.pausedAgents}** on \`${rules.excludeOwnerTeamNames.join(", ")}\`` +
+        `${passedOver.pausedNames?.length ? ` (${passedOver.pausedNames.join(", ")})` : ""}, ` +
         `holding ${passedOver.pausedLeads} lead(s) back from nudges and sweeps`
     );
   }
@@ -936,6 +937,9 @@ async function main() {
       }
       passedOver.beforeList = run.excluded.length;
       passedOver.pausedAgents = paused.userIds.size;
+      // Names, so "who is on the paused team?" is answered in the report and not
+      // by opening Follow Up Boss.
+      passedOver.pausedNames = [...paused.userIds].map((id) => users.find((u) => u.id === id)?.name ?? `user #${id}`);
       passedOver.pausedLeads = markedLeads;
       say(`  ${run.records.length} in the combined list, ${run.excluded.length} excluded by bucket/group`);
 
