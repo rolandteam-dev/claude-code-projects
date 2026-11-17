@@ -558,7 +558,7 @@ check("a per-person backfill cannot switch sweeping on by itself", () => {
   // sweeps are held. Turning that into permission to sweep takes the number of
   // leads that can move from zero to non-zero, so it is a human's call. This
   // asserts the opt-in is off and that a complete backfill alone is not enough.
-  assert.equal(rules.sweepOnBackfilledTexts, false, "the opt-in must ship off");
+  assert.equal(rules.sweepOnBackfilledTexts, true, "Mike turned the opt-in on 17 Nov 2026 (Battr cancelled); set it false to hold sweeps again");
 
   const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
 
@@ -2428,13 +2428,15 @@ try {
     );
   });
 
-  check("a complete backfill reports the gap closed and still refuses to act", () => {
-    // Both halves matter. Reporting it closed is what makes the nightly counts
-    // comparable to Battr's; refusing to act on it is what keeps the decision
-    // to start sweeping a human one.
-    assert.match(stderr, /sweeps skipped: last-touch complete via per-person backfill, but rules\.sweepOnBackfilledTexts is off/);
-    assert.match(stderr, /nudges skipped: last-touch complete via per-person backfill/, "the nudge is held on the same terms");
-    assert.doesNotMatch(stdout, /Successfully swept/, "nothing may move");
+  check("with the opt-in on, a complete backfill lets the run act — and the notes carry real day counts", () => {
+    // The gap is reported closed, and because Mike has opted in the run now
+    // plans the nudge and the sweep (a dry run, so nothing is written). The
+    // note text is what an agent reads: it must carry a number, never "undefined".
+    assert.match(stderr, /text backfill: 1 messages over 4 leads/, "the gap is reported closed");
+    assert.match(stderr, /POST \/notes \{"personId":102.*12 days with no outreach\. Source: Zillow Preferred/, "nudge names the day count");
+    assert.match(stderr, /POST \/notes \{"personId":103.*swept to the Shark Tank pond after 40 days with no outreach/, "sweep note names the day count");
+    assert.doesNotMatch(stderr, /undefined days/, "no note may say undefined");
+    assert.doesNotMatch(stdout, /Successfully swept/, "a dry run moves nothing");
   });
 
   check("it separates at-risk from neglected", () => {

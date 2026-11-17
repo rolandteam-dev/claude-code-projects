@@ -98,20 +98,20 @@ export const rules = {
   maxTextBackfill: 1000,
 
   /**
-   * MIKE'S CALL, DELIBERATELY LEFT OFF.
+   * MIKE'S CALL — ON as of 17 Nov 2026.
    *
    * With the backfill above, last-touch is complete for every lead the run
-   * would act on, so the reason sweeps are disabled no longer applies. But
-   * turning that into "sweeps may now proceed" takes the number of leads that
-   * can be swept from zero to non-zero, and that is not a change to make on
-   * anyone's behalf.
+   * would act on, so the reason sweeps were disabled no longer applies. Turning
+   * that into "sweeps may now proceed" takes the number of leads that can be
+   * swept from zero to non-zero, so it was held for Mike. Battr was cancelled
+   * (last run 9 Oct) and nothing has warned or swept since, so Mike turned it on.
    *
-   * Set this to true to let a run sweep on a backfilled touch index. Until
-   * then the report carries the correct at-risk and neglected counts — which
-   * is what makes it comparable to Battr's nightly emails — and still moves
-   * nothing.
+   * It is still safe by construction: a run writes only when BATTR_LIVE is true
+   * (or a run is started with mode "live"), sweeps are capped per run and per
+   * pond, and `undo <run id>` reverses a whole night — notes, stamps and sweeps.
+   * Set this back to false to hold sweeps and nudges again.
    */
-  sweepOnBackfilledTexts: false,
+  sweepOnBackfilledTexts: true,
 
   // ------------------------------------------------------------- sweep targets
   /**

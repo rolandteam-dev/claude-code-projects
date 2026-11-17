@@ -1162,7 +1162,7 @@ async function main() {
   if (!sweepsAllowedToday) log(`  sweeps skipped: ${touchUsable ? `day filter "${rules.sweepDayFilter}"` : touchReason}`);
 
   const sweepLog = { runId, timestamp: new Date().toISOString(), dry, sweeps: [] };
-  // A single-lead test records the lead and the note it wrote, which is all undo needs.
+  // Every nudge records the lead and the note it wrote, which is all undo needs.
   sweepLog.only = only;
   sweepLog.nudges = [];
 
@@ -1182,8 +1182,10 @@ async function main() {
       }
       try {
         const created = await fub.note(lead.id, rules.nudgeNote(lead));
-        if (only !== null) {
-          // What undo needs to put this lead back exactly as it was.
+        {
+          // What undo needs to put this lead back exactly as it was. Recorded
+          // for every nudge, not just a single-lead test, so a whole night's
+          // notes and stamps can be reversed along with its sweeps.
           sweepLog.nudges.push({
             personId: lead.id,
             name: lead.name,
