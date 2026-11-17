@@ -146,11 +146,12 @@ const nurtureList = ({ id, name, timeframe, atRiskDays, neglectedDays }) => ({
  * Clients", 10/13 days, never nudged or swept), so a buyer we were showing homes
  * to could go a month without a call and nothing said so. Mike's rule: speak with
  * someone we have met at least every 5 days, and someone we are showing homes to at
- * least every 3. At risk is ">" that many days since the last real contact; the
- * agent gets the note and the daily email. Neglected (sweepable, after the usual
- * warn-first stamp) stays at 30 days — "if we haven't spoken with that lead in 30
- * days, what are we doing?" — so a quiet week nudges the agent and a quiet month
- * moves the lead. Stages with a live deal (offers, listing, contract) are NOT here.
+ * least every 3. At risk is ">" that many days since the last real contact: the
+ * agent gets the note and the daily email. Neglected (sweepable, and only after the
+ * warn-first stamp) is 3 days later — the same spread as every Battr list — so the
+ * agent always has three days of warning and a lead is never left a month. (First
+ * cut was 30 days; Mike: why give someone a month's break on a buyer we are
+ * showing homes to?) Stages with a live deal (offers, listing, contract) are NOT here.
  */
 const livePipelineList = ({ id, name, stage, atRiskDays, neglectedDays }) => ({
   id,
@@ -216,9 +217,9 @@ export const lists = [
   nurtureList({ id: 1109, name: "👀 Quarterly Nurture", timeframe: TIMEFRAMES.months12plus, atRiskDays: 93, neglectedDays: 96 }),
 
   // Ours (see livePipelineList): the stages Battr never acted on.
-  livePipelineList({ id: 1160, name: "📅 Appointment Set", stage: "Appointment Set", atRiskDays: 5, neglectedDays: 30 }),
-  livePipelineList({ id: 1161, name: "🤝 Met with Customer", stage: "Met with Customer", atRiskDays: 5, neglectedDays: 30 }),
-  livePipelineList({ id: 1162, name: "🏡 Showing Homes", stage: "Showing Homes", atRiskDays: 3, neglectedDays: 30 }),
+  livePipelineList({ id: 1160, name: "📅 Appointment Set", stage: "Appointment Set", atRiskDays: 5, neglectedDays: 8 }),
+  livePipelineList({ id: 1161, name: "🤝 Met with Customer", stage: "Met with Customer", atRiskDays: 5, neglectedDays: 8 }),
+  livePipelineList({ id: 1162, name: "🏡 Showing Homes", stage: "Showing Homes", atRiskDays: 3, neglectedDays: 6 }),
 
   // ─── Battr runs this one; we mirror it ─────────────────────────────────────
   // Observed on the Aida Audits screen for 2 Sep 2026:
