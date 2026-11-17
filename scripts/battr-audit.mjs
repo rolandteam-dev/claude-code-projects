@@ -1154,12 +1154,16 @@ async function main() {
   }
   const nudgesAllowedToday = isDayAllowed(rules.nudgeDayFilter, AUDIT_DAY, rules.timezone) && touchUsable;
   const sweepsAllowedToday = isDayAllowed(rules.sweepDayFilter, AUDIT_DAY, rules.timezone) && touchUsable;
+  // A start date for sweeping, kept apart from the pinned gate above: until it
+  // arrives every night only warns. See rules.sweepsStartOn.
+  const sweepsOnHold = Boolean(rules.sweepsStartOn) && ptDate(AUDIT_DAY) < rules.sweepsStartOn;
   // The test's own gate, kept apart so the two production gates above stay
   // exactly as the selftest pins them. It lifts one condition — the opt-in —
   // and only for the one lead named.
   const testNudgeAllowed = testOverride && isDayAllowed(rules.nudgeDayFilter, AUDIT_DAY, rules.timezone);
   if (!nudgesAllowedToday) log(`  nudges skipped: ${touchUsable ? `day filter "${rules.nudgeDayFilter}"` : touchReason}`);
   if (!sweepsAllowedToday) log(`  sweeps skipped: ${touchUsable ? `day filter "${rules.sweepDayFilter}"` : touchReason}`);
+  if (sweepsOnHold) log(`  sweeps on hold until ${rules.sweepsStartOn} — nudges only until then`);
 
   const sweepLog = { runId, timestamp: new Date().toISOString(), dry, sweeps: [] };
   // Every nudge records the lead and the note it wrote, which is all undo needs.
@@ -1210,7 +1214,7 @@ async function main() {
 
   // 5b. sweep
   const replyDiag = { checks: 0, undirected: 0, budgetSpent: 0, spared: 0, failures: [] };
-  if ((args.stage === "both" || args.stage === "neglected") && sweepsAllowedToday && only === null) {
+  if ((args.stage === "both" || args.stage === "neglected") && !sweepsOnHold && sweepsAllowedToday && only === null) {
     const cap = args.maxSweeps ?? rules.maxSweepsPerRun;
     const replyWindow = new Date(Date.now() - rules.inboundEmailWindowDays * DAY_MS).toISOString();
     /** Sweeps issued to each pond this run, for the cap below. */
@@ -1331,11 +1335,13 @@ async function main() {
       reason: touchUsable ? `day filter "${rules.nudgeDayFilter}"` : incompleteReason(),
     });
   }
-  if (!sweepsAllowedToday && neglected.length && only === null) {
+  if ((!sweepsAllowedToday || sweepsOnHold) && neglected.length && only === null) {
     actions.skipped.push({
       what: "sweeps",
       count: neglected.length,
-      reason: touchUsable ? `day filter "${rules.sweepDayFilter}"` : incompleteReason(),
+      reason: sweepsOnHold
+        ? `sweeping starts ${rules.sweepsStartOn} — nudges only until then`
+        : touchUsable ? `day filter "${rules.sweepDayFilter}"` : incompleteReason(),
     });
   }
 
@@ -1496,7 +1502,7 @@ async function main() {
     actions,
     stage: args.stage,
     nudgesRan: nudgesAllowedToday,
-    sweepsRan: sweepsAllowedToday,
+    sweepsRan: sweepsAllowedToday && !sweepsOnHold,
     stampOf: (id) => (fields.atRiskSince ? peopleById.get(id)?.[fields.atRiskSince] : null) || null,
   });
   const reportPath = await deliverReport(markdown, { runId, dry, stageEmails });

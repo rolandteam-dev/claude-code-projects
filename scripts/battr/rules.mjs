@@ -254,6 +254,14 @@ export const rules = {
    * the weekend's backlog gets one working day of attention before anything is
    * taken away from an agent.
    */
+  /**
+   * No sweeping before this Pacific date (YYYY-MM-DD). Mike, 17 Nov 2026: "Today is
+   * day 1. Let's warn with nudges first." Nothing has warned agents since 9 Oct, so
+   * the first nights only nudge; a lead stamped on the 17th is sweepable on the 20th
+   * (the normal 3-day clock) and this date is that day. Leads that still carry an
+   * old Battr stamp are held back the same three days. Set to null to remove the gate.
+   */
+  sweepsStartOn: "2026-11-20",
   nudgeDayFilter: "Every Day",
   sweepDayFilter: "Weekdays Excluding Monday",
 

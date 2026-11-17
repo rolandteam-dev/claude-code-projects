@@ -553,6 +553,14 @@ check("the backfill cap cannot ration a normal night", () => {
   assert.ok(rules.maxTextBackfill >= 909, "our own 14 Sep run audited 909; the cap must clear that too");
 });
 
+check("sweeping has a start date: nudges only before it, and the gate sits beside the pinned ones", () => {
+  assert.match(rules.sweepsStartOn, /^\d{4}-\d{2}-\d{2}$/, "a PT date, or null to remove the gate");
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /const sweepsOnHold = Boolean\(rules\.sweepsStartOn\) && ptDate\(AUDIT_DAY\) < rules\.sweepsStartOn;/);
+  assert.match(src, /&& !sweepsOnHold && sweepsAllowedToday && only === null\)/, "the sweep loop honours the hold");
+  assert.match(src, /sweepsRan: sweepsAllowedToday && !sweepsOnHold/, "the report says sweeps did not run");
+});
+
 check("a per-person backfill cannot switch sweeping on by itself", () => {
   // The backfill restores a complete touch index, which removes the REASON
   // sweeps are held. Turning that into permission to sweep takes the number of
@@ -2434,7 +2442,15 @@ try {
     // note text is what an agent reads: it must carry a number, never "undefined".
     assert.match(stderr, /text backfill: 1 messages over 4 leads/, "the gap is reported closed");
     assert.match(stderr, /POST \/notes \{"personId":102.*12 days with no outreach\. Source: Zillow Preferred/, "nudge names the day count");
-    assert.match(stderr, /POST \/notes \{"personId":103.*swept to the Shark Tank pond after 40 days with no outreach/, "sweep note names the day count");
+    // Sweeping has a start date (rules.sweepsStartOn). The fixture runs on the real
+    // clock, so expect the hold before that date and the sweep note from it on.
+    const todayPT = new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
+    if (rules.sweepsStartOn && todayPT < rules.sweepsStartOn) {
+      assert.match(stderr, new RegExp(`sweeps on hold until ${rules.sweepsStartOn}`), "sweeps wait for their start date");
+      assert.doesNotMatch(stderr, /POST \/notes \{"personId":103/, "no sweep note while on hold");
+    } else {
+      assert.match(stderr, /POST \/notes \{"personId":103.*swept to the Shark Tank pond after 40 days with no outreach/, "sweep note names the day count");
+    }
     assert.doesNotMatch(stderr, /undefined days/, "no note may say undefined");
     assert.doesNotMatch(stdout, /Successfully swept/, "a dry run moves nothing");
   });
