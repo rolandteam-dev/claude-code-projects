@@ -435,13 +435,13 @@ check("Battr's six lists plus our three live-pipeline lists feed the sweep — n
   );
 });
 
-check("live-pipeline lists: nudge at 5 days (3 for showings), sweepable at 30, and no live deal stage", () => {
+check("live-pipeline lists: nudge at 5 days (3 for showings), sweepable 3 days later, and no live deal stage", () => {
   const get = (name) => lists.find((l) => l.name === name);
   const days = (set) => (set.groups.flat().find((c) => c.transform?.type === "days_since")).value;
   const stageOf = (l) => l.list_filters.groups[0].find((c) => c.field === "stage_name").value;
-  assert.deepEqual([days(get("🤝 Met with Customer").at_risk_filters), days(get("🤝 Met with Customer").neglected_filters)], [5, 30]);
-  assert.deepEqual([days(get("📅 Appointment Set").at_risk_filters), days(get("📅 Appointment Set").neglected_filters)], [5, 30]);
-  assert.deepEqual([days(get("🏡 Showing Homes").at_risk_filters), days(get("🏡 Showing Homes").neglected_filters)], [3, 30]);
+  assert.deepEqual([days(get("🤝 Met with Customer").at_risk_filters), days(get("🤝 Met with Customer").neglected_filters)], [5, 8]);
+  assert.deepEqual([days(get("📅 Appointment Set").at_risk_filters), days(get("📅 Appointment Set").neglected_filters)], [5, 8]);
+  assert.deepEqual([days(get("🏡 Showing Homes").at_risk_filters), days(get("🏡 Showing Homes").neglected_filters)], [3, 6]);
   const covered = ["📅 Appointment Set", "🤝 Met with Customer", "🏡 Showing Homes"].flatMap((n) => stageOf(get(n)));
   for (const live of ["Submitting Offers", "Listing Agreement", "Active Listing", "Under Contract", "Pending", "Closed"]) {
     assert.ok(!covered.includes(live), `${live} is a live deal and must never be swept`);
