@@ -424,7 +424,7 @@ check("Active Leads uses its own 6/9 thresholds, not Hot Leads' 2/4", () => {
 
 check("Battr's six lists plus our five lists feed the sweep — nothing else", () => {
   const { ids, resolved } = memberListsOf(lists.find((l) => l.audit_type === "combined_contact_lists"));
-  assert.equal(ids.length, 11);
+  assert.equal(ids.length, 12);
   assert.deepEqual(
     resolved.map((l) => l.name).sort(),
     [
@@ -432,7 +432,7 @@ check("Battr's six lists plus our five lists feed the sweep — nothing else", (
       // Ours, 17 Nov 2026 (Mike): Battr never acted on these stages.
       "📅 Appointment Set", "🤝 Met with Customer", "🏡 Showing Homes",
       // Ours, 17 Nov 2026 (Mike): no-timeframe Nurture, and Submitting Offers (nudge only).
-      "🕳️ Nurture — no timeframe", "💼 Submitting Offers (nudge only)",
+      "🕳️ Nurture — no timeframe", "💼 Submitting Offers (nudge only)", "🗣️ Spoke with Customer",
     ].sort()
   );
 });
@@ -612,6 +612,20 @@ check("NOCONTACT leads move to Missed Opportunities (early stages only) and are 
   assert.match(src, /!\(isNoContactLead\(r\) && !sweptIds\.has\(r\.id\)\)/, "not in the agent digests");
   assert.match(src, /!sweepsOnHold && sweepsAllowedToday && only === null\) \{\n    const moPond/, "same gates as a sweep");
   assert.match(rules.noContactNote({ pondName: "Missed Opportunities", previousOwner: "A B" }), /NOCONTACT/);
+});
+
+check("Spoke with Customer has its own 7/10 clock, whatever the timeframe; Lead/Attempted older than 10 days is 5/8", () => {
+  const days = (set) => (set.groups.flat().find((c) => c.transform?.type === "days_since")).value;
+  const spoke = lists.find((l) => l.id === 1165);
+  assert.deepEqual([days(spoke.at_risk_filters), days(spoke.neglected_filters)], [7, 10]);
+  assert.ok(!JSON.stringify(spoke.list_filters).includes("timeframe"), "Spoke with Customer must not depend on the timeframe field");
+  const warm = lists.find((l) => l.id === 1104);
+  assert.deepEqual([days(warm.at_risk_filters), days(warm.neglected_filters)], [5, 8]);
+  // The Nurture lists no longer take Spoke with Customer (it would be in two lists).
+  for (const id of [1106, 1107, 1108, 1109, 1163]) {
+    const stage = lists.find((l) => l.id === id).list_filters.groups[0].find((c) => c.field === "stage_name").value;
+    assert.deepEqual(stage, ["Nurture"], `list ${id} covers Nurture only`);
+  }
 });
 
 check("sweeping has a start date: nudges only before it, and the gate sits beside the pinned ones", () => {
@@ -872,7 +886,7 @@ check("each id carries the rules that belong to that list, not just the label", 
 
   const atRiskDays = (list) => list.at_risk_filters.groups[0][0].value;
   assert.equal(atRiskDays(listById(1144)), 2, "Hot Leads warns at 2 days");
-  assert.equal(atRiskDays(listById(1104)), 10, "Warm Back Up warns at 10 days");
+  assert.equal(atRiskDays(listById(1104)), 5, "Warm Back Up warns at 5 days (ours since 17 Nov 2026; Battr's was 10)");
 });
 
 check("observed.mjs agrees with lists.mjs about which id is which", () => {
@@ -1154,7 +1168,7 @@ check("the day filter plus the three-day spread explain every observed night", (
     return comm.value;
   };
   const spreads = memberListsOf(lists.find((l) => l.audit_type === "combined_contact_lists"))
-    .ids.filter((id) => !(id >= 1160 && id <= 1164)) // ours, no Battr night to reconcile
+    .ids.filter((id) => !(id >= 1160 && id <= 1165)) // ours, no Battr night to reconcile
     .map((id) => {
       const l = listById(id);
       return {
@@ -1166,7 +1180,7 @@ check("the day filter plus the three-day spread explain every observed night", (
   for (const { id, name, gap } of spreads) {
     // Our live-pipeline lists (1160-1162) are deliberately wide: a quiet week nudges,
     // a quiet month sweeps. They have no Battr night to reconcile against.
-    if (id >= 1160 && id <= 1164) continue;
+    if (id >= 1160 && id <= 1165) continue;
     const expected = id === 1144 ? 2 : 3;
     assert.equal(gap, expected, `${name}: Battr's observed spread is ${expected} days, not ${gap}`);
   }
@@ -1380,23 +1394,23 @@ check("a lead past the neglected line is neglected, sweep day or not", () => {
   // at-risk by AGEING past the neglected threshold, not by being swept — the
   // sweep is an action taken on the neglected state, not the thing that
   // produces it. Conflating the two is what made the earlier note wrong.
-  const warm = listById(1104); // 10 days to warn, 13 to sweep
+  const warm = listById(1104); // 5 days to warn, 8 to sweep (Battr's was 10/13)
   const build = (quietDays) => {
     const c = normalizeContact(
       { id: 42, stage: "Lead", created: daysAgo(60), assignedUserId: 5, tags: [] },
       { lastOutbound: 0 }
     );
     c.custom_fields.fub.system_lastCommunication = daysAgo(quietDays);
-    c.custom_fields.fub.customBattrAtRiskSince = daysAgo(quietDays - 10);
+    c.custom_fields.fub.customBattrAtRiskSince = daysAgo(Math.max(1, quietDays - 5));
     return c;
   };
 
-  assert.equal(classifyForList(build(11), warm, NOW), "at_risk", "inside the band");
-  assert.equal(classifyForList(build(14), warm, NOW), "neglected", "past the band — regardless of the calendar");
+  assert.equal(classifyForList(build(7), warm, NOW), "at_risk", "inside the band");
+  assert.equal(classifyForList(build(10), warm, NOW), "neglected", "past the band — regardless of the calendar");
 
   // The two tiers are exclusive: nothing is ever both, so a lead that becomes
   // neglected necessarily stops being reported as at-risk that same night.
-  for (const days of [9, 11, 14, 40]) {
+  for (const days of [4, 7, 10, 40]) {
     const status = classifyForList(build(days), warm, NOW);
     assert.ok(["compliant", "at_risk", "neglected"].includes(status), `${days}d produced ${status}`);
   }
@@ -1693,7 +1707,7 @@ check("Warm Back Up picks up early-stage leads older than 10 days", () => {
   };
   assert.equal(classifyForList(build(30, 14), warm, NOW), "neglected");
   assert.equal(classifyForList(build(30, 14, false), warm, NOW), "at_risk", "Warm Back Up carries the interlock too");
-  assert.equal(classifyForList(build(30, 11), warm, NOW), "at_risk");
+  assert.equal(classifyForList(build(30, 7), warm, NOW), "at_risk");
   assert.equal(classifyForList(build(5, 14), warm, NOW), null, "younger than 10 days belongs to Hot Leads");
 });
 
@@ -3500,7 +3514,7 @@ check("the state Battr owns is the state that went missing", () => {
   const warm = allLists.find((l) => l.name.includes("Warm Back Up"));
 
   check("gap: reads each list's own at-risk window off the rule JSON", () => {
-    assert.equal(G.atRiskDaysOf(warm), 10);
+    assert.equal(G.atRiskDaysOf(warm), 5);
     assert.equal(G.atRiskDaysOf(allLists.find((l) => l.name.includes("Hot Leads"))), 2);
     assert.equal(G.atRiskDaysOf(allLists.find((l) => l.name.includes("Quarterly"))), 93);
     assert.equal(G.atRiskDaysOf({}), null);
@@ -3525,7 +3539,7 @@ check("the state Battr owns is the state that went missing", () => {
     assert.equal(g.total, 5, "compliant leads are not counted");
     assert.deepEqual(g.signals, { automatedEmail: 1, recordEdited: 1, divergentSource: 1, unexplained: 2, byRule: 1 });
     assert.deepEqual(g.byAgent.map((a) => [a.agent, a.atRisk, a.unexplained]), [["Agent B", 3, 1], ["Agent A", 2, 1]]);
-    assert.equal(g.byList[0].days, 10);
+    assert.equal(g.byList[0].days, 5);
     assert.deepEqual(g.profileFields, { people: 6, stageField: 0, timeframeField: 0, fieldNames: {} });
   });
 
