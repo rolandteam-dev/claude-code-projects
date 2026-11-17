@@ -279,6 +279,24 @@ export const postgresStore: HomeownerStore = {
     await sql()`UPDATE homeowners SET subscribed = false WHERE token = ${token}`;
   },
 
+  async markDnc(phones, opts) {
+    await ensureSchema();
+    const list = phones.filter((p) => p && p.length === 10);
+    if (list.length === 0) return { matched: 0, applied: 0 };
+    // Match on the last 10 digits of the stored phone (strip formatting in SQL).
+    if (opts?.apply) {
+      const rows = await sql()`
+        UPDATE homeowners SET dnc = true, updated_at = now()
+        WHERE right(regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g'), 10) = ANY(${list})
+        RETURNING token`;
+      return { matched: rows.length, applied: rows.length };
+    }
+    const rows = await sql()`
+      SELECT count(*)::int AS n FROM homeowners
+      WHERE right(regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g'), 10) = ANY(${list})`;
+    return { matched: (rows[0]?.n as number) ?? 0, applied: 0 };
+  },
+
   async claimSellerSend(limit) {
     await ensureSchema();
     await sql()`CREATE TABLE IF NOT EXISTS seller_send_counts (day text PRIMARY KEY, n int NOT NULL DEFAULT 0)`;
