@@ -165,6 +165,9 @@ const livePipelineList = ({ id, name, stage, atRiskDays, neglectedDays }) => ({
   },
 });
 
+/** Our actionable list of no-timeframe Nurture leads (Battr's own CLEAN UP list, 1145, only reports). */
+export const NO_TIMEFRAME_LIST_ID = 1163;
+
 export const lists = [
   {
     id: 1144,
@@ -220,6 +223,46 @@ export const lists = [
   livePipelineList({ id: 1160, name: "📅 Appointment Set", stage: "Appointment Set", atRiskDays: 5, neglectedDays: 8 }),
   livePipelineList({ id: 1161, name: "🤝 Met with Customer", stage: "Met with Customer", atRiskDays: 5, neglectedDays: 8 }),
   livePipelineList({ id: 1162, name: "🏡 Showing Homes", stage: "Showing Homes", atRiskDays: 3, neglectedDays: 6 }),
+
+  // Ours (17 Nov 2026, Mike): Submitting Offers is NUDGE-ONLY. A buyer with offers
+  // going in should hear from the agent at least every 2 days; the agent is told when
+  // they have not. There is no neglected tier, so nothing is ever swept — an empty
+  // tier means "never flag at this tier". Listing Agreement, Active Listing and Under
+  // Contract are deliberately not audited at all (Mike: no nudge needed).
+  {
+    id: 1164,
+    name: "💼 Submitting Offers (nudge only)",
+    audit_type: "contact_list",
+    is_active: true,
+    list_filters: { groups: [[contact("stage_name", "IS ANY OF", ["Submitting Offers"], { value_data_type: "text" }), notInAPond]] },
+    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 2)]] },
+    neglected_filters: { groups: [] },
+  },
+
+  // Ours (17 Nov 2026, Mike): Nurture leads with NO timeframe set — the ~4,100 leads
+  // Battr only reported on (list 1145 below, which still reports). Mike: "30 days of
+  // no communication and we nudge/sweep these also". Same warn-first stamp and +3 day
+  // spread as the rest; capped per night by rules.maxNoTimeframeNudgesPerRun so
+  // thousands of notes do not land on the same night.
+  {
+    id: NO_TIMEFRAME_LIST_ID,
+    name: "🕳️ Nurture — no timeframe",
+    audit_type: "contact_list",
+    is_active: true,
+    list_filters: {
+      groups: [
+        [
+          contact("stage_name", "IS ANY OF", STAGES.nurture, { value_data_type: "text" }),
+          contact(TIMEFRAME, "=", null, { value_data_type: "text" }),
+          notInAPond,
+        ],
+      ],
+    },
+    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 30)]] },
+    neglected_filters: {
+      groups: [[daysSince(LAST_COMM, ">", 33), contact(AT_RISK_SINCE, "!=", null, { value_data_type: "text" })]],
+    },
+  },
 
   // ─── Battr runs this one; we mirror it ─────────────────────────────────────
   // Observed on the Aida Audits screen for 2 Sep 2026:
@@ -282,7 +325,7 @@ export const lists = [
     list_filters: {
       groups: [
         [
-          { object: "battr.aida_lists", field: "source_list_ids", operator: "IS ANY OF", value: [1104, 1106, 1107, 1108, 1109, 1144, 1160, 1161, 1162], value_data_type: "integer" },
+          { object: "battr.aida_lists", field: "source_list_ids", operator: "IS ANY OF", value: [1104, 1106, 1107, 1108, 1109, 1144, 1160, 1161, 1162, 1163, 1164], value_data_type: "integer" },
           contact("lead_bucket_id", "!=", 82, { object: "battr.lead_buckets", value_data_type: "integer" }),
           contact("owner_group_ids", "DOES NOT CONTAIN ANY", [52555], { value_data_type: "integer" }),
         ],

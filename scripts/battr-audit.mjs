@@ -47,7 +47,7 @@ const AUDIT_DAY = auditDate();
  * Battr does, rather than the 1 AM GitHub actually starts at. See schedule.mjs.
  */
 const AUDIT_NOW = auditInstant().getTime();
-import { lists, reportOnlyLists, longestCommWindowDays } from "./battr/lists.mjs";
+import { lists, reportOnlyLists, longestCommWindowDays, NO_TIMEFRAME_LIST_ID } from "./battr/lists.mjs";
 import { bucketName, isSourceAudited } from "./battr/sources.mjs";
 import { needsRules, unseenCount, OBSERVED_DATE } from "./battr/observed.mjs";
 import {
@@ -1174,6 +1174,15 @@ async function main() {
   sweepLog.only = only;
   sweepLog.nudges = [];
 
+  // Do-not-contact leads (rules.noContact*) are moved to a pond, never nudged, and
+  // kept out of the agent digests — "reach out" is the wrong thing to tell an agent
+  // about a lead tagged NOCONTACT.
+  const isNoContactLead = (r) =>
+    Boolean(rules.noContactPond) && hasAny(r.tags ?? [], rules.noContactTags) && hasAny([r.stage], rules.noContactStages);
+  /** No-timeframe Nurture leads not nudged tonight because of the nightly cap; hidden from the digests until they are. */
+  const capHeldIds = new Set();
+  let noTimeframeNudged = 0;
+
   // 5a. nudge
   if ((args.stage === "both" || args.stage === "at-risk") && (nudgesAllowedToday || testNudgeAllowed) && (only === null || testNudgeAllowed)) {
     if (only !== null && !atRisk.some((l) => l.id === only)) {
@@ -1187,6 +1196,14 @@ async function main() {
       if (alreadyFlagged) {
         actions.alreadyFlagged.push(lead);
         continue;
+      }
+      if (isNoContactLead(lead)) continue; // moved to a pond, not nudged
+      if (lead.source_list_ids?.includes(NO_TIMEFRAME_LIST_ID)) {
+        if (noTimeframeNudged >= rules.maxNoTimeframeNudgesPerRun) {
+          capHeldIds.add(lead.id);
+          continue;
+        }
+        noTimeframeNudged++;
       }
       try {
         const created = await fub.note(lead.id, rules.nudgeNote(lead));
@@ -1325,6 +1342,49 @@ async function main() {
       }
     }
   }
+
+  // 5c. Do-not-contact leads → Missed Opportunities. Same gates as a sweep.
+  let noContactHeld = 0;
+  if (rules.noContactPond && (args.stage === "both" || args.stage === "neglected") && !sweepsOnHold && sweepsAllowedToday && only === null) {
+    const moPond = ponds.find((p) => lower(p.name).includes(lower(rules.noContactPond)));
+    if (!moPond) {
+      log(`  NOCONTACT: no pond matching "${rules.noContactPond}" in Follow Up Boss — nothing moved`);
+    } else {
+      const movedAlready = new Set(actions.swept.map((x) => x.personId));
+      let moved = 0;
+      for (const lead of results.filter((r) => (r.status === "at_risk" || r.status === "neglected") && isNoContactLead(r))) {
+        if (movedAlready.has(lead.id) || isExemptAgent(lead.owner, rules) || !isSourceAudited(lead.source)) continue;
+        if (moved >= rules.maxNoContactMovesPerRun) {
+          noContactHeld++;
+          continue;
+        }
+        const record = {
+          personId: lead.id,
+          name: lead.name,
+          previousOwner: lead.owner,
+          fromUserId: lead.ownerId,
+          fromUserName: lead.owner,
+          toPondId: moPond.id,
+          pondName: moPond.name,
+          daysSinceTouch: lead.daysSinceTouch,
+          source: lead.source,
+          atRiskSince: null,
+          reason: "NOCONTACT",
+        };
+        try {
+          await fub.note(lead.id, rules.noContactNote(record));
+          await fub.assign(lead.id, { userId: null, pondId: moPond.id, fields: fields.lastSwept ? { [fields.lastSwept]: today } : {} });
+          actions.swept.push(record);
+          sweepLog.sweeps.push(record);
+          moved++;
+        } catch (err) {
+          log(`  NOCONTACT move failed for ${lead.name} (#${lead.id}): ${err.message}`);
+        }
+      }
+      log(`  NOCONTACT → ${moPond.name}: ${moved} moved${noContactHeld ? `, ${noContactHeld} waiting for the next night (cap ${rules.maxNoContactMovesPerRun})` : ""}`);
+    }
+  }
+  if (capHeldIds.size) log(`  ${capHeldIds.size} no-timeframe Nurture leads wait for a later night (nudge cap ${rules.maxNoTimeframeNudgesPerRun} a night)`);
 
   // A blocked day is a recorded skip, not a silent no-op.
   const incompleteReason = () =>
@@ -1467,8 +1527,9 @@ async function main() {
   // — on a night the engine swept nothing and had already said in its own report
   // that it could not trust the counts. Telling thirty agents their book is
   // being taken, wrongly, is not a smaller mistake than taking it.
+  const digestResults = results.filter((r) => !capHeldIds.has(r.id) && !(isNoContactLead(r) && !sweptIds.has(r.id)));
   const digests = touchUsable
-    ? buildAgentDigests(results, {
+    ? buildAgentDigests(digestResults, {
         excludeGroupIds: rules.excludeOwnerGroupIds,
         sweepDays: rules.neglectedDays,
         sweepsStartOn: sweepsOnHold ? rules.sweepsStartOn : null,

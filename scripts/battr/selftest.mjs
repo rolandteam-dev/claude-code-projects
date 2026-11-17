@@ -422,15 +422,17 @@ check("Active Leads uses its own 6/9 thresholds, not Hot Leads' 2/4", () => {
   assert.equal(classifyForList(neg, activeLeads, NOW), "neglected");
 });
 
-check("Battr's six lists plus our three live-pipeline lists feed the sweep — nothing else", () => {
+check("Battr's six lists plus our five lists feed the sweep — nothing else", () => {
   const { ids, resolved } = memberListsOf(lists.find((l) => l.audit_type === "combined_contact_lists"));
-  assert.equal(ids.length, 9);
+  assert.equal(ids.length, 11);
   assert.deepEqual(
     resolved.map((l) => l.name).sort(),
     [
       "😎 Bi-Weekly Nurture", "🌤️ Warm Back Up", "🌱 Monthly Nurture", "🌶️ Hot Leads", "🔥 Weekly Nurture", "👀 Quarterly Nurture",
       // Ours, 17 Nov 2026 (Mike): Battr never acted on these stages.
       "📅 Appointment Set", "🤝 Met with Customer", "🏡 Showing Homes",
+      // Ours, 17 Nov 2026 (Mike): no-timeframe Nurture, and Submitting Offers (nudge only).
+      "🕳️ Nurture — no timeframe", "💼 Submitting Offers (nudge only)",
     ].sort()
   );
 });
@@ -579,6 +581,37 @@ check("agent digests say when sweeping starts while it is held, and 'next run' o
   assert.doesNotMatch(held, /NEXT RUN/);
   assert.match(renderDigestHtml({ ...base, sweepsStartOn: "2026-11-20" }), /Sweeping from Fri, Nov 20 \(1\)/);
   assert.match(renderDigestText({ ...base, sweepsStartOn: null }), /SWEEPING NEXT RUN \(1\)/);
+});
+
+check("Submitting Offers is nudge-only; Listing Agreement, Active Listing and Under Contract are not audited", () => {
+  const offers = lists.find((l) => l.name === "💼 Submitting Offers (nudge only)");
+  assert.deepEqual(offers.neglected_filters.groups, [], "no neglected tier, so it can never be swept");
+  assert.equal((offers.at_risk_filters.groups.flat().find((c) => c.transform?.type === "days_since")).value, 2);
+  const members = memberListsOf(lists.find((l) => l.audit_type === "combined_contact_lists")).resolved;
+  const stages = members.flatMap((l) => l.list_filters.groups.flat().filter((c) => c.field === "stage_name").flatMap((c) => c.value));
+  for (const s of ["Listing Agreement", "Active Listing", "Under Contract", "Pending", "Closed"]) {
+    assert.ok(!stages.includes(s), `${s} must not be audited`);
+  }
+});
+
+check("no-timeframe Nurture: nudged at 30 days, sweepable at 33, and the nightly nudge cap is on", () => {
+  const l = lists.find((x) => x.id === 1163);
+  const days = (set) => (set.groups.flat().find((c) => c.transform?.type === "days_since")).value;
+  assert.deepEqual([days(l.at_risk_filters), days(l.neglected_filters)], [30, 33]);
+  assert.ok(rules.maxNoTimeframeNudgesPerRun > 0 && rules.maxNoTimeframeNudgesPerRun <= 300);
+});
+
+check("NOCONTACT leads move to Missed Opportunities (early stages only) and are never nudged or emailed", () => {
+  assert.deepEqual(rules.noContactTags, ["NOCONTACT"]);
+  assert.match(rules.noContactPond, /missed opportunities/i);
+  for (const live of ["Appointment Set", "Met with Customer", "Showing Homes", "Submitting Offers", "Under Contract", "Closed"]) {
+    assert.ok(!rules.noContactStages.includes(live), `${live} must never be moved on a tag`);
+  }
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /if \(isNoContactLead\(lead\)\) continue;/, "no nudge");
+  assert.match(src, /!\(isNoContactLead\(r\) && !sweptIds\.has\(r\.id\)\)/, "not in the agent digests");
+  assert.match(src, /!sweepsOnHold && sweepsAllowedToday && only === null\) \{\n    const moPond/, "same gates as a sweep");
+  assert.match(rules.noContactNote({ pondName: "Missed Opportunities", previousOwner: "A B" }), /NOCONTACT/);
 });
 
 check("sweeping has a start date: nudges only before it, and the gate sits beside the pinned ones", () => {
@@ -934,6 +967,12 @@ check("every sweeping list carries the warn-first interlock in its own rule", ()
 
   for (const list of resolved) {
     const groups = list.neglected_filters?.groups ?? [];
+    // A nudge-only list (Submitting Offers, 1164) has NO neglected tier on purpose:
+    // it can never be swept, so there is no sweep to interlock.
+    if (list.id === 1164) {
+      assert.equal(groups.length, 0, `${list.name} must stay nudge-only`);
+      continue;
+    }
     assert.ok(groups.length > 0, `${list.name} has no neglected tier`);
     for (const group of groups) {
       assert.ok(
@@ -1115,7 +1154,8 @@ check("the day filter plus the three-day spread explain every observed night", (
     return comm.value;
   };
   const spreads = memberListsOf(lists.find((l) => l.audit_type === "combined_contact_lists"))
-    .ids.map((id) => {
+    .ids.filter((id) => !(id >= 1160 && id <= 1164)) // ours, no Battr night to reconcile
+    .map((id) => {
       const l = listById(id);
       return {
         id,
@@ -1126,7 +1166,7 @@ check("the day filter plus the three-day spread explain every observed night", (
   for (const { id, name, gap } of spreads) {
     // Our live-pipeline lists (1160-1162) are deliberately wide: a quiet week nudges,
     // a quiet month sweeps. They have no Battr night to reconcile against.
-    if (id >= 1160 && id <= 1162) continue;
+    if (id >= 1160 && id <= 1164) continue;
     const expected = id === 1144 ? 2 : 3;
     assert.equal(gap, expected, `${name}: Battr's observed spread is ${expected} days, not ${gap}`);
   }

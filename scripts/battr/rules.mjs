@@ -439,6 +439,34 @@ export const rules = {
     `This lead is at risk - reach out and keep them going! 🙌\n\n` +
     `${lead.daysSinceTouch ?? "Several"} days with no outreach. Source: ${lead.source || "unknown"}.`,
 
+  // ------------------------------------------------ do-not-contact leads (Mike, 17 Nov 2026)
+  /**
+   * A lead tagged NOCONTACT is not nudged ("reach out!" would be wrong) and is moved
+   * to the Missed Opportunities pond instead. Limited to the early stages — a lead
+   * with an appointment, a showing or a deal is never moved on a tag. The usual
+   * exclusions all apply (never-swept sources, paused team, exempt agents, leads
+   * already in a pond), the move waits for `sweepsStartOn`, runs Tue–Fri, and is
+   * undoable like any sweep. Set `noContactPond` to null to switch it off.
+   */
+  noContactTags: ["NOCONTACT"],
+  noContactStages: ["Lead", "Attempted Contact", "Spoke with Customer", "Nurture"],
+  noContactPond: "Missed Opportunities",
+  maxNoContactMovesPerRun: 25,
+
+  /**
+   * The no-timeframe Nurture list (1163) holds ~4,100 leads that have never been
+   * warned. Nudging them all at once would write thousands of notes and put a
+   * thousand-line list in each agent's email, so only this many are nudged per
+   * night; the rest follow, oldest listing order first, and the agent digest shows
+   * only the ones that have been nudged.
+   */
+  maxNoTimeframeNudgesPerRun: 150,
+
+  /** Text of the note left when a do-not-contact lead is moved. */
+  noContactNote: (lead) =>
+    `Battr: moved to the ${lead.pondName} pond — this lead is tagged NOCONTACT (do not contact). ` +
+    `Previously assigned to ${lead.previousOwner || "unassigned"}.`,
+
   /** Text of the note recorded on the lead when it is swept. */
   sweepNote: (lead) =>
     `Battr: swept to the ${lead.pondName} pond after ${lead.daysSinceTouch ?? "many"} days with no outreach. ` +
