@@ -1467,6 +1467,7 @@ async function main() {
     ? buildAgentDigests(results, {
         excludeGroupIds: rules.excludeOwnerGroupIds,
         sweepDays: rules.neglectedDays,
+        sweepsStartOn: sweepsOnHold ? rules.sweepsStartOn : null,
         unanswered,
         // Built AFTER the sweep loop, so the digest can tell an agent which
         // leads they can still save from the ones already gone.
