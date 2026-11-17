@@ -7,6 +7,7 @@
  */
 import postgres from "postgres";
 import type { BuyerOfferInputs, JobResult, JobStatus, JobType } from "./types";
+import type { StatedTerms } from "./terms";
 
 let client: ReturnType<typeof postgres> | null = null;
 
@@ -48,6 +49,29 @@ function ensureSchema(): Promise<void> {
           updated_at timestamptz NOT NULL DEFAULT now()
         )`;
       await s`CREATE INDEX IF NOT EXISTS offer_jobs_status_idx ON offer_jobs (status, created_at)`;
+      await s`
+        CREATE TABLE IF NOT EXISTS offer_conversations (
+          id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+          channel_id text NOT NULL,
+          thread_ts text NOT NULL,
+          requested_by text NOT NULL,
+          speaker_name text NOT NULL DEFAULT '',
+          stated jsonb NOT NULL DEFAULT '{}'::jsonb,
+          snapshot jsonb,
+          status text NOT NULL DEFAULT 'collecting',
+          card_ts text,
+          turns int NOT NULL DEFAULT 0,
+          created_at timestamptz NOT NULL DEFAULT now(),
+          updated_at timestamptz NOT NULL DEFAULT now(),
+          UNIQUE (channel_id, thread_ts)
+        )`;
+      // Slack retries and double-fires (a mention in a thread arrives as BOTH an
+      // app_mention and a message event); this makes each message count once.
+      await s`
+        CREATE TABLE IF NOT EXISTS offer_events_seen (
+          key text PRIMARY KEY,
+          seen_at timestamptz NOT NULL DEFAULT now()
+        )`;
     })().catch((e) => {
       ready = null; // retry on the next call rather than caching a failure
       throw e;
@@ -194,4 +218,119 @@ export async function listRecent(limit = 50): Promise<OfferJob[]> {
   await ensureSchema();
   const rows = await sql()`SELECT * FROM offer_jobs ORDER BY created_at DESC LIMIT ${limit}`;
   return rows.map(toJob);
+}
+
+// ------------------------------------------------- conversational intake (Stage 1)
+
+export type ConvoStatus = "collecting" | "confirming" | "done" | "cancelled";
+
+/** The offer exactly as the agent saw it on the confirmation card. Confirm uses THIS, not a recompute. */
+export interface ConvoSnapshot {
+  inputs: BuyerOfferInputs;
+  defaulted: string[];
+}
+
+export interface OfferConvo {
+  id: string;
+  channelId: string;
+  threadTs: string;
+  requestedBy: string;
+  speakerName: string;
+  stated: StatedTerms;
+  snapshot: ConvoSnapshot | null;
+  status: ConvoStatus;
+  cardTs: string | null;
+  turns: number;
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function toConvo(r: any): OfferConvo {
+  return {
+    id: r.id,
+    channelId: r.channel_id,
+    threadTs: r.thread_ts,
+    requestedBy: r.requested_by,
+    speakerName: r.speaker_name ?? "",
+    stated: r.stated ?? {},
+    snapshot: r.snapshot ?? null,
+    status: r.status,
+    cardTs: r.card_ts ?? null,
+    turns: r.turns,
+  };
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+/** True the first time a Slack message key is seen, false for every repeat. */
+export async function markSeen(key: string): Promise<boolean> {
+  await ensureSchema();
+  const s = sql();
+  const rows = await s`INSERT INTO offer_events_seen (key) VALUES (${key}) ON CONFLICT DO NOTHING RETURNING key`;
+  if (Math.random() < 0.02) await s`DELETE FROM offer_events_seen WHERE seen_at < now() - interval '2 days'`;
+  return rows.length > 0;
+}
+
+export async function getConvoByThread(channelId: string, threadTs: string): Promise<OfferConvo | null> {
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM offer_conversations WHERE channel_id = ${channelId} AND thread_ts = ${threadTs}`;
+  return rows[0] ? toConvo(rows[0]) : null;
+}
+
+export async function getConvo(id: string): Promise<OfferConvo | null> {
+  await ensureSchema();
+  const rows = await sql()`SELECT * FROM offer_conversations WHERE id = ${id}`;
+  return rows[0] ? toConvo(rows[0]) : null;
+}
+
+export async function createConvo(args: {
+  channelId: string;
+  threadTs: string;
+  requestedBy: string;
+  speakerName: string;
+}): Promise<OfferConvo> {
+  await ensureSchema();
+  const s = sql();
+  const rows = await s`
+    INSERT INTO offer_conversations (channel_id, thread_ts, requested_by, speaker_name)
+    VALUES (${args.channelId}, ${args.threadTs}, ${args.requestedBy}, ${args.speakerName})
+    ON CONFLICT (channel_id, thread_ts) DO NOTHING
+    RETURNING *`;
+  if (rows[0]) return toConvo(rows[0]);
+  return (await getConvoByThread(args.channelId, args.threadTs)) as OfferConvo;
+}
+
+export async function saveConvo(
+  id: string,
+  patch: { stated?: StatedTerms; snapshot?: ConvoSnapshot | null; status?: ConvoStatus; cardTs?: string | null; turns?: number; speakerName?: string },
+): Promise<void> {
+  await ensureSchema();
+  const s = sql();
+  await s`
+    UPDATE offer_conversations SET
+      stated = COALESCE(${patch.stated ? s.json(patch.stated as never) : null}, stated),
+      snapshot = CASE WHEN ${patch.snapshot !== undefined} THEN ${patch.snapshot ? s.json(patch.snapshot as never) : null} ELSE snapshot END,
+      status = COALESCE(${patch.status ?? null}, status),
+      card_ts = CASE WHEN ${patch.cardTs !== undefined} THEN ${patch.cardTs ?? null} ELSE card_ts END,
+      turns = COALESCE(${patch.turns ?? null}, turns),
+      speaker_name = COALESCE(${patch.speakerName ?? null}, speaker_name),
+      updated_at = now()
+    WHERE id = ${id}`;
+}
+
+/** confirming -> done, only if the card the agent clicked is still the current one. Null otherwise. */
+export async function finishConvo(id: string, version: number): Promise<OfferConvo | null> {
+  await ensureSchema();
+  const rows = await sql()`
+    UPDATE offer_conversations SET status = 'done', updated_at = now()
+    WHERE id = ${id} AND status = 'confirming' AND turns = ${version}
+    RETURNING *`;
+  return rows[0] ? toConvo(rows[0]) : null;
+}
+
+export async function cancelConvo(id: string): Promise<OfferConvo | null> {
+  await ensureSchema();
+  const rows = await sql()`
+    UPDATE offer_conversations SET status = 'cancelled', updated_at = now()
+    WHERE id = ${id} AND status IN ('collecting', 'confirming')
+    RETURNING *`;
+  return rows[0] ? toConvo(rows[0]) : null;
 }

@@ -40,11 +40,28 @@ export interface SlackResponse {
   channel?: string;
 }
 
+/** SLACK_API_BASE exists so tests can point the app at a fake Slack. Production leaves it unset. */
+const slackBase = () => process.env.SLACK_API_BASE || "https://slack.com/api";
+
+/** Read endpoints (users.info, users.list) take query parameters, not a JSON body. */
+export async function slackGet(method: string, params: Record<string, string>): Promise<Record<string, unknown> & SlackResponse> {
+  const token = process.env.SLACK_BOT_TOKEN;
+  if (!token) return { ok: false, error: "no_token" };
+  try {
+    const res = await fetch(`${slackBase()}/${method}?${new URLSearchParams(params)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return await res.json();
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}
+
 export async function slackApi(method: string, body: Record<string, unknown>): Promise<SlackResponse> {
   const token = process.env.SLACK_BOT_TOKEN;
   if (!token) return { ok: false, error: "no_token" };
   try {
-    const res = await fetch(`https://slack.com/api/${method}`, {
+    const res = await fetch(`${slackBase()}/${method}`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify(body),

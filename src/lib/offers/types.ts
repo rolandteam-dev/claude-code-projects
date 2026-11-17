@@ -62,6 +62,15 @@ export interface BuyerOfferInputs {
   contingencies: Contingency[];
   /** Context for the drafter only. Never changes price, dates or contingencies. */
   notes?: string;
+  /** Agent writing the offer: the Slack speaker, unless they named someone else. */
+  agentName?: string;
+  /** Contingency periods in days, set only for contingencies that are included. */
+  inspectionDays?: number;
+  appraisalDays?: number;
+  loanDays?: number;
+  /** Seller-paid closing costs / credit, in dollars. */
+  sellerCredit?: number;
+  mlsNumber?: string;
 }
 
 /** What the worker reports back after drafting in TransactionDesk. */
@@ -89,6 +98,12 @@ export interface RawBuyerForm {
   close_date?: string;
   contingencies?: string[];
   notes?: string;
+  agent_name?: string;
+  inspection_days?: string;
+  appraisal_days?: string;
+  loan_days?: string;
+  seller_credit?: string;
+  mls_number?: string;
 }
 
 export type ValidationResult =
@@ -169,6 +184,32 @@ export function validateBuyerForm(raw: RawBuyerForm, now: Date = new Date()): Va
   const notes = (raw.notes ?? "").trim();
   if (notes.length > 1000) errors.notes = "Keep notes under 1,000 characters.";
 
+  const agentName = (raw.agent_name ?? "").trim();
+  if (agentName.length > 80) errors.agent_name = "That agent name is too long.";
+  const mlsNumber = (raw.mls_number ?? "").trim().slice(0, 20);
+
+  const days: { inspectionDays?: number; appraisalDays?: number; loanDays?: number } = {};
+  for (const [rawKey, outKey, label] of [
+    ["inspection_days", "inspectionDays", "Inspection"],
+    ["appraisal_days", "appraisalDays", "Appraisal"],
+    ["loan_days", "loanDays", "Loan"],
+  ] as const) {
+    const v = (raw[rawKey] ?? "").trim();
+    if (!v) continue;
+    const n = Number(v);
+    if (!Number.isInteger(n) || n < 1 || n > 60) errors[rawKey] = `${label} days must be a whole number from 1 to 60.`;
+    else days[outKey] = n;
+  }
+
+  let sellerCredit: number | undefined;
+  const creditRaw = (raw.seller_credit ?? "").trim();
+  if (creditRaw) {
+    const c = parseMoney(creditRaw);
+    if (c === null) errors.seller_credit = "Enter the seller credit as a number.";
+    else if (offerPrice && c > offerPrice * 0.1) errors.seller_credit = "That credit is over 10% of the offer. Check the digits.";
+    else sellerCredit = c;
+  }
+
   if (Object.keys(errors).length > 0) return { ok: false, errors };
 
   return {
@@ -184,6 +225,10 @@ export function validateBuyerForm(raw: RawBuyerForm, now: Date = new Date()): Va
       closeDate,
       contingencies,
       ...(notes ? { notes } : {}),
+      ...(agentName ? { agentName } : {}),
+      ...days,
+      ...(sellerCredit !== undefined ? { sellerCredit } : {}),
+      ...(mlsNumber ? { mlsNumber } : {}),
     },
   };
 }

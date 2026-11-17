@@ -20,6 +20,18 @@ import {
 } from "../../src/lib/offers/types.ts";
 import { verifySlackSignature, jobMessage, readModalValues, esc } from "../../src/lib/offers/slack.ts";
 import { isAllowedUser, canReview, safeEqual } from "../../src/lib/offers/config.ts";
+import {
+  resolveTerms,
+  mergeStated,
+  matchPerson,
+  sanitizeExtraction,
+  sheetText,
+  coverEmail,
+  pickListing,
+  questionText,
+  addDays,
+  joinNames,
+} from "../../src/lib/offers/terms.ts";
 
 let passed = 0;
 function test(name, fn) {
@@ -287,6 +299,193 @@ test("user and worker text cannot inject mentions or links", () => {
   };
   const text = JSON.stringify(jobMessage(evil).blocks);
   assert.doesNotMatch(text, /<!channel>|<!here>|<!everyone>|<@UEVIL>/);
+});
+
+
+// --- conversational core: terms.ts ----------------------------------------
+const TODAY = "2026-11-17";
+const CTX = { speakerName: "Mike Roland", today: TODAY };
+// "write an offer for Mark Smith and Megan Smith, $500,000, 123 Main Street" and nothing else
+const SAID = { buyerNames: ["Mark Smith", "Megan Smith"], address: "123 Main Street", offerPrice: 500000 };
+
+test("the example sentence asks only for what it can't know", () => {
+  const r = resolveTerms(SAID, CTX);
+  assert.deepEqual(r.missing, ["the list price", "how they're paying (cash, conventional, FHA, VA)"]);
+  assert.equal(r.inputs, null);
+  assert.match(questionText(r.missing), /list price[\s\S]*how they're paying/);
+});
+
+test("the agent is the speaker unless they named someone", () => {
+  const r = resolveTerms(SAID, CTX);
+  assert.deepEqual(r.display.find((d) => d.label === "Agent"), { label: "Agent", value: "Mike Roland", source: "speaker" });
+  const named = resolveTerms({ ...SAID, agentName: "Pat Example" }, CTX);
+  assert.equal(named.display.find((d) => d.label === "Agent").value, "Pat Example");
+  assert.equal(named.display.find((d) => d.label === "Agent").source, "stated");
+});
+
+test("with list price + financing, the rest comes from defaults and is labelled", () => {
+  const r = resolveTerms({ ...SAID, listPrice: 520000, financing: "conventional" }, CTX);
+  assert.deepEqual(r.missing, []);
+  assert.equal(r.errors, null);
+  assert.equal(r.inputs.earnestMoney, 5000); // 1% of 500k
+  assert.equal(r.inputs.closeDate, addDays(TODAY, 30));
+  assert.deepEqual(r.inputs.contingencies, ["inspection", "appraisal", "loan"]);
+  assert.equal(r.inputs.inspectionDays, 10);
+  assert.equal(r.inputs.loanDays, 21);
+  assert.equal(r.inputs.clientName, "Mark Smith and Megan Smith");
+  assert.equal(r.inputs.agentName, "Mike Roland");
+  assert.deepEqual(r.defaulted, ["Earnest money", "Close of escrow", "Contingencies"]);
+});
+
+test("a cash offer drops the loan contingency by default", () => {
+  const r = resolveTerms({ ...SAID, listPrice: 520000, financing: "cash" }, CTX);
+  assert.deepEqual(r.inputs.contingencies, ["inspection", "appraisal"]);
+  assert.equal("loanDays" in r.inputs, false);
+});
+
+test("stated terms beat defaults and are not labelled as defaults", () => {
+  const r = resolveTerms(
+    { ...SAID, listPrice: 520000, financing: "fha", earnestMoney: 10000, closeDate: "2026-12-30", contingencies: ["inspection"], inspectionDays: 7, sellerCredit: 5000 },
+    CTX,
+  );
+  assert.equal(r.inputs.earnestMoney, 10000);
+  assert.equal(r.inputs.closeDate, "2026-12-30");
+  assert.deepEqual(r.inputs.contingencies, ["inspection"]);
+  assert.equal(r.inputs.inspectionDays, 7);
+  assert.equal("appraisalDays" in r.inputs, false);
+  assert.equal(r.inputs.sellerCredit, 5000);
+  assert.deepEqual(r.defaulted, []);
+});
+
+test('"no contingencies" is honoured, not overwritten by defaults', () => {
+  const r = resolveTerms({ ...SAID, listPrice: 520000, financing: "cash", contingencies: [] }, CTX);
+  assert.deepEqual(r.inputs.contingencies, []);
+  assert.equal(r.display.find((d) => d.label === "Contingencies").value, "None");
+});
+
+test("the list price from the MLS lookup fills in, and is labelled as a lookup", () => {
+  const r = resolveTerms({ ...SAID, financing: "va", lookup: { tried: true, listPrice: 520000, mlsNumber: "2512345" } }, CTX);
+  assert.deepEqual(r.missing, []);
+  assert.equal(r.inputs.listPrice, 520000);
+  assert.equal(r.inputs.mlsNumber, "2512345");
+  assert.equal(r.display.find((d) => d.label === "List price").source, "lookup");
+  // an agent-stated list price beats the lookup
+  const stated = resolveTerms({ ...SAID, listPrice: 530000, financing: "va", lookup: { tried: true, listPrice: 520000 } }, CTX);
+  assert.equal(stated.inputs.listPrice, 530000);
+});
+
+test("a typo'd price is caught by validation and the offer is NOT produced", () => {
+  const r = resolveTerms({ ...SAID, offerPrice: 50000, listPrice: 520000, financing: "cash" }, CTX);
+  assert.equal(r.inputs, null);
+  assert.ok(r.errors.offer_price);
+  const past = resolveTerms({ ...SAID, listPrice: 520000, financing: "cash", closeDate: "2026-11-01" }, CTX);
+  assert.equal(past.inputs, null);
+  assert.ok(past.errors.close_date);
+});
+
+test("mergeStated: later statements win, arrays replace, a new address drops the old lookup", () => {
+  const a = { ...SAID, contingencies: ["inspection", "loan"], lookup: { tried: true, listPrice: 520000 } };
+  const b = mergeStated(a, { offerPrice: 510000, contingencies: ["appraisal"], buyerNames: undefined });
+  assert.equal(b.offerPrice, 510000);
+  assert.deepEqual(b.contingencies, ["appraisal"]);
+  assert.deepEqual(b.buyerNames, ["Mark Smith", "Megan Smith"]); // untouched
+  assert.deepEqual(b.lookup, { tried: true, listPrice: 520000 }); // same address: kept
+  const c = mergeStated(a, { address: "456 Oak Ave" });
+  assert.equal(c.lookup, undefined);
+  assert.equal(mergeStated(a, { address: "123 Main Street" }).lookup.listPrice, 520000); // same address: kept
+});
+
+test("matchPerson catches the Rowland/Roland slip but never guesses", () => {
+  const team = ["Mike Roland", "Mark Smith", "Kristi Example"];
+  assert.deepEqual(matchPerson("Mike Rowland", team), { name: "Mike Roland", exact: false });
+  assert.deepEqual(matchPerson("mike roland", team), { name: "Mike Roland", exact: true });
+  assert.equal(matchPerson("Zed Zebra", team), null);
+  assert.equal(matchPerson("Mo", team), null);
+  assert.equal(matchPerson("Jun Smith", ["Jon Smith", "Jan Smith"]), null); // ambiguous
+});
+
+test("sanitizeExtraction never trusts the model", () => {
+  const e = sanitizeExtraction({
+    buyerNames: ["Mark Smith", "", 7, "Megan Smith"],
+    address: "123 Main Street",
+    offerPrice: 500, // implausible: dropped
+    listPrice: "520000", // wrong type: dropped
+    financing: "bitcoin",
+    closeDate: "tomorrow",
+    contingencies: ["inspection", "waive_everything"],
+    inspectionDays: 400,
+    appraisalDays: 17,
+    sellerCredit: -5,
+    earnestMoney: 0,
+    isAdmin: true, // unknown key
+    cancel: true,
+  });
+  assert.deepEqual(e.terms, {
+    buyerNames: ["Mark Smith", "Megan Smith"],
+    address: "123 Main Street",
+    contingencies: ["inspection"],
+    appraisalDays: 17,
+    earnestMoney: 0,
+  });
+  assert.equal(e.cancel, true);
+  assert.deepEqual(sanitizeExtraction(null), { terms: {}, cancel: false });
+  assert.deepEqual(sanitizeExtraction("DROP TABLE"), { terms: {}, cancel: false });
+  assert.deepEqual(sanitizeExtraction({ offerPrice: 500000, financing: "fha", closeDate: "2026-12-30" }).terms, {
+    offerPrice: 500000,
+    financing: "fha",
+    closeDate: "2026-12-30",
+  });
+});
+
+test("the terms sheet states the typed numbers and warns about placeholder defaults", () => {
+  const r = resolveTerms({ ...SAID, listPrice: 520000, financing: "conventional", sellerCredit: 5000 }, CTX);
+  const sheet = sheetText(r.inputs, r.defaulted);
+  assert.match(sheet, /Purchase price:\s+\$500,000\s+\(list \$520,000, 96\.2%\)/);
+  assert.match(sheet, /Earnest money:\s+\$5,000/);
+  assert.match(sheet, /Seller credit:\s+\$5,000/);
+  assert.match(sheet, /Inspection \(10 days\), Appraisal \(17 days\), Loan \(21 days\)/);
+  assert.match(sheet, /Filled from defaults, not stated: Earnest money, Close of escrow, Contingencies/);
+  assert.match(sheet, /PLACEHOLDERS/);
+  const allStated = resolveTerms(
+    { ...SAID, listPrice: 520000, financing: "cash", earnestMoney: 10000, closeDate: "2026-12-30", contingencies: [] },
+    CTX,
+  );
+  assert.doesNotMatch(sheetText(allStated.inputs, allStated.defaulted), /defaults/);
+});
+
+test("the cover email states only what the sheet states", () => {
+  const r = resolveTerms({ ...SAID, listPrice: 520000, financing: "cash", sellerCredit: 3000 }, CTX);
+  const mail = coverEmail(r.inputs);
+  assert.equal(mail.subject, "Offer: 123 Main Street");
+  assert.match(mail.body, /Mark Smith and Megan Smith/);
+  assert.match(mail.body, /Purchase price: \$500,000/);
+  assert.match(mail.body, /Financing: Cash/);
+  assert.match(mail.body, /Seller credit: \$3,000/);
+  assert.doesNotMatch(mail.body, /Loan/); // cash: no loan contingency
+  assert.match(mail.body, /Mike Roland/);
+  assert.match(mail.body, /\[Listing agent name\]/); // never invented
+});
+
+test("pickListing accepts only the exact street, never a near miss", () => {
+  const l = (line1) => ({ address: { line1 }, listPrice: 1 });
+  assert.equal(pickListing([l("123 Main St")], "123 Main Street, Las Vegas NV").address.line1, "123 Main St");
+  assert.equal(pickListing([l("1230 Main St")], "123 Main St"), null);
+  assert.equal(pickListing([l("123 Main St"), l("123 Main St")], "123 Main St"), null); // ambiguous (e.g. units)
+  assert.equal(pickListing([l("123 Oak Ave")], "123 Main St"), null);
+  assert.equal(pickListing([], "123 Main St"), null);
+  assert.equal(pickListing([l("123 Main St")], ""), null);
+});
+
+test("validator: new optional fields are range-checked", () => {
+  assert.ok(validateBuyerForm({ ...good, inspection_days: "0" }, NOW).errors.inspection_days);
+  assert.ok(validateBuyerForm({ ...good, loan_days: "61" }, NOW).errors.loan_days);
+  assert.ok(validateBuyerForm({ ...good, appraisal_days: "ten" }, NOW).errors.appraisal_days);
+  assert.ok(validateBuyerForm({ ...good, seller_credit: "999999" }, NOW).errors.seller_credit);
+  const ok = validateBuyerForm({ ...good, inspection_days: "10", seller_credit: "5,000", agent_name: "Pat", mls_number: "1" }, NOW);
+  assert.equal(ok.ok, true);
+  assert.equal(ok.inputs.inspectionDays, 10);
+  assert.equal(ok.inputs.sellerCredit, 5000);
+  assert.equal(joinNames(["A", "B", "C"]), "A, B, and C");
 });
 
 console.log(`offers selftest: ${passed} passed${process.exitCode ? " (with failures)" : ""}`);
