@@ -67,6 +67,20 @@ export function LeadForm({
         <input className={field} name="phone" type="tel" placeholder="Phone" aria-label="Phone" />
       </div>
       <textarea className={field} name="message" rows={3} placeholder="How can we help? (optional)" aria-label="Message" />
+      <div className="space-y-2">
+        <label className="flex items-start gap-2 font-sans text-[0.78rem] leading-[1.45] text-[var(--color-ink-soft)]">
+          <input type="checkbox" name="emailConsent" className="mt-0.5 shrink-0" />
+          <span>Send me ongoing market updates and home-value emails. <span className="text-[var(--color-muted)]">(optional)</span></span>
+        </label>
+        <label className="flex items-start gap-2 font-sans text-[0.78rem] leading-[1.45] text-[var(--color-ink-soft)]">
+          <input type="checkbox" name="callTextConsent" className="mt-0.5 shrink-0" />
+          <span>It&apos;s OK to call or text me about my request. <span className="text-[var(--color-muted)]">(optional)</span></span>
+        </label>
+        <p className="font-sans text-[0.68rem] leading-[1.5] text-[var(--color-muted)]">
+          By submitting, you agree {site.name} may contact you about your request. Message/data rates may apply if you
+          opt into texts. Unsubscribe anytime. We never sell your information.
+        </p>
+      </div>
       <button type="submit" disabled={status === "sending"} className="btn w-full disabled:opacity-60">
         {status === "sending" ? "Sending…" : submitLabel}
       </button>

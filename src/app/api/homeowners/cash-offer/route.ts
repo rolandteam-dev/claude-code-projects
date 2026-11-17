@@ -24,6 +24,8 @@ type Input = {
   zip?: string;
   timeframe?: string;
   condition?: string;
+  emailConsent?: boolean;
+  callTextConsent?: boolean;
 };
 
 export async function POST(req: Request) {
@@ -58,7 +60,12 @@ export async function POST(req: Request) {
     zip: d.zip,
     type: "Seller Inquiry",
     source: "Cash Offer Request",
-    tags: ["Seller Lead", "Cash Offer"],
+    tags: [
+      "Seller Lead",
+      "Cash Offer",
+      ...(d.emailConsent ? ["Email Opt-In"] : []),
+      ...(d.callTextConsent ? ["Call/Text OK"] : []),
+    ],
     message: detail,
   });
 
@@ -75,6 +82,8 @@ export async function POST(req: Request) {
         state: d.state,
         zip: d.zip,
         source: "cash-offer",
+        emailConsent: d.emailConsent,
+        callTextConsent: d.callTextConsent,
       });
     } catch {
       // non-fatal

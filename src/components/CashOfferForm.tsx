@@ -25,6 +25,8 @@ export function CashOfferForm() {
     condition: "Good",
   });
   const [status, setStatus] = useState<"idle" | "sending" | "ok" | "error">("idle");
+  // Consent kept separate from `f` so the string setter below stays string-typed.
+  const [consent, setConsent] = useState({ email: false, callText: false });
   function set<K extends keyof typeof f>(k: K, v: string) {
     setF((p) => ({ ...p, [k]: v }));
   }
@@ -40,7 +42,7 @@ export function CashOfferForm() {
       const res = await fetch("/api/homeowners/cash-offer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(f),
+        body: JSON.stringify({ ...f, emailConsent: consent.email, callTextConsent: consent.callText }),
       });
       const json = await res.json().catch(() => ({ ok: false }));
       setStatus(res.ok && json.ok ? "ok" : "error");
@@ -102,6 +104,16 @@ export function CashOfferForm() {
         </div>
         <input className={field} type="email" placeholder="Email" value={f.email} onChange={(e) => set("email", e.target.value)} aria-label="Email" />
         <input className={field} type="tel" placeholder="Phone" value={f.phone} onChange={(e) => set("phone", e.target.value)} aria-label="Phone" />
+        <div className="space-y-1.5 pt-0.5">
+          <label className="flex items-start gap-2 font-sans text-[0.76rem] leading-[1.4] text-[var(--color-ink-soft)]">
+            <input type="checkbox" className="mt-0.5 shrink-0" checked={consent.email} onChange={(e) => setConsent((c) => ({ ...c, email: e.target.checked }))} />
+            <span>Send me ongoing home-value &amp; market updates. <span className="text-[var(--color-muted)]">(optional)</span></span>
+          </label>
+          <label className="flex items-start gap-2 font-sans text-[0.76rem] leading-[1.4] text-[var(--color-ink-soft)]">
+            <input type="checkbox" className="mt-0.5 shrink-0" checked={consent.callText} onChange={(e) => setConsent((c) => ({ ...c, callText: e.target.checked }))} />
+            <span>It&apos;s OK to call or text me about my home. <span className="text-[var(--color-muted)]">(optional)</span></span>
+          </label>
+        </div>
         {status === "error" && (
           <div className="font-sans text-[0.78rem] text-[#b4433a]">Please add your address and an email or phone.</div>
         )}

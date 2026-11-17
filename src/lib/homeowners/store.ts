@@ -58,6 +58,16 @@ export type Homeowner = {
   /** total automated emails sent to this homeowner (accurate from when this was
    * added; older records may show fewer than were actually sent) */
   emailCount?: number;
+  /** Explicit opt-in to ongoing marketing / value emails (captured on web forms).
+   * `undefined` = unknown (legacy/imported → treated as an existing relationship,
+   * still mailable); `false` = declined, and the value digest skips them. */
+  emailConsent?: boolean;
+  /** Explicit permission to call or text (captured on web forms). Informational
+   * for agents / FUB; the app itself sends no SMS. */
+  callTextConsent?: boolean;
+  /** On the Do Not Call registry, or flagged email-only. When true the contact is
+   * email-only — no calls or texts. Set by a DNC scrub, import, or admin. */
+  dnc?: boolean;
 };
 
 /** Exact pipeline counts across the WHOLE database (not a sample). */
@@ -202,7 +212,10 @@ const memoryStore: HomeownerStore = {
   async listDueForEmail(intervalDays, limit) {
     const cutoff = Date.now() - intervalDays * 86_400_000;
     const due = [...mem.values()].filter(
-      (h) => h.subscribed && (!h.lastEmailedAt || new Date(h.lastEmailedAt).getTime() < cutoff)
+      (h) =>
+        h.subscribed &&
+        h.emailConsent !== false && // honor an explicit email opt-out
+        (!h.lastEmailedAt || new Date(h.lastEmailedAt).getTime() < cutoff)
     );
     // Engaged contacts (any dashboard view) first, then most-recently-updated —
     // warm-up reputation is built by mailing openers/clickers first.
