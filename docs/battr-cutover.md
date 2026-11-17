@@ -24,11 +24,16 @@ agents have not had for five weeks.
 - [ ] Mike's decision on the stage-move rule (forward moves only vs. as is).
 
 ## 2. The switches
-1. **`rules.sweepOnBackfilledTexts: true`** in `scripts/battr/rules.mjs` (Claude opens
-   the PR once step 1 is met). In a dry run this only changes the report from "held"
-   to "would act" — it writes nothing.
-2. **`BATTR_LIVE` = `true`** (GitHub → Settings → Secrets and variables → Actions →
-   Variables). This is what makes the scheduled run write. Only Mike sets it.
+1. **`rules.sweepOnBackfilledTexts: true`** — DONE 17 Nov 2026 (Mike: "my leads are
+   being neglected, start sweeping, with the ability to undo"). The second
+   single-lead test and the stage-move decision were not waited for; stage moves
+   count as work exactly as they do today (change later if wanted).
+2. **First live run, by hand:** Actions → Battr audit → Run workflow → branch `main`,
+   task `audit`, **mode `live`**, stage `both`, only_id **empty**. A manual live run
+   writes without the repo variable, so the first night can be watched.
+3. **`BATTR_LIVE` = `true`** (Settings → Secrets and variables → Actions → Variables)
+   makes the *scheduled* nightly run write. Only Mike sets it, after the first run
+   looks right.
 
 ## 3. First live night — what to expect
 - Nudges (note + stamp) on every at-risk lead not already stamped, including the two
@@ -41,8 +46,9 @@ agents have not had for five weeks.
 ## 4. Brake
 - Stop writing: set `BATTR_LIVE` to anything but `true`. The next run is a dry run.
 - Reverse a night: Actions → Battr audit → task `undo` with the run id at the bottom
-  of that run's report. It puts swept leads back with their owner and removes nudges
-  from single-lead tests. It refuses a dry run's log.
+  of that run's report. It puts swept leads back with their owner and deletes that
+  run's nudge notes and stamps (every nudge is now recorded, not just a single-lead
+  test's). It refuses a dry run's log.
 
 ## 5. After cutover
 - Keep the nightly comparison rows; stop expecting a Battr row once the subscription ends.
