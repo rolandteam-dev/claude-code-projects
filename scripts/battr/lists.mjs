@@ -139,6 +139,31 @@ const nurtureList = ({ id, name, timeframe, atRiskDays, neglectedDays }) => ({
   },
 });
 
+/**
+ * Live-pipeline stages — OURS, not Battr's. Added 17 Nov 2026 at Mike's direction.
+ *
+ * Battr audited these stages only in a report-only list ("Current & Upcoming
+ * Clients", 10/13 days, never nudged or swept), so a buyer we were showing homes
+ * to could go a month without a call and nothing said so. Mike's rule: speak with
+ * someone we have met at least every 5 days, and someone we are showing homes to at
+ * least every 3. At risk is ">" that many days since the last real contact; the
+ * agent gets the note and the daily email. Neglected (sweepable, after the usual
+ * warn-first stamp) stays at 30 days — "if we haven't spoken with that lead in 30
+ * days, what are we doing?" — so a quiet week nudges the agent and a quiet month
+ * moves the lead. Stages with a live deal (offers, listing, contract) are NOT here.
+ */
+const livePipelineList = ({ id, name, stage, atRiskDays, neglectedDays }) => ({
+  id,
+  name,
+  audit_type: "contact_list",
+  is_active: true,
+  list_filters: { groups: [[contact("stage_name", "IS ANY OF", [stage], { value_data_type: "text" }), notInAPond]] },
+  at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", atRiskDays)]] },
+  neglected_filters: {
+    groups: [[daysSince(LAST_COMM, ">", neglectedDays), contact(AT_RISK_SINCE, "!=", null, { value_data_type: "text" })]],
+  },
+});
+
 export const lists = [
   {
     id: 1144,
@@ -189,6 +214,11 @@ export const lists = [
   nurtureList({ id: 1107, name: "😎 Bi-Weekly Nurture", timeframe: TIMEFRAMES.months3to6, atRiskDays: 16, neglectedDays: 19 }),
   nurtureList({ id: 1108, name: "🌱 Monthly Nurture", timeframe: TIMEFRAMES.months6to12, atRiskDays: 33, neglectedDays: 36 }),
   nurtureList({ id: 1109, name: "👀 Quarterly Nurture", timeframe: TIMEFRAMES.months12plus, atRiskDays: 93, neglectedDays: 96 }),
+
+  // Ours (see livePipelineList): the stages Battr never acted on.
+  livePipelineList({ id: 1160, name: "📅 Appointment Set", stage: "Appointment Set", atRiskDays: 5, neglectedDays: 30 }),
+  livePipelineList({ id: 1161, name: "🤝 Met with Customer", stage: "Met with Customer", atRiskDays: 5, neglectedDays: 30 }),
+  livePipelineList({ id: 1162, name: "🏡 Showing Homes", stage: "Showing Homes", atRiskDays: 3, neglectedDays: 30 }),
 
   // ─── Battr runs this one; we mirror it ─────────────────────────────────────
   // Observed on the Aida Audits screen for 2 Sep 2026:
@@ -251,7 +281,7 @@ export const lists = [
     list_filters: {
       groups: [
         [
-          { object: "battr.aida_lists", field: "source_list_ids", operator: "IS ANY OF", value: [1104, 1106, 1107, 1108, 1109, 1144], value_data_type: "integer" },
+          { object: "battr.aida_lists", field: "source_list_ids", operator: "IS ANY OF", value: [1104, 1106, 1107, 1108, 1109, 1144, 1160, 1161, 1162], value_data_type: "integer" },
           contact("lead_bucket_id", "!=", 82, { object: "battr.lead_buckets", value_data_type: "integer" }),
           contact("owner_group_ids", "DOES NOT CONTAIN ANY", [52555], { value_data_type: "integer" }),
         ],

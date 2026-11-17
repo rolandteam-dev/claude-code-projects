@@ -422,13 +422,32 @@ check("Active Leads uses its own 6/9 thresholds, not Hot Leads' 2/4", () => {
   assert.equal(classifyForList(neg, activeLeads, NOW), "neglected");
 });
 
-check("only Battr's six lists feed the sweep", () => {
+check("Battr's six lists plus our three live-pipeline lists feed the sweep — nothing else", () => {
   const { ids, resolved } = memberListsOf(lists.find((l) => l.audit_type === "combined_contact_lists"));
-  assert.equal(ids.length, 6);
+  assert.equal(ids.length, 9);
   assert.deepEqual(
     resolved.map((l) => l.name).sort(),
-    ["😎 Bi-Weekly Nurture", "🌤️ Warm Back Up", "🌱 Monthly Nurture", "🌶️ Hot Leads", "🔥 Weekly Nurture", "👀 Quarterly Nurture"].sort()
+    [
+      "😎 Bi-Weekly Nurture", "🌤️ Warm Back Up", "🌱 Monthly Nurture", "🌶️ Hot Leads", "🔥 Weekly Nurture", "👀 Quarterly Nurture",
+      // Ours, 17 Nov 2026 (Mike): Battr never acted on these stages.
+      "📅 Appointment Set", "🤝 Met with Customer", "🏡 Showing Homes",
+    ].sort()
   );
+});
+
+check("live-pipeline lists: nudge at 5 days (3 for showings), sweepable at 30, and no live deal stage", () => {
+  const get = (name) => lists.find((l) => l.name === name);
+  const days = (set) => (set.groups.flat().find((c) => c.transform?.type === "days_since")).value;
+  const stageOf = (l) => l.list_filters.groups[0].find((c) => c.field === "stage_name").value;
+  assert.deepEqual([days(get("🤝 Met with Customer").at_risk_filters), days(get("🤝 Met with Customer").neglected_filters)], [5, 30]);
+  assert.deepEqual([days(get("📅 Appointment Set").at_risk_filters), days(get("📅 Appointment Set").neglected_filters)], [5, 30]);
+  assert.deepEqual([days(get("🏡 Showing Homes").at_risk_filters), days(get("🏡 Showing Homes").neglected_filters)], [3, 30]);
+  const covered = ["📅 Appointment Set", "🤝 Met with Customer", "🏡 Showing Homes"].flatMap((n) => stageOf(get(n)));
+  for (const live of ["Submitting Offers", "Listing Agreement", "Active Listing", "Under Contract", "Pending", "Closed"]) {
+    assert.ok(!covered.includes(live), `${live} is a live deal and must never be swept`);
+  }
+  // The sweep still needs the warn-first stamp.
+  assert.ok(JSON.stringify(get("🏡 Showing Homes").neglected_filters).includes("customBattrAtRiskSince"));
 });
 
 check("no report-only list can ever reach the sweep", () => {
@@ -1105,6 +1124,9 @@ check("the day filter plus the three-day spread explain every observed night", (
       };
     });
   for (const { id, name, gap } of spreads) {
+    // Our live-pipeline lists (1160-1162) are deliberately wide: a quiet week nudges,
+    // a quiet month sweeps. They have no Battr night to reconcile against.
+    if (id >= 1160 && id <= 1162) continue;
     const expected = id === 1144 ? 2 : 3;
     assert.equal(gap, expected, `${name}: Battr's observed spread is ${expected} days, not ${gap}`);
   }
