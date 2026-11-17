@@ -111,7 +111,11 @@ const ZILLOW_INTENT_TAGS = ["Zillow High Intent Buyer", "Zillow High Intent Sell
 /** The live-business stages, as this account actually names them. */
 const LIVE_BUSINESS_STAGES = ["Showing Homes", "Active Listing", "Listing Agreement", "Under Contract", "Submitting Offers"];
 
-/** Our Nurture lists cover the Nurture stage alone; Spoke with Customer has list 1165. */
+/**
+ * Our no-timeframe Nurture list (1163) covers the Nurture stage alone. Spoke with
+ * Customer WITHOUT a timeframe has its own, tighter list (1165); WITH a timeframe it
+ * is judged by the four timeframe lists with Nurture, as Battr did.
+ */
 const NURTURE_ONLY = ["Nurture"];
 
 /** The nurture lists differ only by timeframe and thresholds. */
@@ -123,9 +127,10 @@ const nurtureList = ({ id, name, timeframe, atRiskDays, neglectedDays }) => ({
   list_filters: {
     groups: [
       [
-        // Nurture only. Spoke with Customer has its own 7/10 list below (Mike, 17 Nov
-        // 2026) — a lead you have spoken with is warm and must not depend on a timeframe.
-        contact("stage_name", "IS ANY OF", NURTURE_ONLY, { value_data_type: "text" }),
+        // Nurture AND Spoke with Customer, by timeframe — Battr's rule, kept (Mike, 17
+        // Nov 2026: "if there's a timeframe, follow the previous rules"). Spoke with
+        // Customer with NO timeframe is list 1165.
+        contact("stage_name", "IS ANY OF", STAGES.nurture, { value_data_type: "text" }),
         contact(TIMEFRAME, "IS ANY OF", timeframe, { value_data_type: "text" }),
         notInAPond,
       ],
@@ -226,10 +231,28 @@ export const lists = [
   nurtureList({ id: 1108, name: "🌱 Monthly Nurture", timeframe: TIMEFRAMES.months6to12, atRiskDays: 33, neglectedDays: 36 }),
   nurtureList({ id: 1109, name: "👀 Quarterly Nurture", timeframe: TIMEFRAMES.months12plus, atRiskDays: 93, neglectedDays: 96 }),
 
-  // Ours, 17 Nov 2026 (Mike): Spoke with Customer on its own 7/10 clock, whatever the
-  // timeframe field says (it used to be judged by the Nurture timeframe lists and not
-  // at all when no timeframe was set).
-  livePipelineList({ id: 1165, name: "🗣️ Spoke with Customer", stage: "Spoke with Customer", atRiskDays: 7, neglectedDays: 10 }),
+  // Ours, 17 Nov 2026 (Mike): Spoke with Customer with NO timeframe is on a 7/10 clock.
+  // (Before, it was never nudged or swept without a timeframe. With a timeframe it
+  // follows the timeframe lists above, unchanged.)
+  {
+    id: 1165,
+    name: "🗣️ Spoke with Customer — no timeframe",
+    audit_type: "contact_list",
+    is_active: true,
+    list_filters: {
+      groups: [
+        [
+          contact("stage_name", "IS ANY OF", ["Spoke with Customer"], { value_data_type: "text" }),
+          contact(TIMEFRAME, "=", null, { value_data_type: "text" }),
+          notInAPond,
+        ],
+      ],
+    },
+    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 7)]] },
+    neglected_filters: {
+      groups: [[daysSince(LAST_COMM, ">", 10), contact(AT_RISK_SINCE, "!=", null, { value_data_type: "text" })]],
+    },
+  },
 
   // Ours (see livePipelineList): the stages Battr never acted on.
   livePipelineList({ id: 1160, name: "📅 Appointment Set", stage: "Appointment Set", atRiskDays: 5, neglectedDays: 8 }),

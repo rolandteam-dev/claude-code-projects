@@ -432,7 +432,7 @@ check("Battr's six lists plus our five lists feed the sweep — nothing else", (
       // Ours, 17 Nov 2026 (Mike): Battr never acted on these stages.
       "📅 Appointment Set", "🤝 Met with Customer", "🏡 Showing Homes",
       // Ours, 17 Nov 2026 (Mike): no-timeframe Nurture, and Submitting Offers (nudge only).
-      "🕳️ Nurture — no timeframe", "💼 Submitting Offers (nudge only)", "🗣️ Spoke with Customer",
+      "🕳️ Nurture — no timeframe", "💼 Submitting Offers (nudge only)", "🗣️ Spoke with Customer — no timeframe",
     ].sort()
   );
 });
@@ -614,18 +614,21 @@ check("NOCONTACT leads move to Missed Opportunities (early stages only) and are 
   assert.match(rules.noContactNote({ pondName: "Missed Opportunities", previousOwner: "A B" }), /NOCONTACT/);
 });
 
-check("Spoke with Customer has its own 7/10 clock, whatever the timeframe; Lead/Attempted older than 10 days is 5/8", () => {
+check("Spoke with Customer: no timeframe is 7/10, with a timeframe it follows the timeframe lists; Lead/Attempted over 10 days is 5/8", () => {
   const days = (set) => (set.groups.flat().find((c) => c.transform?.type === "days_since")).value;
   const spoke = lists.find((l) => l.id === 1165);
   assert.deepEqual([days(spoke.at_risk_filters), days(spoke.neglected_filters)], [7, 10]);
-  assert.ok(!JSON.stringify(spoke.list_filters).includes("timeframe"), "Spoke with Customer must not depend on the timeframe field");
+  const spokeConds = spoke.list_filters.groups[0];
+  assert.ok(spokeConds.some((c) => c.field.endsWith("system_timeframe") && c.operator === "=" && c.value === null), "only Spoke with Customer with NO timeframe");
   const warm = lists.find((l) => l.id === 1104);
   assert.deepEqual([days(warm.at_risk_filters), days(warm.neglected_filters)], [5, 8]);
-  // The Nurture lists no longer take Spoke with Customer (it would be in two lists).
-  for (const id of [1106, 1107, 1108, 1109, 1163]) {
-    const stage = lists.find((l) => l.id === id).list_filters.groups[0].find((c) => c.field === "stage_name").value;
-    assert.deepEqual(stage, ["Nurture"], `list ${id} covers Nurture only`);
+  const stageOf = (id) => lists.find((l) => l.id === id).list_filters.groups[0].find((c) => c.field === "stage_name").value;
+  // With a timeframe, Spoke with Customer is judged with Nurture, as it always was.
+  for (const id of [1106, 1107, 1108, 1109]) {
+    assert.deepEqual(stageOf(id), ["Nurture", "Spoke with Customer"], `list ${id} keeps Spoke with Customer`);
   }
+  assert.deepEqual(stageOf(1163), ["Nurture"], "no-timeframe Nurture is Nurture only");
+  assert.deepEqual([days(lists.find((l) => l.id === 1106).at_risk_filters), days(lists.find((l) => l.id === 1109).at_risk_filters)], [10, 93]);
 });
 
 check("sweeping has a start date: nudges only before it, and the gate sits beside the pinned ones", () => {
