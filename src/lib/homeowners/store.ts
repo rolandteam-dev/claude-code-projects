@@ -220,11 +220,12 @@ const memoryStore: HomeownerStore = {
         h.emailConsent !== false && // honor an explicit email opt-out
         (!h.lastEmailedAt || new Date(h.lastEmailedAt).getTime() < cutoff)
     );
-    // Engaged contacts (any dashboard view) first, then most-recently-updated —
-    // warm-up reputation is built by mailing openers/clickers first.
+    // Engaged contacts first (dashboard views / clicks, never opens), then
+    // most-recently-updated — warm-up reputation is built by mailing the
+    // engaged first.
     due.sort((a, b) => {
-      const ea = (a.views?.length ?? 0) > 0 ? 1 : 0;
-      const eb = (b.views?.length ?? 0) > 0 ? 1 : 0;
+      const ea = hasEngaged(a) ? 1 : 0;
+      const eb = hasEngaged(b) ? 1 : 0;
       if (ea !== eb) return eb - ea;
       return a.updatedAt < b.updatedAt ? 1 : -1;
     });
@@ -397,4 +398,16 @@ export function engagementScore(h: Homeowner): number {
     else score += 2;
   }
   return Math.min(100, Math.round(score));
+}
+
+/**
+ * The engagement signal behind the warm-up guardrail: has this contact shown
+ * real interest? True when they've opened their DASHBOARD (a recorded view),
+ * which also captures the email's CTA clicks — the value email's main link lands
+ * on the dashboard, so a click becomes a view. Deliberately NOT email opens:
+ * opens are unreliable (Apple Mail Privacy pre-fetches them) and are never
+ * recorded here. Clicks, replies-to-inbox, or dashboard views — never opens.
+ */
+export function hasEngaged(h: Homeowner): boolean {
+  return (h.views?.length ?? 0) > 0;
 }

@@ -12,7 +12,7 @@
  * everything. READ-ONLY data gathering (MLS + local store). Sends via Resend.
  */
 import { Resend } from "resend";
-import { homeownerBrand } from "@/lib/homeowners/brand";
+import { homeownerBrand, homeownerFrom } from "@/lib/homeowners/brand";
 import { databaseClosings, databaseNewListings, type IntelMatch } from "@/lib/idx/closings";
 import { expiredMatches, type ExpiredMatch } from "@/lib/idx/expired";
 import { loadFormerMatcher } from "@/lib/idx/referral";
@@ -203,13 +203,20 @@ export async function sendReportEmail(
   html: string,
 ): Promise<{ sent: boolean; reason?: string; to?: string[] }> {
   const key = process.env.RESEND_API_KEY;
-  const from = (process.env.HOMEOWNER_FROM_EMAIL ?? "").trim();
+  const from = homeownerFrom();
   const to = recipients();
-  if (!key || !from) return { sent: false, reason: "email not configured (RESEND_API_KEY / HOMEOWNER_FROM_EMAIL)" };
+  if (!key) return { sent: false, reason: "email not configured (RESEND_API_KEY)" };
   if (!to.length) return { sent: false, reason: "no recipient (set REPORTS_EMAIL_TO)" };
+  // Plain-text alternative so the internal report isn't HTML-only either.
+  const text = html
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
   try {
     const resend = new Resend(key);
-    const { error } = await resend.emails.send({ from, to, subject, html, replyTo: homeownerBrand.email });
+    const { error } = await resend.emails.send({ from, to, subject, html, text, replyTo: homeownerBrand.email });
     if (error) return { sent: false, reason: String((error as { message?: string })?.message ?? error) };
     return { sent: true, to };
   } catch (e) {

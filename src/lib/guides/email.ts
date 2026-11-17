@@ -9,8 +9,7 @@
  */
 import { Resend } from "resend";
 import { combinedGuidePdfUrl, guideContact, relocationGuides } from "@/content/relocationGuides";
-
-const DEFAULT_FROM = "The Roland Team <home@therolandteam.com>";
+import { homeownerFrom, listUnsubscribeMailtoHeaders } from "@/lib/homeowners/brand";
 
 function enabled(): boolean {
   return process.env.GUIDE_EMAIL_ENABLED !== "false";
@@ -75,13 +74,37 @@ export function guideEmailHtml(firstName?: string): string {
   </div>`;
 }
 
+export function guideEmailText(firstName?: string): string {
+  const name = firstName ? ` ${firstName}` : "";
+  const cards = relocationGuides
+    .map((g) => `${g.part} — ${g.title}\n  ${g.blurb}\n  Read online: ${g.readUrl}\n  Download PDF: ${g.pdfUrl}`)
+    .join("\n\n");
+  return [
+    `Your Las Vegas guides${name}`,
+    "",
+    "Both guides are below, to read online or keep as a PDF. Part one is what the move actually costs and the deadlines that catch people. Part two is the city you'll live in once the boxes are unpacked.",
+    "",
+    cards,
+    "",
+    `Prefer one file? Download both guides as a single PDF: ${combinedGuidePdfUrl}`,
+    "",
+    `If you want a second opinion on a neighborhood, call or text ${guideContact.phoneDisplay}. We answer.`,
+    "",
+    "Mike Roland",
+    "The Roland Team with LPT Realty",
+    "",
+    `${guideContact.legalName} · ${guideContact.address}`,
+    `You asked for these guides at ${guideContact.origin.replace(/^https?:\/\//, "")}. Equal Housing Opportunity.`,
+  ].join("\n");
+}
+
 export async function sendGuideEmail(to: {
   email: string;
   firstName?: string;
 }): Promise<{ sent: boolean; reason?: string }> {
   if (!enabled()) return { sent: false, reason: "disabled (GUIDE_EMAIL_ENABLED is \"false\")" };
   const key = process.env.RESEND_API_KEY;
-  const from = process.env.HOMEOWNER_FROM_EMAIL || DEFAULT_FROM;
+  const from = homeownerFrom();
   if (!key) return { sent: false, reason: "email not configured" };
   if (!to.email) return { sent: false, reason: "missing email" };
   try {
@@ -91,7 +114,9 @@ export async function sendGuideEmail(to: {
       to: to.email,
       subject: "Your Las Vegas guides",
       html: guideEmailHtml(to.firstName),
+      text: guideEmailText(to.firstName),
       replyTo: guideContact.email,
+      headers: listUnsubscribeMailtoHeaders(),
     });
     if (error) return { sent: false, reason: errMsg(error) };
     return { sent: true };

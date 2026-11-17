@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sendValueEmail, renderValueEmailHtml, valueEmailSubject } from "@/lib/homeowners/email";
+import { sendValueEmail, renderValueEmailHtml, renderValueEmailText, valueEmailSubject } from "@/lib/homeowners/email";
 import type { Homeowner } from "@/lib/homeowners/store";
 
 export const runtime = "nodejs";
@@ -58,6 +58,13 @@ export async function GET(req: Request) {
   if (params.get("preview") === "1") {
     return new NextResponse(renderValueEmailHtml(sample(params)), {
       headers: { "Content-Type": "text/html; charset=utf-8" },
+    });
+  }
+
+  // Plain-text preview — the text/plain alternative shipped with every send.
+  if (params.get("text") === "1") {
+    return new NextResponse(renderValueEmailText(sample(params)), {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
     });
   }
 
