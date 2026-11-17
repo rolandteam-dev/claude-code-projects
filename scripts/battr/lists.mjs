@@ -111,6 +111,9 @@ const ZILLOW_INTENT_TAGS = ["Zillow High Intent Buyer", "Zillow High Intent Sell
 /** The live-business stages, as this account actually names them. */
 const LIVE_BUSINESS_STAGES = ["Showing Homes", "Active Listing", "Listing Agreement", "Under Contract", "Submitting Offers"];
 
+/** Our Nurture lists cover the Nurture stage alone; Spoke with Customer has list 1165. */
+const NURTURE_ONLY = ["Nurture"];
+
 /** The nurture lists differ only by timeframe and thresholds. */
 const nurtureList = ({ id, name, timeframe, atRiskDays, neglectedDays }) => ({
   id,
@@ -120,7 +123,9 @@ const nurtureList = ({ id, name, timeframe, atRiskDays, neglectedDays }) => ({
   list_filters: {
     groups: [
       [
-        contact("stage_name", "IS ANY OF", STAGES.nurture, { value_data_type: "text" }),
+        // Nurture only. Spoke with Customer has its own 7/10 list below (Mike, 17 Nov
+        // 2026) — a lead you have spoken with is warm and must not depend on a timeframe.
+        contact("stage_name", "IS ANY OF", NURTURE_ONLY, { value_data_type: "text" }),
         contact(TIMEFRAME, "IS ANY OF", timeframe, { value_data_type: "text" }),
         notInAPond,
       ],
@@ -207,10 +212,12 @@ export const lists = [
         ],
       ],
     },
-    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 10)]] },
-    // Same interlock as the nurture lists — confirmed on the rule screen 3 Sep 2026.
+    // OURS since 17 Nov 2026 (Mike): Battr's 10/13. A Lead or Attempted Contact older
+    // than 10 days that nobody has reached in 10 days is too long — 5 days to the
+    // nudge, 8 to the sweep (same +3 as every list, warn-first stamp still required).
+    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 5)]] },
     neglected_filters: {
-      groups: [[daysSince(LAST_COMM, ">", 13), contact(AT_RISK_SINCE, "!=", null, { value_data_type: "text" })]],
+      groups: [[daysSince(LAST_COMM, ">", 8), contact(AT_RISK_SINCE, "!=", null, { value_data_type: "text" })]],
     },
   },
 
@@ -218,6 +225,11 @@ export const lists = [
   nurtureList({ id: 1107, name: "😎 Bi-Weekly Nurture", timeframe: TIMEFRAMES.months3to6, atRiskDays: 16, neglectedDays: 19 }),
   nurtureList({ id: 1108, name: "🌱 Monthly Nurture", timeframe: TIMEFRAMES.months6to12, atRiskDays: 33, neglectedDays: 36 }),
   nurtureList({ id: 1109, name: "👀 Quarterly Nurture", timeframe: TIMEFRAMES.months12plus, atRiskDays: 93, neglectedDays: 96 }),
+
+  // Ours, 17 Nov 2026 (Mike): Spoke with Customer on its own 7/10 clock, whatever the
+  // timeframe field says (it used to be judged by the Nurture timeframe lists and not
+  // at all when no timeframe was set).
+  livePipelineList({ id: 1165, name: "🗣️ Spoke with Customer", stage: "Spoke with Customer", atRiskDays: 7, neglectedDays: 10 }),
 
   // Ours (see livePipelineList): the stages Battr never acted on.
   livePipelineList({ id: 1160, name: "📅 Appointment Set", stage: "Appointment Set", atRiskDays: 5, neglectedDays: 8 }),
@@ -252,7 +264,7 @@ export const lists = [
     list_filters: {
       groups: [
         [
-          contact("stage_name", "IS ANY OF", STAGES.nurture, { value_data_type: "text" }),
+          contact("stage_name", "IS ANY OF", NURTURE_ONLY, { value_data_type: "text" }),
           contact(TIMEFRAME, "=", null, { value_data_type: "text" }),
           notInAPond,
         ],
@@ -325,7 +337,7 @@ export const lists = [
     list_filters: {
       groups: [
         [
-          { object: "battr.aida_lists", field: "source_list_ids", operator: "IS ANY OF", value: [1104, 1106, 1107, 1108, 1109, 1144, 1160, 1161, 1162, 1163, 1164], value_data_type: "integer" },
+          { object: "battr.aida_lists", field: "source_list_ids", operator: "IS ANY OF", value: [1104, 1106, 1107, 1108, 1109, 1144, 1160, 1161, 1162, 1163, 1164, 1165], value_data_type: "integer" },
           contact("lead_bucket_id", "!=", 82, { object: "battr.lead_buckets", value_data_type: "integer" }),
           contact("owner_group_ids", "DOES NOT CONTAIN ANY", [52555], { value_data_type: "integer" }),
         ],
