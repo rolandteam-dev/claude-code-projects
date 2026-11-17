@@ -99,6 +99,9 @@ export interface HomeownerStore {
   updateFacts(token: string, facts: { beds?: number; baths?: number; sqft?: number }): Promise<void>;
   markEmailed(token: string, at?: string): Promise<void>;
   unsubscribe(token: string): Promise<void>;
+  /** Mark homeowners whose phone (normalized to its last 10 digits) is in
+   * `phones` as DNC. `apply:false` (default) counts matches without writing. */
+  markDnc(phones: string[], opts?: { apply?: boolean }): Promise<{ matched: number; applied: number }>;
   /**
    * Atomically take one slot from today's (Pacific) seller-report send budget.
    * Returns false once `limit` slots are taken — the caller must not send.
@@ -281,6 +284,23 @@ const memoryStore: HomeownerStore = {
     const h = mem.get(token);
     if (h) h.subscribed = false;
   },
+  async markDnc(phones, opts) {
+    const set = new Set(phones.filter(Boolean));
+    let matched = 0;
+    let applied = 0;
+    for (const h of mem.values()) {
+      const p = normPhone(h.phone);
+      if (p && set.has(p)) {
+        matched++;
+        if (opts?.apply) {
+          h.dnc = true;
+          h.updatedAt = now();
+          applied++;
+        }
+      }
+    }
+    return { matched, applied };
+  },
   async claimSellerSend(limit) {
     const day = pacificDay();
     const n = sellerSends.get(day) ?? 0;
@@ -328,6 +348,13 @@ export function storeDriver(): "postgres" | "memory" {
   return process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRES_DATABASE_URL
     ? "postgres"
     : "memory";
+}
+
+/** Digits-only last-10 of a US phone, or "" when it doesn't hold 10 digits.
+ * The match key for DNC scrubs (formatting varies: "(702) 555-1234" vs "702...". */
+export function normPhone(s?: string | null): string {
+  const d = (s ?? "").replace(/\D/g, "");
+  return d.length >= 10 ? d.slice(-10) : "";
 }
 
 /** Unguessable token for dashboard URLs. */
