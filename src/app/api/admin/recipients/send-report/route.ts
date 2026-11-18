@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { homeownerStore } from "@/lib/homeowners/store";
-import { sendValueEmail } from "@/lib/homeowners/email";
+import { sendValueEmail, sendWelcomeEmail } from "@/lib/homeowners/email";
 import { valueHome } from "@/lib/homeowners/nvValue";
 
 export const runtime = "nodejs";
@@ -49,10 +49,15 @@ export async function POST(req: Request) {
       await store.addEstimate(h.token, estimate);
       h.estimates.push(estimate);
     }
-    const r = await sendValueEmail(h);
+    // The value report needs a number. If this address has no estimate yet (and
+    // none could be computed just now — e.g. the AVM has no beds/baths/sqft for
+    // it), fall back to the welcome / dashboard-invite email, which is built to
+    // send without a value — so the button never dead-ends on an un-valued home.
+    const hasValue = (h.estimates?.length ?? 0) > 0;
+    const r = hasValue ? await sendValueEmail(h) : await sendWelcomeEmail(h, { reason: "requested" });
     if (r.sent) {
       await store.markEmailed(h.token);
-      return NextResponse.json({ ok: true, sent: true, to: h.email });
+      return NextResponse.json({ ok: true, kind: hasValue ? "report" : "invite", to: h.email });
     }
     return NextResponse.json({ ok: false, error: r.reason ?? "send failed" }, { status: 200 });
   } catch (e) {

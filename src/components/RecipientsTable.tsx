@@ -157,9 +157,9 @@ export function RecipientsTable({ rows, adminKey }: { rows: RecipientRow[]; admi
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: r.token }),
       });
-      const j = (await res.json()) as { ok?: boolean; error?: string };
+      const j = (await res.json()) as { ok?: boolean; error?: string; kind?: string };
       if (!res.ok || !j.ok) throw new Error(j.error || `HTTP ${res.status}`);
-      setOkMsg(`Home value report sent to ${r.name || r.email}.`);
+      setOkMsg(`${j.kind === "invite" ? "Dashboard invite" : "Home value report"} sent to ${r.name || r.email}.`);
       const nowIso = new Date().toISOString();
       setData((prev) =>
         prev.map((x) =>
