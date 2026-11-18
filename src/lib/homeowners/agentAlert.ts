@@ -15,7 +15,7 @@
  * Requires RESEND_API_KEY (send) and FUB_API_KEY (resolve the assigned agent).
  */
 import { Resend } from "resend";
-import { homeownerBrand } from "./brand";
+import { homeownerBrand, homeownerFrom } from "./brand";
 import { FUB_BASE, fubHeaders } from "./fubMap";
 
 const DEFAULT_HOT_TAGS = ["Requested CMA", "Cash Offer", "List With Us", "Equity Calculator", "Buyer Lead"];
@@ -114,7 +114,7 @@ export async function notifyAssignedAgent(
   const fubLink = resolved?.personId && subdomain
     ? `https://${subdomain}.followupboss.com/2/people/view/${resolved.personId}`
     : "";
-  const from = process.env.HOMEOWNER_FROM_EMAIL || "The Roland Team <home@therolandteam.com>";
+  const from = homeownerFrom();
 
   const money = (n?: number) =>
     typeof n === "number" && Number.isFinite(n) && n > 0
@@ -173,6 +173,23 @@ export async function notifyAssignedAgent(
     <p style="margin:22px 0 0;font-size:12px;color:#9a9a9a;">Sent by The Roland Team homeowner dashboard. Reply to reach the lead directly.</p>
   </div>`;
 
+  const text = [
+    signal,
+    "",
+    `Name: ${name}`,
+    lead.email ? `Email: ${lead.email}` : "",
+    lead.phone ? `Phone: ${lead.phone}` : "",
+    resolved?.name ? `Assigned to: ${resolved.name}` : "",
+    lead.address ? `Address: ${lead.address}` : "",
+    avmValue ? `Estimated value: ${avmValue}${avmRange ? ` (likely range ${avmRange})` : ""}` : "",
+    lead.saleTimeline ? `Sale timeline: ${lead.saleTimeline}` : "",
+    lead.message ? `\n${lead.message}` : "",
+    fubLink ? `\nOpen in Follow Up Boss: ${fubLink}` : "",
+    "\nReply to this email to reach the lead directly.",
+  ]
+    .filter((l) => l !== "")
+    .join("\n");
+
   try {
     const resend = new Resend(resendKey);
     const { error } = await resend.emails.send({
@@ -181,6 +198,7 @@ export async function notifyAssignedAgent(
       replyTo: lead.email || homeownerBrand.email,
       subject: `🔥 ${signal} — ${name}${lead.address ? ` · ${lead.address}` : ""}`,
       html,
+      text,
     });
     if (error) return { sent: false, reason: String(error) };
     return { sent: true };

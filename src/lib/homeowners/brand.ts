@@ -74,3 +74,48 @@ export const homeownerBrand = {
 export function dashboardUrl(token: string): string {
   return `${homeownerBrand.baseUrl.replace(/\/$/, "")}/dashboard/${token}`;
 }
+
+/**
+ * Single source of truth for the From header on EVERY email we send (value
+ * digest, welcome, cash offer, guides, rebate, agent alerts, internal reports).
+ * Driven entirely by one env var — HOMEOWNER_FROM_EMAIL — so moving the whole
+ * program to a dedicated sending subdomain (e.g. "Mike Roland
+ * <mike@mail.therolandteam.com>") is a Vercel env change with no code edit.
+ * Defaults to the personal sender on the verified root domain.
+ */
+export const DEFAULT_FROM_EMAIL = `${homeownerBrand.founder} <${homeownerBrand.email}>`;
+export function homeownerFrom(): string {
+  return (process.env.HOMEOWNER_FROM_EMAIL ?? "").trim() || DEFAULT_FROM_EMAIL;
+}
+
+/** Absolute one-click (RFC 8058) unsubscribe URL for a homeowner token. */
+export function unsubscribeUrl(token: string): string {
+  return `${homeownerBrand.baseUrl.replace(/\/$/, "")}/api/dashboard/unsubscribe?token=${encodeURIComponent(token)}`;
+}
+
+/** The mailbox a `List-Unsubscribe: mailto:` points at. Defaults to the reply
+ * inbox; point HOMEOWNER_UNSUB_MAILTO at a monitored/auto-processing address to
+ * fully automate mailto opt-outs. */
+function unsubMailto(): string {
+  return (process.env.HOMEOWNER_UNSUB_MAILTO ?? "").trim() || homeownerBrand.email;
+}
+
+/**
+ * RFC 8058 List-Unsubscribe headers for a tokened recurring email: a `mailto`
+ * AND the https one-click URL, plus List-Unsubscribe-Post so Gmail/Yahoo show a
+ * native one-click control. Their absence on marketing mail is a negative
+ * deliverability signal; the https POST handler lives on the unsubscribe route.
+ */
+export function listUnsubscribeHeaders(token: string): Record<string, string> {
+  return {
+    "List-Unsubscribe": `<mailto:${unsubMailto()}?subject=unsubscribe>, <${unsubscribeUrl(token)}>`,
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+  };
+}
+
+/** List-Unsubscribe for a token-less transactional email (guide / rebate / cash-
+ * offer ack): `mailto` only — there's no subscriber token to one-click, but the
+ * header still satisfies providers and gives recipients an out. */
+export function listUnsubscribeMailtoHeaders(): Record<string, string> {
+  return { "List-Unsubscribe": `<mailto:${unsubMailto()}?subject=unsubscribe>` };
+}

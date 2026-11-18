@@ -13,7 +13,14 @@
  * rather than on the schedule: that is the only place that catches all of them.
  */
 import { Resend } from "resend";
-import { homeownerBrand, dashboardUrl } from "./brand";
+import {
+  homeownerBrand,
+  dashboardUrl,
+  homeownerFrom,
+  unsubscribeUrl,
+  listUnsubscribeHeaders,
+  listUnsubscribeMailtoHeaders,
+} from "./brand";
 import { latestEstimate, appreciation, type Homeowner } from "./store";
 
 const money = (n: number) =>
@@ -96,6 +103,86 @@ export function renderValueEmailHtml(h: Homeowner): string {
   return html(h);
 }
 
+// ---- Plain-text alternatives. Every send ships both; an HTML-only message is a
+// ---- spam signal and some clients render only the text part.
+
+function valueText(h: Homeowner): string {
+  const latest = latestEstimate(h)!;
+  const appr = appreciation(h);
+  const lines = [
+    `Hi ${h.firstName || "there"}, it's Mike with ${homeownerBrand.name}. Here's where ${h.address || "your home"} stands this month.`,
+    "",
+    `My current estimate: ${money(latest.value)}`,
+  ];
+  if (latest.low && latest.high) lines.push(`Likely range: ${money(latest.low)} – ${money(latest.high)}`);
+  if (appr)
+    lines.push(
+      `Since I started tracking it, your estimate is ${appr.abs >= 0 ? "up" : "down"} ${money(Math.abs(appr.abs))} (${appr.pct >= 0 ? "+" : "−"}${Math.abs(appr.pct).toFixed(1)}%).`,
+    );
+  lines.push(
+    "",
+    "The number only tells part of the story. On your private dashboard I keep the homes that actually sold near you, where mortgage rates landed this week, and how much equity you could put to work.",
+    "",
+    `See what's moving your value: ${dashboardUrl(h.token)}`,
+    "",
+    `Curious what it would actually sell for? Just reply — it comes straight to me — or call ${homeownerBrand.phone}.`,
+    "",
+    "— Mike Roland",
+    "",
+    `${homeownerBrand.legalName} · ${homeownerBrand.postalAddress}`,
+    "Automated estimate, not an appraisal. Equal Housing Opportunity.",
+    `Unsubscribe from home value updates: ${unsubscribeUrl(h.token)}`,
+  );
+  return lines.join("\n");
+}
+
+/** The value-email plain text, exposed for the admin value-email preview/test. */
+export function renderValueEmailText(h: Homeowner): string {
+  return valueText(h);
+}
+
+function welcomeText(h: Homeowner, reason: "requested" | "seller-lead" = "requested"): string {
+  const latest = latestEstimate(h);
+  const lines = [
+    `Your home value dashboard is ready${h.firstName ? `, ${h.firstName}` : ""}.`,
+    [h.address, h.city, `${h.state} ${h.zip}`].filter(Boolean).join(", ").trim(),
+  ];
+  if (latest) lines.push("", `Current estimate: ${money(latest.value)}`);
+  lines.push(
+    "",
+    "It's Mike — I'll keep an eye on your home's value and send you an update as the market moves. Bookmark your private dashboard to check it anytime.",
+    "",
+    `View my home dashboard: ${dashboardUrl(h.token)}`,
+    "",
+    `Ready for a precise, human valuation? Just reply — it comes straight to me — or call ${homeownerBrand.phone}.`,
+    "",
+    "— Mike Roland",
+    "",
+    `${homeownerBrand.legalName} · ${homeownerBrand.postalAddress}`,
+    "Automated estimate, not an appraisal. Equal Housing Opportunity.",
+    reason === "seller-lead"
+      ? `You're receiving this because you asked about selling your home with ${homeownerBrand.name}.`
+      : "You're receiving this because you requested your home value.",
+    `Unsubscribe: ${unsubscribeUrl(h.token)}`,
+  );
+  return lines.join("\n");
+}
+
+function cashOfferText(to: { firstName?: string; address?: string }): string {
+  return [
+    `Got your cash-offer request${to.firstName ? `, ${to.firstName}` : ""}.`,
+    "",
+    `Thanks for reaching out${to.address ? ` about ${to.address}` : ""} — it's Mike. I'll review your home and get back to you shortly with your cash-offer options, plus a side-by-side of what the same home could bring on the open market, so you can compare with no pressure.`,
+    "",
+    `Call ${homeownerBrand.phone}`,
+    "",
+    "— Mike Roland",
+    "",
+    `${homeownerBrand.legalName} · ${homeownerBrand.postalAddress}`,
+    "Equal Housing Opportunity.",
+  ].join("\n");
+}
+
 function welcomeHtml(h: Homeowner, reason: "requested" | "seller-lead" = "requested"): string {
   const latest = latestEstimate(h);
   const url = dashboardUrl(h.token);
@@ -154,41 +241,10 @@ function sendingEnabled(): boolean {
   return process.env.HOMEOWNER_EMAIL_ENABLED === "true";
 }
 
-/**
- * From address for homeowner email. Defaults to a PERSONAL sender —
- * "Mike Roland <mike@therolandteam.com>" — because a named human lifts opens and
- * replies far more than a brand name ("The Roland Team") does, and replies land
- * straight in Mike's inbox. Still on the org's verified domain (therolandteam.com)
- * so it passes SPF/DKIM — sending from a different domain (e.g. rolandluxury.com)
- * trips Gmail's "may be impersonating" warning. Override with HOMEOWNER_FROM_EMAIL
- * only to another verified sender.
- */
-const DEFAULT_FROM = `${homeownerBrand.founder} <${homeownerBrand.email}>`;
-function fromAddress(): string {
-  return process.env.HOMEOWNER_FROM_EMAIL || DEFAULT_FROM;
-}
-
 const DISABLED = {
   sent: false,
   reason: "sending disabled (HOMEOWNER_EMAIL_ENABLED is not \"true\")",
 } as const;
-
-/** Absolute one-click unsubscribe URL for a homeowner token. */
-function unsubscribeUrl(token: string): string {
-  return `${homeownerBrand.baseUrl.replace(/\/$/, "")}/api/dashboard/unsubscribe?token=${encodeURIComponent(token)}`;
-}
-
-/**
- * RFC 8058 one-click unsubscribe headers. Gmail and Yahoo show a native
- * "Unsubscribe" control from these and treat their absence on marketing-style
- * mail as a negative signal; the POST handler lives on the same URL.
- */
-function listUnsubscribeHeaders(token: string): Record<string, string> {
-  return {
-    "List-Unsubscribe": `<${unsubscribeUrl(token)}>`,
-    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-  };
-}
 
 export async function sendWelcomeEmail(
   h: Homeowner,
@@ -196,7 +252,7 @@ export async function sendWelcomeEmail(
 ): Promise<{ sent: boolean; reason?: string }> {
   if (!sendingEnabled()) return DISABLED;
   const key = process.env.RESEND_API_KEY;
-  const from = fromAddress();
+  const from = homeownerFrom();
   if (!key || !from) return { sent: false, reason: "email not configured" };
   if (!h.email) return { sent: false, reason: "missing email" };
   try {
@@ -206,6 +262,7 @@ export async function sendWelcomeEmail(
       to: h.email,
       subject: `Your ${h.city || "Las Vegas"} home value dashboard`,
       html: welcomeHtml(h, opts.reason),
+      text: welcomeText(h, opts.reason),
       replyTo: homeownerBrand.email,
       headers: listUnsubscribeHeaders(h.token),
     });
@@ -223,7 +280,7 @@ export async function sendCashOfferEmail(to: {
 }): Promise<{ sent: boolean; reason?: string }> {
   if (!sendingEnabled()) return DISABLED;
   const key = process.env.RESEND_API_KEY;
-  const from = fromAddress();
+  const from = homeownerFrom();
   if (!key || !from) return { sent: false, reason: "email not configured" };
   if (!to.email) return { sent: false, reason: "missing email" };
   const html = `
@@ -255,7 +312,9 @@ export async function sendCashOfferEmail(to: {
       to: to.email,
       subject: "Your cash-offer request — next steps",
       html,
+      text: cashOfferText(to),
       replyTo: homeownerBrand.email,
+      headers: listUnsubscribeMailtoHeaders(),
     });
     if (error) return { sent: false, reason: errMsg(error) };
     return { sent: true };
@@ -267,7 +326,7 @@ export async function sendCashOfferEmail(to: {
 export async function sendValueEmail(h: Homeowner): Promise<{ sent: boolean; reason?: string }> {
   if (!sendingEnabled()) return DISABLED;
   const key = process.env.RESEND_API_KEY;
-  const from = fromAddress(); // e.g. "Mike Roland <mike@therolandteam.com>"
+  const from = homeownerFrom(); // single env var: HOMEOWNER_FROM_EMAIL
   if (!key || !from) return { sent: false, reason: "email not configured" };
   if (!h.email || !latestEstimate(h)) return { sent: false, reason: "missing email or estimate" };
   const subject = valueEmailSubject(h);
@@ -278,6 +337,7 @@ export async function sendValueEmail(h: Homeowner): Promise<{ sent: boolean; rea
       to: h.email,
       subject,
       html: html(h),
+      text: valueText(h),
       replyTo: homeownerBrand.email,
       headers: listUnsubscribeHeaders(h.token),
     });

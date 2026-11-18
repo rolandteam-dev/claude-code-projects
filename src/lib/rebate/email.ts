@@ -11,8 +11,14 @@
  */
 import { Resend } from "resend";
 import { rebateContact, rebateOffer } from "@/content/newConstructionRebate";
+import { homeownerFrom, listUnsubscribeMailtoHeaders } from "@/lib/homeowners/brand";
 
-const DEFAULT_FROM = "The Roland Team <home@therolandteam.com>";
+/** The three next-steps, shared by the HTML and plain-text bodies. */
+const REBATE_STEPS: [string, string][] = [
+  ["Book the call", "Fifteen to thirty minutes on Zoom. We go over the builders and communities on your list and answer whatever you want to ask."],
+  ["Sign the buyer agreement", "Sent electronically after the call. It states the rebate in writing so nothing depends on a web page."],
+  ["We register you with the builder", "Before your first visit. That one step is what funds the rebate, and most builders only honor it if it happens first."],
+];
 
 function enabled(): boolean {
   return process.env.REBATE_EMAIL_ENABLED !== "false";
@@ -37,11 +43,7 @@ function escapeHtml(s: string): string {
 export function rebateEmailHtml(firstName?: string): string {
   const name = firstName ? escapeHtml(firstName) : "";
   const termsUrl = `${rebateContact.origin}/terms`;
-  const steps = [
-    ["Book the call", "Fifteen to thirty minutes on Zoom. We go over the builders and communities on your list and answer whatever you want to ask."],
-    ["Sign the buyer agreement", "Sent electronically after the call. It states the rebate in writing so nothing depends on a web page."],
-    ["We register you with the builder", "Before your first visit. That one step is what funds the rebate, and most builders only honor it if it happens first."],
-  ]
+  const steps = REBATE_STEPS
     .map(
       ([title, body], i) => `
       <tr>
@@ -87,13 +89,40 @@ export function rebateEmailHtml(firstName?: string): string {
   </div>`;
 }
 
+export function rebateEmailText(firstName?: string): string {
+  const name = firstName ? `, ${firstName}` : "";
+  const termsUrl = `${rebateContact.origin}/terms`;
+  const steps = REBATE_STEPS.map(([t, b], i) => `0${i + 1} ${t} — ${b}`).join("\n");
+  return [
+    `You're in${name}.`,
+    "",
+    `Your spot in the ${rebateOffer.programName} is saved: ${rebateOffer.pricePercent}% of the base purchase price back at closing, up to ${rebateOffer.commissionCapPercent}% of the commission the builder pays us.`,
+    "",
+    "One thing before anything else: please do not visit a builder's sales office or register on a builder's website until we have talked. Most builders will not pay a commission on a buyer who walked in first, and without that commission there is nothing to rebate.",
+    "",
+    steps,
+    "",
+    `Book the call: ${rebateContact.bookingUrl}`,
+    `Full program terms: ${termsUrl}`,
+    "",
+    `Questions before the call? Call or text ${rebateContact.phoneDisplay}. We answer.`,
+    "",
+    "Mike Roland",
+    "The Roland Team with LPT Realty",
+    "",
+    `${rebateContact.legalName} · ${rebateContact.address}`,
+    `${rebateContact.agentLicense} · ${rebateContact.brokerLicense}`,
+    `You asked about the rebate at ${rebateContact.origin.replace(/^https?:\/\//, "")}. Not a builder program. Equal Housing Opportunity.`,
+  ].join("\n");
+}
+
 export async function sendRebateEmail(to: {
   email: string;
   firstName?: string;
 }): Promise<{ sent: boolean; reason?: string }> {
   if (!enabled()) return { sent: false, reason: "disabled (REBATE_EMAIL_ENABLED is \"false\")" };
   const key = process.env.RESEND_API_KEY;
-  const from = process.env.HOMEOWNER_FROM_EMAIL || DEFAULT_FROM;
+  const from = homeownerFrom();
   if (!key) return { sent: false, reason: "email not configured" };
   if (!to.email) return { sent: false, reason: "missing email" };
   try {
@@ -103,7 +132,9 @@ export async function sendRebateEmail(to: {
       to: to.email,
       subject: "Your new construction rebate: one thing before you visit a builder",
       html: rebateEmailHtml(to.firstName),
+      text: rebateEmailText(to.firstName),
       replyTo: rebateContact.email,
+      headers: listUnsubscribeMailtoHeaders(),
     });
     if (error) return { sent: false, reason: errMsg(error) };
     return { sent: true };

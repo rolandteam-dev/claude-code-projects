@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { homeownerStore } from "@/lib/homeowners/store";
+import { homeownerStore, hasEngaged } from "@/lib/homeowners/store";
 import { valueHome } from "@/lib/homeowners/nvValue";
 import { sendValueEmail } from "@/lib/homeowners/email";
 import { isEligible } from "@/lib/homeowners/eligibility";
@@ -89,14 +89,14 @@ async function run(req: Request) {
   let eligibleList = due.filter((h) => isEligible({ email: h.email, state: h.state, zip: h.zip }));
   const skippedIneligible = due.length - eligibleList.length;
   if (sources) eligibleList = eligibleList.filter((h) => sources.has(h.source));
-  if (engagedOnly) eligibleList = eligibleList.filter((h) => (h.views?.length ?? 0) > 0);
+  if (engagedOnly) eligibleList = eligibleList.filter((h) => hasEngaged(h));
 
   // Hold back the chronically-unengaged (engaged OR still within the first
   // coldCap touches survive).
   let skippedCold = 0;
   if (warmFirst) {
     const before = eligibleList.length;
-    eligibleList = eligibleList.filter((h) => (h.views?.length ?? 0) > 0 || (h.emailCount ?? 0) < coldCap);
+    eligibleList = eligibleList.filter((h) => hasEngaged(h) || (h.emailCount ?? 0) < coldCap);
     skippedCold = before - eligibleList.length;
   }
 

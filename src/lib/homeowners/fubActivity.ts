@@ -22,7 +22,6 @@ export type HomeownerActivity =
   | "repeat-viewer"
   | "home-value-request"
   | "unsubscribe"
-  | "email-open"
   | "email-click";
 
 /**
@@ -62,12 +61,6 @@ const ACTIVITY: Record<
     source: "Home Value Dashboard",
     tags: ["Homeowner Activity", "Unsubscribed"],
     label: "Unsubscribed from home value updates — do not email",
-  },
-  "email-open": {
-    type: "General Inquiry",
-    source: "Home Value Email",
-    tags: ["Homeowner Activity", "Email Open"],
-    label: "Opened a home value email",
   },
   "email-click": {
     type: "General Inquiry",
