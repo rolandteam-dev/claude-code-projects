@@ -143,16 +143,30 @@ export function renderValueEmailText(h: Homeowner): string {
 
 function welcomeText(h: Homeowner, reason: "requested" | "seller-lead" = "requested"): string {
   const latest = latestEstimate(h);
-  const lines = [
-    `Your home value dashboard is ready${h.firstName ? `, ${h.firstName}` : ""}.`,
-    [h.address, h.city, `${h.state} ${h.zip}`].filter(Boolean).join(", ").trim(),
-  ];
-  if (latest) lines.push("", `Current estimate: ${money(latest.value)}`);
+  const hi = h.firstName ? `, ${h.firstName}` : "";
+  const addr = [h.address, h.city, `${h.state} ${h.zip}`].filter(Boolean).join(", ").trim();
+  // With a value → the "your dashboard is ready" welcome. Without one (home not
+  // in the MLS / no beds-baths-sqft) → ask for those details so we CAN value it.
+  const lines = latest
+    ? [
+        `Your home value dashboard is ready${hi}.`,
+        addr,
+        "",
+        `Current estimate: ${money(latest.value)}`,
+        "",
+        "It's Mike — I'll keep an eye on your home's value and send you an update as the market moves. Bookmark your private dashboard to check it anytime.",
+        "",
+        `View my home dashboard: ${dashboardUrl(h.token)}`,
+      ]
+    : [
+        `Let's finish your home valuation${hi}.`,
+        addr,
+        "",
+        "It's Mike — to run your home's current value I just need a few quick details: beds, baths, and square footage. Add them here and I'll send your estimate right over.",
+        "",
+        `Add my home details: ${dashboardUrl(h.token)}`,
+      ];
   lines.push(
-    "",
-    "It's Mike — I'll keep an eye on your home's value and send you an update as the market moves. Bookmark your private dashboard to check it anytime.",
-    "",
-    `View my home dashboard: ${dashboardUrl(h.token)}`,
     "",
     `Ready for a precise, human valuation? Just reply — it comes straight to me — or call ${homeownerBrand.phone}.`,
     "",
@@ -187,26 +201,34 @@ function welcomeHtml(h: Homeowner, reason: "requested" | "seller-lead" = "reques
   const latest = latestEstimate(h);
   const url = dashboardUrl(h.token);
   const unsub = unsubscribeUrl(h.token);
+  const headline = latest
+    ? `Your home value dashboard is ready${h.firstName ? `, ${h.firstName}` : ""} ✦`
+    : `Let's finish your home valuation${h.firstName ? `, ${h.firstName}` : ""} ✦`;
+  // With a value → show it + the "I'll watch it for you" note. Without one → ask
+  // for the beds/baths/sqft we need to value the home, instead of a dead number.
+  const middle = latest
+    ? `<div style="font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#8a8a8a;">Current estimate</div>
+      <div style="font-size:36px;line-height:1.1;color:#8a6d2b;font-weight:700;">${money(latest.value)}</div>
+      <p style="margin:16px 0 0;font-size:14px;color:#3a3a3a;">
+        It's Mike — I'll keep an eye on your home's value and send you an update as the market moves. Bookmark your
+        private dashboard to check it anytime.
+      </p>`
+    : `<p style="margin:16px 0 0;font-size:14px;color:#3a3a3a;">
+        It's Mike — to run your home's current value I just need a few quick details: <strong>beds, baths, and
+        square footage</strong>. Add them and I'll send your estimate right over.
+      </p>`;
+  const btnLabel = latest ? "View my home dashboard" : "Add my home details";
   return `
   <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;color:#1c1c1c;">
     <div style="padding:20px 0;text-align:center;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#8a6d2b;font-weight:600;">
       ${homeownerBrand.name}
     </div>
     <div style="background:#fff;border:1px solid #e7e3db;border-radius:14px;padding:28px;">
-      <p style="margin:0 0 6px;font-size:19px;font-weight:600;">Your home value dashboard is ready${h.firstName ? `, ${h.firstName}` : ""} ✦</p>
+      <p style="margin:0 0 6px;font-size:19px;font-weight:600;">${headline}</p>
       <p style="margin:0 0 16px;font-size:14px;color:#5a5a5a;">${h.address}${h.city ? `, ${h.city}` : ""}, ${h.state} ${h.zip}</p>
-      ${
-        latest
-          ? `<div style="font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#8a8a8a;">Current estimate</div>
-             <div style="font-size:36px;line-height:1.1;color:#8a6d2b;font-weight:700;">${money(latest.value)}</div>`
-          : ""
-      }
-      <p style="margin:16px 0 0;font-size:14px;color:#3a3a3a;">
-        It's Mike — I'll keep an eye on your home's value and send you an update as the market moves. Bookmark your
-        private dashboard to check it anytime.
-      </p>
+      ${middle}
       <a href="${url}" style="display:inline-block;margin-top:20px;background:#8a6d2b;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:600;font-size:15px;">
-        View my home dashboard
+        ${btnLabel}
       </a>
       <p style="margin:20px 0 0;font-size:13px;color:#5a5a5a;">
         Ready for a precise, human valuation? Just reply — it comes straight to me — or call
@@ -260,7 +282,9 @@ export async function sendWelcomeEmail(
     const { error } = await resend.emails.send({
       from,
       to: h.email,
-      subject: `Your ${h.city || "Las Vegas"} home value dashboard`,
+      subject: latestEstimate(h)
+        ? `Your ${h.city || "Las Vegas"} home value dashboard`
+        : `A couple details to value your ${h.city || "Las Vegas"} home`,
       html: welcomeHtml(h, opts.reason),
       text: welcomeText(h, opts.reason),
       replyTo: homeownerBrand.email,
