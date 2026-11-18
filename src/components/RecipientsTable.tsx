@@ -7,6 +7,7 @@ export type RecipientRow = {
   name: string;
   email: string;
   phone?: string;
+  address: string;
   city: string;
   zip: string;
   reportSent: boolean;
@@ -62,12 +63,13 @@ export function RecipientsTable({ rows, adminKey }: { rows: RecipientRow[]; admi
   const [dir, setDir] = useState<"asc" | "desc">("desc");
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [okMsg, setOkMsg] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const out = data.filter((r) => {
       if (needle) {
-        const hay = `${r.name} ${r.email} ${r.city} ${r.zip} ${r.phone ?? ""}`.toLowerCase();
+        const hay = `${r.name} ${r.email} ${r.address} ${r.city} ${r.zip} ${r.phone ?? ""}`.toLowerCase();
         if (!hay.includes(needle)) return false;
       }
       if (sent === "sent" && !r.reportSent) return false;
@@ -140,6 +142,34 @@ export function RecipientsTable({ rows, adminKey }: { rows: RecipientRow[]; admi
       );
     } catch (e) {
       setErr(`Couldn't ${mode} ${r.name || r.email}: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function sendReport(r: RecipientRow) {
+    setBusy(r.token);
+    setErr(null);
+    setOkMsg(null);
+    try {
+      const res = await fetch(`/api/admin/recipients/send-report?key=${encodeURIComponent(adminKey)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: r.token }),
+      });
+      const j = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !j.ok) throw new Error(j.error || `HTTP ${res.status}`);
+      setOkMsg(`Home value report sent to ${r.name || r.email}.`);
+      const nowIso = new Date().toISOString();
+      setData((prev) =>
+        prev.map((x) =>
+          x.token === r.token
+            ? { ...x, reportSent: true, emailCount: x.emailCount + 1, lastEmailedAt: nowIso, lastActivity: nowIso }
+            : x,
+        ),
+      );
+    } catch (e) {
+      setErr(`Couldn't send to ${r.name || r.email}: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setBusy(null);
     }
@@ -218,6 +248,15 @@ export function RecipientsTable({ rows, adminKey }: { rows: RecipientRow[]; admi
         </div>
       )}
 
+      {okMsg && (
+        <div
+          className="mt-3 rounded-[10px] border p-3 font-sans text-[0.8rem]"
+          style={{ borderColor: "#1f7a4d", background: "rgba(34,139,84,0.08)", color: "#1f7a4d" }}
+        >
+          {okMsg}
+        </div>
+      )}
+
       <div className="mt-3 overflow-x-auto rounded-[12px] border border-[var(--color-line)] bg-white">
         <table className="w-full border-collapse">
           <thead className="border-b border-[var(--color-line)] bg-[var(--color-sand)]">
@@ -243,7 +282,7 @@ export function RecipientsTable({ rows, adminKey }: { rows: RecipientRow[]; admi
                   <td className={td}>
                     <div className="font-semibold">{r.name}</div>
                     <div className="text-[var(--color-muted)]">{r.phone || r.email || "—"}</div>
-                    <div className="text-[var(--color-muted)]">{[r.city, r.zip].filter(Boolean).join(", ")}</div>
+                    <div className="text-[var(--color-muted)]">{[r.address, r.city, r.zip].filter(Boolean).join(", ")}</div>
                   </td>
                   <td className={td}>
                     <span
@@ -275,6 +314,15 @@ export function RecipientsTable({ rows, adminKey }: { rows: RecipientRow[]; admi
                   </td>
                   <td className={td}>
                     <div className="flex flex-col items-start gap-1">
+                      <button
+                        type="button"
+                        disabled={working || !r.subscribed}
+                        onClick={() => sendReport(r)}
+                        title={r.subscribed ? "Send this contact their home value report now" : "Re-add them first to send"}
+                        className={`${actionBtn} border-[var(--color-gold)] text-[var(--color-gold)] hover:bg-[rgba(138,109,43,0.08)]`}
+                      >
+                        {working ? "…" : "Send report"}
+                      </button>
                       {r.subscribed ? (
                         <button
                           type="button"
