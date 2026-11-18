@@ -47,7 +47,9 @@ async function run(req: Request) {
   if (via === "cron" && process.env.HOMEOWNER_DIGEST_ENABLED !== "true") {
     return NextResponse.json({ ok: true, skipped: "digest off (set HOMEOWNER_DIGEST_ENABLED=true to run)" });
   }
-  const days = Number(url.searchParams.get("days") ?? 14);
+  // Per-homeowner cadence: re-mail once their last send is older than this many
+  // days. 7 = weekly. The cron runs daily; each person is mailed at most once a week.
+  const days = Number(url.searchParams.get("days") ?? 7);
   const dryRun =
     url.searchParams.get("dryRun") === "1" || (via === "admin" && url.searchParams.get("send") !== "1");
 

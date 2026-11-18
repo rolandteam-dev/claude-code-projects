@@ -49,6 +49,7 @@ export default async function RecipientsPage({
       name: [h.firstName, h.lastName].filter(Boolean).join(" ") || "—",
       email: h.email,
       phone: h.phone,
+      address: h.address,
       city: h.city,
       zip: h.zip,
       reportSent: (h.emailCount ?? 0) > 0 || !!h.lastEmailedAt,
