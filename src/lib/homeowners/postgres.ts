@@ -279,6 +279,19 @@ export const postgresStore: HomeownerStore = {
     await sql()`UPDATE homeowners SET subscribed = false WHERE token = ${token}`;
   },
 
+  async suppressByEmail(email) {
+    await ensureSchema();
+    const want = email.trim().toLowerCase();
+    if (!want) return { matched: 0 };
+    // Only flip rows still subscribed, and RETURNING the changed rows gives an
+    // accurate "newly suppressed" count (idempotent across repeated webhooks).
+    const rows = await sql()`
+      UPDATE homeowners SET subscribed = false, updated_at = now()
+      WHERE lower(email) = ${want} AND subscribed = true
+      RETURNING token`;
+    return { matched: rows.length };
+  },
+
   async markDnc(phones, opts) {
     await ensureSchema();
     const list = phones.filter((p) => p && p.length === 10);

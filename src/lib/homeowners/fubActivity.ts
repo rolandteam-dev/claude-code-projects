@@ -22,7 +22,9 @@ export type HomeownerActivity =
   | "repeat-viewer"
   | "home-value-request"
   | "unsubscribe"
-  | "email-click";
+  | "email-click"
+  | "email-bounce"
+  | "email-complaint";
 
 /**
  * How each activity lands in FUB.
@@ -67,6 +69,21 @@ const ACTIVITY: Record<
     source: "Home Value Email",
     tags: ["Homeowner Activity", "Email Click"],
     label: "Clicked through from a home value email",
+  },
+  // Deliverability suppression. The "Bounced" / "Unsubscribed" tags are what the
+  // FUB suppression sync (cron/fub-suppress-sync) and the seller send path read
+  // to stop mailing a contact, so an agent sees exactly why we went quiet.
+  "email-bounce": {
+    type: "General Inquiry",
+    source: "Email Deliverability",
+    tags: ["Homeowner Activity", "Bounced"],
+    label: "Email hard-bounced — address undeliverable, suppressed from future sends",
+  },
+  "email-complaint": {
+    type: "General Inquiry",
+    source: "Email Deliverability",
+    tags: ["Homeowner Activity", "Unsubscribed"],
+    label: "Reported our email as spam — suppressed and unsubscribed",
   },
 };
 
