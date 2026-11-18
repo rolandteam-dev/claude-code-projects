@@ -22,6 +22,7 @@ export type RecipientRow = {
 };
 
 type SortKey = "name" | "emailCount" | "views" | "lastActivity" | "value" | "score";
+type Action = "unsubscribe" | "resubscribe" | "delete";
 
 const money = (n: number) =>
   n > 0 ? n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) : "—";
@@ -51,17 +52,20 @@ function tier(score: number): { label: string; bg: string; fg: string } {
   return { label: "Quiet", bg: "#eef0f2", fg: "#6a6f76" };
 }
 
-export function RecipientsTable({ rows }: { rows: RecipientRow[] }) {
+export function RecipientsTable({ rows, adminKey }: { rows: RecipientRow[]; adminKey: string }) {
+  const [data, setData] = useState<RecipientRow[]>(rows);
   const [q, setQ] = useState("");
   const [sent, setSent] = useState<"all" | "sent" | "not">("all");
   const [eng, setEng] = useState<"all" | "engaged" | "quiet">("all");
   const [sub, setSub] = useState<"all" | "yes" | "no">("all");
   const [sortKey, setSortKey] = useState<SortKey>("lastActivity");
   const [dir, setDir] = useState<"asc" | "desc">("desc");
+  const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    const out = rows.filter((r) => {
+    const out = data.filter((r) => {
       if (needle) {
         const hay = `${r.name} ${r.email} ${r.city} ${r.zip} ${r.phone ?? ""}`.toLowerCase();
         if (!hay.includes(needle)) return false;
@@ -96,16 +100,48 @@ export function RecipientsTable({ rows }: { rows: RecipientRow[] }) {
       return 0;
     });
     return out;
-  }, [rows, q, sent, eng, sub, sortKey, dir]);
+  }, [data, q, sent, eng, sub, sortKey, dir]);
 
-  const sentCount = rows.filter((r) => r.reportSent).length;
-  const engagedCount = rows.filter((r) => r.views > 0).length;
+  const sentCount = data.filter((r) => r.reportSent).length;
+  const engagedCount = data.filter((r) => r.views > 0).length;
 
   function toggleSort(k: SortKey) {
     if (k === sortKey) setDir(dir === "asc" ? "desc" : "asc");
     else {
       setSortKey(k);
       setDir(k === "name" ? "asc" : "desc");
+    }
+  }
+
+  async function act(r: RecipientRow, mode: Action) {
+    if (
+      mode === "delete" &&
+      !window.confirm(
+        `Permanently delete ${r.name || r.email}?\n\n` +
+          `This erases their history and blocks the weekly Follow Up Boss sync from re-adding them. This cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+    setBusy(r.token);
+    setErr(null);
+    try {
+      const res = await fetch(`/api/admin/recipients/remove?key=${encodeURIComponent(adminKey)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: r.token, mode }),
+      });
+      const j = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !j.ok) throw new Error(j.error || `HTTP ${res.status}`);
+      setData((prev) =>
+        mode === "delete"
+          ? prev.filter((x) => x.token !== r.token)
+          : prev.map((x) => (x.token === r.token ? { ...x, subscribed: mode === "resubscribe" } : x)),
+      );
+    } catch (e) {
+      setErr(`Couldn't ${mode} ${r.name || r.email}: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setBusy(null);
     }
   }
 
@@ -136,6 +172,7 @@ export function RecipientsTable({ rows }: { rows: RecipientRow[] }) {
   const th = "px-3 py-2.5 text-left font-sans text-[0.62rem] font-semibold uppercase tracking-[0.08em] text-[var(--color-muted)]";
   const td = "px-3 py-2.5 align-top font-sans text-[0.82rem] text-[var(--color-ink)]";
   const sortMark = (k: SortKey) => (sortKey === k ? (dir === "asc" ? " ↑" : " ↓") : "");
+  const actionBtn = "rounded-md border px-2 py-1 text-[0.68rem] font-semibold disabled:opacity-40 disabled:cursor-wait";
 
   return (
     <div>
@@ -168,9 +205,18 @@ export function RecipientsTable({ rows }: { rows: RecipientRow[] }) {
       </div>
 
       <div className="mt-3 font-sans text-[0.76rem] text-[var(--color-ink-soft)]">
-        Showing <strong>{filtered.length.toLocaleString()}</strong> of {rows.length.toLocaleString()} · reports sent:{" "}
+        Showing <strong>{filtered.length.toLocaleString()}</strong> of {data.length.toLocaleString()} · reports sent:{" "}
         <strong>{sentCount.toLocaleString()}</strong> · engaged: <strong>{engagedCount.toLocaleString()}</strong>
       </div>
+
+      {err && (
+        <div
+          className="mt-3 rounded-[10px] border p-3 font-sans text-[0.8rem]"
+          style={{ borderColor: "#b4433a", background: "rgba(180,67,58,0.08)", color: "#8a2f28" }}
+        >
+          {err}
+        </div>
+      )}
 
       <div className="mt-3 overflow-x-auto rounded-[12px] border border-[var(--color-line)] bg-white">
         <table className="w-full border-collapse">
@@ -185,11 +231,13 @@ export function RecipientsTable({ rows }: { rows: RecipientRow[] }) {
               <th className={`${th} cursor-pointer`} onClick={() => toggleSort("value")}>Est. value{sortMark("value")}</th>
               <th className={`${th} cursor-pointer`} onClick={() => toggleSort("score")}>Signal{sortMark("score")}</th>
               <th className={th}>Dashboard</th>
+              <th className={th}>Manage</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((r) => {
               const t = tier(r.score);
+              const working = busy === r.token;
               return (
                 <tr key={r.token} className="border-b border-[var(--color-line)] last:border-0">
                   <td className={td}>
@@ -224,6 +272,40 @@ export function RecipientsTable({ rows }: { rows: RecipientRow[] }) {
                     <a href={r.dashUrl} target="_blank" rel="noreferrer" className="font-semibold text-[var(--color-gold)] hover:underline">
                       Open →
                     </a>
+                  </td>
+                  <td className={td}>
+                    <div className="flex flex-col items-start gap-1">
+                      {r.subscribed ? (
+                        <button
+                          type="button"
+                          disabled={working}
+                          onClick={() => act(r, "unsubscribe")}
+                          title="Stop emailing them (kept on file, survives the FUB sync)"
+                          className={`${actionBtn} border-[var(--color-line)] text-[var(--color-ink-soft)] hover:border-[var(--color-gold)]`}
+                        >
+                          Remove
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={working}
+                          onClick={() => act(r, "resubscribe")}
+                          title="Put them back on the email list"
+                          className={`${actionBtn} border-[#1f7a4d] text-[#1f7a4d] hover:bg-[rgba(34,139,84,0.08)]`}
+                        >
+                          Re-add
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        disabled={working}
+                        onClick={() => act(r, "delete")}
+                        title="Permanently delete and block the FUB sync from re-adding them"
+                        className={`${actionBtn} border-[#b4433a] text-[#b4433a] hover:bg-[rgba(180,67,58,0.08)]`}
+                      >
+                        {working ? "…" : "Delete"}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );

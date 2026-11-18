@@ -96,11 +96,13 @@ export default async function RecipientsPage({
         </p>
       )}
 
-      <RecipientsTable rows={rows} />
+      <RecipientsTable rows={rows} adminKey={key!} />
 
       <p className="mt-4 font-sans text-[0.66rem] text-[var(--color-muted)]">
         &ldquo;Emails&rdquo; counts automated sends (welcome, seller report, digest) accurately from when counting
-        was added; older records may show fewer than were actually sent. Read-only.
+        was added; older records may show fewer than were actually sent. <strong>Manage:</strong> &ldquo;Remove&rdquo;
+        stops emailing a contact (kept on file, survives the Follow Up Boss sync); &ldquo;Delete&rdquo; permanently
+        erases them and blocks the sync from re-adding them.
       </p>
     </div>
   );
