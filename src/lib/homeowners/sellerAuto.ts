@@ -34,6 +34,19 @@ export function sellerTag(): string {
   return (process.env.SELLER_AUTO_TAG || "Seller").trim();
 }
 
+/**
+ * FUB tags that mean "never email this contact." Read at SEND time, so a contact
+ * an agent (or our bounce/complaint webhook) marked bad in FUB is skipped even
+ * when our own store hasn't caught up. Override the set with FUB_SUPPRESS_TAGS.
+ */
+export function suppressTags(): string[] {
+  const raw = (process.env.FUB_SUPPRESS_TAGS || "Bounced, Unsubscribed, Complained, Do Not Email").trim();
+  return raw
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
 export function newLeadWindowDays(): number {
   const n = Number(process.env.SELLER_AUTO_NEW_DAYS ?? 3);
   return Number.isFinite(n) && n > 0 ? n : 3;
@@ -64,6 +77,11 @@ function tagsOf(person: any): string[] {
 function hasTag(person: any, tag: string): boolean {
   const want = tag.toLowerCase();
   return tagsOf(person).some((t) => t.trim().toLowerCase() === want);
+}
+
+/** True when the FUB contact carries any suppression tag (Bounced / Unsubscribed / …). */
+export function isSuppressedInFub(person: any): boolean {
+  return suppressTags().some((t) => hasTag(person, t));
 }
 
 /** Cheap pre-check so callers can count only real candidates against the cap. */
@@ -177,6 +195,7 @@ export async function maybeSendSellerReport(
   if (!personId) return skip("no person id");
   if (!hasTag(person, sellerTag())) return skip(`no "${sellerTag()}" tag`);
   if (hasTag(person, SENT_TAG)) return skip("already sent");
+  if (isSuppressedInFub(person)) return skip("suppressed in FUB (Bounced/Unsubscribed)");
   if (!isSellerCandidate(person, opts.manual)) return skip("not a new lead (created outside window)");
   if (process.env.HOMEOWNER_EMAIL_ENABLED !== "true") return skip("sending disabled (HOMEOWNER_EMAIL_ENABLED)");
 

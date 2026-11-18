@@ -99,6 +99,14 @@ export interface HomeownerStore {
   updateFacts(token: string, facts: { beds?: number; baths?: number; sqft?: number }): Promise<void>;
   markEmailed(token: string, at?: string): Promise<void>;
   unsubscribe(token: string): Promise<void>;
+  /**
+   * Mark every homeowner whose email matches (case-insensitively) as
+   * unsubscribed, so the value digest and seller path stop mailing them. Used by
+   * the Resend bounce/complaint webhook and the FUB suppression sync — neither
+   * has a dashboard token, only the address that bounced or complained. Returns
+   * how many rows were flipped (rows already unsubscribed are not counted).
+   */
+  suppressByEmail(email: string): Promise<{ matched: number }>;
   /** Mark homeowners whose phone (normalized to its last 10 digits) is in
    * `phones` as DNC. `apply:false` (default) counts matches without writing. */
   markDnc(phones: string[], opts?: { apply?: boolean }): Promise<{ matched: number; applied: number }>;
@@ -284,6 +292,19 @@ const memoryStore: HomeownerStore = {
   async unsubscribe(token) {
     const h = mem.get(token);
     if (h) h.subscribed = false;
+  },
+  async suppressByEmail(email) {
+    const want = email.trim().toLowerCase();
+    if (!want) return { matched: 0 };
+    let matched = 0;
+    for (const h of mem.values()) {
+      if (h.subscribed && h.email.trim().toLowerCase() === want) {
+        h.subscribed = false;
+        h.updatedAt = now();
+        matched++;
+      }
+    }
+    return { matched };
   },
   async markDnc(phones, opts) {
     const set = new Set(phones.filter(Boolean));

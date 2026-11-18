@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { FUB_BASE, fubHeaders, personToHomeowner } from "@/lib/homeowners/fubMap";
 import {
   isSellerCandidate,
+  isSuppressedInFub,
   maybeSendSellerReport,
   sellerTag,
   dailyCap,
@@ -104,8 +105,10 @@ export async function GET(req: Request) {
       for (const person of people) {
         scanned++;
         // Cheap eligibility read (no writes): tagged "Seller", not already sent,
-        // and resolves to a homeowner (valid email + Nevada address).
-        if (!(isSellerCandidate(person, true) && personToHomeowner(person))) continue;
+        // not FUB-suppressed (Bounced/Unsubscribed), and resolves to a homeowner
+        // (valid email + Nevada address).
+        if (!(isSellerCandidate(person, true) && !isSuppressedInFub(person) && personToHomeowner(person)))
+          continue;
         eligible++;
 
         if (dryRun) continue;
