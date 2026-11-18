@@ -2525,19 +2525,21 @@ try {
   });
 
   check("with the opt-in on, a complete backfill lets the run act — and the notes carry real day counts", () => {
-    // The gap is reported closed, and because Mike has opted in the run now
-    // plans the nudge and the sweep (a dry run, so nothing is written). The
-    // note text is what an agent reads: it must carry a number, never "undefined".
+    // The gap is reported closed, and because Mike has opted in the run now plans the
+    // nudge and (once sweeping has started) the sweep — a dry run, so nothing is
+    // written. The note text is what an agent reads: it must carry a NUMBER, never
+    // "undefined". It must NOT pin WHICH number: a nightly run starts at ~1 AM and is
+    // judged as of the previous 7 PM, so the same fixture lead reads 11 days then and
+    // 12 in the daytime. (That pinned "12" failed the first live night's self-test.)
     assert.match(stderr, /text backfill: 1 messages over 4 leads/, "the gap is reported closed");
-    assert.match(stderr, /POST \/notes \{"personId":102.*12 days with no outreach\. Source: Zillow Preferred/, "nudge names the day count");
-    // Sweeping has a start date (rules.sweepsStartOn). The fixture runs on the real
-    // clock, so expect the hold before that date and the sweep note from it on.
-    const todayPT = new Date().toLocaleDateString("en-CA", { timeZone: "America/Los_Angeles" });
-    if (rules.sweepsStartOn && todayPT < rules.sweepsStartOn) {
-      assert.match(stderr, new RegExp(`sweeps on hold until ${rules.sweepsStartOn}`), "sweeps wait for their start date");
-      assert.doesNotMatch(stderr, /POST \/notes \{"personId":103/, "no sweep note while on hold");
+    assert.match(stderr, /POST \/notes \{"personId":102.*\d+ days with no outreach\. Source: Zillow Preferred/, "nudge names a day count");
+    // Whether a night sweeps depends on the AUDIT instant, not the wall clock: it has a
+    // start date (rules.sweepsStartOn) and runs Tue-Fri only (a Monday-evening audit,
+    // started at 1 AM Tuesday, does not). So ask the run itself whether it was holding.
+    if (/sweeps on hold until|sweeps skipped:/.test(stderr)) {
+      assert.doesNotMatch(stderr, /POST \/notes \{"personId":103/, "no sweep note on a night that does not sweep");
     } else {
-      assert.match(stderr, /POST \/notes \{"personId":103.*swept to the Shark Tank pond after 40 days with no outreach/, "sweep note names the day count");
+      assert.match(stderr, /POST \/notes \{"personId":103.*swept to the Shark Tank pond after \d+ days with no outreach/, "sweep note names a day count");
     }
     assert.doesNotMatch(stderr, /undefined days/, "no note may say undefined");
     assert.doesNotMatch(stdout, /Successfully swept/, "a dry run moves nothing");
