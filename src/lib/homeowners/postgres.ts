@@ -62,6 +62,17 @@ function ensureSchema(): Promise<void> {
       .then(() => s`ALTER TABLE homeowners ADD COLUMN IF NOT EXISTS email_consent boolean`)
       .then(() => s`ALTER TABLE homeowners ADD COLUMN IF NOT EXISTS call_text_consent boolean`)
       .then(() => s`ALTER TABLE homeowners ADD COLUMN IF NOT EXISTS dnc boolean`)
+      // Permanently-deleted contacts: the FUB import skips any token listed here,
+      // so a hard delete is not undone by the next sync.
+      .then(
+        () => s`CREATE TABLE IF NOT EXISTS homeowner_blocklist (
+          token text PRIMARY KEY,
+          email text,
+          fub_person_id text,
+          reason text,
+          created_at timestamptz NOT NULL DEFAULT now()
+        )`,
+      )
       .then(() => undefined);
   }
   return ready;
@@ -205,9 +216,13 @@ export const postgresStore: HomeownerStore = {
     if (records.length === 0) return;
     await ensureSchema();
     const s = sql();
+    // Skip permanently-deleted contacts so the FUB import never re-creates them.
+    const blockedRows = await s`SELECT token FROM homeowner_blocklist WHERE token = ANY(${records.map((r) => r.token)})`;
+    const blocked = new Set(blockedRows.map((r) => r.token as string));
     // Per-row insert (no read-back) preserving estimates/views/subscribed on
     // conflict — the bulk import path. New rows get empty history + subscribed.
     for (const h of records) {
+      if (blocked.has(h.token)) continue;
       await s`
         INSERT INTO homeowners (
           id, token, first_name, last_name, email, phone, address, city, state, zip,
@@ -290,6 +305,25 @@ export const postgresStore: HomeownerStore = {
       WHERE lower(email) = ${want} AND subscribed = true
       RETURNING token`;
     return { matched: rows.length };
+  },
+
+  async resubscribe(token) {
+    await ensureSchema();
+    await sql()`UPDATE homeowners SET subscribed = true, updated_at = now() WHERE token = ${token}`;
+  },
+
+  async deleteAndBlock(token) {
+    await ensureSchema();
+    const s = sql();
+    // Record identity on the block-list (so the FUB import skips this token for
+    // good), then delete the row. Order matters: block first, then remove.
+    const rows = await s`SELECT email, fub_person_id FROM homeowners WHERE token = ${token} LIMIT 1`;
+    await s`
+      INSERT INTO homeowner_blocklist (token, email, fub_person_id, reason)
+      VALUES (${token}, ${(rows[0]?.email as string) ?? null}, ${(rows[0]?.fub_person_id as string) ?? null}, 'admin-delete')
+      ON CONFLICT (token) DO NOTHING`;
+    const del = await s`DELETE FROM homeowners WHERE token = ${token} RETURNING token`;
+    return { deleted: del.length > 0 };
   },
 
   async markDnc(phones, opts) {

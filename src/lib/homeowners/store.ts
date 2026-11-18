@@ -107,6 +107,16 @@ export interface HomeownerStore {
    * how many rows were flipped (rows already unsubscribed are not counted).
    */
   suppressByEmail(email: string): Promise<{ matched: number }>;
+  /** Admin: re-subscribe a contact — undo an unsubscribe or a bounce/complaint suppression. */
+  resubscribe(token: string): Promise<void>;
+  /**
+   * Admin hard delete: remove the homeowner row AND remember the token on a
+   * block-list so the automated Follow Up Boss import (weekly sync, 30-min poll,
+   * real-time webhook — all via `upsertContacts`) never re-adds them. Deliberate
+   * single writes (a person self-submitting their address on the site) are not
+   * blocked, so a genuine fresh opt-in can still return.
+   */
+  deleteAndBlock(token: string): Promise<{ deleted: boolean }>;
   /** Mark homeowners whose phone (normalized to its last 10 digits) is in
    * `phones` as DNC. `apply:false` (default) counts matches without writing. */
   markDnc(phones: string[], opts?: { apply?: boolean }): Promise<{ matched: number; applied: number }>;
@@ -205,6 +215,9 @@ const mem: Map<string, Homeowner> = g.__homeownerStore ?? (g.__homeownerStore = 
 
 const sellerSends = new Map<string, number>();
 const sellerPeople = new Set<string>();
+// Tokens hard-deleted by an admin: the FUB import (upsertContacts) skips these so
+// a permanently-deleted contact is not re-created by the next sync.
+const blockedTokens = new Set<string>();
 
 const memoryStore: HomeownerStore = {
   async getByToken(token) {
@@ -245,6 +258,7 @@ const memoryStore: HomeownerStore = {
   },
   async upsertContacts(records) {
     for (const h of records) {
+      if (blockedTokens.has(h.token)) continue; // permanently-deleted — never re-import
       const existing = mem.get(h.token);
       mem.set(h.token, {
         ...h,
@@ -305,6 +319,18 @@ const memoryStore: HomeownerStore = {
       }
     }
     return { matched };
+  },
+  async resubscribe(token) {
+    const h = mem.get(token);
+    if (h) {
+      h.subscribed = true;
+      h.updatedAt = now();
+    }
+  },
+  async deleteAndBlock(token) {
+    const existed = mem.delete(token);
+    blockedTokens.add(token); // block even if the row was already gone
+    return { deleted: existed };
   },
   async markDnc(phones, opts) {
     const set = new Set(phones.filter(Boolean));
