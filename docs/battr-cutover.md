@@ -10,30 +10,41 @@ agents have not had for five weeks.
   Battr warned before it ended is already on the clock and is swept on the same
   schedule (3 days after the stamp, 2 for Hot Leads, Tue–Fri, never Monday).
 
-## 1. The gate (before either switch)
-- [x] Single-lead dry run on **#85008** (8 Oct, run `2026-10-08-mtap`) — qualifies.
-- [x] Single-lead **live** run on #85008 (run `2026-10-08-wmio`) — one note + the
-      stamp, no agent emailed, nothing else touched. It exposed "undefined days"
-      in the note text (fixed in #151).
-- [x] Undo of that run (run #59) — note gone, stamp clear, verified in FUB.
-- [ ] **Second single-lead live run + undo** on the fixed code — the note must read
-      "N days with no outreach" with a real number.
-- [ ] **Sending domain:** repo variable `BATTR_REPORT_FROM` is an address on a
-      Resend-verified domain (not `onboarding@resend.dev`, which only delivers to
-      the account owner). Without it every agent email is refused.
-- [ ] Mike's decision on the stage-move rule (forward moves only vs. as is).
+## 1. Where things stand (19 Nov 2026)
 
-## 2. The switches
-1. **`rules.sweepOnBackfilledTexts: true`** — DONE 17 Nov 2026 (Mike: "my leads are
-   being neglected, start sweeping, with the ability to undo"). The second
-   single-lead test and the stage-move decision were not waited for; stage moves
-   count as work exactly as they do today (change later if wanted).
-2. **First live run, by hand:** Actions → Battr audit → Run workflow → branch `main`,
-   task `audit`, **mode `live`**, stage `both`, only_id **empty**. A manual live run
-   writes without the repo variable, so the first night can be watched.
-3. **`BATTR_LIVE` = `true`** (Settings → Secrets and variables → Actions → Variables)
-   makes the *scheduled* nightly run write. Only Mike sets it, after the first run
-   looks right.
+The first live night (18 Nov) flagged **1,063** leads against Battr's last recorded **14**, because
+Follow Up Boss will not serve texts or emails in bulk and the audit read a lead an agent had only
+texted as never contacted. It held every nudge and sent nothing. So the audit is **back in dry run**:
+
+- `rules.forceDryRun: true` — in code; `BATTR_LIVE=true` and a manual "live" run both still produce a
+  dry run. Only `undo` can write. Turning it live means editing that one line, deliberately.
+- `rules.profile: "battr"` — Battr's six lists and thresholds exactly (see `docs/battr-rules.md`).
+  The 17 Nov stage rules are kept behind `"extended"`.
+- `rules.sweepsStartOn: "2027-01-01"` — the 20 Nov sweep start is paused.
+- **Pass 2 contact check** — every at-risk or neglected candidate has its texts AND emails read
+  person by person; a lead with an agent touch in the window drops off; a lead that cannot be read
+  is held as **unverified** and listed. One unreadable lead no longer holds the night.
+- **Hard caps** — nudges and sweeps: 10 per agent, 50 a night. Over 50 the run does nothing and
+  emails mike@therolandteam.com the list.
+- **Nightly email to Mike** (a dry run still sends it): tonight at a glance, our count beside
+  Battr's last recorded one (with its age), the would-be nudges and sweeps, the unverified leads, and
+  every flagged lead with the rule that fired.
+
+## 2. What has to be true before it goes live
+
+Three nights **in a row** where all of these hold:
+- [ ] Our verified at-risk count is close to Battr's rate. Battr's last recorded night was 14 of 805
+      audited (about 1.7%); there is no newer Battr number, because Battr was cancelled.
+- [ ] Every lead we flag has a real reason: the rule that fired is in the report, and it holds up
+      against `docs/battr-rules.md`.
+- [ ] Unverified leads are few and each has a stated reason (a failed lookup, not a pattern).
+- [ ] No cap tripped. (A tripped cap is the audit telling us the evidence is wrong.)
+
+Then, and only then, Mike says go, and:
+1. `rules.forceDryRun` → `false` (a PR Claude opens on his word).
+2. `rules.sweepsStartOn` → the date sweeping should begin.
+3. `BATTR_LIVE` → `true` (already set) — the nightly job writes.
+4. Decide whether to switch `rules.profile` to `"extended"` (the 17 Nov stage rules).
 
 ## 3. First live night — what to expect
 - Nudges (note + stamp) on every at-risk lead not already stamped, including the two

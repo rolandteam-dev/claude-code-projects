@@ -47,7 +47,9 @@ const AUDIT_DAY = auditDate();
  * Battr does, rather than the 1 AM GitHub actually starts at. See schedule.mjs.
  */
 const AUDIT_NOW = auditInstant().getTime();
-import { lists, reportOnlyLists, longestCommWindowDays, NO_TIMEFRAME_LIST_ID } from "./battr/lists.mjs";
+import { lists, reportOnlyLists, longestCommWindowDays, NO_TIMEFRAME_LIST_ID, BATTR_PARITY } from "./battr/lists.mjs";
+import { planCaps, renderCapList } from "./battr/caps.mjs";
+import { renderParitySections } from "./battr/parity.mjs";
 import { bucketName, isSourceAudited } from "./battr/sources.mjs";
 import { needsRules, unseenCount, OBSERVED_DATE } from "./battr/observed.mjs";
 import {
@@ -173,7 +175,7 @@ async function replyReprieve(fub, personId, sinceIso, diag) {
 
 // ---------------------------------------------------------------------- report
 
-function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], touchIncomplete = [], unenforceable = [], comparisonDrift = [], gap = null, stageTracking = null, passedOver = { beforeList: 0, pausedAgents: 0, pausedLeads: 0 }, emailBackfill = null }) {
+function buildReport({ runId, dry, population, results, actions, ponds, agentStats = [], alerts = { delivered: [], failed: [] }, replyDiag = null, unanswered = [], reportLists = [], touchIncomplete = [], unenforceable = [], comparisonDrift = [], gap = null, stageTracking = null, passedOver = { beforeList: 0, pausedAgents: 0, pausedLeads: 0 }, emailBackfill = null, forcedDry = false }) {
   const byAgent = new Map();
   for (const r of results) {
     if (r.status === "excluded" || !r.owner) continue;
@@ -212,12 +214,31 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
   lines.push(
     `Run \`${runId}\` · **${audited} leads audited** of ${population} pulled from Follow Up Boss · ${thresholdNote}`
   );
-  if (touchIncomplete.length) {
+  // Follow Up Boss serves neither texts nor emails in bulk. That is no longer a reason
+  // to distrust the night: every candidate lead is checked person by person (pass 2),
+  // and a lead that cannot be checked is held and listed. Only a SYSTEMIC failure of
+  // that check — or no check at all — keeps the red banner.
+  const systemicGaps = touchIncomplete.filter((g) => g.systemic);
+  const verifiedPerPerson = emailBackfill?.complete === true && systemicGaps.length === 0;
+  if (touchIncomplete.length && verifiedPerPerson) {
+    const held = results.filter((r) => r.status === "unverified").length;
+    lines.push("");
+    lines.push(
+      `> ℹ Follow Up Boss will not serve ${touchIncomplete.map((g) => `**${g.channel}**`).join(" or ")} in bulk, so every lead the bulk data called at risk ` +
+        `was checked **person by person** (texts, emails and calls) before it was counted. ` +
+        `${held ? `**${held} lead(s) could not be checked and are held, not acted on** — they are listed below.` : "Every one of them was checked."}`
+    );
+    lines.push("");
+  } else if (touchIncomplete.length) {
     lines.push("");
     lines.push("> ## ⚠ THIS AUDIT IS NOT COMPLETE — DO NOT ACT ON THE NEGLECTED COUNTS");
     lines.push(">");
     for (const gap of touchIncomplete) {
-      lines.push(`> Follow Up Boss would not serve **${gap.channel}** in bulk: \`${gap.reason}\``);
+      lines.push(
+        gap.systemic
+          ? `> **${gap.channel}** — ${gap.reason}`
+          : `> Follow Up Boss would not serve **${gap.channel}** in bulk: \`${gap.reason}\``
+      );
     }
     lines.push(">");
     lines.push(
@@ -251,6 +272,22 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
   }
 
   lines.push("");
+  // Dry-run / parity: what Mike reads first — mode, our count beside Battr's, the
+  // would-be nudges and sweeps, the unverified leads, and every flagged lead's rule.
+  lines.push(
+    ...renderParitySections({
+      results,
+      actions,
+      dry,
+      forcedDry,
+      profile: rules.profile,
+      rules,
+      battrAtRisk: gap?.battrAtRisk ?? null,
+      battrDate: gap?.battrDate ?? null,
+      auditDay: AUDIT_DAY,
+    })
+  );
+
   lines.push("## Summary");
   lines.push("");
   lines.push(
@@ -745,7 +782,10 @@ async function main() {
   const log = console.error;
 
   // Writing requires an explicit opt-in. Everything else is a dry run.
-  const dry = args.dry === true || process.env.BATTR_LIVE !== "true";
+  // rules.forceDryRun is the in-code kill switch: no repository variable and no "live"
+  // mode argument can write while it is true (only `undo`, handled above this line, can).
+  const dry = args.dry === true || process.env.BATTR_LIVE !== "true" || rules.forceDryRun === true;
+  const forcedDry = rules.forceDryRun === true && args.dry !== true && process.env.BATTR_LIVE === "true";
   const runId = `${ptDate(AUDIT_DAY)}-${Date.now().toString(36).slice(-4)}`;
 
   const fub = new FubClient(process.env.FUB_API_KEY, { dry, log });
@@ -978,76 +1018,67 @@ async function main() {
   // found here can only move a lead from neglected toward compliant. The pass
   // cannot make anyone newly sweepable, which is why it is safe to run before
   // the sweep decision rather than after.
+  // 4c. PASS 2 — VERIFY EVERY CANDIDATE, PERSON BY PERSON
+  //
+  // Pass 1 (the bulk read above) is cheap and incomplete: FUB serves neither texts
+  // nor emails in bulk, so a lead an agent has only texted or emailed reads as never
+  // contacted. That is how the first live night flagged 1,063 leads against Battr's 14.
+  //
+  // Pass 2 fixes it at the source. EVERY lead pass 1 calls at risk or neglected is
+  // looked up individually — its texts AND its emails — and the answers are folded
+  // into the touch index. Folding only ever moves last-touch FORWARD, so this can
+  // only take a lead OFF the list, never put one on. A lead with an agent text, email
+  // or call inside the window drops out when the population is reclassified below.
+  //
+  // THE RULE THAT MATTERS: "no data" is never "no contact". If a lead's history
+  // cannot be fetched (a failed lookup, an email whose origin cannot be told manual
+  // from automated, or the night's lookup ceiling), that ONE lead is HELD — status
+  // "unverified", never nudged, swept or emailed about, and listed in the report with
+  // the reason. The rest of the night is not held hostage by it. Only a systemic
+  // failure (more than rules.maxUnverifiedShare of lookups failing) holds everything.
+  //
+  // Request pacing and 429 / 5xx backoff are the client's (fub.mjs honours
+  // Retry-After); rules.verifyPaceMs adds a pause between leads on top.
   let textBackfill = null;
-  const missingTexts = touchIncomplete.find((g) => g.channel === "texts");
-  if (missingTexts && rules.perPersonTextBackfill) {
-    const candidates = results.filter((r) => r.status === "at_risk" || r.status === "neglected");
-    if (candidates.length > rules.maxTextBackfill) {
-      // Abandoned, not half-done. A partial backfill is the one genuinely
-      // dangerous outcome here: it looks like a complete touch index.
-      log(`  text backfill SKIPPED: ${candidates.length} actionable leads exceeds maxTextBackfill (${rules.maxTextBackfill}).`);
-      textBackfill = { attempted: candidates.length, complete: false, reason: "over the cap" };
-    } else {
-      log(`  backfilling texts for ${candidates.length} actionable leads (FUB serves these per person)...`);
-      const before = { atRisk: results.filter((r) => r.status === "at_risk").length, neglected: results.filter((r) => r.status === "neglected").length };
-      let rows = 0;
-      let failed = 0;
-      for (const cand of candidates) {
-        try {
-          const texts = await fub.textsForPerson(cand.id, since);
-          rows += texts.length;
-          foldTouches(touchIndex, texts, "text");
-        } catch (err) {
-          // One lead's thread failing leaves the index incomplete for that
-          // lead, and there is no way to tell a "no texts" from a "could not
-          // read". So the whole pass is incomplete, and sweeps stay off.
-          failed++;
-          log(`  text backfill failed for one lead: ${err.message}`);
-        }
-      }
-      results = classifyPopulation({ quiet: true });
-      const after = { atRisk: results.filter((r) => r.status === "at_risk").length, neglected: results.filter((r) => r.status === "neglected").length };
-      textBackfill = { attempted: candidates.length, rows, failed, complete: failed === 0, before, after };
-      log(
-        `  text backfill: ${rows} messages over ${candidates.length} leads` +
-          (failed ? `, ${failed} FAILED — touch index still incomplete` : "") +
-          ` — at risk ${before.atRisk} → ${after.atRisk}, neglected ${before.neglected} → ${after.neglected}`
-      );
-    }
-  }
-
-  // 4c. EMAIL, WHICH BATTR COUNTS AND WE DID NOT
-  //
-  // Battr's playbook counts a manual email as working a lead and ignores an
-  // automated one. We excluded the channel outright, because a FUB batch send
-  // is one click for five hundred leads — right reasoning, too blunt a fix,
-  // and it cost 281 at risk against Battr's 15 on 22 Sep.
-  //
-  // Same shape as the text backfill above and safe for the same reason:
-  // folding only moves last-touch forward, so an email found here can move a
-  // lead from neglected toward compliant and never the other way.
-  //
-  // The new risk is different. A text either exists or does not; an email has
-  // to be JUDGED, and if its origin cannot be read then counting it reopens
-  // the blast hole and ignoring it sweeps a lead the agent wrote to. So an
-  // unreadable origin marks the touch index incomplete, which turns sweeps off
-  // for the run — the same brake the missing text channel pulls.
   let emailBackfill = null;
   /** Person id → last AUTOMATED email. Never a touch; measured for the gap section. */
   const automatedAt = new Map();
-  if (rules.emailCountsAsTouch) {
+  /** Person id → why this lead's history could not be verified. */
+  const unverified = new Map();
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const needTexts = Boolean(touchIncomplete.find((g) => g.channel === "texts")) && rules.perPersonTextBackfill;
+  const needEmails = Boolean(rules.emailCountsAsTouch);
+  if (needTexts || needEmails) {
+    const countBy = () => ({
+      atRisk: results.filter((r) => r.status === "at_risk").length,
+      neglected: results.filter((r) => r.status === "neglected").length,
+    });
     const candidates = results.filter((r) => r.status === "at_risk" || r.status === "neglected");
-    if (candidates.length > rules.maxEmailBackfill) {
-      log(`  email backfill SKIPPED: ${candidates.length} actionable leads exceeds maxEmailBackfill (${rules.maxEmailBackfill}).`);
-      emailBackfill = { attempted: candidates.length, complete: false, reason: "over the cap" };
-      touchIncomplete.push({ channel: "emails", reason: `backfill skipped — ${candidates.length} leads over the cap` });
-    } else {
-      log(`  backfilling emails for ${candidates.length} actionable leads (manual only — automated does not count)...`);
-      const before = { atRisk: results.filter((r) => r.status === "at_risk").length, neglected: results.filter((r) => r.status === "neglected").length };
-      const tally = { manual: 0, automated: 0, unknown: 0, skipped: 0, rows: 0 };
-      let failed = 0;
-      let sample = [];
-      for (const cand of candidates) {
+    const toVerify = candidates.slice(0, rules.maxVerifyLeads);
+    for (const over of candidates.slice(rules.maxVerifyLeads)) {
+      unverified.set(over.id, `over tonight's verification ceiling (${rules.maxVerifyLeads} leads)`);
+    }
+    log(`  verifying ${toVerify.length} candidate leads person by person (${[needTexts && "texts", needEmails && "emails"].filter(Boolean).join(" + ")}; manual email only — automated does not count)...`);
+
+    const before = countBy();
+    const tally = { manual: 0, automated: 0, unknown: 0, skipped: 0, rows: 0 };
+    let textRows = 0;
+    let textFailed = 0;
+    let emailFailed = 0;
+    let sample = [];
+    for (const cand of toVerify) {
+      const why = [];
+      if (needTexts) {
+        try {
+          const texts = await fub.textsForPerson(cand.id, since);
+          textRows += texts.length;
+          foldTouches(touchIndex, texts, "text");
+        } catch (err) {
+          textFailed++;
+          why.push(`texts could not be read (${err.message})`);
+        }
+      }
+      if (needEmails) {
         try {
           const rows = await fub.emailsForPerson(cand.id, since);
           if (sample.length < 40) sample = sample.concat(rows).slice(0, 40);
@@ -1057,52 +1088,69 @@ async function main() {
           tally.unknown += t.unknown;
           tally.skipped += t.skipped;
           tally.rows += rows.length;
+          if (t.unknown) why.push(`${t.unknown} email(s) could not be told manual from automated`);
         } catch (err) {
-          failed++;
-          log(`  email backfill failed for one lead: ${err.message}`);
+          emailFailed++;
+          why.push(`emails could not be read (${err.message})`);
         }
       }
-      results = classifyPopulation({ quiet: true });
-      const after = { atRisk: results.filter((r) => r.status === "at_risk").length, neglected: results.filter((r) => r.status === "neglected").length };
+      if (why.length) unverified.set(cand.id, why.join("; "));
+      if (rules.verifyPaceMs) await sleep(rules.verifyPaceMs);
+    }
+
+    results = classifyPopulation({ quiet: true });
+    const after = countBy();
+    const lookupsFailed = toVerify.filter((c) => unverified.has(c.id)).length;
+    const systemic = toVerify.length >= 20 && lookupsFailed / toVerify.length > rules.maxUnverifiedShare;
+    if (systemic) {
+      touchIncomplete.push({
+        channel: "verification",
+        systemic: true,
+        reason:
+          `${lookupsFailed} of ${toVerify.length} per-person lookups failed (more than ${Math.round(rules.maxUnverifiedShare * 100)}%) — ` +
+          `Follow Up Boss's history cannot be trusted tonight, so nothing is acted on.`,
+      });
+    }
+    if (needTexts) {
+      textBackfill = { attempted: toVerify.length, rows: textRows, failed: textFailed, complete: !systemic, before, after };
+    }
+    if (needEmails) {
       emailBackfill = {
-        attempted: candidates.length,
+        attempted: toVerify.length,
         ...tally,
-        failed,
-        complete: failed === 0 && tally.unknown === 0,
+        failed: emailFailed,
+        complete: !systemic,
         before,
         after,
         origin: describeEmailOrigin(sample),
       };
-      log(
-        `  email backfill: ${tally.manual} manual, ${tally.automated} automated, ${tally.unknown} undetermined` +
-          (failed ? `, ${failed} FAILED` : "") +
-          ` — at risk ${before.atRisk} → ${after.atRisk}, neglected ${before.neglected} → ${after.neglected}`
-      );
-      // Rows read and none usable is the failure this pass has already had
-      // once: it reports zeroes that read exactly like "nobody emailed anyone".
-      // It is a shape problem with the rows, and it must say so.
+    }
+    log(
+      `  verified: ${toVerify.length - lookupsFailed} of ${toVerify.length} candidates read cleanly, ${unverified.size} held as UNVERIFIED` +
+        ` — at risk ${before.atRisk} → ${after.atRisk}, neglected ${before.neglected} → ${after.neglected}`
+    );
+    if (needEmails) {
+      log(`  emails: ${tally.manual} manual, ${tally.automated} automated (ignored), ${tally.unknown} undetermined`);
+      // Rows read and none usable is a shape problem, not an empty inbox, and it is
+      // SYSTEMIC (every lead is affected), so it holds the whole night.
       if (tally.rows && tally.manual + tally.automated + tally.unknown === 0) {
         touchIncomplete.push({
           channel: "emails",
+          systemic: true,
           reason:
             `${tally.rows} email row(s) were read and NONE could be used — every one lacked a person id or a ` +
             `timestamp we recognise. This is a row-shape problem, not an empty inbox. ` +
             `Fields seen: ${JSON.stringify(emailBackfill.origin.fields)}`,
         });
       }
-      if (tally.unknown) {
-        touchIncomplete.push({
-          channel: "emails",
-          reason:
-            `${tally.unknown} email(s) carried no field identifying them as manual or automated. ` +
-            `Counting them would let one batch send mark a lead as worked; ignoring them would sweep a lead an ` +
-            `agent wrote to. Origin fields actually present: ${JSON.stringify(emailBackfill.origin.fields)}`,
-        });
-      }
-      if (failed) {
-        touchIncomplete.push({ channel: "emails", reason: `${failed} lead(s) whose email thread could not be read` });
-      }
     }
+    // Held, not dropped: an unverified lead keeps its place in the report, but its
+    // status takes it out of every nudge, sweep, digest and count that follows.
+    results = results.map((r) =>
+      unverified.has(r.id) && (r.status === "at_risk" || r.status === "neglected")
+        ? { ...r, status: "unverified", unverifiedReason: unverified.get(r.id), wasStatus: r.status }
+        : r
+    );
   }
 
   const atRisk = results.filter((r) => r.status === "at_risk");
@@ -1178,18 +1226,47 @@ async function main() {
   // kept out of the agent digests — "reach out" is the wrong thing to tell an agent
   // about a lead tagged NOCONTACT.
   const isNoContactLead = (r) =>
-    Boolean(rules.noContactPond) && hasAny(r.tags ?? [], rules.noContactTags) && hasAny([r.stage], rules.noContactStages);
+    Boolean(rules.noContactPond) && !BATTR_PARITY && hasAny(r.tags ?? [], rules.noContactTags) && hasAny([r.stage], rules.noContactStages);
   /** No-timeframe Nurture leads not nudged tonight because of the nightly cap; hidden from the digests until they are. */
   const capHeldIds = new Set();
   let noTimeframeNudged = 0;
 
   // 5a. nudge
+  //
+  // HARD CAPS FIRST (rules.maxNudges*). Work out what tonight's nudges would be —
+  // every verified at-risk lead not already warned — then cap it: over the nightly
+  // total the run does nothing and the list goes to Mike; otherwise at most
+  // `maxNudgesPerAgentPerNight` per agent. This is planned even on a dry run, so the
+  // report shows the list the real run would have acted on.
+  const nudgeQueue = [];
+  for (const lead of atRisk) {
+    if (only !== null && lead.id !== only) continue;
+    const person = peopleById.get(lead.id);
+    const alreadyFlagged = fields.atRiskSince ? Boolean(person?.[fields.atRiskSince]) : false;
+    if (alreadyFlagged) {
+      actions.alreadyFlagged.push(lead);
+      continue;
+    }
+    if (isNoContactLead(lead)) continue; // moved to a pond, not nudged
+    nudgeQueue.push(lead);
+  }
+  const nudgePlan =
+    only === null
+      ? planCaps(nudgeQueue, { perAgent: rules.maxNudgesPerAgentPerNight, total: rules.maxNudgesPerNight })
+      : { tripped: false, total: nudgeQueue.length, send: nudgeQueue, sendIds: new Set(nudgeQueue.map((l) => l.id)), held: [], heldIds: new Set() };
+  actions.nudgePlan = nudgePlan;
+  if (nudgePlan.tripped) {
+    log(`  NUDGE CAP TRIPPED: ${nudgePlan.total} nudges would go out, over the ${rules.maxNudgesPerNight} a night limit — NOTHING is nudged tonight; the list goes to ${rules.alertEmail}`);
+  } else if (nudgePlan.held.length) {
+    log(`  ${nudgePlan.held.length} nudge(s) held by the ${rules.maxNudgesPerAgentPerNight}-per-agent limit`);
+    for (const h of nudgePlan.held) actions.heldBack.push(h);
+  }
+
   if ((args.stage === "both" || args.stage === "at-risk") && (nudgesAllowedToday || testNudgeAllowed) && (only === null || testNudgeAllowed)) {
     if (only !== null && !atRisk.some((l) => l.id === only)) {
       log(`  #${only} is not at risk tonight (or is excluded) — the test wrote nothing.`);
     }
-    for (const lead of atRisk) {
-      if (only !== null && lead.id !== only) continue;
+    for (const lead of nudgePlan.send) {
       const person = peopleById.get(lead.id);
       const alreadyFlagged = fields.atRiskSince ? Boolean(person?.[fields.atRiskSince]) : false;
 
@@ -1234,6 +1311,27 @@ async function main() {
   }
 
   // 5b. sweep
+  //
+  // HARD CAPS (rules.maxSweeps*). The leads that could be swept on paper — neglected,
+  // verified, warned, not exempt, audited source — are counted first. Over the nightly
+  // total the run sweeps NOTHING and the list goes to Mike; otherwise at most
+  // `maxSweepsPerAgentPerNight` leave any one agent in a night. The existing per-run
+  // and per-pond caps still apply on top.
+  const sweepOnPaper = neglected.filter(
+    (l) =>
+      !isExemptAgent(l.owner, rules) &&
+      isSourceAudited(l.source) &&
+      !hasAny(l.tags, rules.reportOnlyTags) &&
+      (!rules.requireWarningBeforeSweep || (fields.atRiskSince ? Boolean(peopleById.get(l.id)?.[fields.atRiskSince]) : false))
+  );
+  const sweepPlan =
+    only === null
+      ? planCaps(sweepOnPaper, { perAgent: rules.maxSweepsPerAgentPerNight, total: rules.maxSweepsPerNight })
+      : { tripped: false, total: 0, send: [], sendIds: new Set(), held: [], heldIds: new Set() };
+  actions.sweepPlan = sweepPlan;
+  if (sweepPlan.tripped) {
+    log(`  SWEEP CAP TRIPPED: ${sweepPlan.total} leads could be swept, over the ${rules.maxSweepsPerNight} a night limit — NOTHING is swept tonight; the list goes to ${rules.alertEmail}`);
+  }
   const replyDiag = { checks: 0, undirected: 0, budgetSpent: 0, spared: 0, failures: [] };
   if ((args.stage === "both" || args.stage === "neglected") && !sweepsOnHold && sweepsAllowedToday && only === null) {
     const cap = args.maxSweeps ?? rules.maxSweepsPerRun;
@@ -1242,6 +1340,11 @@ async function main() {
     const sweptPerPond = new Map();
 
     for (const lead of neglected) {
+      if (sweepPlan.tripped) break; // over the nightly total: nothing moves
+      if (sweepPlan.heldIds.has(lead.id)) {
+        actions.heldBack.push({ ...lead, holdReason: sweepPlan.held.find((h) => h.id === lead.id)?.holdReason ?? "per-agent sweep limit" });
+        continue;
+      }
       if (actions.swept.length >= cap) {
         actions.heldBack.push({ ...lead, holdReason: `per-run sweep cap (${cap}) reached` });
         continue;
@@ -1385,6 +1488,34 @@ async function main() {
     }
   }
   if (capHeldIds.size) log(`  ${capHeldIds.size} no-timeframe Nurture leads wait for a later night (nudge cap ${rules.maxNoTimeframeNudgesPerRun} a night)`);
+
+  // An over-the-cap night is a fault, not a night's work. Nothing was done; Mike is
+  // emailed the whole list so a person decides what it means. (On a dry run the
+  // nightly report is already that email and carries the same list.)
+  for (const [kind, plan, limit] of [
+    ["nudges", nudgePlan, rules.maxNudgesPerNight],
+    ["sweeps", sweepPlan, rules.maxSweepsPerNight],
+  ]) {
+    if (!plan.tripped) continue;
+    actions.skipped.push({ what: kind, count: plan.total, reason: `over the ${limit}-a-night limit — nothing done, the list goes to ${rules.alertEmail}` });
+    const subject = `Battr: ${plan.total} ${kind} would go out tonight — over the ${limit} limit, so NOTHING was done`;
+    const text =
+      `The audit found ${plan.total} ${kind} to do tonight. The limit is ${limit} a night (${kind === "nudges" ? rules.maxNudgesPerAgentPerNight : rules.maxSweepsPerAgentPerNight} per agent), ` +
+      `so it did none of them. A night this size usually means the evidence is wrong, not that ${plan.total} leads went quiet.\n\n` +
+      renderCapList(plan.held);
+    if (dry) {
+      log(`  (dry run) ${kind} over the limit — the nightly report carries the list`);
+    } else if (mailConfigured()) {
+      try {
+        await sendMail({ to: rules.alertEmail, subject, text });
+        log(`  emailed ${rules.alertEmail} the ${plan.total} ${kind} that would have gone out`);
+      } catch (err) {
+        log(`  could NOT email the over-the-limit ${kind} list: ${err.message}`);
+      }
+    } else {
+      log(`  over-the-limit ${kind} list NOT emailed: RESEND_API_KEY is not set`);
+    }
+  }
 
   // A blocked day is a recorded skip, not a silent no-op.
   const incompleteReason = () =>
@@ -1558,7 +1689,7 @@ async function main() {
     only !== null
       ? `> ## 🔬 SINGLE-LEAD LIVE TEST — lead #${only} only\n>\n> ${sweepLog.nudges.length ? `Nudged: ${sweepLog.nudges.map((n) => `${n.name} (#${n.personId}, ${n.owner}, ${n.source || "no source"})`).join("; ")}. Undo: \`node scripts/battr-audit.mjs --undo=${runId}\`` : "Nothing was written to Follow Up Boss."} Everything below is tonight's normal read-only audit; no other lead was touched and no agent was emailed.\n\n`
       : "";
-  const markdown = testBanner + buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete, unenforceable, comparisonDrift, gap, stageTracking, passedOver, emailBackfill });
+  const markdown = testBanner + buildReport({ runId, dry, population: people.length, results, actions, ponds, agentStats, alerts, replyDiag, unanswered, reportLists, touchIncomplete, unenforceable, comparisonDrift, gap, stageTracking, passedOver, emailBackfill, forcedDry });
   // A single-lead test sends the one report and no stage emails: those would
   // list every at-risk lead as "held" and bury the one that was tested.
   const stageEmails = only !== null ? [] : buildStageEmails({
