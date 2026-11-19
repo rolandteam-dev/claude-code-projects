@@ -33,6 +33,20 @@
  *    classification; it would only mislabel a source chip in the report.
  */
 
+import { rules as ruleConfig } from "./rules.mjs";
+
+/**
+ * Which member lists feed the sweep, by rule profile (rules.profile).
+ *   battr    — the six lists Battr runs (ids confirmed from its rule screen).
+ *   extended — those six plus the lists added for Mike on 17 Nov 2026.
+ */
+export const PROFILE_MEMBER_IDS = {
+  battr: [1104, 1106, 1107, 1108, 1109, 1144],
+  extended: [1104, 1106, 1107, 1108, 1109, 1144, 1160, 1161, 1162, 1163, 1164, 1165],
+};
+/** True while the audit is judging by Battr's rules alone. */
+export const BATTR_PARITY = ruleConfig.profile !== "extended";
+
 /** FUB stage names the rules match on. Verify against /v1/stages. */
 export const STAGES = {
   earlyPipeline: ["Lead", "Attempted Contact"],
@@ -217,12 +231,12 @@ export const lists = [
         ],
       ],
     },
-    // OURS since 17 Nov 2026 (Mike): Battr's 10/13. A Lead or Attempted Contact older
-    // than 10 days that nobody has reached in 10 days is too long — 5 days to the
-    // nudge, 8 to the sweep (same +3 as every list, warn-first stamp still required).
-    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", 5)]] },
+    // Battr's rule is 10 / 13. Mike asked for 5 / 8 on 17 Nov 2026 (a Lead or Attempted
+    // Contact older than 10 days that nobody has reached in 10 days is too long); that is
+    // the "extended" profile. The audit runs Battr's 10 / 13 until the parity work is done.
+    at_risk_filters: { groups: [[daysSince(LAST_COMM, ">", BATTR_PARITY ? 10 : 5)]] },
     neglected_filters: {
-      groups: [[daysSince(LAST_COMM, ">", 8), contact(AT_RISK_SINCE, "!=", null, { value_data_type: "text" })]],
+      groups: [[daysSince(LAST_COMM, ">", BATTR_PARITY ? 13 : 8), contact(AT_RISK_SINCE, "!=", null, { value_data_type: "text" })]],
     },
   },
 
@@ -360,7 +374,7 @@ export const lists = [
     list_filters: {
       groups: [
         [
-          { object: "battr.aida_lists", field: "source_list_ids", operator: "IS ANY OF", value: [1104, 1106, 1107, 1108, 1109, 1144, 1160, 1161, 1162, 1163, 1164, 1165], value_data_type: "integer" },
+          { object: "battr.aida_lists", field: "source_list_ids", operator: "IS ANY OF", value: PROFILE_MEMBER_IDS[BATTR_PARITY ? "battr" : "extended"], value_data_type: "integer" },
           contact("lead_bucket_id", "!=", 82, { object: "battr.lead_buckets", value_data_type: "integer" }),
           contact("owner_group_ids", "DOES NOT CONTAIN ANY", [52555], { value_data_type: "integer" }),
         ],

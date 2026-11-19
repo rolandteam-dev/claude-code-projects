@@ -14,7 +14,7 @@ import { createServer } from "node:http";
 import { execFile } from "node:child_process";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { rmSync, readFileSync } from "node:fs";
+import { rmSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import assert from "node:assert/strict";
 
@@ -22,7 +22,8 @@ import { classify, buildTouchIndex, classifyForList, runCombinedList, isExemptAg
 import { evaluateCondition, evaluateSet } from "./filters.mjs";
 import { normalizeContact } from "./contact.mjs";
 import { isDayAllowed } from "./schedule.mjs";
-import { lists, listById, memberListsOf, reportOnlyLists, TIMEFRAMES, TIMEFRAME_IDS } from "./lists.mjs";
+import { planCaps, renderCapList } from "./caps.mjs";
+import { lists, listById, memberListsOf, reportOnlyLists, TIMEFRAMES, TIMEFRAME_IDS, PROFILE_MEMBER_IDS } from "./lists.mjs";
 import { detectAtBats, summarizeAgents, formatRate } from "./atbats.mjs";
 import { buildAgentDigests, deliverDigests, renderDigestText, renderDigestHtml, digestSubject } from "./alerts.mjs";
 import { describeError, fromAddress, mailConfigured } from "./email.mjs";
@@ -422,19 +423,22 @@ check("Active Leads uses its own 6/9 thresholds, not Hot Leads' 2/4", () => {
   assert.equal(classifyForList(neg, activeLeads, NOW), "neglected");
 });
 
-check("Battr's six lists plus our five lists feed the sweep — nothing else", () => {
+check("the sweep is fed by the active profile's lists — Battr's six by default — and the extended set stays defined", () => {
   const { ids, resolved } = memberListsOf(lists.find((l) => l.audit_type === "combined_contact_lists"));
-  assert.equal(ids.length, 12);
+  assert.equal(rules.profile, "battr", "the audit runs Battr's rules until Mike says otherwise (19 Nov 2026)");
+  assert.deepEqual([...ids].sort(), [...PROFILE_MEMBER_IDS[rules.profile]].sort());
   assert.deepEqual(
     resolved.map((l) => l.name).sort(),
-    [
-      "😎 Bi-Weekly Nurture", "🌤️ Warm Back Up", "🌱 Monthly Nurture", "🌶️ Hot Leads", "🔥 Weekly Nurture", "👀 Quarterly Nurture",
-      // Ours, 17 Nov 2026 (Mike): Battr never acted on these stages.
-      "📅 Appointment Set", "🤝 Met with Customer", "🏡 Showing Homes",
-      // Ours, 17 Nov 2026 (Mike): no-timeframe Nurture, and Submitting Offers (nudge only).
-      "🕳️ Nurture — no timeframe", "💼 Submitting Offers (nudge only)", "🗣️ Spoke with Customer — no timeframe",
-    ].sort()
+    ["😎 Bi-Weekly Nurture", "🌤️ Warm Back Up", "🌱 Monthly Nurture", "🌶️ Hot Leads", "🔥 Weekly Nurture", "👀 Quarterly Nurture"].sort()
   );
+  // The 17 Nov lists are not deleted: switching rules.profile to "extended" brings them back.
+  assert.equal(PROFILE_MEMBER_IDS.extended.length, 12);
+  assert.deepEqual(PROFILE_MEMBER_IDS.battr.filter((id) => !PROFILE_MEMBER_IDS.extended.includes(id)), [], "extended contains every Battr list");
+  const names = PROFILE_MEMBER_IDS.extended.map((id) => listById(id)?.name);
+  assert.ok(names.every(Boolean), "every extended list id resolves");
+  for (const n of ["📅 Appointment Set", "🤝 Met with Customer", "🏡 Showing Homes", "🕳️ Nurture — no timeframe", "💼 Submitting Offers (nudge only)", "🗣️ Spoke with Customer — no timeframe"]) {
+    assert.ok(names.includes(n), `${n} is in the extended set`);
+  }
 });
 
 check("live-pipeline lists: nudge at 5 days (3 for showings), sweepable 3 days later, and no live deal stage", () => {
@@ -621,7 +625,7 @@ check("Spoke with Customer: no timeframe is 7/10, with a timeframe it follows th
   const spokeConds = spoke.list_filters.groups[0];
   assert.ok(spokeConds.some((c) => c.field.endsWith("system_timeframe") && c.operator === "=" && c.value === null), "only Spoke with Customer with NO timeframe");
   const warm = lists.find((l) => l.id === 1104);
-  assert.deepEqual([days(warm.at_risk_filters), days(warm.neglected_filters)], [5, 8]);
+  assert.deepEqual([days(warm.at_risk_filters), days(warm.neglected_filters)], rules.profile === "extended" ? [5, 8] : [10, 13], "Warm Back Up is Battr's 10/13 (5/8 in the extended profile)");
   const stageOf = (id) => lists.find((l) => l.id === id).list_filters.groups[0].find((c) => c.field === "stage_name").value;
   // With a timeframe, Spoke with Customer is judged with Nurture, as it always was.
   for (const id of [1106, 1107, 1108, 1109]) {
@@ -664,10 +668,11 @@ check("a per-person backfill cannot switch sweeping on by itself", () => {
   );
   assert.ok(usable.includes("sweepOnBackfilledTexts"), "permission must depend on the opt-in");
 
-  // A partial backfill must never read as complete. `failed === 0` is the only
-  // thing that sets it, because a lead whose thread could not be read is
-  // indistinguishable from a lead with no texts.
-  assert.match(src, /complete: failed === 0/, "any failed lead makes the whole pass incomplete");
+  // A failed lookup must never read as "no contact": that lead is held as unverified,
+  // and if lookups fail wholesale (more than rules.maxUnverifiedShare) the whole night
+  // is held. (This used to be `failed === 0`, which held every lead for one failure.)
+  assert.match(src, /complete: !systemic/, "only a systemic lookup failure makes the whole pass incomplete");
+  assert.match(src, /unverified\.set\(cand\.id, why\.join/, "a failed lookup holds THAT lead, never reads as no contact");
 });
 
 check("folding touches only ever moves last-touch forward", () => {
@@ -889,7 +894,7 @@ check("each id carries the rules that belong to that list, not just the label", 
 
   const atRiskDays = (list) => list.at_risk_filters.groups[0][0].value;
   assert.equal(atRiskDays(listById(1144)), 2, "Hot Leads warns at 2 days");
-  assert.equal(atRiskDays(listById(1104)), 5, "Warm Back Up warns at 5 days (ours since 17 Nov 2026; Battr's was 10)");
+  assert.equal(atRiskDays(listById(1104)), rules.profile === "extended" ? 5 : 10, "Warm Back Up warns at 10 days (Battr's; 5 in the extended profile)");
 });
 
 check("observed.mjs agrees with lists.mjs about which id is which", () => {
@@ -1397,23 +1402,25 @@ check("a lead past the neglected line is neglected, sweep day or not", () => {
   // at-risk by AGEING past the neglected threshold, not by being swept — the
   // sweep is an action taken on the neglected state, not the thing that
   // produces it. Conflating the two is what made the earlier note wrong.
-  const warm = listById(1104); // 5 days to warn, 8 to sweep (Battr's was 10/13)
+  const warm = listById(1104); // 10 days to warn, 13 to sweep (Battr's; 5/8 in the extended profile)
+  const wAt = rules.profile === "extended" ? 5 : 10;
+  const wNg = rules.profile === "extended" ? 8 : 13;
   const build = (quietDays) => {
     const c = normalizeContact(
       { id: 42, stage: "Lead", created: daysAgo(60), assignedUserId: 5, tags: [] },
       { lastOutbound: 0 }
     );
     c.custom_fields.fub.system_lastCommunication = daysAgo(quietDays);
-    c.custom_fields.fub.customBattrAtRiskSince = daysAgo(Math.max(1, quietDays - 5));
+    c.custom_fields.fub.customBattrAtRiskSince = daysAgo(Math.max(1, quietDays - wAt));
     return c;
   };
 
-  assert.equal(classifyForList(build(7), warm, NOW), "at_risk", "inside the band");
-  assert.equal(classifyForList(build(10), warm, NOW), "neglected", "past the band — regardless of the calendar");
+  assert.equal(classifyForList(build(wAt + 1), warm, NOW), "at_risk", "inside the band");
+  assert.equal(classifyForList(build(wNg + 1), warm, NOW), "neglected", "past the band — regardless of the calendar");
 
   // The two tiers are exclusive: nothing is ever both, so a lead that becomes
   // neglected necessarily stops being reported as at-risk that same night.
-  for (const days of [4, 7, 10, 40]) {
+  for (const days of [wAt - 1, wAt + 1, wNg + 1, 40]) {
     const status = classifyForList(build(days), warm, NOW);
     assert.ok(["compliant", "at_risk", "neglected"].includes(status), `${days}d produced ${status}`);
   }
@@ -1710,7 +1717,7 @@ check("Warm Back Up picks up early-stage leads older than 10 days", () => {
   };
   assert.equal(classifyForList(build(30, 14), warm, NOW), "neglected");
   assert.equal(classifyForList(build(30, 14, false), warm, NOW), "at_risk", "Warm Back Up carries the interlock too");
-  assert.equal(classifyForList(build(30, 7), warm, NOW), "at_risk");
+  assert.equal(classifyForList(build(30, rules.profile === "extended" ? 7 : 11), warm, NOW), "at_risk");
   assert.equal(classifyForList(build(5, 14), warm, NOW), null, "younger than 10 days belongs to Hot Leads");
 });
 
@@ -2378,7 +2385,7 @@ check("rows without a usable id or date are dropped, not guessed at", () => {
 // ------------------------------------------------------------------ end-to-end
 
 /** A stand-in FUB API serving fixtures, so the real client code is exercised. */
-function fixtureServer() {
+function fixtureServer({ failTextsFor = [] } = {}) {
   // Dates here are relative to the REAL clock, not the frozen NOW the unit tests
   // use. The end-to-end run is a subprocess with its own Date.now(), so fixtures
   // built from a fixed date drift a day further from their intended tier every
@@ -2458,6 +2465,11 @@ function fixtureServer() {
         res.writeHead(400, { "Content-Type": "application/json" });
         return res.end(JSON.stringify({ errorMessage: "personId, threadId, phone ... must be specified" }));
       }
+      // A lead whose thread cannot be read (a real failure mode: a 4xx on one person).
+      if (failTextsFor.includes(Number(personId))) {
+        res.writeHead(403, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ errorMessage: "forbidden for this person" }));
+      }
       const textmessages = textsByPerson[personId] ?? [];
       res.writeHead(200, { "Content-Type": "application/json" });
       return res.end(JSON.stringify({ textmessages, _metadata: { total: textmessages.length } }));
@@ -2488,6 +2500,17 @@ const run = (env) =>
     );
   });
 
+/** The same engine WITHOUT --dry, the way the nightly job runs it. */
+const runNightly = (env) =>
+  new Promise((resolve, reject) => {
+    execFile(
+      process.execPath,
+      [join(ROOT, "scripts", "battr-audit.mjs")],
+      { cwd: ROOT, env: { ...process.env, GITHUB_STEP_SUMMARY: "", BATTR_LOG_DIR: SCRATCH_LOGS, ...env } },
+      (err, stdout, stderr) => (err ? reject(new Error(`${err.message}\n${stderr}`)) : resolve({ stdout, stderr }))
+    );
+  });
+
 console.log("\nEnd-to-end — engine against a fixture API");
 
 const { server, writes } = fixtureServer();
@@ -2500,6 +2523,9 @@ try {
     FUB_API_BASE: `http://127.0.0.1:${port}`,
     BATTR_LIVE: "",
   });
+
+  // Debug aid: BATTR_TEST_DUMP=/path writes the fixture run's report there so it can be read.
+  if (process.env.BATTR_TEST_DUMP) writeFileSync(process.env.BATTR_TEST_DUMP, stdout);
 
   check("the run completes and prints a report", () => {
     assert.match(stdout, /# Battr audit/);
@@ -2516,10 +2542,10 @@ try {
     // its last text 3 days ago: neglected on the first pass, compliant after
     // the backfill. Without this the sweep takes it off the agent who worked it.
     assert.match(stderr, /texts: NOT available in bulk/, "the fixture must reproduce FUB's 400");
-    assert.match(stderr, /backfilling texts for 4 actionable leads/, "only actionable leads are queried");
+    assert.match(stderr, /verifying 4 candidate leads person by person/, "only candidate leads are looked up, each one");
     assert.match(
       stderr,
-      /text backfill: 1 messages over 4 leads — at risk 1 → 1, neglected 3 → 2/,
+      /verified: 4 of 4 candidates read cleanly, 0 held as UNVERIFIED — at risk 1 → 1, neglected 3 → 2/,
       "one text moved one lead out of neglected, and moved nobody in"
     );
   });
@@ -2531,7 +2557,7 @@ try {
     // "undefined". It must NOT pin WHICH number: a nightly run starts at ~1 AM and is
     // judged as of the previous 7 PM, so the same fixture lead reads 11 days then and
     // 12 in the daytime. (That pinned "12" failed the first live night's self-test.)
-    assert.match(stderr, /text backfill: 1 messages over 4 leads/, "the gap is reported closed");
+    assert.match(stderr, /verified: 4 of 4 candidates read cleanly/, "the gap is reported closed");
     assert.match(stderr, /POST \/notes \{"personId":102.*\d+ days with no outreach\. Source: Zillow Preferred/, "nudge names a day count");
     // Whether a night sweeps depends on the AUDIT instant, not the wall clock: it has a
     // start date (rules.sweepsStartOn) and runs Tue-Fri only (a Monday-evening audit,
@@ -2579,12 +2605,114 @@ try {
     assert.match(stdout, /never entered the audit list/, "and it must break down by where");
     assert.match(stdout, /removed after it/);
   });
+
+  check("the report opens with tonight at a glance: mode, our count, the would-be nudges, every flagged lead's rule", () => {
+    assert.match(stdout, /## Tonight at a glance/);
+    assert.match(stdout, /\*\*Our verified at-risk count: \d+\*\*/);
+    assert.match(stdout, /Leads we could NOT verify/);
+    assert.match(stdout, /Would-be nudges tonight: \*\*\d+\*\*/);
+    assert.match(stdout, /Would-be sweeps tonight/);
+    assert.match(stdout, /### Every lead we flag, and the rule that flagged it/);
+    // The rule names the list, the stage, the days and the window.
+    assert.match(stdout, /Warm Back Up: [A-Za-z ]+, \d+d quiet > 10d/);
+    assert.ok(stdout.indexOf("## Tonight at a glance") < stdout.indexOf("## Summary"), "it comes first");
+  });
 } finally {
   server.close();
   // Only ever the scratch directory. Removing ROOT/battr-logs here destroyed the
   // committed audit trail and state/ownership.csv every time the suite ran.
   rmSync(SCRATCH_LOGS, { recursive: true, force: true });
 }
+
+// ---- a lead whose history cannot be read is HELD, and the kill switch holds -------
+{
+  const bad = fixtureServer({ failTextsFor: [102] });
+  await new Promise((r) => bad.server.listen(0, "127.0.0.1", r));
+  const badPort = bad.server.address().port;
+  try {
+    const { stdout, stderr } = await run({ FUB_API_KEY: "test-key", FUB_API_BASE: `http://127.0.0.1:${badPort}`, BATTR_LIVE: "" });
+
+    check("a lead whose texts cannot be read is held as unverified — never read as 'no contact'", () => {
+      assert.match(stderr, /1 held as UNVERIFIED/, "exactly the one lead whose lookup failed");
+      assert.match(stdout, /### Unverified leads — held, not acted on \(1\)/);
+      assert.match(stdout, /Going Quiet \(#102\)[^\n]*texts could not be read/, "listed with the reason");
+      assert.doesNotMatch(stderr, /POST \/notes \{"personId":102/, "an unverified lead is never nudged");
+      assert.doesNotMatch(stdout, /Every lead we flag[\s\S]*Going Quiet \(#102\)[\s\S]*## Summary/, "and is not in the flagged list");
+    });
+
+    check("one failed lookup does not hold the rest of the night", () => {
+      // Before: any failed lead made the whole pass incomplete and held every lead.
+      assert.match(stderr, /verified: 3 of 4 candidates read cleanly/);
+      assert.match(stderr, /0 at risk, 2 neglected/, "the other leads are still classified: 102 held, 103 and 104 neglected, 106 rescued by its text");
+    });
+  } finally {
+    bad.server.close();
+  }
+
+  const live = fixtureServer();
+  await new Promise((r) => live.server.listen(0, "127.0.0.1", r));
+  const livePort = live.server.address().port;
+  try {
+    // The nightly job's own settings: no --dry, BATTR_LIVE=true. rules.forceDryRun must still win.
+    const { stdout, stderr } = await runNightly({ FUB_API_KEY: "test-key", FUB_API_BASE: `http://127.0.0.1:${livePort}`, BATTR_LIVE: "true" });
+    check("the in-code kill switch holds with BATTR_LIVE=true and no --dry: a dry run, zero writes", () => {
+      assert.equal(rules.forceDryRun, true, "rules.forceDryRun is on until Mike turns it live");
+      assert.match(stderr, /DRY RUN \(no writes\)/);
+      assert.match(stdout, /DRY RUN — nothing was written/);
+      assert.match(stdout, /It is forced \(`rules\.forceDryRun`\)/, "and the report says why");
+      assert.deepEqual(live.writes, [], "not one POST, PUT or DELETE reached Follow Up Boss");
+    });
+  } finally {
+    live.server.close();
+  }
+}
+
+check("hard caps: over the nightly total NOTHING is done; otherwise the per-agent limit; worst first", () => {
+  const lead = (id, owner, days) => ({ id, owner, daysSinceTouch: days, name: `L${id}`, stage: "Lead", source: "Zillow" });
+
+  // Over the total: nothing, whoever owns the leads (one agent with 51 is as wrong as 51 agents).
+  const many = Array.from({ length: 51 }, (_, i) => lead(i + 1, "Agent A", 10 + i));
+  const tripped = planCaps(many, { perAgent: 10, total: 50 });
+  assert.equal(tripped.tripped, true);
+  assert.equal(tripped.send.length, 0, "nothing is sent");
+  assert.equal(tripped.held.length, 51, "the whole list is handed to Mike");
+  assert.equal(tripped.total, 51);
+
+  // Exactly at the total is allowed.
+  assert.equal(planCaps(Array.from({ length: 50 }, (_, i) => lead(i, `Agent ${i % 7}`, 5)), { perAgent: 10, total: 50 }).tripped, false);
+
+  // Under the total: 10 per agent, the most overdue first, the rest held with a reason.
+  const one = Array.from({ length: 14 }, (_, i) => lead(i + 1, "Agent A", i + 1));
+  const plan = planCaps([...one, lead(99, "Agent B", 3)], { perAgent: 10, total: 50 });
+  assert.equal(plan.tripped, false);
+  assert.equal(plan.send.filter((l) => l.owner === "Agent A").length, 10);
+  assert.equal(plan.send.filter((l) => l.owner === "Agent B").length, 1);
+  assert.equal(plan.held.length, 4);
+  assert.ok(plan.held.every((h) => /per-agent limit/.test(h.holdReason)));
+  assert.ok(Math.min(...plan.send.filter((l) => l.owner === "Agent A").map((l) => l.daysSinceTouch)) >= 5, "the 4 least overdue are the ones held");
+
+  assert.match(renderCapList(many.slice(0, 2)), /Agent A \(2\)\n  • L1 \(#1\)/);
+
+  // The limits themselves, and that both nudges and sweeps use them.
+  assert.equal(rules.maxNudgesPerAgentPerNight, 10);
+  assert.equal(rules.maxNudgesPerNight, 50);
+  assert.equal(rules.maxSweepsPerAgentPerNight, 10);
+  assert.equal(rules.maxSweepsPerNight, 50);
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /for \(const lead of nudgePlan\.send\)/, "nudges iterate the capped plan");
+  assert.match(src, /if \(sweepPlan\.tripped\) break;/, "sweeps stop when the total is exceeded");
+  assert.match(src, /sendMail\(\{ to: rules\.alertEmail, subject, text \}\)/, "over the total, Mike is emailed the list");
+  assert.equal(rules.alertEmail, "mike@therolandteam.com");
+});
+
+check("safeguards are on: forced dry run, Battr's rules, sweeping paused", () => {
+  assert.equal(rules.forceDryRun, true);
+  assert.equal(rules.profile, "battr");
+  assert.ok(rules.sweepsStartOn > "2026-12-31", "sweeping start is paused out of this year");
+  assert.ok(rules.maxUnverifiedShare > 0 && rules.maxUnverifiedShare <= 0.5);
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /process\.env\.BATTR_LIVE !== "true" \|\| rules\.forceDryRun === true/);
+});
 
 check("the suite cannot delete the real audit trail", () => {
   // The guard for the bug above: if the e2e run is ever pointed back at the
@@ -3294,17 +3422,18 @@ await (async () => {
     assert.equal(untouched.last_communication_at, null, "and a lead with neither is still untouched");
   });
 
-  check("an email we cannot classify turns sweeps off rather than picking a side", () => {
-    // The one genuinely dangerous outcome. Counting an unreadable row reopens
-    // the batch-email hole; ignoring it sweeps a lead the agent wrote to. The
-    // engine does neither — it marks the touch index incomplete, which is the
-    // same brake the missing text channel pulls.
+  check("an email we cannot classify holds THAT lead as unverified rather than picking a side", () => {
+    // The one genuinely dangerous outcome. Counting an unreadable row reopens the
+    // batch-email hole; ignoring it takes a lead the agent wrote to. The engine does
+    // neither: the lead whose email origin cannot be read is HELD — status
+    // "unverified", listed with the reason, never nudged or swept. (It used to mark the
+    // whole night incomplete; one such email then held every lead.)
     const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
-    assert.match(src, /if \(tally\.unknown\) \{/, "an undetermined origin must be acted on");
-    const block = src.slice(src.indexOf("if (tally.unknown) {"), src.indexOf("if (failed) {"));
-    assert.match(block, /touchIncomplete\.push/, "and the action is to mark the index incomplete");
-    assert.match(block, /manual or automated/, "and to say what could not be read");
-    assert.match(block, /Origin fields actually present/, "with the evidence needed to narrow the field list");
+    assert.match(src, /if \(t\.unknown\) why\.push\(/, "an undetermined origin must be acted on");
+    assert.match(src, /could not be told manual from automated/, "and say what could not be read");
+    assert.match(src, /status: "unverified"/, "by holding the lead");
+    // A row-shape problem is different: it hits every lead, so it still holds the night.
+    assert.match(src, /every one lacked a person id or a/, "systemic row-shape failures still hold everything");
   });
 
   check("the policy reversal is written down where the policy lives", () => {
@@ -3327,8 +3456,8 @@ check("the email origin finding reaches the report, not the run log", () => {
   // number has gone somewhere nobody reads, after the owner-group warning, the
   // At Risk Since stamp and the paused-agent count.
   const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
-  assert.match(src, /passedOver, emailBackfill \}\);/, "the tally must be handed to the report");
-  assert.match(src, /emailBackfill = null \}\) \{/, "and the report must accept it");
+  assert.match(src, /passedOver, emailBackfill, forcedDry \}\);/, "the tally must be handed to the report");
+  assert.match(src, /emailBackfill = null, forcedDry = false \}\) \{/, "and the report must accept it");
   assert.match(src, /Email counted as work/, "and print it");
   assert.match(src, /origin fields present on the sample/, "with the field names, which is the finding");
   assert.match(src, /none — FUB marks these rows no way we can read/, "including the answer that no field exists");
@@ -3519,7 +3648,7 @@ check("the state Battr owns is the state that went missing", () => {
   const warm = allLists.find((l) => l.name.includes("Warm Back Up"));
 
   check("gap: reads each list's own at-risk window off the rule JSON", () => {
-    assert.equal(G.atRiskDaysOf(warm), 5);
+    assert.equal(G.atRiskDaysOf(warm), rules.profile === "extended" ? 5 : 10);
     assert.equal(G.atRiskDaysOf(allLists.find((l) => l.name.includes("Hot Leads"))), 2);
     assert.equal(G.atRiskDaysOf(allLists.find((l) => l.name.includes("Quarterly"))), 93);
     assert.equal(G.atRiskDaysOf({}), null);
@@ -3544,7 +3673,7 @@ check("the state Battr owns is the state that went missing", () => {
     assert.equal(g.total, 5, "compliant leads are not counted");
     assert.deepEqual(g.signals, { automatedEmail: 1, recordEdited: 1, divergentSource: 1, unexplained: 2, byRule: 1 });
     assert.deepEqual(g.byAgent.map((a) => [a.agent, a.atRisk, a.unexplained]), [["Agent B", 3, 1], ["Agent A", 2, 1]]);
-    assert.equal(g.byList[0].days, 5);
+    assert.equal(g.byList[0].days, rules.profile === "extended" ? 5 : 10);
     assert.deepEqual(g.profileFields, { people: 6, stageField: 0, timeframeField: 0, fieldNames: {} });
   });
 
