@@ -35,6 +35,9 @@ export interface StatedTerms {
   appraisalDays?: number;
   loanDays?: number;
   sellerCredit?: number;
+  downPaymentPercent?: number;
+  homeWarranty?: "seller" | "buyer";
+  inclusions?: string[];
   notes?: string;
   /** Result of the MLS lookup for `address`. Cleared whenever the address changes. */
   lookup?: { tried: boolean; listPrice?: number; mlsNumber?: string; status?: string; matchedAddress?: string };
@@ -89,6 +92,9 @@ export function longDate(ymd: string): string {
 }
 
 const roundTo100 = (n: number) => Math.round(n / 100) * 100;
+const capFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const warrantyText = (w: "seller" | "buyer") => (w === "seller" ? "Seller-paid" : "Buyer-paid");
+const downPaymentText = (pct: number, price: number) => `${pct}% (${formatMoney((price * pct) / 100)})`;
 
 /** Merge a new extraction over what's already stated. A new address invalidates the old lookup. */
 export function mergeStated(prev: StatedTerms, next: StatedTerms): StatedTerms {
@@ -192,6 +198,8 @@ export function resolveTerms(s: StatedTerms, ctx: ResolveContext): ResolvedTerms
   row("Offer price", offerPrice ? formatMoney(offerPrice) : undefined, "stated");
   row("List price", listPrice ? formatMoney(listPrice) : undefined, listSource);
   row("Financing", financing ? FINANCING_LABEL[financing] : undefined, "stated");
+  const downPct = s.downPaymentPercent;
+  if (downPct !== undefined) row("Down payment", offerPrice ? downPaymentText(downPct, offerPrice) : `${downPct}%`, "stated");
   row("Earnest money", earnestMoney !== undefined ? formatMoney(earnestMoney) : undefined, s.earnestMoney !== undefined ? "stated" : "default");
   row("Close of escrow", longDate(closeDate), s.closeDate ? "stated" : "default");
   row(
@@ -200,6 +208,8 @@ export function resolveTerms(s: StatedTerms, ctx: ResolveContext): ResolvedTerms
     s.contingencies !== undefined ? "stated" : "default",
   );
   if (s.sellerCredit !== undefined) row("Seller credit", formatMoney(s.sellerCredit), "stated");
+  if (s.homeWarranty) row("Home warranty", warrantyText(s.homeWarranty), "stated");
+  if (s.inclusions?.length) row("Included", s.inclusions.map(capFirst).join(", "), "stated");
   if (s.notes) row("Notes", s.notes, "stated");
 
   const missing: string[] = [];
@@ -209,6 +219,8 @@ export function resolveTerms(s: StatedTerms, ctx: ResolveContext): ResolvedTerms
   if (!offerPrice) missing.push("the offer price");
   if (!listPrice) missing.push("the list price");
   if (!financing) missing.push("how they're paying (cash, conventional, FHA, VA)");
+  // A down payment is never defaulted: guessing it would put a wrong loan term in the offer.
+  if (financing && financing !== "cash" && downPct === undefined) missing.push("the down payment (percent)");
 
   if (missing.length > 0) return { missing, errors: null, inputs: null, display, defaulted };
 
@@ -226,6 +238,9 @@ export function resolveTerms(s: StatedTerms, ctx: ResolveContext): ResolvedTerms
     appraisal_days: days.appraisalDays ? String(days.appraisalDays) : undefined,
     loan_days: days.loanDays ? String(days.loanDays) : undefined,
     seller_credit: s.sellerCredit !== undefined ? String(s.sellerCredit) : undefined,
+    down_payment_percent: downPct !== undefined ? String(downPct) : undefined,
+    home_warranty: s.homeWarranty,
+    inclusions: s.inclusions,
     notes: s.notes,
     mls_number: lk?.mlsNumber,
   };
@@ -297,6 +312,14 @@ export function sanitizeExtraction(raw: unknown): Extraction {
   if (loan) terms.loanDays = loan;
   const credit = money(r.sellerCredit);
   if (credit !== undefined) terms.sellerCredit = credit;
+  if (typeof r.downPaymentPercent === "number" && Number.isFinite(r.downPaymentPercent) && r.downPaymentPercent >= 0 && r.downPaymentPercent <= 100) {
+    terms.downPaymentPercent = Math.round(r.downPaymentPercent * 100) / 100;
+  }
+  if (r.homeWarranty === "seller" || r.homeWarranty === "buyer") terms.homeWarranty = r.homeWarranty;
+  if (Array.isArray(r.inclusions)) {
+    const items = [...new Set(r.inclusions.map((i) => clip(i, 60)).filter((i): i is string => Boolean(i)))].slice(0, 20);
+    if (items.length) terms.inclusions = items;
+  }
   const notes = clip(r.notes, 1000);
   if (notes) terms.notes = notes;
 
@@ -324,10 +347,13 @@ export function sheetText(i: BuyerOfferInputs, defaulted: string[]): string {
     ...(i.agentName ? [`${pad("Agent")}${i.agentName}`] : []),
     `${pad("Purchase price")}${formatMoney(i.offerPrice)}  (list ${formatMoney(i.listPrice)}, ${pct}%)`,
     `${pad("Financing")}${FINANCING_LABEL[i.financing]}`,
+    ...(i.downPaymentPercent !== undefined ? [`${pad("Down payment")}${downPaymentText(i.downPaymentPercent, i.offerPrice)}`] : []),
     `${pad("Earnest money")}${formatMoney(i.earnestMoney)}`,
     `${pad("Close of escrow")}${longDate(i.closeDate)}`,
     `${pad("Contingencies")}${contingencyText(i.contingencies, i)}`,
     ...(i.sellerCredit !== undefined ? [`${pad("Seller credit")}${formatMoney(i.sellerCredit)}`] : []),
+    ...(i.homeWarranty ? [`${pad("Home warranty")}${warrantyText(i.homeWarranty)}`] : []),
+    ...(i.inclusions?.length ? [`${pad("Included")}${i.inclusions.map(capFirst).join(", ")}`] : []),
     ...(i.notes ? [`${pad("Notes")}${i.notes}`] : []),
   ];
   if (defaulted.length) {
@@ -343,11 +369,13 @@ export function sheetText(i: BuyerOfferInputs, defaulted: string[]): string {
 export function coverEmail(i: BuyerOfferInputs): { subject: string; body: string } {
   const bullets = [
     `Purchase price: ${formatMoney(i.offerPrice)}`,
-    `Financing: ${FINANCING_LABEL[i.financing]}`,
+    `Financing: ${FINANCING_LABEL[i.financing]}${i.downPaymentPercent !== undefined ? `, ${i.downPaymentPercent}% down` : ""}`,
     `Earnest money deposit: ${formatMoney(i.earnestMoney)}`,
     `Close of escrow: ${longDate(i.closeDate)}`,
     `Contingencies: ${contingencyText(i.contingencies, i)}`,
     ...(i.sellerCredit !== undefined ? [`Seller credit: ${formatMoney(i.sellerCredit)}`] : []),
+    ...(i.homeWarranty ? [`Home warranty: ${warrantyText(i.homeWarranty)}`] : []),
+    ...(i.inclusions?.length ? [`Included in the sale: ${i.inclusions.join(", ")}`] : []),
   ];
   const body = [
     "Hi [Listing agent name],",

@@ -71,7 +71,16 @@ export interface BuyerOfferInputs {
   /** Seller-paid closing costs / credit, in dollars. */
   sellerCredit?: number;
   mlsNumber?: string;
+  /** Percent of the purchase price paid down. Set for financed offers; absent for cash. */
+  downPaymentPercent?: number;
+  /** Who pays for a home warranty, when one is part of the offer. */
+  homeWarranty?: "seller" | "buyer";
+  /** Items that convey with the property (appliances, window coverings, ...). */
+  inclusions?: string[];
 }
+
+/** FHA's minimum down payment (credit score 580+), in percent. */
+export const FHA_MIN_DOWN_PERCENT = 3.5;
 
 /** What the worker reports back after drafting in TransactionDesk. */
 export interface JobResult {
@@ -104,6 +113,9 @@ export interface RawBuyerForm {
   loan_days?: string;
   seller_credit?: string;
   mls_number?: string;
+  down_payment_percent?: string;
+  home_warranty?: string;
+  inclusions?: string[];
 }
 
 export type ValidationResult =
@@ -210,6 +222,31 @@ export function validateBuyerForm(raw: RawBuyerForm, now: Date = new Date()): Va
     else sellerCredit = c;
   }
 
+  let downPaymentPercent: number | undefined;
+  const downRaw = (raw.down_payment_percent ?? "").trim();
+  if (downRaw) {
+    const dp = Number(downRaw);
+    if (!/^\d+(\.\d{1,2})?$/.test(downRaw) || dp > 100) {
+      errors.down_payment_percent = "Enter the down payment as a percent from 0 to 100.";
+    } else if (financing === "cash") {
+      errors.down_payment_percent = "A cash offer has no down payment.";
+    } else if (financing === "fha" && dp < FHA_MIN_DOWN_PERCENT) {
+      errors.down_payment_percent = `FHA requires at least ${FHA_MIN_DOWN_PERCENT}% down.`;
+    } else {
+      downPaymentPercent = dp;
+    }
+  }
+
+  let homeWarranty: "seller" | "buyer" | undefined;
+  const warrantyRaw = (raw.home_warranty ?? "").trim();
+  if (warrantyRaw === "seller" || warrantyRaw === "buyer") homeWarranty = warrantyRaw;
+  else if (warrantyRaw) errors.home_warranty = "A home warranty is paid by the seller or the buyer.";
+
+  const inclusions = (raw.inclusions ?? []).map((i) => i.trim()).filter(Boolean);
+  if (inclusions.length > 20 || inclusions.some((i) => i.length > 60)) {
+    errors.inclusions = "List up to 20 included items, each under 60 characters.";
+  }
+
   if (Object.keys(errors).length > 0) return { ok: false, errors };
 
   return {
@@ -229,6 +266,9 @@ export function validateBuyerForm(raw: RawBuyerForm, now: Date = new Date()): Va
       ...days,
       ...(sellerCredit !== undefined ? { sellerCredit } : {}),
       ...(mlsNumber ? { mlsNumber } : {}),
+      ...(downPaymentPercent !== undefined ? { downPaymentPercent } : {}),
+      ...(homeWarranty ? { homeWarranty } : {}),
+      ...(inclusions.length ? { inclusions } : {}),
     },
   };
 }

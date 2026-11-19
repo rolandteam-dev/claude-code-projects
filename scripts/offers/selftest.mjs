@@ -324,7 +324,7 @@ test("the agent is the speaker unless they named someone", () => {
 });
 
 test("with list price + financing, the rest comes from defaults and is labelled", () => {
-  const r = resolveTerms({ ...SAID, listPrice: 520000, financing: "conventional" }, CTX);
+  const r = resolveTerms({ ...SAID, listPrice: 520000, financing: "conventional", downPaymentPercent: 5 }, CTX);
   assert.deepEqual(r.missing, []);
   assert.equal(r.errors, null);
   assert.equal(r.inputs.earnestMoney, 5000); // 1% of 500k
@@ -345,7 +345,7 @@ test("a cash offer drops the loan contingency by default", () => {
 
 test("stated terms beat defaults and are not labelled as defaults", () => {
   const r = resolveTerms(
-    { ...SAID, listPrice: 520000, financing: "fha", earnestMoney: 10000, closeDate: "2026-12-30", contingencies: ["inspection"], inspectionDays: 7, sellerCredit: 5000 },
+    { ...SAID, listPrice: 520000, financing: "fha", downPaymentPercent: 3.5, earnestMoney: 10000, closeDate: "2026-12-30", contingencies: ["inspection"], inspectionDays: 7, sellerCredit: 5000 },
     CTX,
   );
   assert.equal(r.inputs.earnestMoney, 10000);
@@ -364,13 +364,13 @@ test('"no contingencies" is honoured, not overwritten by defaults', () => {
 });
 
 test("the list price from the MLS lookup fills in, and is labelled as a lookup", () => {
-  const r = resolveTerms({ ...SAID, financing: "va", lookup: { tried: true, listPrice: 520000, mlsNumber: "2512345" } }, CTX);
+  const r = resolveTerms({ ...SAID, financing: "va", downPaymentPercent: 0, lookup: { tried: true, listPrice: 520000, mlsNumber: "2512345" } }, CTX);
   assert.deepEqual(r.missing, []);
   assert.equal(r.inputs.listPrice, 520000);
   assert.equal(r.inputs.mlsNumber, "2512345");
   assert.equal(r.display.find((d) => d.label === "List price").source, "lookup");
   // an agent-stated list price beats the lookup
-  const stated = resolveTerms({ ...SAID, listPrice: 530000, financing: "va", lookup: { tried: true, listPrice: 520000 } }, CTX);
+  const stated = resolveTerms({ ...SAID, listPrice: 530000, financing: "va", downPaymentPercent: 0, lookup: { tried: true, listPrice: 520000 } }, CTX);
   assert.equal(stated.inputs.listPrice, 530000);
 });
 
@@ -438,11 +438,12 @@ test("sanitizeExtraction never trusts the model", () => {
 });
 
 test("the terms sheet states the typed numbers and warns about placeholder defaults", () => {
-  const r = resolveTerms({ ...SAID, listPrice: 520000, financing: "conventional", sellerCredit: 5000 }, CTX);
+  const r = resolveTerms({ ...SAID, listPrice: 520000, financing: "conventional", downPaymentPercent: 5, sellerCredit: 5000 }, CTX);
   const sheet = sheetText(r.inputs, r.defaulted);
   assert.match(sheet, /Purchase price:\s+\$500,000\s+\(list \$520,000, 96\.2%\)/);
   assert.match(sheet, /Earnest money:\s+\$5,000/);
   assert.match(sheet, /Seller credit:\s+\$5,000/);
+  assert.match(sheet, /Down payment:\s+5% \(\$25,000\)/);
   assert.match(sheet, /Inspection \(10 days\), Appraisal \(17 days\), Loan \(21 days\)/);
   assert.match(sheet, /Filled from defaults, not stated: Earnest money, Close of escrow, Contingencies/);
   assert.match(sheet, /PLACEHOLDERS/);
@@ -486,6 +487,89 @@ test("validator: new optional fields are range-checked", () => {
   assert.equal(ok.inputs.inspectionDays, 10);
   assert.equal(ok.inputs.sellerCredit, 5000);
   assert.equal(joinNames(["A", "B", "C"]), "A, B, and C");
+});
+
+
+// --- your real sentence: 123 Main, FHA 3.5% down, credit, warranty, inclusions ---
+const MEGAN = {
+  buyerNames: ["Megan Smith"],
+  address: "123 main st, henderson, nv 89014",
+  offerPrice: 450000,
+  listPrice: 425000, // supplied by the agent
+  financing: "fha",
+  downPaymentPercent: 3.5,
+  sellerCredit: 10000,
+  homeWarranty: "seller",
+  inclusions: ["refrigerator", "washer", "dryer", "window coverings"],
+  closeDate: "2026-12-15",
+};
+
+test("the 123 Main sentence resolves with every term as a real field", () => {
+  const r = resolveTerms(MEGAN, { speakerName: "Mike Roland", today: "2026-11-19" });
+  assert.deepEqual(r.missing, []);
+  assert.equal(r.errors, null);
+  const i = r.inputs;
+  assert.equal(i.downPaymentPercent, 3.5);
+  assert.equal(i.homeWarranty, "seller");
+  assert.deepEqual(i.inclusions, ["refrigerator", "washer", "dryer", "window coverings"]);
+  assert.equal(i.sellerCredit, 10000);
+  assert.equal(i.closeDate, "2026-12-15");
+  assert.equal(i.earnestMoney, 4500); // default 1%
+  assert.deepEqual(r.defaulted, ["Earnest money", "Contingencies"]);
+  assert.equal("notes" in i, false); // nothing is left stuck in free text
+  const sheet = sheetText(i, r.defaulted);
+  assert.match(sheet, /Purchase price:\s+\$450,000\s+\(list \$425,000, 105\.9%\)/);
+  assert.match(sheet, /Financing:\s+FHA/);
+  assert.match(sheet, /Down payment:\s+3\.5% \(\$15,750\)/);
+  assert.match(sheet, /Seller credit:\s+\$10,000/);
+  assert.match(sheet, /Home warranty:\s+Seller-paid/);
+  assert.match(sheet, /Included:\s+Refrigerator, Washer, Dryer, Window coverings/);
+  const mail = coverEmail(i).body;
+  assert.match(mail, /Financing: FHA, 3\.5% down/);
+  assert.match(mail, /Home warranty: Seller-paid/);
+  assert.match(mail, /Included in the sale: refrigerator, washer, dryer, window coverings/);
+});
+
+test("FHA below 3.5% down is refused: 3% was the typo that started this", () => {
+  const r = resolveTerms({ ...MEGAN, downPaymentPercent: 3 }, { speakerName: "Mike Roland", today: "2026-11-19" });
+  assert.equal(r.inputs, null);
+  assert.match(r.errors.down_payment_percent, /FHA requires at least 3\.5% down/);
+});
+
+test("down payment rules: never defaulted, asked for when financed, rejected for cash, zero-down VA allowed", () => {
+  const c = { speakerName: "Mike Roland", today: "2026-11-19" };
+  const noDown = { ...MEGAN };
+  delete noDown.downPaymentPercent;
+  assert.deepEqual(resolveTerms(noDown, c).missing, ["the down payment (percent)"]);
+  assert.deepEqual(resolveTerms({ ...noDown, financing: "cash" }, c).missing, []); // cash: nothing to ask
+  assert.ok(resolveTerms({ ...MEGAN, financing: "cash" }, c).errors.down_payment_percent); // cash + 3.5% down: contradiction
+  assert.equal(resolveTerms({ ...MEGAN, financing: "va", downPaymentPercent: 0 }, c).inputs.downPaymentPercent, 0);
+  assert.ok(validateBuyerForm({ ...good, down_payment_percent: "101" }, NOW).errors.down_payment_percent);
+  assert.ok(validateBuyerForm({ ...good, down_payment_percent: "ten" }, NOW).errors.down_payment_percent);
+});
+
+test("warranty and inclusions are validated", () => {
+  assert.ok(validateBuyerForm({ ...good, home_warranty: "title company" }, NOW).errors.home_warranty);
+  assert.ok(validateBuyerForm({ ...good, inclusions: Array(21).fill("x") }, NOW).errors.inclusions);
+  assert.ok(validateBuyerForm({ ...good, inclusions: ["y".repeat(61)] }, NOW).errors.inclusions);
+  const ok = validateBuyerForm({ ...good, home_warranty: "buyer", inclusions: [" pool equipment ", ""] }, NOW);
+  assert.equal(ok.inputs.homeWarranty, "buyer");
+  assert.deepEqual(ok.inputs.inclusions, ["pool equipment"]);
+});
+
+test("sanitizeExtraction handles the new fields without trusting them", () => {
+  const e = sanitizeExtraction({
+    downPaymentPercent: 3.5,
+    homeWarranty: "seller",
+    inclusions: [" Refrigerator ", "refrigerator ", "", 7, "washer"],
+  }).terms;
+  assert.equal(e.downPaymentPercent, 3.5);
+  assert.equal(e.homeWarranty, "seller");
+  assert.deepEqual(e.inclusions, ["Refrigerator", "refrigerator", "washer"]); // exact duplicates only collapse
+  assert.deepEqual(sanitizeExtraction({ downPaymentPercent: 150, homeWarranty: "title", inclusions: [] }).terms, {});
+  assert.deepEqual(sanitizeExtraction({ downPaymentPercent: -1 }).terms, {});
+  assert.equal(sanitizeExtraction({ downPaymentPercent: 0 }).terms.downPaymentPercent, 0);
+  assert.equal(sanitizeExtraction({ inclusions: Array.from({ length: 30 }, (_, k) => `item ${k}`) }).terms.inclusions.length, 20);
 });
 
 console.log(`offers selftest: ${passed} passed${process.exitCode ? " (with failures)" : ""}`);

@@ -32,7 +32,8 @@ decides what the offer says is plain code (`src/lib/offers/terms.ts`):
 - what's missing, and the single question that asks for it
 - defaults, and the "(default)" label on every term the agent didn't state
 - validation: offer far from list, cash + loan contingency, past close date,
-  earnest money above the offer, seller credit over 10%, days out of range
+  earnest money above the offer, seller credit over 10%, days out of range,
+  **FHA below 3.5% down**, a down payment on a cash offer
 - the sheet and the cover email, which state only what was confirmed
 
 A model mistake can therefore only show up on the card the agent reads, never
@@ -121,9 +122,15 @@ she most often has to chase agents for. That decides what the bot should treat a
 ## What it doesn't do (yet)
 
 - **No buyer lookup in Follow Up Boss.** Buyer names are taken as typed.
-- **Free-text terms are not applied.** Anything that isn't a field (rent-back,
-  possession, etc.) is kept as a note on the sheet. Add a real field when a term
-  recurs. Seller credit and the contingency day counts already are fields.
+- **Free-text terms are not applied.** Down payment, seller credit, home warranty,
+  included items and the contingency day counts are real fields. Anything else
+  (rent-back, possession, etc.) is kept as a note on the sheet and checked by
+  nobody. Add a real field when a term recurs.
+- **The down payment is never defaulted.** For a financed offer the bot always asks
+  if it wasn't stated. The only down-payment rules built in are FHA's 3.5% floor
+  and "no down payment on cash"; other loan programs' minimums are not checked.
+- **The `/offer` form lacks the newer fields** (down payment, warranty, included
+  items). Use the chat flow for those.
 - **Buyer offers only.** Counters and seller-side review are not built.
 - **Names and prices go to the Claude API.** Messages (client names, addresses,
   prices) are sent to Anthropic to be read. Confirm that's acceptable with the
