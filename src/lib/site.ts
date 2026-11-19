@@ -49,6 +49,10 @@ export const site = {
     { value: "5.0★", label: "rating on Zillow" },
   ],
   foundedYear: 2015,
+  // Month/year the credibility stats above were last verified against the team's
+  // published Zillow + Google profiles. Keep current so seller-page proof stays
+  // dated and defensible (Fair-Housing / advertising rules).
+  statsAsOf: "November 2026",
   teamSize: "22",
   // Real, verified rating — a combined tally of the team's Zillow + Google
   // reviews. Keep reviewCount at or below the true published total so the

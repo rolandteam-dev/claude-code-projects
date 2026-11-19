@@ -26,6 +26,56 @@ export const rules = {
    */
   mode: "lists",
 
+  // ------------------------------------------------- safeguards (19 Nov 2026)
+  /**
+   * THE KILL SWITCH, IN CODE. While true the audit is a DRY RUN no matter what
+   * BATTR_LIVE says or which "mode" a manual run is started in: nothing is written
+   * to Follow Up Boss and no agent is emailed, and each night Mike is emailed what
+   * the run WOULD have done. Why it exists: the first live night read 1,063 leads at
+   * risk against Battr's 14 (Battr's last recorded night, 7 Oct), because texts and
+   * emails could not be read in bulk. Only `undo` still writes. Mike turns it live by
+   * having this set to false (a one-line change) — not by a repository variable.
+   */
+  forceDryRun: true,
+
+  /**
+   * Which rule set the nightly audit judges by.
+   *   "battr"    — Battr's six lists and thresholds exactly as they were (see
+   *                docs/battr-rules.md). THIS is the default until Mike says otherwise.
+   *   "extended" — Battr's plus the lists Mike asked for on 17 Nov 2026 (Met with
+   *                Customer 5/8, Appointment Set 5/8, Showing Homes 3/6, Submitting
+   *                Offers 2/never, Spoke with Customer without a timeframe 7/10,
+   *                Nurture without a timeframe 30/33, Lead/Attempted over 10 days
+   *                5/8, NOCONTACT to Missed Opportunities). Defined in lists.mjs
+   *                and kept; switched back on by setting this to "extended".
+   */
+  profile: "battr",
+
+  /**
+   * Pass 2 of the contact check. Every lead pass 1 (the bulk data) calls at risk or
+   * neglected is looked up PERSON BY PERSON — texts and emails — before anything is
+   * done with it. A lead whose history cannot be read is HELD and listed as
+   * unverified; "no data" is never read as "no contact".
+   */
+  maxVerifyLeads: 5000, // a ceiling on one night's lookups; leads past it are held as unverified
+  verifyPaceMs: 120, // pause between leads, on top of the client's 429 backoff
+  /** If more than this share of lookups fail the evidence source is down: hold everything. */
+  maxUnverifiedShare: 0.25,
+
+  /**
+   * Hard caps, nudges and sweeps alike. Over the TOTAL (counted before the per-agent
+   * limit) the run does nothing and emails Mike the list instead — 1,063 nudges is a
+   * fault, not a night's work. At or under it, no agent gets more than the per-agent
+   * limit in one night; the rest wait and are listed.
+   */
+  maxNudgesPerAgentPerNight: 10,
+  maxNudgesPerNight: 50,
+  maxSweepsPerAgentPerNight: 10,
+  maxSweepsPerNight: 50,
+
+  /** Where the over-the-cap list and the nightly would-be email go. */
+  alertEmail: "mike@therolandteam.com",
+
   /** Team timezone — all "days since" math and day filters run in it. */
   timezone: "America/Los_Angeles",
 
@@ -98,20 +148,20 @@ export const rules = {
   maxTextBackfill: 1000,
 
   /**
-   * MIKE'S CALL, DELIBERATELY LEFT OFF.
+   * MIKE'S CALL — ON as of 17 Nov 2026.
    *
    * With the backfill above, last-touch is complete for every lead the run
-   * would act on, so the reason sweeps are disabled no longer applies. But
-   * turning that into "sweeps may now proceed" takes the number of leads that
-   * can be swept from zero to non-zero, and that is not a change to make on
-   * anyone's behalf.
+   * would act on, so the reason sweeps were disabled no longer applies. Turning
+   * that into "sweeps may now proceed" takes the number of leads that can be
+   * swept from zero to non-zero, so it was held for Mike. Battr was cancelled
+   * (last run 9 Oct) and nothing has warned or swept since, so Mike turned it on.
    *
-   * Set this to true to let a run sweep on a backfilled touch index. Until
-   * then the report carries the correct at-risk and neglected counts — which
-   * is what makes it comparable to Battr's nightly emails — and still moves
-   * nothing.
+   * It is still safe by construction: a run writes only when BATTR_LIVE is true
+   * (or a run is started with mode "live"), sweeps are capped per run and per
+   * pond, and `undo <run id>` reverses a whole night — notes, stamps and sweeps.
+   * Set this back to false to hold sweeps and nudges again.
    */
-  sweepOnBackfilledTexts: false,
+  sweepOnBackfilledTexts: true,
 
   // ------------------------------------------------------------- sweep targets
   /**
@@ -254,6 +304,15 @@ export const rules = {
    * the weekend's backlog gets one working day of attention before anything is
    * taken away from an agent.
    */
+  /**
+   * No sweeping before this Pacific date (YYYY-MM-DD). Mike, 17 Nov 2026: "Today is
+   * day 1. Let's warn with nudges first." Nothing has warned agents since 9 Oct, so
+   * the first nights only nudge; a lead stamped on the 17th is sweepable on the 20th
+   * (the normal 3-day clock) and this date is that day. Leads that still carry an
+   * old Battr stamp are held back the same three days. Set to null to remove the gate.
+   * PAUSED 19 Nov 2026: pushed out of this year until the audit matches Battr.
+   */
+  sweepsStartOn: "2027-01-01", // PAUSED 19 Nov 2026 (was 20 Nov) until the parity work is signed off; move it to restart sweeping
   nudgeDayFilter: "Every Day",
   sweepDayFilter: "Weekdays Excluding Monday",
 
@@ -430,6 +489,34 @@ export const rules = {
   nudgeNote: (lead) =>
     `This lead is at risk - reach out and keep them going! 🙌\n\n` +
     `${lead.daysSinceTouch ?? "Several"} days with no outreach. Source: ${lead.source || "unknown"}.`,
+
+  // ------------------------------------------------ do-not-contact leads (Mike, 17 Nov 2026)
+  /**
+   * A lead tagged NOCONTACT is not nudged ("reach out!" would be wrong) and is moved
+   * to the Missed Opportunities pond instead. Limited to the early stages — a lead
+   * with an appointment, a showing or a deal is never moved on a tag. The usual
+   * exclusions all apply (never-swept sources, paused team, exempt agents, leads
+   * already in a pond), the move waits for `sweepsStartOn`, runs Tue–Fri, and is
+   * undoable like any sweep. Set `noContactPond` to null to switch it off.
+   */
+  noContactTags: ["NOCONTACT"],
+  noContactStages: ["Lead", "Attempted Contact", "Spoke with Customer", "Nurture"],
+  noContactPond: "Missed Opportunities",
+  maxNoContactMovesPerRun: 25,
+
+  /**
+   * The no-timeframe Nurture list (1163) holds ~4,100 leads that have never been
+   * warned. Nudging them all at once would write thousands of notes and put a
+   * thousand-line list in each agent's email, so only this many are nudged per
+   * night; the rest follow, oldest listing order first, and the agent digest shows
+   * only the ones that have been nudged.
+   */
+  maxNoTimeframeNudgesPerRun: 150,
+
+  /** Text of the note left when a do-not-contact lead is moved. */
+  noContactNote: (lead) =>
+    `Battr: moved to the ${lead.pondName} pond — this lead is tagged NOCONTACT (do not contact). ` +
+    `Previously assigned to ${lead.previousOwner || "unassigned"}.`,
 
   /** Text of the note recorded on the lead when it is swept. */
   sweepNote: (lead) =>

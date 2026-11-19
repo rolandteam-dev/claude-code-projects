@@ -89,7 +89,7 @@ export default function SellHub() {
         <Container size="wide" className="relative z-10 py-16 md:py-24">
           <div className="max-w-[680px]">
             <div className="font-sans text-[0.76rem] uppercase tracking-[0.24em] text-[var(--color-gold-2)]">
-              Sell with The Roland Team
+              Sell with The Roland Team · {site.brokerage}
             </div>
             <h1 className="mt-3 font-serif text-[2.8rem] font-semibold leading-[1.04] text-white md:text-[3.7rem]">
               Sell your Las Vegas home for more
@@ -113,6 +113,10 @@ export default function SellHub() {
                 </div>
               ))}
             </div>
+            <p className="mt-3 max-w-[560px] font-sans text-[0.64rem] leading-relaxed text-[#aab0b8]">
+              Earned by The Roland Team and verified on the team&apos;s published Zillow &amp; Google profiles · as of{" "}
+              {site.statsAsOf}. Individual results vary.
+            </p>
           </div>
         </Container>
       </section>

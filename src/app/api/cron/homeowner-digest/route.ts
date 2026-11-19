@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { homeownerStore } from "@/lib/homeowners/store";
+import { homeownerStore, hasEngaged } from "@/lib/homeowners/store";
 import { valueHome } from "@/lib/homeowners/nvValue";
 import { sendValueEmail } from "@/lib/homeowners/email";
 import { isEligible } from "@/lib/homeowners/eligibility";
@@ -47,7 +47,9 @@ async function run(req: Request) {
   if (via === "cron" && process.env.HOMEOWNER_DIGEST_ENABLED !== "true") {
     return NextResponse.json({ ok: true, skipped: "digest off (set HOMEOWNER_DIGEST_ENABLED=true to run)" });
   }
-  const days = Number(url.searchParams.get("days") ?? 14);
+  // Per-homeowner cadence: re-mail once their last send is older than this many
+  // days. 7 = weekly. The cron runs daily; each person is mailed at most once a week.
+  const days = Number(url.searchParams.get("days") ?? 7);
   const dryRun =
     url.searchParams.get("dryRun") === "1" || (via === "admin" && url.searchParams.get("send") !== "1");
 
@@ -89,14 +91,14 @@ async function run(req: Request) {
   let eligibleList = due.filter((h) => isEligible({ email: h.email, state: h.state, zip: h.zip }));
   const skippedIneligible = due.length - eligibleList.length;
   if (sources) eligibleList = eligibleList.filter((h) => sources.has(h.source));
-  if (engagedOnly) eligibleList = eligibleList.filter((h) => (h.views?.length ?? 0) > 0);
+  if (engagedOnly) eligibleList = eligibleList.filter((h) => hasEngaged(h));
 
   // Hold back the chronically-unengaged (engaged OR still within the first
   // coldCap touches survive).
   let skippedCold = 0;
   if (warmFirst) {
     const before = eligibleList.length;
-    eligibleList = eligibleList.filter((h) => (h.views?.length ?? 0) > 0 || (h.emailCount ?? 0) < coldCap);
+    eligibleList = eligibleList.filter((h) => hasEngaged(h) || (h.emailCount ?? 0) < coldCap);
     skippedCold = before - eligibleList.length;
   }
 

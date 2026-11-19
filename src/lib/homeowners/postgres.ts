@@ -48,6 +48,9 @@ function ensureSchema(): Promise<void> {
         last_emailed_at timestamptz,
         first_emailed_at timestamptz,
         email_count int NOT NULL DEFAULT 0,
+        email_consent boolean,
+        call_text_consent boolean,
+        dnc boolean,
         estimates jsonb NOT NULL DEFAULT '[]'::jsonb,
         views jsonb NOT NULL DEFAULT '[]'::jsonb
       )
@@ -55,6 +58,21 @@ function ensureSchema(): Promise<void> {
       // Migrate tables created before send-count tracking was added.
       .then(() => s`ALTER TABLE homeowners ADD COLUMN IF NOT EXISTS first_emailed_at timestamptz`)
       .then(() => s`ALTER TABLE homeowners ADD COLUMN IF NOT EXISTS email_count int NOT NULL DEFAULT 0`)
+      // Consent / DNC (nullable: NULL = unknown, honored as an existing relationship).
+      .then(() => s`ALTER TABLE homeowners ADD COLUMN IF NOT EXISTS email_consent boolean`)
+      .then(() => s`ALTER TABLE homeowners ADD COLUMN IF NOT EXISTS call_text_consent boolean`)
+      .then(() => s`ALTER TABLE homeowners ADD COLUMN IF NOT EXISTS dnc boolean`)
+      // Permanently-deleted contacts: the FUB import skips any token listed here,
+      // so a hard delete is not undone by the next sync.
+      .then(
+        () => s`CREATE TABLE IF NOT EXISTS homeowner_blocklist (
+          token text PRIMARY KEY,
+          email text,
+          fub_person_id text,
+          reason text,
+          created_at timestamptz NOT NULL DEFAULT now()
+        )`,
+      )
       .then(() => undefined);
   }
   return ready;
@@ -84,6 +102,9 @@ function rowToHomeowner(r: any): Homeowner {
     lastEmailedAt: r.last_emailed_at ? new Date(r.last_emailed_at).toISOString() : undefined,
     firstEmailedAt: r.first_emailed_at ? new Date(r.first_emailed_at).toISOString() : undefined,
     emailCount: r.email_count != null ? Number(r.email_count) : 0,
+    emailConsent: r.email_consent ?? undefined,
+    callTextConsent: r.call_text_consent ?? undefined,
+    dnc: r.dnc ?? undefined,
     estimates: (r.estimates ?? []) as EstimatePoint[],
     views: (r.views ?? []) as string[],
   };
@@ -143,6 +164,7 @@ export const postgresStore: HomeownerStore = {
               AND email LIKE '%@%.%'
               AND email NOT LIKE 'noemail-%'
               AND email NOT LIKE '%@notvalidemail.com'
+              AND (email_consent IS DISTINCT FROM false)
             ORDER BY (jsonb_array_length(COALESCE(views, '[]'::jsonb)) > 0) DESC, updated_at DESC
             LIMIT ${limit}
           `
@@ -154,6 +176,7 @@ export const postgresStore: HomeownerStore = {
               AND email LIKE '%@%.%'
               AND email NOT LIKE 'noemail-%'
               AND email NOT LIKE '%@notvalidemail.com'
+              AND (email_consent IS DISTINCT FROM false)
             ORDER BY (jsonb_array_length(COALESCE(views, '[]'::jsonb)) > 0) DESC, updated_at DESC
           `;
     return rows.map(rowToHomeowner);
@@ -165,12 +188,13 @@ export const postgresStore: HomeownerStore = {
       INSERT INTO homeowners (
         id, token, first_name, last_name, email, phone, address, city, state, zip,
         beds, baths, sqft, subscribed, source, fub_person_id, created_at, updated_at,
-        last_emailed_at, estimates, views
+        last_emailed_at, email_consent, call_text_consent, dnc, estimates, views
       ) VALUES (
         ${h.id}, ${h.token}, ${h.firstName}, ${h.lastName}, ${h.email}, ${h.phone ?? null},
         ${h.address}, ${h.city}, ${h.state}, ${h.zip}, ${h.beds ?? null}, ${h.baths ?? null},
         ${h.sqft ?? null}, ${h.subscribed}, ${h.source}, ${h.fubPersonId ?? null},
         ${h.createdAt}, now(), ${h.lastEmailedAt ?? null},
+        ${h.emailConsent ?? null}, ${h.callTextConsent ?? null}, ${h.dnc ?? null},
         ${sql().json(h.estimates)}, ${sql().json(h.views)}
       )
       ON CONFLICT (token) DO UPDATE SET
@@ -178,7 +202,11 @@ export const postgresStore: HomeownerStore = {
         email = EXCLUDED.email, phone = EXCLUDED.phone, address = EXCLUDED.address,
         city = EXCLUDED.city, state = EXCLUDED.state, zip = EXCLUDED.zip,
         beds = EXCLUDED.beds, baths = EXCLUDED.baths, sqft = EXCLUDED.sqft,
-        source = EXCLUDED.source, fub_person_id = EXCLUDED.fub_person_id, updated_at = now()
+        source = EXCLUDED.source, fub_person_id = EXCLUDED.fub_person_id, updated_at = now(),
+        -- never let a blank form submission erase a consent we already captured
+        email_consent = COALESCE(EXCLUDED.email_consent, homeowners.email_consent),
+        call_text_consent = COALESCE(EXCLUDED.call_text_consent, homeowners.call_text_consent),
+        dnc = COALESCE(EXCLUDED.dnc, homeowners.dnc)
     `;
     const saved = await this.getByToken(h.token);
     return saved ?? h;
@@ -188,9 +216,13 @@ export const postgresStore: HomeownerStore = {
     if (records.length === 0) return;
     await ensureSchema();
     const s = sql();
+    // Skip permanently-deleted contacts so the FUB import never re-creates them.
+    const blockedRows = await s`SELECT token FROM homeowner_blocklist WHERE token = ANY(${records.map((r) => r.token)})`;
+    const blocked = new Set(blockedRows.map((r) => r.token as string));
     // Per-row insert (no read-back) preserving estimates/views/subscribed on
     // conflict — the bulk import path. New rows get empty history + subscribed.
     for (const h of records) {
+      if (blocked.has(h.token)) continue;
       await s`
         INSERT INTO homeowners (
           id, token, first_name, last_name, email, phone, address, city, state, zip,
@@ -260,6 +292,56 @@ export const postgresStore: HomeownerStore = {
   async unsubscribe(token) {
     await ensureSchema();
     await sql()`UPDATE homeowners SET subscribed = false WHERE token = ${token}`;
+  },
+
+  async suppressByEmail(email) {
+    await ensureSchema();
+    const want = email.trim().toLowerCase();
+    if (!want) return { matched: 0 };
+    // Only flip rows still subscribed, and RETURNING the changed rows gives an
+    // accurate "newly suppressed" count (idempotent across repeated webhooks).
+    const rows = await sql()`
+      UPDATE homeowners SET subscribed = false, updated_at = now()
+      WHERE lower(email) = ${want} AND subscribed = true
+      RETURNING token`;
+    return { matched: rows.length };
+  },
+
+  async resubscribe(token) {
+    await ensureSchema();
+    await sql()`UPDATE homeowners SET subscribed = true, updated_at = now() WHERE token = ${token}`;
+  },
+
+  async deleteAndBlock(token) {
+    await ensureSchema();
+    const s = sql();
+    // Record identity on the block-list (so the FUB import skips this token for
+    // good), then delete the row. Order matters: block first, then remove.
+    const rows = await s`SELECT email, fub_person_id FROM homeowners WHERE token = ${token} LIMIT 1`;
+    await s`
+      INSERT INTO homeowner_blocklist (token, email, fub_person_id, reason)
+      VALUES (${token}, ${(rows[0]?.email as string) ?? null}, ${(rows[0]?.fub_person_id as string) ?? null}, 'admin-delete')
+      ON CONFLICT (token) DO NOTHING`;
+    const del = await s`DELETE FROM homeowners WHERE token = ${token} RETURNING token`;
+    return { deleted: del.length > 0 };
+  },
+
+  async markDnc(phones, opts) {
+    await ensureSchema();
+    const list = phones.filter((p) => p && p.length === 10);
+    if (list.length === 0) return { matched: 0, applied: 0 };
+    // Match on the last 10 digits of the stored phone (strip formatting in SQL).
+    if (opts?.apply) {
+      const rows = await sql()`
+        UPDATE homeowners SET dnc = true, updated_at = now()
+        WHERE right(regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g'), 10) = ANY(${list})
+        RETURNING token`;
+      return { matched: rows.length, applied: rows.length };
+    }
+    const rows = await sql()`
+      SELECT count(*)::int AS n FROM homeowners
+      WHERE right(regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g'), 10) = ANY(${list})`;
+    return { matched: (rows[0]?.n as number) ?? 0, applied: 0 };
   },
 
   async claimSellerSend(limit) {

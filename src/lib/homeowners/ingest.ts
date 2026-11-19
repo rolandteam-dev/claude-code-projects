@@ -23,6 +23,11 @@ export type IngestInput = {
   baths?: number;
   sqft?: number;
   source?: string;
+  /** Explicit opt-in to ongoing value emails. The "track my home" step passes
+   * true because requesting value updates IS the opt-in to that email stream. */
+  emailConsent?: boolean;
+  /** Explicit permission to call or text, when the form collected it. */
+  callTextConsent?: boolean;
   /** An estimate already computed for this home (e.g. the instant comp range). */
   initialEstimate?: { value: number; low?: number; high?: number };
 };
@@ -50,6 +55,8 @@ export async function ingestHomeowner(
     sqft: input.sqft,
     subscribed: true,
     source: input.source ?? "home-value",
+    emailConsent: input.emailConsent,
+    callTextConsent: input.callTextConsent,
     createdAt: nowIso,
     updatedAt: nowIso,
     estimates: [],

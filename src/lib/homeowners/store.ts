@@ -58,6 +58,16 @@ export type Homeowner = {
   /** total automated emails sent to this homeowner (accurate from when this was
    * added; older records may show fewer than were actually sent) */
   emailCount?: number;
+  /** Explicit opt-in to ongoing marketing / value emails (captured on web forms).
+   * `undefined` = unknown (legacy/imported → treated as an existing relationship,
+   * still mailable); `false` = declined, and the value digest skips them. */
+  emailConsent?: boolean;
+  /** Explicit permission to call or text (captured on web forms). Informational
+   * for agents / FUB; the app itself sends no SMS. */
+  callTextConsent?: boolean;
+  /** On the Do Not Call registry, or flagged email-only. When true the contact is
+   * email-only — no calls or texts. Set by a DNC scrub, import, or admin. */
+  dnc?: boolean;
 };
 
 /** Exact pipeline counts across the WHOLE database (not a sample). */
@@ -89,6 +99,27 @@ export interface HomeownerStore {
   updateFacts(token: string, facts: { beds?: number; baths?: number; sqft?: number }): Promise<void>;
   markEmailed(token: string, at?: string): Promise<void>;
   unsubscribe(token: string): Promise<void>;
+  /**
+   * Mark every homeowner whose email matches (case-insensitively) as
+   * unsubscribed, so the value digest and seller path stop mailing them. Used by
+   * the Resend bounce/complaint webhook and the FUB suppression sync — neither
+   * has a dashboard token, only the address that bounced or complained. Returns
+   * how many rows were flipped (rows already unsubscribed are not counted).
+   */
+  suppressByEmail(email: string): Promise<{ matched: number }>;
+  /** Admin: re-subscribe a contact — undo an unsubscribe or a bounce/complaint suppression. */
+  resubscribe(token: string): Promise<void>;
+  /**
+   * Admin hard delete: remove the homeowner row AND remember the token on a
+   * block-list so the automated Follow Up Boss import (weekly sync, 30-min poll,
+   * real-time webhook — all via `upsertContacts`) never re-adds them. Deliberate
+   * single writes (a person self-submitting their address on the site) are not
+   * blocked, so a genuine fresh opt-in can still return.
+   */
+  deleteAndBlock(token: string): Promise<{ deleted: boolean }>;
+  /** Mark homeowners whose phone (normalized to its last 10 digits) is in
+   * `phones` as DNC. `apply:false` (default) counts matches without writing. */
+  markDnc(phones: string[], opts?: { apply?: boolean }): Promise<{ matched: number; applied: number }>;
   /**
    * Atomically take one slot from today's (Pacific) seller-report send budget.
    * Returns false once `limit` slots are taken — the caller must not send.
@@ -184,6 +215,9 @@ const mem: Map<string, Homeowner> = g.__homeownerStore ?? (g.__homeownerStore = 
 
 const sellerSends = new Map<string, number>();
 const sellerPeople = new Set<string>();
+// Tokens hard-deleted by an admin: the FUB import (upsertContacts) skips these so
+// a permanently-deleted contact is not re-created by the next sync.
+const blockedTokens = new Set<string>();
 
 const memoryStore: HomeownerStore = {
   async getByToken(token) {
@@ -202,13 +236,17 @@ const memoryStore: HomeownerStore = {
   async listDueForEmail(intervalDays, limit) {
     const cutoff = Date.now() - intervalDays * 86_400_000;
     const due = [...mem.values()].filter(
-      (h) => h.subscribed && (!h.lastEmailedAt || new Date(h.lastEmailedAt).getTime() < cutoff)
+      (h) =>
+        h.subscribed &&
+        h.emailConsent !== false && // honor an explicit email opt-out
+        (!h.lastEmailedAt || new Date(h.lastEmailedAt).getTime() < cutoff)
     );
-    // Engaged contacts (any dashboard view) first, then most-recently-updated —
-    // warm-up reputation is built by mailing openers/clickers first.
+    // Engaged contacts first (dashboard views / clicks, never opens), then
+    // most-recently-updated — warm-up reputation is built by mailing the
+    // engaged first.
     due.sort((a, b) => {
-      const ea = (a.views?.length ?? 0) > 0 ? 1 : 0;
-      const eb = (b.views?.length ?? 0) > 0 ? 1 : 0;
+      const ea = hasEngaged(a) ? 1 : 0;
+      const eb = hasEngaged(b) ? 1 : 0;
       if (ea !== eb) return eb - ea;
       return a.updatedAt < b.updatedAt ? 1 : -1;
     });
@@ -220,6 +258,7 @@ const memoryStore: HomeownerStore = {
   },
   async upsertContacts(records) {
     for (const h of records) {
+      if (blockedTokens.has(h.token)) continue; // permanently-deleted — never re-import
       const existing = mem.get(h.token);
       mem.set(h.token, {
         ...h,
@@ -267,6 +306,48 @@ const memoryStore: HomeownerStore = {
   async unsubscribe(token) {
     const h = mem.get(token);
     if (h) h.subscribed = false;
+  },
+  async suppressByEmail(email) {
+    const want = email.trim().toLowerCase();
+    if (!want) return { matched: 0 };
+    let matched = 0;
+    for (const h of mem.values()) {
+      if (h.subscribed && h.email.trim().toLowerCase() === want) {
+        h.subscribed = false;
+        h.updatedAt = now();
+        matched++;
+      }
+    }
+    return { matched };
+  },
+  async resubscribe(token) {
+    const h = mem.get(token);
+    if (h) {
+      h.subscribed = true;
+      h.updatedAt = now();
+    }
+  },
+  async deleteAndBlock(token) {
+    const existed = mem.delete(token);
+    blockedTokens.add(token); // block even if the row was already gone
+    return { deleted: existed };
+  },
+  async markDnc(phones, opts) {
+    const set = new Set(phones.filter(Boolean));
+    let matched = 0;
+    let applied = 0;
+    for (const h of mem.values()) {
+      const p = normPhone(h.phone);
+      if (p && set.has(p)) {
+        matched++;
+        if (opts?.apply) {
+          h.dnc = true;
+          h.updatedAt = now();
+          applied++;
+        }
+      }
+    }
+    return { matched, applied };
   },
   async claimSellerSend(limit) {
     const day = pacificDay();
@@ -317,6 +398,13 @@ export function storeDriver(): "postgres" | "memory" {
     : "memory";
 }
 
+/** Digits-only last-10 of a US phone, or "" when it doesn't hold 10 digits.
+ * The match key for DNC scrubs (formatting varies: "(702) 555-1234" vs "702...". */
+export function normPhone(s?: string | null): string {
+  const d = (s ?? "").replace(/\D/g, "");
+  return d.length >= 10 ? d.slice(-10) : "";
+}
+
 /** Unguessable token for dashboard URLs. */
 export function newToken(): string {
   return (
@@ -357,4 +445,16 @@ export function engagementScore(h: Homeowner): number {
     else score += 2;
   }
   return Math.min(100, Math.round(score));
+}
+
+/**
+ * The engagement signal behind the warm-up guardrail: has this contact shown
+ * real interest? True when they've opened their DASHBOARD (a recorded view),
+ * which also captures the email's CTA clicks — the value email's main link lands
+ * on the dashboard, so a click becomes a view. Deliberately NOT email opens:
+ * opens are unreliable (Apple Mail Privacy pre-fetches them) and are never
+ * recorded here. Clicks, replies-to-inbox, or dashboard views — never opens.
+ */
+export function hasEngaged(h: Homeowner): boolean {
+  return (h.views?.length ?? 0) > 0;
 }
