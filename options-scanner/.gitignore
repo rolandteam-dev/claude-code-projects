@@ -1,0 +1,10 @@
+.venv/
+.cache/
+*.egg-info/
+__pycache__/
+.pytest_cache/
+# Local data and personal state
+data/
+out/
+.env
+token.json

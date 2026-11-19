@@ -1,0 +1,6 @@
+# One ticker per line. Lines starting with # are ignored.
+# These are added to the S&P 500 universe (and kept even if filters later drop them).
+AAPL
+MSFT
+NVDA
+AMD

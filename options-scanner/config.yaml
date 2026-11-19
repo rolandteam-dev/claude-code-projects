@@ -1,0 +1,65 @@
+# Options scanner configuration. Every value below is the default; delete or edit freely.
+# Unknown keys are rejected so typos fail loudly instead of being silently ignored.
+
+mode: paper            # paper only for now. There is no order-placement code in this project.
+
+provider:
+  name: yfinance       # yfinance (prototyping only, unreliable options data) | schwab (Stage 6)
+  cache_dir: .cache    # relative to this file
+  quote_ttl_minutes: 15
+  chain_ttl_minutes: 60
+  history_ttl_minutes: 720
+
+universe:
+  include_sp500: true
+  watchlist_file: watchlist.txt
+  exclude: []          # tickers to always skip
+  max_tickers: null    # set a number to cap a scan while testing
+
+filters:
+  iv_measure: rank     # rank = IV Rank (52-week range). Falls back to labeled 'IVR(proxy)' until IV history is logged
+  min_iv_rank: 50
+  dte_min: 30
+  dte_max: 45
+  delta_min: 0.15      # absolute value of the short strike's delta
+  delta_max: 0.30
+  min_open_interest: 500
+  max_spread_pct: 10   # bid/ask spread as % of mid
+  min_avg_volume: 1000000
+  exclude_earnings: true        # no earnings inside the trade window
+  exclude_ex_dividend: true     # no ex-dividend date inside the trade window
+  trend_ma_days: 50             # puts: price must be above this moving average
+  covered_call_stretch_pct: 10  # covered calls: flag when price is this % above the MA
+  min_annualized_return_pct: 15
+  min_price: 20
+
+exits:
+  take_profit:
+    enabled: true
+    pct_of_max_credit: 50
+  dte_close:
+    enabled: true
+    dte: 21
+    action: close      # close | roll
+  stop_loss:
+    enabled: true
+    multiple_of_credit: 2.0
+  support_break:
+    enabled: true
+  earnings_added:
+    enabled: true
+  roll:
+    require_net_credit: true
+    flag_delaying_loss: true
+
+# Position-size caps are a percent of each account's size.
+# Placeholder: one entry at the combined total. Replace with your five accounts, e.g.
+#   - {name: schwab-individual, size: 120000}
+accounts:
+  - name: combined
+    size: 372000
+
+risk:
+  max_position_pct: 5     # max buying power for one position, % of an account
+  max_ticker_pct: 25      # max buying power on one ticker, % of total across all accounts
+  max_sector_pct: 30      # max buying power in one sector, % of total across all accounts
