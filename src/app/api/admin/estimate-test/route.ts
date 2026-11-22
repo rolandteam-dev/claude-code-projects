@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { homeownerStore } from "@/lib/homeowners/store";
 import { styleWantFor, styleTextOf, matchesStyle } from "@/lib/idx/estimate";
 import { resolveProperty } from "@/lib/homeowners/nvValue";
+import { resolvePropertyFromPublicRecords, publicRecordsProvider } from "@/lib/idx/publicRecords";
 
 export const runtime = "nodejs";
 
@@ -109,6 +110,9 @@ export async function GET(req: Request) {
 
   // What the real production lookup now returns for this address.
   const resolved = await resolveProperty({ address, zip });
+  // Public-records fallback probe — what we'd use when the MLS has no record.
+  // No-op (null) unless PROPERTY_DATA_PROVIDER + key are configured.
+  const publicRecords = await resolvePropertyFromPublicRecords({ address, city, state, zip });
 
   // Each value: MLS first, then user-supplied (?beds=/&baths=/&sqft=/&propertyType=/&style=),
   // else missing. NEVER a hardcoded default.
@@ -177,7 +181,9 @@ export async function GET(req: Request) {
   return NextResponse.json({
     ok: true,
     input: { address, city, state, zip, streetNumber, streetName, boardId },
-    resolved: resolved ?? null, // null = not found in MLS → UI asks the owner
+    resolved: resolved ?? null, // null = not found in MLS → public-records probe below
+    publicRecordsProvider: publicRecordsProvider() || "off",
+    publicRecords: publicRecords ?? null, // beds/baths/sqft from public records when the MLS misses
     inputs, // per-value { value, source: mls | user | missing }
     estimate, // AVM probe (not used in production; comp engine is)
     listings,
