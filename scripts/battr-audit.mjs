@@ -784,8 +784,9 @@ async function main() {
   // Writing requires an explicit opt-in. Everything else is a dry run.
   // rules.forceDryRun is the in-code kill switch: no repository variable and no "live"
   // mode argument can write while it is true (only `undo`, handled above this line, can).
-  const dry = args.dry === true || process.env.BATTR_LIVE !== "true" || rules.forceDryRun === true;
-  const forcedDry = rules.forceDryRun === true && args.dry !== true && process.env.BATTR_LIVE === "true";
+  const forceDry = rules.forceDryRun === true || process.env.BATTR_FORCE_DRY_RUN === "true";
+  const dry = args.dry === true || process.env.BATTR_LIVE !== "true" || forceDry;
+  const forcedDry = forceDry && args.dry !== true && process.env.BATTR_LIVE === "true";
   const runId = `${ptDate(AUDIT_DAY)}-${Date.now().toString(36).slice(-4)}`;
 
   const fub = new FubClient(process.env.FUB_API_KEY, { dry, log });
@@ -1664,7 +1665,13 @@ async function main() {
   // — on a night the engine swept nothing and had already said in its own report
   // that it could not trust the counts. Telling thirty agents their book is
   // being taken, wrongly, is not a smaller mistake than taking it.
-  const digestResults = results.filter((r) => !capHeldIds.has(r.id) && !(isNoContactLead(r) && !sweptIds.has(r.id)));
+  // The agent email lists what the agent has actually been WARNED about. A lead still
+  // waiting its turn in the backlog (nudgePlan.held) has had no note and no stamp yet,
+  // so it stays out of tonight's email — otherwise the first night would hand Patty a
+  // 46-lead list the 10-per-agent limit exists to prevent.
+  const digestResults = results.filter(
+    (r) => !capHeldIds.has(r.id) && !nudgePlan.heldIds.has(r.id) && !(isNoContactLead(r) && !sweptIds.has(r.id))
+  );
   const digests = touchUsable
     ? buildAgentDigests(digestResults, {
         excludeGroupIds: rules.excludeOwnerGroupIds,

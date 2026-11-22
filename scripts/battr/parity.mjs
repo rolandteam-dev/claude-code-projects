@@ -71,7 +71,7 @@ export function renderParitySections({
   lines.push(
     dry
       ? `- **DRY RUN** — nothing was written to Follow Up Boss and no agent was emailed.` +
-          (forcedDry ? ` It is forced (\`rules.forceDryRun\`): BATTR_LIVE cannot turn it live; Mike does, by changing that one line.` : "")
+          (forcedDry ? ` It is forced (\`rules.forceDryRun\` or BATTR_FORCE_DRY_RUN): BATTR_LIVE cannot turn it live.` : "")
       : `- **LIVE** — this run wrote to Follow Up Boss.`
   );
   lines.push(

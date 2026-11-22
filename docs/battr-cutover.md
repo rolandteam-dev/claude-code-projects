@@ -1,23 +1,25 @@
 # Battr cutover — Battr is cancelled; this engine is the only audit
 
 Battr's last run was 9 Oct 2026 and the subscription is cancelled (Mike, 17 Nov).
-Since then every nightly run has been a **dry run**: nothing has been nudged,
-swept or emailed. Going live is no longer a handover — it restores the warnings
-agents have not had for five weeks.
+**LIVE as of 22 Nov 2026 (Mike: "Yes, go live tonight").** Nudges write; sweeping is
+paused. Until then every nightly run was a dry run, so agents had not been warned for
+six weeks.
 
 ## Why existing Battr stamps are still honoured
 - This engine reads and writes the same stamp, `Battr At Risk Since`. A lead
   Battr warned before it ended is already on the clock and is swept on the same
   schedule (3 days after the stamp, 2 for Hot Leads, Tue–Fri, never Monday).
 
-## 1. Where things stand (19 Nov 2026)
+## 1. Where things stand (22 Nov 2026)
 
 The first live night (18 Nov) flagged **1,063** leads against Battr's last recorded **14**, because
 Follow Up Boss will not serve texts or emails in bulk and the audit read a lead an agent had only
-texted as never contacted. It held every nudge and sent nothing. So the audit is **back in dry run**:
+texted as never contacted. It was fixed (per-person check) and held in dry run until 22 Nov, when
+Mike turned nudging live:
 
-- `rules.forceDryRun: true` — in code; `BATTR_LIVE=true` and a manual "live" run both still produce a
-  dry run. Only `undo` can write. Turning it live means editing that one line, deliberately.
+- `rules.forceDryRun: false` — nudges write when the `BATTR_LIVE` repo variable is `true`.
+  The kill switch is still in the code: set `forceDryRun: true` (PR) or the `BATTR_FORCE_DRY_RUN=true`
+  env hook, and `BATTR_LIVE=true` still produces a dry run. Only `undo` can write.
 - `rules.profile: "battr"` — Battr's six lists and thresholds exactly (see `docs/battr-rules.md`).
   The 17 Nov stage rules are kept behind `"extended"`.
 - `rules.sweepsStartOn: "2027-01-01"` — the 20 Nov sweep start is paused.
@@ -35,28 +37,22 @@ texted as never contacted. It held every nudge and sent nothing. So the audit is
   Battr's last recorded one (with its age), the would-be nudges and sweeps, the unverified leads, and
   every flagged lead with the rule that fired.
 
-## 2. What has to be true before it goes live
+## 2. Go-live criteria (the original bar, for the record)
 
-Three nights **in a row** where all of these hold:
-- [ ] Our verified at-risk count is close to Battr's rate. Battr's last recorded night was 14 of 805
-      audited (about 1.7%); there is no newer Battr number, because Battr was cancelled.
-- [ ] Every lead we flag has a real reason: the rule that fired is in the report, and it holds up
-      against `docs/battr-rules.md`.
-- [ ] Unverified leads are few and each has a stated reason (a failed lookup, not a pattern).
-- [ ] No cap tripped. (A tripped cap is the audit telling us the evidence is wrong.)
+Three nights in a row of: our verified at-risk count near Battr's rate (14 of 805, about 1.7%, last
+recorded 7 Oct — there is no newer number); every flagged lead with a rule that holds up against
+`docs/battr-rules.md`; few unverified leads, each with a stated reason; no cap tripped.
+Mike chose to go live on 22 Nov with the 50-a-night batch cap as the safeguard instead.
 
-Then, and only then, Mike says go, and:
-1. `rules.forceDryRun` → `false` (a PR Claude opens on his word).
-2. `rules.sweepsStartOn` → the date sweeping should begin.
-3. `BATTR_LIVE` → `true` (already set) — the nightly job writes.
-4. Decide whether to switch `rules.profile` to `"extended"` (the 17 Nov stage rules).
+Still open: `rules.sweepsStartOn` (paused, 2027-01-01 — un-pause once the backlog is warned),
+the stage-move rule (any stage change counts as work for now), and whether to switch
+`rules.profile` to `"extended"`.
 
 ## 3. First live night — what to expect
-- Nudges (note + stamp) on every at-risk lead not already stamped, including the two
-  sources swept by choice (`my +plus leads`, `Steve Hawks`) — about 166 on the 16 Nov
-  dry run, because nothing has been warned since 9 Oct. Expect a big first night:
-  one email per agent (not one per lead), and the agents' lists will be long.
-- Sweeps are capped at 30 per run and 25 per pond; extra leads wait for the next night.
+- Nudges (note + stamp) on the **50 most overdue** at-risk leads, at most 10 per agent; the rest
+  wait and are not listed in tonight's agent emails. About 4-5 nights to clear the backlog.
+- **Nothing is swept** (paused). Agent emails say sweeping starts "on a date to be announced".
+- Sweeps, once on, are capped at 30 per run and 25 per pond.
 - Agents get their per-agent emails (`BATTR_ALERT_CHANNEL`, default email).
 
 ## 4. Brake
