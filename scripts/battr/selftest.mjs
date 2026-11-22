@@ -23,6 +23,7 @@ import { evaluateCondition, evaluateSet } from "./filters.mjs";
 import { normalizeContact } from "./contact.mjs";
 import { isDayAllowed } from "./schedule.mjs";
 import { planCaps, renderCapList } from "./caps.mjs";
+import { overdueDays } from "./parity.mjs";
 import { lists, listById, memberListsOf, reportOnlyLists, TIMEFRAMES, TIMEFRAME_IDS, PROFILE_MEMBER_IDS } from "./lists.mjs";
 import { detectAtBats, summarizeAgents, formatRate } from "./atbats.mjs";
 import { buildAgentDigests, deliverDigests, renderDigestText, renderDigestHtml, digestSubject } from "./alerts.mjs";
@@ -2703,6 +2704,49 @@ check("hard caps: over the nightly total NOTHING is done; otherwise the per-agen
   assert.match(src, /if \(sweepPlan\.tripped\) break;/, "sweeps stop when the total is exceeded");
   assert.match(src, /sendMail\(\{ to: rules\.alertEmail, subject, text \}\)/, "over the total, Mike is emailed the list");
   assert.equal(rules.alertEmail, "mike@therolandteam.com");
+});
+
+check("a backlog is warned 50 a night, most overdue first, 10 per agent — and only a fault night trips", () => {
+  // 22 Nov 2026 (Mike, option 1). 171 leads were past their line the night this was decided.
+  const agents = ["Patty", "Quetza", "Shantele", "Nik", "Anthony", "Sylvia", "Lynda", "Jason"];
+  const backlog = Array.from({ length: 171 }, (_, i) => ({ id: i + 1, owner: agents[i % agents.length], daysSinceTouch: 10 + (i % 90), name: `L${i}`, stage: "Nurture", source: "Zillow" }));
+  const opts = { perAgent: 10, total: 50, batch: 50, ceiling: 400, rank: (l) => l.daysSinceTouch };
+  const plan = planCaps(backlog, opts);
+  assert.equal(plan.tripped, false, "a backlog is not a fault");
+  assert.equal(plan.send.length, 50, "50 tonight");
+  assert.equal(plan.held.length, 121, "the rest wait their turn");
+  for (const a of agents) assert.ok(plan.send.filter((l) => l.owner === a).length <= 10, `${a} has at most 10`);
+  assert.ok(plan.held.every((h) => /per-agent limit|waiting its turn/.test(h.holdReason)));
+  // Most overdue first: nothing held is more overdue than something sent to the same agent.
+  for (const a of agents) {
+    const sent = plan.send.filter((l) => l.owner === a).map((l) => l.daysSinceTouch);
+    const held = plan.held.filter((l) => l.owner === a).map((l) => l.daysSinceTouch);
+    if (sent.length && held.length) assert.ok(Math.min(...sent) >= Math.max(...held), `${a}: the most overdue go first`);
+  }
+  assert.ok(plan.nightsToClear >= 4 && plan.nightsToClear <= 6, `about 4-5 nights to clear 171, got ${plan.nightsToClear}`);
+
+  // The next night: the 50 warned are stamped and drop out, the next 50 follow.
+  const next = planCaps(backlog.filter((l) => !plan.sendIds.has(l.id)), opts);
+  assert.equal(next.send.length, 50);
+  assert.equal(next.send.filter((l) => plan.sendIds.has(l.id)).length, 0, "nobody is warned twice");
+
+  // A fault night (18 Nov: 1,063) still does nothing and hands over the list.
+  const fault = planCaps(Array.from({ length: 401 }, (_, i) => ({ id: i, owner: agents[i % 8], daysSinceTouch: 5 })), opts);
+  assert.equal(fault.tripped, true);
+  assert.equal(fault.send.length, 0);
+  assert.equal(fault.held.length, 401);
+
+  assert.equal(rules.maxNudgesPerNight, 50);
+  assert.equal(rules.maxNudgeBacklog, 400);
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /rank: overdueDays/, "the audit ranks by days PAST the line, not raw days quiet");
+});
+
+check("overdue means days past the lead's own line: 98 days on a 93-day list is less overdue than 30 on a 10-day list", () => {
+  const rec = (listId, days) => ({ source_list_ids: [listId], daysSinceTouch: days, stage: "Nurture", contact: {} });
+  assert.equal(overdueDays(rec(1109, 98)), 5, "Quarterly: 93-day line");
+  assert.equal(overdueDays(rec(1106, 30)), 20, "Weekly: 10-day line");
+  assert.ok(overdueDays(rec(1106, 30)) > overdueDays(rec(1109, 98)));
 });
 
 check("safeguards are on: forced dry run, Battr's rules, sweeping paused", () => {

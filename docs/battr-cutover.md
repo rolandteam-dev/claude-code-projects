@@ -24,8 +24,13 @@ texted as never contacted. It held every nudge and sent nothing. So the audit is
 - **Pass 2 contact check** — every at-risk or neglected candidate has its texts AND emails read
   person by person; a lead with an agent touch in the window drops off; a lead that cannot be read
   is held as **unverified** and listed. One unreadable lead no longer holds the night.
-- **Hard caps** — nudges and sweeps: 10 per agent, 50 a night. Over 50 the run does nothing and
-  emails mike@therolandteam.com the list.
+- **Hard caps.** *Nudges* work the backlog down in batches (Mike, 22 Nov 2026, "warn the 50 most
+  overdue each night"): 50 a night, at most 10 per agent, most overdue first (days past the
+  lead's own at-risk line). A lead already warned drops off, so the next night is the next 50.
+  The ~150 leads past their line on 19 Nov take about 4-5 nights. Only a night over
+  `maxNudgeBacklog` (400) is a fault: nothing is done and the list is emailed to
+  mike@therolandteam.com (18 Nov's 1,063 was that). *Sweeps* keep the strict rule: over 50
+  eligible, nothing moves and Mike is emailed the list.
 - **Nightly email to Mike** (a dry run still sends it): tonight at a glance, our count beside
   Battr's last recorded one (with its age), the would-be nudges and sweeps, the unverified leads, and
   every flagged lead with the rule that fired.

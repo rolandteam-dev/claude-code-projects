@@ -42,6 +42,12 @@ export function ruleFor(record) {
   };
 }
 
+/** Days past the at-risk line: how OVERDUE a lead is, which is what ranks a backlog (98 days quiet on a 93-day list is 5 overdue; 30 on a 10-day list is 20). */
+export function overdueDays(record) {
+  const { threshold, days } = ruleFor(record);
+  return Number.isFinite(days) && Number.isFinite(threshold) ? days - threshold : days ?? 0;
+}
+
 export function renderParitySections({
   results,
   actions,
@@ -88,10 +94,15 @@ export function renderParitySections({
     `- Leads we could NOT verify (held, never guessed at): **${unverified.length}**. ` +
       `A lead is verified when its texts and emails were read person by person and nothing in the window reached it.`
   );
+  const nightly = rules.maxNudgesPerNight;
   lines.push(
     `- Would-be nudges tonight: **${nudgePlan.tripped ? 0 : nudgePlan.send.length}** of ${nudgePlan.total} eligible ` +
-      `(limit ${rules.maxNudgesPerAgentPerNight} per agent, ${rules.maxNudgesPerNight} total)` +
-      (nudgePlan.tripped ? ` — **OVER THE LIMIT: nothing would go out; this list is what Mike would be emailed instead.**` : ".")
+      `(the backlog is warned ${nightly} a night, most overdue first, at most ${rules.maxNudgesPerAgentPerNight} per agent)` +
+      (nudgePlan.tripped
+        ? ` — **OVER THE SANITY CEILING of ${rules.maxNudgeBacklog}: nothing would go out; this list is what Mike would be emailed instead.**`
+        : nudgePlan.held.length
+          ? `. **${nudgePlan.held.length} more are waiting their turn — about ${nudgePlan.nightsToClear ?? "?"} night(s) to clear at this pace.**`
+          : ".")
   );
   lines.push(
     `- Would-be sweeps tonight: **${sweepPlan.tripped ? 0 : actions.swept.length}** ` +
@@ -113,9 +124,14 @@ export function renderParitySections({
     lines.push("");
   }
   if (!nudgePlan.tripped && nudgePlan.held.length) {
-    lines.push(`### Held by the ${rules.maxNudgesPerAgentPerNight}-per-agent limit (${nudgePlan.held.length}) — they wait for another night`);
+    lines.push(`### Waiting their turn (${nudgePlan.held.length}) — warned on later nights`);
     lines.push("");
-    for (const r of [...nudgePlan.held].sort(byAgentThenQuiet)) lines.push(`- ${esc(agentOf(r))}: ${esc(r.name)} (#${r.id}), ${r.daysSinceTouch ?? "?"} days quiet`);
+    const perAgent = new Map();
+    for (const r of nudgePlan.held) perAgent.set(agentOf(r), (perAgent.get(agentOf(r)) ?? 0) + 1);
+    lines.push(
+      [...perAgent.entries()].sort((a, b) => b[1] - a[1]).map(([agent, n]) => `${esc(agent)} ${n}`).join(" · ") +
+        `. Each night the next ${rules.maxNudgesPerNight} most overdue (at most ${rules.maxNudgesPerAgentPerNight} per agent) are warned; a lead already warned drops off this list.`
+    );
     lines.push("");
   }
 

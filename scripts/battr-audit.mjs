@@ -49,7 +49,7 @@ const AUDIT_DAY = auditDate();
 const AUDIT_NOW = auditInstant().getTime();
 import { lists, reportOnlyLists, longestCommWindowDays, NO_TIMEFRAME_LIST_ID, BATTR_PARITY } from "./battr/lists.mjs";
 import { planCaps, renderCapList } from "./battr/caps.mjs";
-import { renderParitySections } from "./battr/parity.mjs";
+import { renderParitySections, overdueDays } from "./battr/parity.mjs";
 import { bucketName, isSourceAudited } from "./battr/sources.mjs";
 import { needsRules, unseenCount, OBSERVED_DATE } from "./battr/observed.mjs";
 import {
@@ -1252,13 +1252,19 @@ async function main() {
   }
   const nudgePlan =
     only === null
-      ? planCaps(nudgeQueue, { perAgent: rules.maxNudgesPerAgentPerNight, total: rules.maxNudgesPerNight })
+      ? planCaps(nudgeQueue, {
+          perAgent: rules.maxNudgesPerAgentPerNight,
+          total: rules.maxNudgesPerNight,
+          batch: rules.maxNudgesPerNight, // a backlog is worked down 50 a night, most overdue first...
+          ceiling: rules.maxNudgeBacklog, // ...and only a night past this is a fault
+          rank: overdueDays,
+        })
       : { tripped: false, total: nudgeQueue.length, send: nudgeQueue, sendIds: new Set(nudgeQueue.map((l) => l.id)), held: [], heldIds: new Set() };
   actions.nudgePlan = nudgePlan;
   if (nudgePlan.tripped) {
-    log(`  NUDGE CAP TRIPPED: ${nudgePlan.total} nudges would go out, over the ${rules.maxNudgesPerNight} a night limit — NOTHING is nudged tonight; the list goes to ${rules.alertEmail}`);
+    log(`  NUDGE CEILING TRIPPED: ${nudgePlan.total} nudges would go out, over the sanity ceiling of ${rules.maxNudgeBacklog} — NOTHING is nudged tonight; the list goes to ${rules.alertEmail}`);
   } else if (nudgePlan.held.length) {
-    log(`  ${nudgePlan.held.length} nudge(s) held by the ${rules.maxNudgesPerAgentPerNight}-per-agent limit`);
+    log(`  nudging ${nudgePlan.send.length} of ${nudgePlan.total} eligible tonight (${rules.maxNudgesPerNight} a night, ${rules.maxNudgesPerAgentPerNight} per agent, most overdue first); ${nudgePlan.held.length} wait their turn, about ${nudgePlan.nightsToClear} night(s) to clear`);
     for (const h of nudgePlan.held) actions.heldBack.push(h);
   }
 
@@ -1493,11 +1499,11 @@ async function main() {
   // emailed the whole list so a person decides what it means. (On a dry run the
   // nightly report is already that email and carries the same list.)
   for (const [kind, plan, limit] of [
-    ["nudges", nudgePlan, rules.maxNudgesPerNight],
+    ["nudges", nudgePlan, rules.maxNudgeBacklog],
     ["sweeps", sweepPlan, rules.maxSweepsPerNight],
   ]) {
     if (!plan.tripped) continue;
-    actions.skipped.push({ what: kind, count: plan.total, reason: `over the ${limit}-a-night limit — nothing done, the list goes to ${rules.alertEmail}` });
+    actions.skipped.push({ what: kind, count: plan.total, reason: `over the ${limit} ${kind === "nudges" ? "sanity ceiling" : "a-night limit"} — nothing done, the list goes to ${rules.alertEmail}` });
     const subject = `Battr: ${plan.total} ${kind} would go out tonight — over the ${limit} limit, so NOTHING was done`;
     const text =
       `The audit found ${plan.total} ${kind} to do tonight. The limit is ${limit} a night (${kind === "nudges" ? rules.maxNudgesPerAgentPerNight : rules.maxSweepsPerAgentPerNight} per agent), ` +

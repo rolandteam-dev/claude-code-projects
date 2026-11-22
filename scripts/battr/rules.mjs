@@ -69,7 +69,16 @@ export const rules = {
    * limit in one night; the rest wait and are listed.
    */
   maxNudgesPerAgentPerNight: 10,
+  /**
+   * NUDGES ARE A BATCH, NOT A BREAKER (Mike, 22 Nov 2026, "warn the 50 most overdue each
+   * night"). Nothing has warned anyone since Battr stopped on 9 Oct, so ~150 leads are
+   * already past their line. They are warned 50 a night (10 per agent), the most overdue
+   * first, until the backlog is gone. Only a night over `maxNudgeBacklog` is treated as a
+   * fault — nothing is done and Mike is emailed the list (1,063 on 18 Nov was that).
+   * Sweeps keep the original rule: over `maxSweepsPerNight`, nothing moves.
+   */
   maxNudgesPerNight: 50,
+  maxNudgeBacklog: 400,
   maxSweepsPerAgentPerNight: 10,
   maxSweepsPerNight: 50,
 
