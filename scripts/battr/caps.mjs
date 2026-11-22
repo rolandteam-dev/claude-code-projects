@@ -14,17 +14,30 @@
  *
  * Pure: no I/O, so the rule can be tested without a Follow Up Boss.
  */
-export function planCaps(items, { perAgent, total, agentOf = (item) => item.owner ?? "(unassigned)" }) {
+export function planCaps(
+  items,
+  { perAgent, total, batch = null, ceiling = null, rank = (item) => item.daysSinceTouch ?? 0, agentOf = (item) => item.owner ?? "(unassigned)" }
+) {
   // Worst first, so a cap sheds the least urgent leads and never the most.
-  const ordered = [...items].sort((a, b) => (b.daysSinceTouch ?? 0) - (a.daysSinceTouch ?? 0));
+  const ordered = [...items].sort((a, b) => rank(b) - rank(a) || (b.daysSinceTouch ?? 0) - (a.daysSinceTouch ?? 0));
 
-  if (ordered.length > total) {
+  // TRIP MODE (sweeps, and the default): over `total`, do nothing. BATCH MODE (nudges,
+  // since 22 Nov 2026): work the backlog down `batch` leads a night, most overdue first,
+  // and trip only past `ceiling` — a night so big it is a fault, not a backlog.
+  const tripAt = batch !== null ? ceiling ?? Infinity : total;
+  const limit = batch !== null ? batch : total;
+  const reason =
+    batch !== null
+      ? `over the sanity ceiling of ${tripAt} — nothing is done tonight`
+      : `over the nightly total of ${total} — nothing is done tonight`;
+
+  if (ordered.length > tripAt) {
     return {
       tripped: true,
       total: ordered.length,
       send: [],
       sendIds: new Set(),
-      held: ordered.map((item) => ({ ...item, holdReason: `over the nightly total of ${total} — nothing is done tonight` })),
+      held: ordered.map((item) => ({ ...item, holdReason: reason })),
       heldIds: new Set(ordered.map((item) => item.id)),
     };
   }
@@ -37,11 +50,21 @@ export function planCaps(items, { perAgent, total, agentOf = (item) => item.owne
     const n = perAgentCount.get(agent) ?? 0;
     if (n >= perAgent) {
       held.push({ ...item, holdReason: `${agent} already has ${perAgent} tonight (per-agent limit)` });
+    } else if (send.length >= limit) {
+      held.push({ ...item, holdReason: batch !== null ? `waiting its turn: the backlog is warned ${batch} a night, most overdue first` : `over the nightly total of ${total}` });
     } else {
       send.push(item);
       perAgentCount.set(agent, n + 1);
     }
   }
+
+  // Nights until the backlog is gone at this pace (the per-agent limit can be the slower of the two).
+  const byAgent = new Map();
+  for (const item of ordered) byAgent.set(agentOf(item), (byAgent.get(agentOf(item)) ?? 0) + 1);
+  const nightsToClear = ordered.length
+    ? Math.max(Math.ceil(ordered.length / limit), ...[...byAgent.values()].map((n) => Math.ceil(n / perAgent)))
+    : 0;
+
   return {
     tripped: false,
     total: ordered.length,
@@ -49,6 +72,7 @@ export function planCaps(items, { perAgent, total, agentOf = (item) => item.owne
     sendIds: new Set(send.map((item) => item.id)),
     held,
     heldIds: new Set(held.map((item) => item.id)),
+    nightsToClear,
   };
 }
 
