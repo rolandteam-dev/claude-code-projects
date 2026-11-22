@@ -182,6 +182,45 @@ export const postgresStore: HomeownerStore = {
     return rows.map(rowToHomeowner);
   },
 
+  async listNeedingValue(limit) {
+    await ensureSchema();
+    const rows =
+      limit && limit > 0
+        ? await sql()`
+            SELECT * FROM homeowners
+            WHERE jsonb_array_length(COALESCE(estimates, '[]'::jsonb)) = 0
+              AND zip ~ '^89[0-9]{3}$'
+              AND email LIKE '%@%.%'
+              AND email NOT LIKE 'noemail-%'
+              AND email NOT LIKE '%@notvalidemail.com'
+            ORDER BY updated_at DESC
+            LIMIT ${limit}
+          `
+        : await sql()`
+            SELECT * FROM homeowners
+            WHERE jsonb_array_length(COALESCE(estimates, '[]'::jsonb)) = 0
+              AND zip ~ '^89[0-9]{3}$'
+              AND email LIKE '%@%.%'
+              AND email NOT LIKE 'noemail-%'
+              AND email NOT LIKE '%@notvalidemail.com'
+            ORDER BY updated_at DESC
+          `;
+    return rows.map(rowToHomeowner);
+  },
+
+  async countNeedingValue() {
+    await ensureSchema();
+    const rows = await sql()`
+      SELECT count(*)::int AS n FROM homeowners
+      WHERE jsonb_array_length(COALESCE(estimates, '[]'::jsonb)) = 0
+        AND zip ~ '^89[0-9]{3}$'
+        AND email LIKE '%@%.%'
+        AND email NOT LIKE 'noemail-%'
+        AND email NOT LIKE '%@notvalidemail.com'
+    `;
+    return (rows[0]?.n as number) ?? 0;
+  },
+
   async upsert(h) {
     await ensureSchema();
     await sql()`
