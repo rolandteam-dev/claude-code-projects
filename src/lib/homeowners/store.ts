@@ -90,6 +90,10 @@ export interface HomeownerStore {
   pipelineStats(intervalDays: number): Promise<PipelineStats>;
   /** records whose last email is older than `intervalDays` (or never sent) and still subscribed, engaged contacts first; `limit` caps the working set */
   listDueForEmail(intervalDays: number, limit?: number): Promise<Homeowner[]>;
+  /** Eligible homeowners (NV ZIP, valid email) that have no estimate yet — the re-value backfill target. */
+  listNeedingValue(limit?: number): Promise<Homeowner[]>;
+  /** Count of eligible homeowners with no estimate — for a backfill cost preview. */
+  countNeedingValue(): Promise<number>;
   upsert(h: Homeowner): Promise<Homeowner>;
   /** Bulk contact upsert for imports — preserves estimates/views/subscribed on conflict. */
   upsertContacts(records: Homeowner[]): Promise<void>;
@@ -251,6 +255,19 @@ const memoryStore: HomeownerStore = {
       return a.updatedAt < b.updatedAt ? 1 : -1;
     });
     return limit && limit > 0 ? due.slice(0, limit) : due;
+  },
+  async listNeedingValue(limit) {
+    const out = [...mem.values()].filter(
+      (h) => (h.estimates?.length ?? 0) === 0 && isEligible({ email: h.email, state: h.state, zip: h.zip }),
+    );
+    return limit && limit > 0 ? out.slice(0, limit) : out;
+  },
+  async countNeedingValue() {
+    let n = 0;
+    for (const h of mem.values()) {
+      if ((h.estimates?.length ?? 0) === 0 && isEligible({ email: h.email, state: h.state, zip: h.zip })) n++;
+    }
+    return n;
   },
   async upsert(h) {
     mem.set(h.token, { ...h, updatedAt: now() });

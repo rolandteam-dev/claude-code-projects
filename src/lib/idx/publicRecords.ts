@@ -109,4 +109,61 @@ async function rentcast(fullAddress: string, key: string): Promise<PublicRecordF
     return null; // timeout / network / parse — fall through to the "ask the owner" path
   }
 }
+
+export type PublicRecordAvm = { value: number; low?: number; high?: number; source: string };
+
+/**
+ * Provider AVM value for an address — the LAST resort, used when neither the MLS
+ * nor the comp engine can price the home. Needs only an address (no beds/sqft),
+ * so it can value homes we have no facts for at all. Returns null when
+ * off/unconfigured or when the provider has no value. A different model than our
+ * comp number, so callers tag the result's source "avm".
+ */
+export async function publicRecordsAvm(input: {
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+}): Promise<PublicRecordAvm | null> {
+  const provider = publicRecordsProvider();
+  const key = (process.env.PROPERTY_DATA_API_KEY ?? "").trim();
+  if (!provider || provider === "off" || !key) return null; // OFF by default
+
+  const address = (input.address ?? "").trim();
+  if (!address) return null;
+  const full = [
+    address,
+    (input.city ?? "").trim(),
+    `${(input.state ?? "").trim()} ${(input.zip ?? "").trim()}`.trim(),
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  switch (provider) {
+    case "rentcast":
+      return rentcastAvm(full, key);
+    default:
+      return null;
+  }
+}
+
+/** RentCast AVM: GET /v1/avm/value?address= → { price, priceRangeLow, priceRangeHigh }. */
+async function rentcastAvm(fullAddress: string, key: string): Promise<PublicRecordAvm | null> {
+  const url = `https://api.rentcast.io/v1/avm/value?address=${encodeURIComponent(fullAddress)}`;
+  try {
+    const res = await fetch(url, {
+      headers: { "X-Api-Key": key, accept: "application/json" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    const data: any = await res.json();
+    const value = num(data.price, data.value, data.priceEstimate);
+    if (value <= 0) return null; // no value — do not fabricate
+    const low = num(data.priceRangeLow, data.rangeLow);
+    const high = num(data.priceRangeHigh, data.rangeHigh);
+    return { value, low: low || undefined, high: high || undefined, source: "rentcast-avm" };
+  } catch {
+    return null;
+  }
+}
 /* eslint-enable @typescript-eslint/no-explicit-any */

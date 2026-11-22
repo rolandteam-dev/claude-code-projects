@@ -11,7 +11,7 @@
  */
 import type { EstimatePoint, Homeowner } from "./store";
 import { estimateHomeValue } from "@/lib/idx/estimate";
-import { resolvePropertyFromPublicRecords } from "@/lib/idx/publicRecords";
+import { resolvePropertyFromPublicRecords, publicRecordsAvm } from "@/lib/idx/publicRecords";
 
 const API_BASE = "https://api.repliers.io";
 const DEFAULT_BOARD_ID = "193";
@@ -125,7 +125,7 @@ export type PropertyFacts = { beds: number; baths: number; sqft: number };
 export type ValueReason = "resolved" | "insufficient_comps" | "out_of_state" | "not_in_mls";
 
 /** Where the subject home's beds/baths/sqft came from. */
-export type ValueSource = "mls" | "public_records";
+export type ValueSource = "mls" | "public_records" | "avm";
 
 export type ValueResult = {
   estimate: EstimatePoint | null;
@@ -158,14 +158,33 @@ export async function valueHome(h: Homeowner): Promise<ValueResult> {
       prop = { beds: pr.beds, baths: pr.baths, sqft: pr.sqft, propertyType: pr.propertyType, style: pr.style, matchedBy: pr.source };
     }
   }
-  // Still no real beds/sqft to anchor the math — do not fabricate.
-  if (!prop || prop.sqft <= 0 || prop.beds <= 0) {
-    return { estimate: null, facts: null, reason: "not_in_mls" };
+  // With real facts, value with the comp engine (one consistent, explainable
+  // number). Keep its result if comps come up thin, so we can report the reason.
+  let compResult: ValueResult | null = null;
+  if (prop && prop.sqft > 0 && prop.beds > 0) {
+    const r = await estimateFrom(
+      { zip: h.zip, city: h.city, beds: prop.beds, baths: prop.baths, sqft: prop.sqft, propertyType: prop.style || prop.propertyType },
+    );
+    if (r.estimate) return { ...r, source };
+    compResult = { ...r, source };
   }
-  const r = await estimateFrom(
-    { zip: h.zip, city: h.city, beds: prop.beds, baths: prop.baths, sqft: prop.sqft, propertyType: prop.style || prop.propertyType },
-  );
-  return { ...r, source };
+
+  // Last resort: the provider's own AVM (needs only an address, so it can value a
+  // home we have no facts for). No-op unless configured. A different model than
+  // our comp number, so it's tagged source "avm".
+  const avm = await publicRecordsAvm({ address: h.address, city: h.city, state: h.state, zip: h.zip });
+  if (avm) {
+    return {
+      estimate: { date: new Date().toISOString().slice(0, 10), value: avm.value, low: avm.low, high: avm.high },
+      facts: prop && prop.sqft > 0 ? { beds: prop.beds, baths: prop.baths, sqft: prop.sqft } : null,
+      reason: "resolved",
+      source: "avm",
+    };
+  }
+
+  // Nothing could value it — never fabricate. Preserve the comp engine's reason
+  // (insufficient_comps when we had facts), else not_in_mls.
+  return compResult ?? { estimate: null, facts: null, reason: "not_in_mls" };
 }
 
 /**

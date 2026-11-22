@@ -9,6 +9,7 @@
     { "path": "/api/cron/daily-reports", "schedule": "30 13 * * *" },
     { "path": "/api/cron/slack-roster-sync", "schedule": "0 14 1 * *" },
     { "path": "/api/cron/distress-push", "schedule": "0 15 * * 1-5" },
-    { "path": "/api/cron/distress-code-sync", "schedule": "30 15 * * 0" }
+    { "path": "/api/cron/distress-code-sync", "schedule": "30 15 * * 0" },
+    { "path": "/api/cron/revalue-backfill", "schedule": "45 11 * * *" }
   ]
 }
