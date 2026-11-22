@@ -2654,17 +2654,39 @@ try {
   await new Promise((r) => live.server.listen(0, "127.0.0.1", r));
   const livePort = live.server.address().port;
   try {
-    // The nightly job's own settings: no --dry, BATTR_LIVE=true. rules.forceDryRun must still win.
-    const { stdout, stderr } = await runNightly({ FUB_API_KEY: "test-key", FUB_API_BASE: `http://127.0.0.1:${livePort}`, BATTR_LIVE: "true" });
-    check("the in-code kill switch holds with BATTR_LIVE=true and no --dry: a dry run, zero writes", () => {
-      assert.equal(rules.forceDryRun, true, "rules.forceDryRun is on until Mike turns it live");
+    // The nightly job's own settings: no --dry, BATTR_LIVE=true — plus the force-dry hook.
+    // The kill switch must still win, with zero writes.
+    const { stdout, stderr } = await runNightly({ FUB_API_KEY: "test-key", FUB_API_BASE: `http://127.0.0.1:${livePort}`, BATTR_LIVE: "true", BATTR_FORCE_DRY_RUN: "true" });
+    check("the kill switch holds with BATTR_LIVE=true and no --dry: a dry run, zero writes", () => {
       assert.match(stderr, /DRY RUN \(no writes\)/);
       assert.match(stdout, /DRY RUN — nothing was written/);
-      assert.match(stdout, /It is forced \(`rules\.forceDryRun`\)/, "and the report says why");
+      assert.match(stdout, /It is forced \(/, "and the report says why");
       assert.deepEqual(live.writes, [], "not one POST, PUT or DELETE reached Follow Up Boss");
     });
   } finally {
     live.server.close();
+  }
+
+  // And the other half, which had never been tested end to end: with the switch OFF and
+  // BATTR_LIVE=true the nightly run really writes — one note and one stamp on the
+  // at-risk lead, nothing else (sweeping is on hold).
+  const wet = fixtureServer();
+  await new Promise((r) => wet.server.listen(0, "127.0.0.1", r));
+  const wetPort = wet.server.address().port;
+  try {
+    const { stdout, stderr } = await runNightly({ FUB_API_KEY: "test-key", FUB_API_BASE: `http://127.0.0.1:${wetPort}`, BATTR_LIVE: "true" });
+    check("live: with the switch off and BATTR_LIVE=true the night really writes its nudge, and only its nudge", () => {
+      assert.equal(rules.forceDryRun, false, "Mike turned it live on 22 Nov 2026");
+      assert.match(stderr, /LIVE/);
+      assert.doesNotMatch(stdout, /DRY RUN — nothing was written/);
+      const notes = wet.writes.filter((w) => /^POST \/notes/.test(w));
+      assert.equal(notes.length, 1, "exactly one note: lead 102, the one verified at-risk lead");
+      assert.ok(wet.writes.some((w) => /^PUT \/people\/102/.test(w)), "and its stamp");
+      assert.ok(!wet.writes.some((w) => /\/people\/10[3-6]/.test(w)), "no other lead is touched, and nobody is swept (sweeping is paused)");
+      assert.match(stderr, /sweeps on hold until/);
+    });
+  } finally {
+    wet.server.close();
   }
 }
 
@@ -2749,13 +2771,22 @@ check("overdue means days past the lead's own line: 98 days on a 93-day list is 
   assert.ok(overdueDays(rec(1106, 30)) > overdueDays(rec(1109, 98)));
 });
 
-check("safeguards are on: forced dry run, Battr's rules, sweeping paused", () => {
-  assert.equal(rules.forceDryRun, true);
+check("safeguards: Battr's rules, sweeping paused, caps and verification on; the kill switch still exists", () => {
+  assert.equal(rules.forceDryRun, false, "live since 22 Nov 2026 (Mike); set true to hold everything again");
   assert.equal(rules.profile, "battr");
-  assert.ok(rules.sweepsStartOn > "2026-12-31", "sweeping start is paused out of this year");
+  assert.ok(rules.sweepsStartOn > "2026-12-31", "sweeping start stays paused");
   assert.ok(rules.maxUnverifiedShare > 0 && rules.maxUnverifiedShare <= 0.5);
   const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
-  assert.match(src, /process\.env\.BATTR_LIVE !== "true" \|\| rules\.forceDryRun === true/);
+  assert.match(src, /rules\.forceDryRun === true \|\| process\.env\.BATTR_FORCE_DRY_RUN === "true"/, "both the in-code switch and the env hook");
+  assert.match(src, /process\.env\.BATTR_LIVE !== "true" \|\| forceDry/, "and BATTR_LIVE unset is still the fast brake");
+});
+
+check("the agent email lists only what the agent was warned about, and says plainly when sweeping is paused", () => {
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.match(src, /!nudgePlan\.heldIds\.has\(r\.id\)/, "a lead still waiting its turn is not in tonight's email");
+  const base = { agent: "A", agentId: 1, atRisk: [], neglected: [{ id: 1, name: "X Lead", daysSinceTouch: 20 }], swept: [], unanswered: [] };
+  assert.match(renderDigestText({ ...base, sweepsStartOn: "2027-01-01" }), /SWEEPING ON A DATE TO BE ANNOUNCED \(1\)/);
+  assert.doesNotMatch(renderDigestText({ ...base, sweepsStartOn: "2027-01-01" }), /JAN/i);
 });
 
 check("the suite cannot delete the real audit trail", () => {

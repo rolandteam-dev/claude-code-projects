@@ -81,6 +81,8 @@ export function buildAgentDigests(
  */
 const sweepWhen = (digest) => {
   if (!digest.sweepsStartOn) return "next run";
+  // Sweeping is paused (a start date out past this year): say so, never "from Jan 1".
+  if (digest.sweepsStartOn > "2026-12-31") return "on a date to be announced";
   const day = new Date(`${digest.sweepsStartOn}T12:00:00Z`).toLocaleDateString("en-US", {
     weekday: "short", month: "short", day: "numeric", timeZone: "UTC",
   });

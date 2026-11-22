@@ -33,10 +33,19 @@ export const rules = {
    * to Follow Up Boss and no agent is emailed, and each night Mike is emailed what
    * the run WOULD have done. Why it exists: the first live night read 1,063 leads at
    * risk against Battr's 14 (Battr's last recorded night, 7 Oct), because texts and
-   * emails could not be read in bulk. Only `undo` still writes. Mike turns it live by
-   * having this set to false (a one-line change) — not by a repository variable.
+   * emails could not be read in bulk. Only `undo` still writes.
+   *
+   * OFF as of 22 Nov 2026 — Mike: "Yes, go live tonight." The audit now verifies every
+   * candidate person by person, holds what it cannot verify, caps what it does (50 a
+   * night, 10 per agent) and has run clean in dry run since 19 Nov. It writes when
+   * BATTR_LIVE is "true" (or a run is started in live mode). The brakes, fastest first:
+   *   - set the BATTR_LIVE repository variable to anything but "true" (the next run is dry);
+   *   - set this back to true (a PR);
+   *   - `undo` with a run id reverses a night's notes, stamps and sweeps.
+   * Setting the environment variable BATTR_FORCE_DRY_RUN=true forces a dry run for one
+   * invocation whatever this says (the self-test uses it to prove the switch still works).
    */
-  forceDryRun: true,
+  forceDryRun: false,
 
   /**
    * Which rule set the nightly audit judges by.
