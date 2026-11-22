@@ -11,6 +11,7 @@
  */
 import type { EstimatePoint, Homeowner } from "./store";
 import { estimateHomeValue } from "@/lib/idx/estimate";
+import { resolvePropertyFromPublicRecords } from "@/lib/idx/publicRecords";
 
 const API_BASE = "https://api.repliers.io";
 const DEFAULT_BOARD_ID = "193";
@@ -123,10 +124,15 @@ export type PropertyFacts = { beds: number; baths: number; sqft: number };
 /** Why valueHome has (or doesn't have) a number — lets the dashboard respond precisely. */
 export type ValueReason = "resolved" | "insufficient_comps" | "out_of_state" | "not_in_mls";
 
+/** Where the subject home's beds/baths/sqft came from. */
+export type ValueSource = "mls" | "public_records";
+
 export type ValueResult = {
   estimate: EstimatePoint | null;
   facts: PropertyFacts | null;
   reason: ValueReason;
+  /** which data source resolved the home's attributes (when one did). */
+  source?: ValueSource;
   /** upstream error detail, surfaced rather than swallowed. */
   detail?: string;
 };
@@ -139,14 +145,27 @@ export type ValueResult = {
  */
 export async function valueHome(h: Homeowner): Promise<ValueResult> {
   if (!isNevada(h)) return { estimate: null, facts: null, reason: "out_of_state" };
-  const prop = await resolveProperty({ address: h.address, zip: h.zip });
-  // No MLS record, or no real beds/sqft to anchor the math — do not fabricate.
+  let source: ValueSource = "mls";
+  let prop = await resolveProperty({ address: h.address, zip: h.zip });
+  // Not on the MLS (never listed/sold) — fall back to public-records / assessor
+  // data for the beds/baths/sqft, then value with the SAME comp engine below.
+  // No-op unless PROPERTY_DATA_PROVIDER + key are configured, so the MLS path is
+  // unchanged by default.
+  if (!prop || prop.sqft <= 0 || prop.beds <= 0) {
+    const pr = await resolvePropertyFromPublicRecords({ address: h.address, city: h.city, state: h.state, zip: h.zip });
+    if (pr && pr.sqft > 0 && pr.beds > 0) {
+      source = "public_records";
+      prop = { beds: pr.beds, baths: pr.baths, sqft: pr.sqft, propertyType: pr.propertyType, style: pr.style, matchedBy: pr.source };
+    }
+  }
+  // Still no real beds/sqft to anchor the math — do not fabricate.
   if (!prop || prop.sqft <= 0 || prop.beds <= 0) {
     return { estimate: null, facts: null, reason: "not_in_mls" };
   }
-  return estimateFrom(
+  const r = await estimateFrom(
     { zip: h.zip, city: h.city, beds: prop.beds, baths: prop.baths, sqft: prop.sqft, propertyType: prop.style || prop.propertyType },
   );
+  return { ...r, source };
 }
 
 /**
