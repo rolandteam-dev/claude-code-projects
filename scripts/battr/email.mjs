@@ -63,15 +63,28 @@ export async function sendMail({ to, subject, text, html }) {
     .filter(Boolean);
   if (!recipients.length) throw new Error("no recipient address");
 
-  const res = await fetch(ENDPOINT, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ from: fromAddress(), to: recipients, subject, text, ...(html ? { html } : {}) }),
-  });
+  // Resend allows 10 requests a second. The nightly run sends one email per agent in a
+  // tight loop, so on 23 Nov the 11th onwards got a 429 and eight agents got nothing.
+  // Back off and retry on 429 / 5xx (honouring Retry-After), a few times, before giving up.
+  const body = JSON.stringify({ from: fromAddress(), to: recipients, subject, text, ...(html ? { html } : {}) });
+  let res;
+  for (let attempt = 0; ; attempt++) {
+    res = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+    if (res.ok || !(res.status === 429 || res.status >= 500) || attempt >= MAIL_RETRIES) break;
+    const wait = Number(res.headers?.get?.("retry-after"));
+    await sleep(Number.isFinite(wait) && wait > 0 ? Math.min(wait * 1000, 10_000) : 600 * (attempt + 1));
+  }
 
   if (!res.ok) throw new Error(describeError(res.status, await res.text()));
   return res.json().catch(() => ({}));
 }
+
+const MAIL_RETRIES = 5;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

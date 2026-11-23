@@ -27,7 +27,7 @@ import { overdueDays } from "./parity.mjs";
 import { lists, listById, memberListsOf, reportOnlyLists, TIMEFRAMES, TIMEFRAME_IDS, PROFILE_MEMBER_IDS } from "./lists.mjs";
 import { detectAtBats, summarizeAgents, formatRate } from "./atbats.mjs";
 import { buildAgentDigests, deliverDigests, renderDigestText, renderDigestHtml, digestSubject } from "./alerts.mjs";
-import { describeError, fromAddress, mailConfigured } from "./email.mjs";
+import { describeError, fromAddress, mailConfigured, sendMail } from "./email.mjs";
 import { parseCsv, findColumn, mapRows } from "./import-atbats.mjs";
 import { bucketForSource, bucketName, isSourceAudited, leadBuckets, unmappedPolicy } from "./sources.mjs";
 import { pondForLead, ageInDays } from "./ponds.mjs";
@@ -2770,6 +2770,37 @@ check("overdue means days past the lead's own line: 98 days on a 93-day list is 
   assert.equal(overdueDays(rec(1106, 30)), 20, "Weekly: 10-day line");
   assert.ok(overdueDays(rec(1106, 30)) > overdueDays(rec(1109, 98)));
 });
+
+{
+  // Resend allows 10 requests a second; on 23 Nov eight agents' emails died on a 429.
+  const realFetch = globalThis.fetch;
+  const oldKey = process.env.RESEND_API_KEY;
+  process.env.RESEND_API_KEY = "test-key";
+  let calls = 0;
+  let outcome;
+  try {
+    globalThis.fetch = async () => {
+      calls++;
+      return calls <= 2
+        ? new Response('{"name":"rate_limit_exceeded"}', { status: 429, headers: { "retry-after": "0" } })
+        : new Response('{"id":"x"}', { status: 200 });
+    };
+    await sendMail({ to: "a@example.com", subject: "s", text: "t" });
+    outcome = { calls };
+    calls = 0;
+    globalThis.fetch = async () => { calls++; return new Response("nope", { status: 401 }); };
+    outcome.authError = await sendMail({ to: "a@example.com", subject: "s", text: "t" }).then(() => null, (e) => e.message);
+    outcome.authCalls = calls;
+  } finally {
+    globalThis.fetch = realFetch;
+    if (oldKey === undefined) delete process.env.RESEND_API_KEY; else process.env.RESEND_API_KEY = oldKey;
+  }
+  check("an email that hits Resend's rate limit is retried, not lost; a real error is not retried", () => {
+    assert.equal(outcome.calls, 3, "two 429s then success");
+    assert.match(outcome.authError, /rejected the API key/);
+    assert.equal(outcome.authCalls, 1, "a 401 is not retried");
+  });
+}
 
 check("safeguards: Battr's rules, sweeping paused, caps and verification on; the kill switch still exists", () => {
   assert.equal(rules.forceDryRun, false, "live since 22 Nov 2026 (Mike); set true to hold everything again");
