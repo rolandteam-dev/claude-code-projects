@@ -18,6 +18,7 @@ import {
   parseJobType,
   parseJobResult,
 } from "../../src/lib/offers/types.ts";
+import { dollarsInWords, parseAddress } from "../../src/lib/offers/rpa/fill.ts";
 import { verifySlackSignature, jobMessage, readModalValues, esc } from "../../src/lib/offers/slack.ts";
 import { isAllowedUser, canReview, safeEqual } from "../../src/lib/offers/config.ts";
 import {
@@ -570,6 +571,15 @@ test("sanitizeExtraction handles the new fields without trusting them", () => {
   assert.deepEqual(sanitizeExtraction({ downPaymentPercent: -1 }).terms, {});
   assert.equal(sanitizeExtraction({ downPaymentPercent: 0 }).terms.downPaymentPercent, 0);
   assert.equal(sanitizeExtraction({ inclusions: Array.from({ length: 30 }, (_, k) => `item ${k}`) }).terms.inclusions.length, 20);
+});
+
+test("RPA helpers: dollars in words and address parsing", () => {
+  assert.equal(dollarsInWords(400000), "Four Hundred Thousand and 00/100");
+  assert.equal(dollarsInWords(1250500.5), "One Million Two Hundred Fifty Thousand Five Hundred and 50/100");
+  assert.equal(dollarsInWords(21), "Twenty-One and 00/100");
+  assert.deepEqual(parseAddress("272 Helmsdale Dr., Henderson, NV 89014"), { city: "Henderson", zip: "89014", county: "Clark" });
+  assert.deepEqual(parseAddress("12 Pine St, Pahrump, NV 89048"), { city: "Pahrump", zip: "89048", county: "" });
+  assert.deepEqual(parseAddress("123 Main St"), { city: "", zip: "", county: "" });
 });
 
 console.log(`offers selftest: ${passed} passed${process.exitCode ? " (with failures)" : ""}`);
