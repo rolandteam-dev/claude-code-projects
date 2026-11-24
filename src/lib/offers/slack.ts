@@ -66,8 +66,12 @@ export async function slackApi(method: string, body: Record<string, unknown>): P
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify(body),
     });
-    return (await res.json()) as SlackResponse;
+    const json = (await res.json()) as SlackResponse;
+    // Silent failures (a wrong bot token, a missing scope, a bot not in the channel) were invisible; say so.
+    if (!json.ok) console.error(`[offers] slack ${method} failed: ${json.error ?? "unknown error"}`);
+    return json;
   } catch (e) {
+    console.error(`[offers] slack ${method} request failed: ${String(e)}`);
     return { ok: false, error: String(e) };
   }
 }

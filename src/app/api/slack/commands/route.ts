@@ -31,6 +31,7 @@ export async function POST(req: Request) {
   const form = new URLSearchParams(raw);
   const userId = form.get("user_id");
   if (!isAllowedUser(userId)) {
+    console.warn("[offers] /offer refused: user is not on OFFER_ALLOWED_SLACK_USERS");
     return ephemeral("You're not set up to draft offers yet. Ask Mike to add you.");
   }
 

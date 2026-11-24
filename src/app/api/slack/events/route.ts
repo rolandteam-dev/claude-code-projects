@@ -6,7 +6,7 @@ import { verifySlackSignature } from "@/lib/offers/slack";
 import { handleTurn } from "@/lib/offers/turn";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 90;
 
 /**
  * Slack Events API endpoint: how the bot hears an agent's plain-English request.
@@ -71,6 +71,7 @@ export async function POST(req: Request) {
       if (!isAllowedUser(e.user)) {
         // Only tell people who actually asked for the bot; never answer ordinary chatter.
         if (isMention && (await markSeen(`${e.channel}:${e.ts}`))) {
+          console.warn("[offers] mention ignored: user is not on OFFER_ALLOWED_SLACK_USERS");
           await say(e.channel, threadTs, { text: "You're not set up to draft offers yet. Ask Mike to add you." });
         }
         return;
