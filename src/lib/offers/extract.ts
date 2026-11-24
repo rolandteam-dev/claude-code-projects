@@ -89,9 +89,11 @@ export async function extractTerms(args: {
     const response = await client.messages.create({
       model: process.env.OFFER_LLM_MODEL || DEFAULT_MODEL,
       max_tokens: 1500,
-      system: SYSTEM,
+      system: `${SYSTEM}\n\nReply with ONLY one JSON object (no prose, no code fence) using any of these keys, and no others:\n${JSON.stringify(SCHEMA.properties)}`,
       // Extraction is simple; low effort keeps it fast and cheap.
-      output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
+      // No json_schema format: in production it hung past 55s while plain calls took ~2s. The model is told
+      // the shape in the prompt and sanitizeExtraction re-validates everything it returns.
+      output_config: { effort: "low" },
       messages: [
         {
           role: "user",
@@ -116,7 +118,11 @@ export async function extractTerms(args: {
     if (response.stop_reason === "refusal") return { kind: "refused" };
     const text = response.content.find((b) => b.type === "text");
     if (!text || text.type !== "text") return { kind: "error", message: "no text in response" };
-    return { kind: "ok", extraction: sanitizeExtraction(JSON.parse(text.text)) };
+    const raw = text.text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+    const start = raw.indexOf("{");
+    const end = raw.lastIndexOf("}");
+    if (start < 0 || end < start) return { kind: "error", message: "model did not return JSON" };
+    return { kind: "ok", extraction: sanitizeExtraction(JSON.parse(raw.slice(start, end + 1))) };
   } catch (e) {
     const ms = Date.now() - startedAt;
     if (e instanceof Anthropic.APIError) return { kind: "error", message: `anthropic ${e.status ?? ""} ${e.message} (after ${ms}ms)`.trim() };
