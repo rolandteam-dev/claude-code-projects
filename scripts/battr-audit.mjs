@@ -567,7 +567,7 @@ function buildReport({ runId, dry, population, results, actions, ponds, agentSta
     lines.push("");
     for (const d of alerts.delivered) {
       const waiting = d.unanswered?.length ? `, ${d.unanswered.length} waiting on a call back` : "";
-      lines.push(`- ${d.agent}: ${d.atRisk.length} at risk, ${d.neglected.length} sweeping${waiting} — ${d.via}`);
+      lines.push(`- ${d.agent}: ${d.atRisk.length} at risk, ${d.neglected.length} way overdue${waiting} — ${d.via}`);
     }
     for (const f of alerts.failed) lines.push(`- ${f.agent}: FAILED — ${f.reason}`);
     lines.push("");
