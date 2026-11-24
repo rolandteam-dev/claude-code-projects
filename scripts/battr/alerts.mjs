@@ -11,7 +11,8 @@
 import { formatRate } from "./atbats.mjs";
 import { sendMail, mailConfigured } from "./email.mjs";
 
-export const ADMIN_MESSAGE = "At risk leads need to be worked ASAP or they will be swept to the pond.";
+export const ADMIN_MESSAGE =
+  "These leads have gone too long without a call, text or email from you. Please reach out to each one today.";
 
 /**
  * Group this run's non-compliant records by owning agent.
@@ -75,9 +76,9 @@ export function buildAgentDigests(
 }
 
 /**
- * "Sweeping next run" is only true once sweeping has started. While it is held
- * (rules.sweepsStartOn) the digest names the day instead, so agents are not told
- * their leads go tonight when they do not.
+ * When leads in the "way overdue" section actually leave the agent, in plain words.
+ * Sweeping can be paused (rules.sweepsStartOn) or on; the agent must never be told
+ * their leads go tonight when they do not, nor that nothing will ever happen.
  */
 const sweepWhen = (digest) => {
   if (!digest.sweepsStartOn) return "next run";
@@ -89,29 +90,54 @@ const sweepWhen = (digest) => {
   return `from ${day}`;
 };
 
-const line = (r) =>
-  `  • ${r.name}${r.daysSinceTouch !== undefined ? ` — ${r.daysSinceTouch} days quiet` : ""}${r.source ? ` (${r.source})` : ""}`;
+/** One plain sentence on what happens to the "way overdue" leads. */
+export function pondSentence(digest) {
+  const when = sweepWhen(digest);
+  if (when === "next run") {
+    return "If you do not contact these, they will be moved out of your name to the team pond at the next nightly check.";
+  }
+  if (when === "on a date to be announced") {
+    return "Nothing is being moved out of your name right now. These are the leads that will be moved to the team pond first once that starts, and you will be told the date before it does.";
+  }
+  return `If you do not contact these, they will be moved out of your name to the team pond starting ${when.replace(/^from /, "")}.`;
+}
 
-/** Plain-text digest. Short on purpose — agents read this on a phone. */
+const firstName = (digest) => String(digest.agent ?? "").trim().split(/\s+/)[0] || "there";
+
+const quiet = (r) =>
+  r.daysSinceTouch !== undefined ? ` — no contact in ${r.daysSinceTouch} days` : "";
+
+const line = (r) => `  • ${r.name}${quiet(r)}${r.source ? ` (${r.source})` : ""}`;
+
 const waitLine = (r) =>
   `  • ${r.name} — waiting ${r.waitingDays ?? "?"} days for a call back${r.source ? ` (${r.source})` : ""}`;
 
+const HOW_IT_WORKS = [
+  "How this works:",
+  "  • \"At risk\" means it has been longer than the follow-up time for that lead since you last called, texted or emailed them.",
+  "  • When a lead is flagged, we add a note to it in Follow Up Boss.",
+  "  • A call, text or email you log on the lead resets the clock and clears it from this list.",
+  "  • A lead is only moved to the pond after it has been flagged and still has not been contacted.",
+];
+
+/** Plain-text digest. Short on purpose — agents read this on a phone. */
 export function renderDigestText(digest) {
-  const parts = [ADMIN_MESSAGE, ""];
+  const parts = [`Hi ${firstName(digest)},`, "", ADMIN_MESSAGE, ""];
 
   // Ordered by urgency: someone who reached out and heard nothing, then the
-  // ones about to go, then the ones on the clock, then — last, as a record —
+  // ones furthest behind, then the ones on the clock, then — last, as a record —
   // the ones already gone.
   if (digest.unanswered?.length) {
-    parts.push(`THEY CONTACTED YOU, NOBODY CAME BACK (${digest.unanswered.length}) — call these first:`);
+    parts.push(`THEY CONTACTED YOU AND NOBODY HAS CALLED THEM BACK (${digest.unanswered.length}) — call these first:`);
     parts.push(...digest.unanswered.map(waitLine), "");
   }
   if (digest.neglected.length) {
-    parts.push(`SWEEPING ${sweepWhen(digest).toUpperCase()} (${digest.neglected.length}) — reach out today to keep these:`);
+    parts.push(`WAY OVERDUE (${digest.neglected.length}) — reach out to these today:`);
+    parts.push(pondSentence(digest), "");
     parts.push(...digest.neglected.map(line), "");
   }
   if (digest.atRisk.length) {
-    parts.push(`AT RISK (${digest.atRisk.length}):`);
+    parts.push(`AT RISK (${digest.atRisk.length}) — it has been too long since you contacted these:`);
     parts.push(...digest.atRisk.map(line), "");
   }
   if (digest.swept?.length) {
@@ -119,7 +145,7 @@ export function renderDigestText(digest) {
     parts.push(...digest.swept.map(line), "");
   }
 
-  parts.push("A lead is only swept after it has been flagged at risk first. Working it clears the flag.");
+  parts.push(...HOW_IT_WORKS);
   return parts.join("\n");
 }
 
@@ -128,7 +154,7 @@ export function renderDigestHtml(digest) {
     String(s).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
   const list = (rows) =>
     `<ul>${rows
-      .map((r) => `<li><strong>${esc(r.name)}</strong>${r.daysSinceTouch !== undefined ? ` — ${r.daysSinceTouch} days quiet` : ""}${r.source ? ` <em>(${esc(r.source)})</em>` : ""}</li>`)
+      .map((r) => `<li><strong>${esc(r.name)}</strong>${quiet(r)}${r.source ? ` <em>(${esc(r.source)})</em>` : ""}</li>`)
       .join("")}</ul>`;
 
   const waitList = (rows) =>
@@ -137,16 +163,21 @@ export function renderDigestHtml(digest) {
       .join("")}</ul>`;
 
   return [
+    `<p>Hi ${esc(firstName(digest))},</p>`,
     `<p><strong>${esc(ADMIN_MESSAGE)}</strong></p>`,
     digest.unanswered?.length
-      ? `<h3>They contacted you, nobody came back (${digest.unanswered.length})</h3><p style="color:#666">Call these first.</p>${waitList(digest.unanswered)}</p>`
+      ? `<h3>They contacted you and nobody has called them back (${digest.unanswered.length})</h3><p style="color:#666">Call these first.</p>${waitList(digest.unanswered)}`
       : "",
-    digest.neglected.length ? `<h3>Sweeping ${sweepWhen(digest)} (${digest.neglected.length})</h3>${list(digest.neglected)}` : "",
-    digest.atRisk.length ? `<h3>At risk (${digest.atRisk.length})</h3>${list(digest.atRisk)}` : "",
+    digest.neglected.length
+      ? `<h3>Way overdue (${digest.neglected.length})</h3><p>${esc(pondSentence(digest))}</p>${list(digest.neglected)}`
+      : "",
+    digest.atRisk.length
+      ? `<h3>At risk (${digest.atRisk.length})</h3><p style="color:#666">It has been too long since you contacted these.</p>${list(digest.atRisk)}`
+      : "",
     digest.swept?.length
       ? `<h3>Moved to the pond tonight (${digest.swept.length})</h3><p style="color:#666">No longer assigned to you.</p>${list(digest.swept)}`
       : "",
-    `<p style="color:#666">A lead is only swept after it has been flagged at risk first. Working it clears the flag.</p>`,
+    `<p style="color:#666"><strong>How this works:</strong> &ldquo;At risk&rdquo; means it has been longer than the follow-up time for that lead since you last called, texted or emailed them. When a lead is flagged, we add a note to it in Follow Up Boss. A call, text or email you log on the lead resets the clock and clears it from this list. A lead is only moved to the pond after it has been flagged and still has not been contacted.</p>`,
   ].join("");
 }
 
@@ -198,8 +229,8 @@ export async function deliverDigests(digests, { channel = "report_only", fub, us
 
         const total = digest.atRisk.length + digest.neglected.length + (digest.unanswered?.length ?? 0);
         const name =
-          `Battr: ${total} of your leads need outreach` +
-          (digest.neglected.length ? ` (${digest.neglected.length} sweeping ${sweepWhen(digest)})` : "");
+          `Battr: ${total} of your leads need a call or text` +
+          (digest.neglected.length ? ` (${digest.neglected.length} way overdue)` : "");
 
         if (!dry) {
           await fub.request("POST", "/tasks", {
@@ -223,8 +254,8 @@ export async function deliverDigests(digests, { channel = "report_only", fub, us
 export function digestSubject(digest) {
   const waiting = digest.unanswered?.length ?? 0;
   const total = digest.atRisk.length + digest.neglected.length + waiting;
-  if (waiting) return `${waiting} lead${waiting === 1 ? "" : "s"} waiting on a call back, ${total} need outreach`;
-  return `${total} of your leads need outreach`;
+  if (waiting) return `${waiting} lead${waiting === 1 ? "" : "s"} waiting on a call back, ${total} need a call or text`;
+  return `${total} of your leads need a call or text`;
 }
 
 async function sendEmail(to, digest) {

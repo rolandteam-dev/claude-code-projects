@@ -579,13 +579,15 @@ check("the backfill cap cannot ration a normal night", () => {
   assert.ok(rules.maxTextBackfill >= 909, "our own 14 Sep run audited 909; the cap must clear that too");
 });
 
-check("agent digests say when sweeping starts while it is held, and 'next run' once it has", () => {
+check("agent digests say plainly when leads will be moved: a date, the next nightly check, or not yet", () => {
   const base = { agent: "A", agentId: 1, atRisk: [], neglected: [{ id: 1, name: "X Lead", daysSinceTouch: 20 }], swept: [], unanswered: [] };
   const held = renderDigestText({ ...base, sweepsStartOn: "2026-11-20" });
-  assert.match(held, /SWEEPING FROM FRI, NOV 20 \(1\)/);
-  assert.doesNotMatch(held, /NEXT RUN/);
-  assert.match(renderDigestHtml({ ...base, sweepsStartOn: "2026-11-20" }), /Sweeping from Fri, Nov 20 \(1\)/);
-  assert.match(renderDigestText({ ...base, sweepsStartOn: null }), /SWEEPING NEXT RUN \(1\)/);
+  assert.match(held, /WAY OVERDUE \(1\)/);
+  assert.match(held, /moved out of your name to the team pond starting Fri, Nov 20/);
+  assert.doesNotMatch(held, /next nightly check/);
+  assert.match(renderDigestHtml({ ...base, sweepsStartOn: "2026-11-20" }), /Way overdue \(1\)[\s\S]*starting Fri, Nov 20/);
+  assert.match(renderDigestText({ ...base, sweepsStartOn: null }), /at the next nightly check/);
+  assert.doesNotMatch(held, /swept|sweeping/i, "no internal jargon in what an agent reads");
 });
 
 check("Submitting Offers is nudge-only; Listing Agreement, Active Listing and Under Contract are not audited", () => {
@@ -2152,10 +2154,11 @@ check("the paused owner-group gets no alerts", () => {
 check("the digest leads with the admin message and flags what is sweeping", () => {
   const [digest] = buildAgentDigests([record({ status: "neglected", name: "Long Gone" })]);
   const text = renderDigestText(digest);
-  assert.match(text, /At risk leads need to be worked ASAP/);
-  assert.match(text, /SWEEPING NEXT RUN \(1\)/);
+  assert.match(text, /too long without a call, text or email from you/);
+  assert.match(text, /WAY OVERDUE \(1\)/);
   assert.match(text, /Long Gone/);
-  assert.match(text, /only swept after it has been flagged at risk first/);
+  assert.match(text, /only moved to the pond after it has been flagged/);
+  assert.match(text, /^Hi /, "it greets the agent");
 });
 
 check("a lead already swept tonight is never listed as still savable", () => {
@@ -2171,7 +2174,7 @@ check("a lead already swept tonight is never listed as still savable", () => {
   assert.equal(digest.neglected.length, 1);
 
   const text = renderDigestText(digest);
-  assert.match(text, /SWEEPING NEXT RUN \(1\)[\s\S]*Still Yours/);
+  assert.match(text, /WAY OVERDUE \(1\)[\s\S]*Still Yours/);
   assert.match(text, /MOVED TO THE POND TONIGHT \(1\)[\s\S]*Already Gone/);
   assert.ok(
     text.indexOf("Still Yours") < text.indexOf("Already Gone"),
@@ -2226,7 +2229,7 @@ check("an unanswered lead earns an agent an email on its own", () => {
   assert.equal(digest.atRisk.length, 0);
 
   const text = renderDigestText(digest);
-  assert.match(text, /THEY CONTACTED YOU, NOBODY CAME BACK \(1\)/);
+  assert.match(text, /THEY CONTACTED YOU AND NOBODY HAS CALLED THEM BACK \(1\)/);
   assert.match(text, /waiting 5 days for a call back/);
 });
 
@@ -2346,10 +2349,10 @@ check("mailConfigured is what gates every send", () => {
 
 check("the subject leads with whoever is waiting on a call back", () => {
   const waiting = digestSubject({ atRisk: [1], neglected: [1], unanswered: [1] });
-  assert.match(waiting, /^1 lead waiting on a call back, 3 need outreach$/);
+  assert.match(waiting, /^1 lead waiting on a call back, 3 need a call or text$/);
 
   const plain = digestSubject({ atRisk: [1, 2], neglected: [1], unanswered: [] });
-  assert.equal(plain, "3 of your leads need outreach");
+  assert.equal(plain, "3 of your leads need a call or text");
 });
 
 // ------------------------------------------------------------- CSV importer
@@ -2816,7 +2819,7 @@ check("the agent email lists only what the agent was warned about, and says plai
   const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
   assert.match(src, /!nudgePlan\.heldIds\.has\(r\.id\)/, "a lead still waiting its turn is not in tonight's email");
   const base = { agent: "A", agentId: 1, atRisk: [], neglected: [{ id: 1, name: "X Lead", daysSinceTouch: 20 }], swept: [], unanswered: [] };
-  assert.match(renderDigestText({ ...base, sweepsStartOn: "2027-01-01" }), /SWEEPING ON A DATE TO BE ANNOUNCED \(1\)/);
+  assert.match(renderDigestText({ ...base, sweepsStartOn: "2027-01-01" }), /WAY OVERDUE \(1\)[\s\S]*Nothing is being moved out of your name right now/);
   assert.doesNotMatch(renderDigestText({ ...base, sweepsStartOn: "2027-01-01" }), /JAN/i);
 });
 
