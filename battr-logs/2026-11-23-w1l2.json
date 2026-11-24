@@ -1,0 +1,559 @@
+{
+  "runId": "2026-11-23-w1l2",
+  "timestamp": "2026-11-24T11:58:46.224Z",
+  "dry": false,
+  "sweeps": [],
+  "only": null,
+  "nudges": [
+    {
+      "personId": 82838,
+      "name": "Rachel Adams",
+      "owner": "Quetza Adame",
+      "source": "my +plus leads",
+      "noteId": 1494928,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 83173,
+      "name": "Senoo Mika",
+      "owner": "Quetza Adame",
+      "source": "my +plus leads",
+      "noteId": 1494929,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 84893,
+      "name": "Yared Admasu Kassa",
+      "owner": "Shantele Marcum",
+      "source": "my +plus leads",
+      "noteId": 1494930,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 84924,
+      "name": "Stephen Morgan",
+      "owner": "Shantele Marcum",
+      "source": "my +plus leads",
+      "noteId": 1494931,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 84946,
+      "name": "Marvin Grijalva",
+      "owner": "Shantele Marcum",
+      "source": "my +plus leads",
+      "noteId": 1494932,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 84996,
+      "name": "Tammy Lovell",
+      "owner": "Shantele Marcum",
+      "source": "my +plus leads",
+      "noteId": 1494933,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 84925,
+      "name": "Kyle Jamison",
+      "owner": "Shantele Marcum",
+      "source": "my +plus leads",
+      "noteId": 1494934,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 80809,
+      "name": "John Gemar",
+      "owner": "Nicole Miller",
+      "source": "my +plus leads",
+      "noteId": 1494935,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 82346,
+      "name": "Ron Cameron",
+      "owner": "Martine Goldberg",
+      "source": "Steve Hawks",
+      "noteId": 1494936,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 84802,
+      "name": "Israel Hernandez",
+      "owner": "Shantele Marcum",
+      "source": "my +plus leads",
+      "noteId": 1494937,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 85008,
+      "name": "Phumanee Nosavan",
+      "owner": "Liza Rivera",
+      "source": "my +plus leads",
+      "noteId": 1494938,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 71425,
+      "name": "Nick",
+      "owner": "Nicole Miller",
+      "source": "CallAction  > Riders",
+      "noteId": 1494939,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 72179,
+      "name": "Irene Luna",
+      "owner": "Nicole Miller",
+      "source": "Steve Hawks",
+      "noteId": 1494940,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 84911,
+      "name": "Gabriel Valdez",
+      "owner": "Shantele Marcum",
+      "source": "my +plus leads",
+      "noteId": 1494941,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 84997,
+      "name": "Todd Weldy",
+      "owner": "Nicole Miller",
+      "source": "my +plus leads",
+      "noteId": 1494942,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 84322,
+      "name": "Daniel Dennon",
+      "owner": "Shantele Marcum",
+      "source": "my +plus leads",
+      "noteId": 1494943,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 84335,
+      "name": "Marine Petrosyan",
+      "owner": "Shantele Marcum",
+      "source": "my +plus leads",
+      "noteId": 1494944,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 84336,
+      "name": "Ki Kim",
+      "owner": "Shantele Marcum",
+      "source": "my +plus leads",
+      "noteId": 1494945,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 82335,
+      "name": "Roberto West",
+      "owner": "Quetza Adame",
+      "source": "my +plus leads",
+      "noteId": 1494946,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 82584,
+      "name": "Brandon Bender",
+      "owner": "Quetza Adame",
+      "source": "my +plus leads",
+      "noteId": 1494947,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 82712,
+      "name": "John Walker",
+      "owner": "Quetza Adame",
+      "source": "my +plus leads",
+      "noteId": 1494948,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 82851,
+      "name": "Shaquiel Sharifan",
+      "owner": "Quetza Adame",
+      "source": "my +plus leads",
+      "noteId": 1494949,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 82881,
+      "name": "Carlos Chicas",
+      "owner": "Quetza Adame",
+      "source": "my +plus leads",
+      "noteId": 1494950,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 82884,
+      "name": "Camelia Chandler",
+      "owner": "Quetza Adame",
+      "source": "my +plus leads",
+      "noteId": 1494951,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 83046,
+      "name": "Jit Dhaliwal",
+      "owner": "Quetza Adame",
+      "source": "my +plus leads",
+      "noteId": 1494952,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 83076,
+      "name": "Dorothy Colbert",
+      "owner": "Quetza Adame",
+      "source": "my +plus leads",
+      "noteId": 1494953,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 100934,
+      "name": "Armando Hernandez",
+      "owner": "Sylvia Landa",
+      "source": "Zillow Preferred",
+      "noteId": 1494954,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 84933,
+      "name": "Xing Wang",
+      "owner": "Anthony Ma",
+      "source": "my +plus leads",
+      "noteId": 1494955,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 89293,
+      "name": "Nahid Jahed",
+      "owner": "Nik Sharapov",
+      "source": "Zillow Preferred",
+      "noteId": 1494956,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 43933,
+      "name": "Maria Masongsong Chacon",
+      "owner": "Anthony Ma",
+      "source": "Real Geeks",
+      "noteId": 1494957,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 60089,
+      "name": "Vanessa Sorrells",
+      "owner": "Karen Valdivia",
+      "source": "Google PPC",
+      "noteId": 1494958,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 41792,
+      "name": "Jhay Gambol",
+      "owner": "Sylvia Landa",
+      "source": "Kyle Nicholas McCray Referral",
+      "noteId": 1494959,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 99637,
+      "name": "Tristyn Jordan",
+      "owner": "Nik Sharapov",
+      "source": "TheRolandTeam.com",
+      "noteId": 1494960,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 83008,
+      "name": "Spencer Miller",
+      "owner": "Nik Sharapov",
+      "source": "my +plus leads",
+      "noteId": 1494961,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 100047,
+      "name": "Phuong Dao",
+      "owner": "Nik Sharapov",
+      "source": "zbuyer.com",
+      "noteId": 1494962,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 63217,
+      "name": "Melvin Natividad",
+      "owner": "Nik Sharapov",
+      "source": "ISA Transfer",
+      "noteId": 1494963,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 73578,
+      "name": "Joshua Rouser",
+      "owner": "Nik Sharapov",
+      "source": "zbuyer.com",
+      "noteId": 1494964,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 101198,
+      "name": "Daniel Johnson",
+      "owner": "Patty Cierley",
+      "source": "Ylopo LSA",
+      "noteId": 1494965,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 84922,
+      "name": "Joseph Wang",
+      "owner": "Nik Sharapov",
+      "source": "my +plus leads",
+      "noteId": 1494966,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 100774,
+      "name": "Daelyn Woods",
+      "owner": "Sylvia Landa",
+      "source": "Zillow Preferred",
+      "noteId": 1494967,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 99742,
+      "name": "Melissa Whitmire",
+      "owner": "Anthony Ma",
+      "source": "TheRolandTeam.com",
+      "noteId": 1494968,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 86612,
+      "name": "Guadalupe Gutierrez",
+      "owner": "Lynda Hwang",
+      "source": "Zillow Preferred",
+      "noteId": 1494969,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 37305,
+      "name": "Bernard Earl Fuller III",
+      "owner": "Patty Cierley",
+      "source": "TheRolandTeam.com",
+      "noteId": 1494970,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 98230,
+      "name": "Juan Valencia",
+      "owner": "Patty Cierley",
+      "source": "Citywide Long Form",
+      "noteId": 1494971,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 100441,
+      "name": "Kenneth Johnson",
+      "owner": "Anthony Ma",
+      "source": "Citywide Long Form",
+      "noteId": 1494972,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 101414,
+      "name": "Bradley Beatty",
+      "owner": "Patty Cierley",
+      "source": "TheRolandTeam.com",
+      "noteId": 1494973,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 63218,
+      "name": "Frank Gonzalez",
+      "owner": "Anthony Ma",
+      "source": "Zillow Preferred",
+      "noteId": 1494974,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 60463,
+      "name": "Zai Ranney",
+      "owner": "Sylvia Landa",
+      "source": "Google PPC",
+      "noteId": 1494975,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 100253,
+      "name": "Brian Willets",
+      "owner": "Misty Sumner",
+      "source": "ISA Transfer",
+      "noteId": 1494976,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    },
+    {
+      "personId": 70858,
+      "name": "Joe",
+      "owner": "Patty Cierley",
+      "source": "ISA Transfer",
+      "noteId": 1494977,
+      "fields": [
+        "customBattrAtRiskSince",
+        "customBattrLastNudged"
+      ]
+    }
+  ]
+}
