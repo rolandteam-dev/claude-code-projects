@@ -13,7 +13,18 @@ import { createHmac, randomBytes } from "crypto";
 import { get, put } from "@vercel/blob";
 import { safeEqual } from "../config";
 
-export const BLANK_PATH = "forms/rpa-blank.pdf";
+export const FORM_NAMES = ["rpa", "duties", "supp", "bbra"] as const;
+export type FormName = (typeof FORM_NAMES)[number];
+/** Pages each blank must have (a revised form has a different count and its layout must be re-mapped). */
+export const FORM_PAGES: Record<FormName, number> = { rpa: 11, duties: 1, supp: 1, bbra: 3 };
+export const FORM_LABEL: Record<FormName, string> = {
+  rpa: "Residential Purchase Agreement",
+  duties: "Duties Owed",
+  supp: "Duties Owed Supplemental List",
+  bbra: "Buyer Brokerage Agreement (BBRA)",
+};
+const blankPath = (name: FormName) => `forms/${name}-blank.pdf`;
+export const BROKERAGE_PATH = "config/brokerage.json";
 const DRAFT_TTL_DAYS = 14;
 const LINK_DAYS = 7;
 
@@ -25,19 +36,30 @@ async function readAll(stream: ReadableStream<Uint8Array>): Promise<Uint8Array> 
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
-export async function storeBlank(bytes: Uint8Array): Promise<void> {
-  await put(BLANK_PATH, Buffer.from(bytes), { access: "private", contentType: "application/pdf", allowOverwrite: true, addRandomSuffix: false });
+export async function storeBlank(name: FormName, bytes: Uint8Array): Promise<void> {
+  await put(blankPath(name), Buffer.from(bytes), { access: "private", contentType: "application/pdf", allowOverwrite: true, addRandomSuffix: false });
 }
 
-/** The blank RPA, or null when it hasn't been uploaded (or Blob isn't set up). */
-export async function loadBlank(): Promise<Uint8Array | null> {
+/** A blank form, or null when it hasn't been uploaded (or Blob isn't set up). */
+export async function loadBlank(name: FormName): Promise<Uint8Array | null> {
   if (!blobConfigured()) return null;
-  const res = await get(BLANK_PATH, { access: "private", useCache: false });
+  const res = await get(blankPath(name), { access: "private", useCache: false });
   return res?.stream ? readAll(res.stream) : null;
 }
 
-export async function saveDraft(pdf: Uint8Array): Promise<string> {
-  const id = randomBytes(16).toString("hex");
+export async function storeBrokerageJson(json: string): Promise<void> {
+  await put(BROKERAGE_PATH, json, { access: "private", contentType: "application/json", allowOverwrite: true, addRandomSuffix: false });
+}
+
+export async function loadBrokerageJson(): Promise<string | null> {
+  if (!blobConfigured()) return null;
+  const res = await get(BROKERAGE_PATH, { access: "private", useCache: false });
+  return res?.stream ? new TextDecoder().decode(await readAll(res.stream)) : null;
+}
+
+/** Stores a filled draft; the id carries the form kind ("duties-<32 hex>"). */
+export async function saveDraft(kind: FormName, pdf: Uint8Array): Promise<string> {
+  const id = `${kind}-${randomBytes(16).toString("hex")}`;
   await put(`drafts/${id}.pdf`, Buffer.from(pdf), {
     access: "private",
     contentType: "application/pdf",
@@ -48,8 +70,10 @@ export async function saveDraft(pdf: Uint8Array): Promise<string> {
   return id;
 }
 
+export const DRAFT_ID = /^(rpa|duties|supp|bbra)-[0-9a-f]{32}$/;
+
 export async function loadDraft(id: string): Promise<Uint8Array | null> {
-  if (!/^[0-9a-f]{32}$/.test(id) || !blobConfigured()) return null;
+  if (!DRAFT_ID.test(id) || !blobConfigured()) return null;
   const res = await get(`drafts/${id}.pdf`, { access: "private", useCache: false });
   return res?.stream ? readAll(res.stream) : null;
 }

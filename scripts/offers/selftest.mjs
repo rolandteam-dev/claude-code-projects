@@ -18,7 +18,10 @@ import {
   parseJobType,
   parseJobResult,
 } from "../../src/lib/offers/types.ts";
+import { standardCloseDate, isHoliday } from "../../src/lib/offers/dates.ts";
 import { draftLink, verifyDraftLink } from "../../src/lib/offers/rpa/store.ts";
+import { findAgent, parseBrokerage } from "../../src/lib/offers/forms/brokerage.ts";
+import { splitBuyers } from "../../src/lib/offers/forms/draw.ts";
 import { dollarsInWords, parseAddress } from "../../src/lib/offers/rpa/fill.ts";
 import { verifySlackSignature, jobMessage, readModalValues, esc } from "../../src/lib/offers/slack.ts";
 import { isAllowedUser, canReview, safeEqual } from "../../src/lib/offers/config.ts";
@@ -31,7 +34,6 @@ import {
   coverEmail,
   pickListing,
   questionText,
-  addDays,
   joinNames,
 } from "../../src/lib/offers/terms.ts";
 
@@ -330,10 +332,11 @@ test("with list price + financing, the rest comes from defaults and is labelled"
   assert.deepEqual(r.missing, []);
   assert.equal(r.errors, null);
   assert.equal(r.inputs.earnestMoney, 5000); // 1% of 500k
-  assert.equal(r.inputs.closeDate, addDays(TODAY, 30));
+  assert.equal(r.inputs.closeDate, standardCloseDate(TODAY, 30)); // 30 days out, moved to a Tue/Wed/Thu
   assert.deepEqual(r.inputs.contingencies, ["inspection", "appraisal", "loan"]);
   assert.equal(r.inputs.inspectionDays, 10);
-  assert.equal(r.inputs.loanDays, 21);
+  assert.equal(r.inputs.appraisalDays, 21);
+  assert.equal(r.inputs.loanDays, 30);
   assert.equal(r.inputs.clientName, "Mark Smith and Megan Smith");
   assert.equal(r.inputs.agentName, "Mike Roland");
   assert.deepEqual(r.defaulted, ["Earnest money", "Close of escrow", "Contingencies"]);
@@ -439,16 +442,16 @@ test("sanitizeExtraction never trusts the model", () => {
   });
 });
 
-test("the terms sheet states the typed numbers and warns about placeholder defaults", () => {
+test("the terms sheet states the typed numbers and lists what came from defaults", () => {
   const r = resolveTerms({ ...SAID, listPrice: 520000, financing: "conventional", downPaymentPercent: 5, sellerCredit: 5000 }, CTX);
   const sheet = sheetText(r.inputs, r.defaulted);
   assert.match(sheet, /Purchase price:\s+\$500,000\s+\(list \$520,000, 96\.2%\)/);
   assert.match(sheet, /Earnest money:\s+\$5,000/);
   assert.match(sheet, /Seller credit:\s+\$5,000/);
   assert.match(sheet, /Down payment:\s+5% \(\$25,000\)/);
-  assert.match(sheet, /Inspection \(10 days\), Appraisal \(17 days\), Loan \(21 days\)/);
+  assert.match(sheet, /Inspection \(10 days\), Appraisal \(21 days\), Loan \(30 days\)/);
   assert.match(sheet, /Filled from defaults, not stated: Earnest money, Close of escrow, Contingencies/);
-  assert.match(sheet, /PLACEHOLDERS/);
+  assert.doesNotMatch(sheet, /PLACEHOLDERS/); // the team has confirmed these as its standard terms
   const allStated = resolveTerms(
     { ...SAID, listPrice: 520000, financing: "cash", earnestMoney: 10000, closeDate: "2026-12-30", contingencies: [] },
     CTX,
@@ -598,6 +601,42 @@ test("RPA draft links are signed, expiring and tamper-proof", () => {
   assert.ok(!verifyDraftLink(id, null, null));
   delete process.env.SLACK_SIGNING_SECRET;
   assert.equal(draftLink(id, "https://home.example.com"), null); // no secret, no link
+});
+
+test("default close of escrow: 30 days out, moved to the next Tue/Wed/Thu that is not a holiday", () => {
+  // 2026-11-24 (Tue) + 30 = Thu 2026-12-24: a Thursday, not a holiday, so it stays.
+  assert.equal(standardCloseDate("2026-11-24", 30), "2026-12-24");
+  // 2026-11-27 + 30 = Sat 12-27 -> next Tue/Wed/Thu is Tue 12-29.
+  assert.equal(standardCloseDate("2026-11-27", 30), "2026-12-29");
+  // Thursday 2026-07-02 + 30 = Sat 08-01 -> Tue 08-04.
+  assert.equal(standardCloseDate("2026-07-02", 30), "2026-08-04");
+  // Landing on Thanksgiving (Thu 2026-11-26) moves on past Family Day (Fri), the weekend and Monday to Tue 12-01.
+  assert.equal(standardCloseDate("2026-10-27", 30), "2026-12-01");
+  assert.ok(isHoliday("2026-11-26") && isHoliday("2026-11-27") && isHoliday("2026-12-25"));
+  assert.ok(isHoliday("2027-07-05")); // July 4, 2027 is a Sunday, observed Monday
+  assert.ok(isHoliday("2026-10-30")); // Nevada Day: last Friday of October
+  assert.ok(!isHoliday("2026-12-24"));
+});
+
+test("brokerage config: parsed defensively, agents found by name, alias or unique first+last", () => {
+  const cfg = parseBrokerage({
+    broker: { name: "B Broker", company: "Co" },
+    agents: [{ name: "Mike S. Roland", license: "S.1", aliases: ["Mike"] }, { name: "Pat Lee", license: "S.2" }, { name: "Pat Smith" }, { name: "" }],
+    additionalLicensees: [{ name: "Casey", license: "S.3" }, {}],
+  });
+  assert.equal(cfg.agents.length, 3);
+  assert.equal(cfg.additionalLicensees.length, 1);
+  assert.equal(findAgent(cfg, "mike")?.license, "S.1");
+  assert.equal(findAgent(cfg, "Pat Lee")?.license, "S.2");
+  assert.equal(findAgent(cfg, "Mike Roland")?.license, "S.1"); // first + last match, middle initial ignored
+  assert.equal(findAgent(cfg, "Pat"), undefined); // ambiguous or unknown: never guess a license
+  assert.throws(() => parseBrokerage({ broker: { name: "" } }), /required/);
+});
+
+test("splitBuyers prefers the explicit list, else splits typed names", () => {
+  assert.deepEqual(splitBuyers(["A B", "C D"], "ignored"), ["A B", "C D"]);
+  assert.deepEqual(splitBuyers(undefined, "Mark Smith and Megan Smith"), ["Mark Smith", "Megan Smith"]);
+  assert.deepEqual(splitBuyers(undefined, "Mark & Megan Smith"), ["Mark", "Megan Smith"]);
 });
 
 console.log(`offers selftest: ${passed} passed${process.exitCode ? " (with failures)" : ""}`);

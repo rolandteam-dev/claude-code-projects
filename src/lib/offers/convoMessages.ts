@@ -6,8 +6,8 @@ import { OFFER_DEFAULTS_ARE_PLACEHOLDERS } from "../../content/offerDefaults";
 import { esc, slackApi } from "./slack";
 import { coverEmail, questionText, sheetText, type ResolvedTerms, type Source } from "./terms";
 import { homeownerBrand } from "../homeowners/brand";
-import { fillRpa } from "./rpa/fill";
-import { draftLink, loadBlank, saveDraft } from "./rpa/store";
+import { buildPacket } from "./forms/packet";
+import { FORM_LABEL, draftLink, saveDraft } from "./rpa/store";
 import { todayLasVegas, type BuyerOfferInputs } from "./types";
 
 type Block = Record<string, unknown>;
@@ -109,30 +109,37 @@ export function sheetMessage(inputs: BuyerOfferInputs, defaulted: string[]): Msg
 }
 
 /**
- * The terms sheet plus, when the blank RPA is stored, a link to the filled RPA draft.
- * Never throws: if the form can't be filled the agent still gets the sheet.
+ * The terms sheet plus, when the blank forms are stored, links to the filled forms packet
+ * (Duties Owed, Supplemental list, BBRA, purchase agreement) and what is left for the agent to complete.
+ * Never throws: if the forms can't be built the agent still gets the sheet.
  */
 export async function sheetMessageWithRpa(inputs: BuyerOfferInputs, defaulted: string[]): Promise<Msg> {
   const msg = sheetMessage(inputs, defaulted);
   try {
-    const blank = await loadBlank();
-    if (!blank) return msg;
-    const filled = await fillRpa(blank, inputs, todayLasVegas());
-    const link = draftLink(await saveDraft(filled.pdf), homeownerBrand.baseUrl);
-    if (!link) return msg;
-    const todo = filled.stillToDo.map((t) => `• ${t}`).join("\n");
-    const warn = filled.warnings.length ? `\n:warning: ${filled.warnings.join(" ")}` : "";
+    const packet = await buildPacket(inputs, todayLasVegas());
+    if (!packet.items.length) return msg;
+    const lines: string[] = [];
+    const todo: string[] = [];
+    for (const item of packet.items) {
+      const link = draftLink(await saveDraft(item.kind, item.pdf), homeownerBrand.baseUrl);
+      if (!link) continue;
+      lines.push(`${lines.length + 1}. <${link}|${item.label}>${item.note ? ` _(${item.note})_` : ""}`);
+      for (const t of item.stillToDo) todo.push(`• *${item.label}:* ${t}`);
+      for (const w of item.warnings) todo.push(`• :warning: ${w}`);
+    }
+    if (!lines.length) return msg;
+    const skipped = packet.skipped.length ? `\n_Not prepared: ${packet.skipped.map((s) => FORM_LABEL[s.kind]).join(", ")}._` : "";
     const placeholder = OFFER_DEFAULTS_ARE_PLACEHOLDERS && defaulted.length ? "\n:warning: Some terms are placeholder defaults, so check them." : "";
     msg.blocks = [
       ...(msg.blocks ?? []),
       md(
-        `*Filled Residential Purchase Agreement (draft)*\n<${link}|Download the RPA draft (PDF)> (link works for 7 days)\n` +
-          `Review it, finish the blanks below, then upload it to TransactionDesk to sign and send.${warn}${placeholder}`,
+        `*Filled forms (drafts, in signing order)*\n${lines.join("\n")}\n` +
+          `Links work for 7 days. Review each one, finish the blanks below, then upload them to TransactionDesk to sign and send.${skipped}${placeholder}`,
       ),
-      md(`*Still for you to complete:*\n${todo}`),
+      md(`*Still for you to complete:*\n${todo.join("\n")}`),
     ];
   } catch (e) {
-    console.error("[offers] RPA draft failed", e);
+    console.error("[offers] forms packet failed", e);
   }
   return msg;
 }

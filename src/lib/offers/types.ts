@@ -51,6 +51,8 @@ export const CONTINGENCY_LABEL: Record<Contingency, string> = {
 export interface BuyerOfferInputs {
   address: string;
   clientName: string;
+  /** The buyers one per entry, when known (the forms need them separately). */
+  buyerNames?: string[];
   /** Optional Follow Up Boss person id, so the worker/agent can find the record. */
   fubPersonId?: string;
   listPrice: number;
