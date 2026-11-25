@@ -6,6 +6,7 @@
  * can never invent a price, a date or a contingency.
  */
 import { OFFER_DEFAULTS_ARE_PLACEHOLDERS, offerDefaults } from "../../content/offerDefaults";
+import { standardCloseDate } from "./dates";
 import {
   CONTINGENCIES,
   CONTINGENCY_LABEL,
@@ -175,7 +176,7 @@ export function resolveTerms(s: StatedTerms, ctx: ResolveContext): ResolvedTerms
 
   const earnestMoney =
     s.earnestMoney ?? (offerPrice ? roundTo100((offerPrice * offerDefaults.earnestMoneyPercent) / 100) : undefined);
-  const closeDate = s.closeDate ?? addDays(ctx.today, offerDefaults.closeOfEscrowDays);
+  const closeDate = s.closeDate ?? standardCloseDate(ctx.today, offerDefaults.closeOfEscrowDays);
 
   const defaultList = offerDefaults.contingencies.filter((c) => !(financing === "cash" && c === "loan"));
   const contingencies: Contingency[] = s.contingencies ?? [...defaultList];
@@ -246,7 +247,7 @@ export function resolveTerms(s: StatedTerms, ctx: ResolveContext): ResolvedTerms
   };
   const checked = validateBuyerForm(raw, new Date(`${ctx.today}T20:00:00Z`));
   if (!checked.ok) return { missing, errors: checked.errors, inputs: null, display, defaulted };
-  return { missing, errors: null, inputs: checked.inputs, display, defaulted };
+  return { missing, errors: null, inputs: { ...checked.inputs, buyerNames: buyers }, display, defaulted };
 }
 
 /** One message asking for everything still missing. */
