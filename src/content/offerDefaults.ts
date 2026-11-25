@@ -36,6 +36,25 @@ export const standardTerms = {
   escrow: { company: "Magnus Title - RETA", officer: "Denise Barragan" },
   /** Home protection plan: required, seller pays. */
   homeProtection: { company: "Achosa", paidBy: "seller", maxPrice: 795 },
+  /**
+   * Inspections (RPA §8D): who pays for each. The coordinator's email says "all others marked N/A";
+   * her filled offer (5732 Aspen Park Lane) says "Waived". The filled offer is followed here: CONFIRM WITH HER.
+   */
+  inspections: { home: "Buyer", others: "Waived", otherNote: "N/A" },
+  /** Title, escrow & appraisal fees (RPA §9A). */
+  fees: { escrow: "50/50", transferTax: "Seller", ownersPolicy: "Seller", lendersPolicy: "Buyer", appraisal: "Buyer", other: "N/A" },
+  /** CIC related expenses (RPA §11A): every line. */
+  cicPaidBy: "Seller",
+  /** Disclosures marked (RPA §12). Solar addendum only when it applies. */
+  disclosures: ["srpd", "constructionDefect"],
+  walkThroughDays: 3,
+  /** Possession (RPA §15): at close of escrow. */
+  possession: "coe",
+  /**
+   * Broker's compensation (RPA §22): the coordinator's email says "Marked Buyer Will"; her filled offer marks
+   * "will not pay additional compensation". The filled offer is followed here: CONFIRM WITH HER.
+   */
+  buyerPaysAdditionalCompensation: false,
   /** "Additional Terms" attached to every offer (RPA page 9). */
   additionalTerms: [
     "Seller shall be required to respond to Buyer’s request for repairs if such request is submitted following Buyer’s home inspection. In the event Seller fails to provide a response prior to the expiration of the Due Diligence Period, the Due Diligence Period shall automatically extend and remain in effect until all repair requests have been addressed and a written agreement regarding such repairs has been reached by all parties.",

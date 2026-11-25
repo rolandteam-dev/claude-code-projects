@@ -310,7 +310,7 @@ test("user and worker text cannot inject mentions or links", () => {
 const TODAY = "2026-11-17";
 const CTX = { speakerName: "Mike Roland", today: TODAY };
 // "write an offer for Mark Smith and Megan Smith, $500,000, 123 Main Street" and nothing else
-const SAID = { buyerNames: ["Mark Smith", "Megan Smith"], address: "123 Main Street", offerPrice: 500000 };
+const SAID = { buyerNames: ["Mark Smith", "Megan Smith"], address: "123 Main Street", offerPrice: 500000, occupy: true };
 
 test("the example sentence asks only for what it can't know", () => {
   const r = resolveTerms(SAID, CTX);
@@ -507,6 +507,7 @@ const MEGAN = {
   homeWarranty: "seller",
   inclusions: ["refrigerator", "washer", "dryer", "window coverings"],
   closeDate: "2026-12-15",
+  occupy: true,
 };
 
 test("the 123 Main sentence resolves with every term as a real field", () => {
@@ -637,6 +638,19 @@ test("splitBuyers prefers the explicit list, else splits typed names", () => {
   assert.deepEqual(splitBuyers(["A B", "C D"], "ignored"), ["A B", "C D"]);
   assert.deepEqual(splitBuyers(undefined, "Mark Smith and Megan Smith"), ["Mark Smith", "Megan Smith"]);
   assert.deepEqual(splitBuyers(undefined, "Mark & Megan Smith"), ["Mark", "Megan Smith"]);
+});
+
+test("occupancy is asked for, never defaulted, and carried onto the inputs", () => {
+  const c = { speakerName: "Mike Roland", today: "2026-11-19" };
+  const noOccupy = { ...MEGAN };
+  delete noOccupy.occupy;
+  const r = resolveTerms(noOccupy, c);
+  assert.equal(r.inputs, null);
+  assert.match(r.missing[0], /live in the home/);
+  assert.equal(resolveTerms(MEGAN, c).inputs.occupy, true);
+  assert.equal(resolveTerms({ ...MEGAN, occupy: false }, c).inputs.occupy, false);
+  assert.equal(sanitizeExtraction({ occupy: "yes" }).terms.occupy, undefined); // only a real boolean counts
+  assert.equal(sanitizeExtraction({ occupy: false }).terms.occupy, false);
 });
 
 console.log(`offers selftest: ${passed} passed${process.exitCode ? " (with failures)" : ""}`);

@@ -78,7 +78,16 @@ export async function buildPacket(inputs: BuyerOfferInputs, today: string): Prom
     const blank = await loadBlank("rpa");
     if (!blank) skip("rpa", "blank form not uploaded");
     else {
-      const r = await fillRpa(blank, inputs, today);
+      const rostered = cfg ? findAgent(cfg, inputs.agentName) : undefined;
+      const rpaCtx = cfg
+        ? {
+            broker: cfg.broker,
+            agent: { name: rostered?.name ?? inputs.agentName ?? "", license: rostered?.license || undefined, email: rostered?.email },
+            phone: rostered?.phone || cfg.officePhone || undefined,
+            emails: [rostered?.email, ...cfg.contactEmails].filter((e, n, all): e is string => Boolean(e) && all.indexOf(e) === n),
+          }
+        : undefined;
+      const r = await fillRpa(blank, inputs, today, inputs.agentName ? rpaCtx : undefined);
       items.push({ kind: "rpa", label: FORM_LABEL.rpa, pdf: r.pdf, stillToDo: r.stillToDo, warnings: r.warnings });
     }
   } catch (e) {

@@ -75,6 +75,8 @@ export interface BuyerOfferInputs {
   mlsNumber?: string;
   /** Percent of the purchase price paid down. Set for financed offers; absent for cash. */
   downPaymentPercent?: number;
+  /** Will the buyers live in the home (RPA page 1)? Undefined = not asked/known: the agent ticks it by hand. */
+  occupy?: boolean;
   /** Who pays for a home warranty, when one is part of the offer. */
   homeWarranty?: "seller" | "buyer";
   /** Items that convey with the property (appliances, window coverings, ...). */

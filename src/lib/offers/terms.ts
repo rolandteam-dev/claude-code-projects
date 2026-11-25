@@ -38,6 +38,8 @@ export interface StatedTerms {
   sellerCredit?: number;
   downPaymentPercent?: number;
   homeWarranty?: "seller" | "buyer";
+  /** Buyers will live in the home (true) or not: investment, second home (false). */
+  occupy?: boolean;
   inclusions?: string[];
   notes?: string;
   /** Result of the MLS lookup for `address`. Cleared whenever the address changes. */
@@ -210,6 +212,7 @@ export function resolveTerms(s: StatedTerms, ctx: ResolveContext): ResolvedTerms
   );
   if (s.sellerCredit !== undefined) row("Seller credit", formatMoney(s.sellerCredit), "stated");
   if (s.homeWarranty) row("Home warranty", warrantyText(s.homeWarranty), "stated");
+  if (s.occupy !== undefined) row("Occupancy", s.occupy ? "Buyers will live in it" : "Buyers will not live in it", "stated");
   if (s.inclusions?.length) row("Included", s.inclusions.map(capFirst).join(", "), "stated");
   if (s.notes) row("Notes", s.notes, "stated");
 
@@ -222,6 +225,8 @@ export function resolveTerms(s: StatedTerms, ctx: ResolveContext): ResolvedTerms
   if (!financing) missing.push("how they're paying (cash, conventional, FHA, VA)");
   // A down payment is never defaulted: guessing it would put a wrong loan term in the offer.
   if (financing && financing !== "cash" && downPct === undefined) missing.push("the down payment (percent)");
+  // Page 1 of the RPA makes the agent declare occupancy; it is the item agents most often forget, so ask.
+  if (s.occupy === undefined) missing.push("whether the buyers will live in the home (their residence) or not (investment, second home)");
 
   if (missing.length > 0) return { missing, errors: null, inputs: null, display, defaulted };
 
@@ -247,7 +252,7 @@ export function resolveTerms(s: StatedTerms, ctx: ResolveContext): ResolvedTerms
   };
   const checked = validateBuyerForm(raw, new Date(`${ctx.today}T20:00:00Z`));
   if (!checked.ok) return { missing, errors: checked.errors, inputs: null, display, defaulted };
-  return { missing, errors: null, inputs: { ...checked.inputs, buyerNames: buyers }, display, defaulted };
+  return { missing, errors: null, inputs: { ...checked.inputs, buyerNames: buyers, ...(s.occupy !== undefined ? { occupy: s.occupy } : {}) }, display, defaulted };
 }
 
 /** One message asking for everything still missing. */
@@ -317,6 +322,7 @@ export function sanitizeExtraction(raw: unknown): Extraction {
     terms.downPaymentPercent = Math.round(r.downPaymentPercent * 100) / 100;
   }
   if (r.homeWarranty === "seller" || r.homeWarranty === "buyer") terms.homeWarranty = r.homeWarranty;
+  if (typeof r.occupy === "boolean") terms.occupy = r.occupy;
   if (Array.isArray(r.inclusions)) {
     const items = [...new Set(r.inclusions.map((i) => clip(i, 60)).filter((i): i is string => Boolean(i)))].slice(0, 20);
     if (items.length) terms.inclusions = items;

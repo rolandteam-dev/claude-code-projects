@@ -30,6 +30,7 @@ Rules:
 - inspectionDays / appraisalDays / loanDays: only when a number of days is stated.
 - downPaymentPercent: the down payment as a percent of the purchase price ("3.5% down" -> 3.5, "20 down" -> 20). If only a dollar amount is given, omit it.
 - sellerCredit: dollars the SELLER pays toward the buyer's closing costs or gives as a credit. In an offer, "$10k in closing costs" or "seller pays $10k" means this.
+- occupy: true ONLY if the message says the buyers will live in it (primary residence, owner-occupied, "they'll live there"); false if it says investment, rental, flip or second home. Omit if not stated.
 - homeWarranty: "seller" if the seller pays for a home warranty, "buyer" if the buyer does. Omit if not mentioned.
 - inclusions: items stated as included with the sale (appliances, window coverings, furniture, etc.), one short string per item.
 - notes: any other term or request in the message that does not fit a field above, quoted briefly. Do not repeat anything already captured in a field. Omit if none.
@@ -55,6 +56,7 @@ const SCHEMA = {
     downPaymentPercent: { type: "number" },
     sellerCredit: { type: "number" },
     homeWarranty: { type: "string", enum: ["seller", "buyer"] },
+    occupy: { type: "boolean" },
     inclusions: { type: "array", items: { type: "string" } },
     notes: { type: "string" },
     cancel: { type: "boolean" },
