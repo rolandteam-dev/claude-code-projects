@@ -18,6 +18,7 @@ import {
   parseJobType,
   parseJobResult,
 } from "../../src/lib/offers/types.ts";
+import { draftLink, verifyDraftLink } from "../../src/lib/offers/rpa/store.ts";
 import { dollarsInWords, parseAddress } from "../../src/lib/offers/rpa/fill.ts";
 import { verifySlackSignature, jobMessage, readModalValues, esc } from "../../src/lib/offers/slack.ts";
 import { isAllowedUser, canReview, safeEqual } from "../../src/lib/offers/config.ts";
@@ -580,6 +581,23 @@ test("RPA helpers: dollars in words and address parsing", () => {
   assert.deepEqual(parseAddress("272 Helmsdale Dr., Henderson, NV 89014"), { city: "Henderson", zip: "89014", county: "Clark" });
   assert.deepEqual(parseAddress("12 Pine St, Pahrump, NV 89048"), { city: "Pahrump", zip: "89048", county: "" });
   assert.deepEqual(parseAddress("123 Main St"), { city: "", zip: "", county: "" });
+});
+
+test("RPA draft links are signed, expiring and tamper-proof", () => {
+  process.env.SLACK_SIGNING_SECRET = "test-secret";
+  const id = "a".repeat(32);
+  const url = new URL(draftLink(id, "https://home.example.com", 1_800_000_000_000));
+  const exp = url.searchParams.get("exp");
+  const sig = url.searchParams.get("sig");
+  assert.ok(url.pathname.endsWith(`/api/offers/rpa/${id}`));
+  assert.ok(verifyDraftLink(id, exp, sig, 1_800_000_000_000));
+  assert.ok(!verifyDraftLink("b".repeat(32), exp, sig, 1_800_000_000_000)); // other id
+  assert.ok(!verifyDraftLink(id, String(Number(exp) + 1), sig, 1_800_000_000_000)); // extended expiry
+  assert.ok(!verifyDraftLink(id, exp, "0".repeat(64), 1_800_000_000_000)); // forged signature
+  assert.ok(!verifyDraftLink(id, exp, sig, (Number(exp) + 1) * 1000)); // expired
+  assert.ok(!verifyDraftLink(id, null, null));
+  delete process.env.SLACK_SIGNING_SECRET;
+  assert.equal(draftLink(id, "https://home.example.com"), null); // no secret, no link
 });
 
 console.log(`offers selftest: ${passed} passed${process.exitCode ? " (with failures)" : ""}`);

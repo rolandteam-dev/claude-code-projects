@@ -5,7 +5,10 @@
 import { OFFER_DEFAULTS_ARE_PLACEHOLDERS } from "../../content/offerDefaults";
 import { esc, slackApi } from "./slack";
 import { coverEmail, questionText, sheetText, type ResolvedTerms, type Source } from "./terms";
-import type { BuyerOfferInputs } from "./types";
+import { homeownerBrand } from "../homeowners/brand";
+import { fillRpa } from "./rpa/fill";
+import { draftLink, loadBlank, saveDraft } from "./rpa/store";
+import { todayLasVegas, type BuyerOfferInputs } from "./types";
 
 type Block = Record<string, unknown>;
 export interface Msg {
@@ -105,6 +108,35 @@ export function sheetMessage(inputs: BuyerOfferInputs, defaulted: string[]): Msg
   };
 }
 
+/**
+ * The terms sheet plus, when the blank RPA is stored, a link to the filled RPA draft.
+ * Never throws: if the form can't be filled the agent still gets the sheet.
+ */
+export async function sheetMessageWithRpa(inputs: BuyerOfferInputs, defaulted: string[]): Promise<Msg> {
+  const msg = sheetMessage(inputs, defaulted);
+  try {
+    const blank = await loadBlank();
+    if (!blank) return msg;
+    const filled = await fillRpa(blank, inputs, todayLasVegas());
+    const link = draftLink(await saveDraft(filled.pdf), homeownerBrand.baseUrl);
+    if (!link) return msg;
+    const todo = filled.stillToDo.map((t) => `• ${t}`).join("\n");
+    const warn = filled.warnings.length ? `\n:warning: ${filled.warnings.join(" ")}` : "";
+    const placeholder = OFFER_DEFAULTS_ARE_PLACEHOLDERS && defaulted.length ? "\n:warning: Some terms are placeholder defaults, so check them." : "";
+    msg.blocks = [
+      ...(msg.blocks ?? []),
+      md(
+        `*Filled Residential Purchase Agreement (draft)*\n<${link}|Download the RPA draft (PDF)> (link works for 7 days)\n` +
+          `Review it, finish the blanks below, then upload it to TransactionDesk to sign and send.${warn}${placeholder}`,
+      ),
+      md(`*Still for you to complete:*\n${todo}`),
+    ];
+  } catch (e) {
+    console.error("[offers] RPA draft failed", e);
+  }
+  return msg;
+}
+
 /** Post in a thread; returns the new message's ts. */
 export async function say(channel: string, threadTs: string, msg: Msg): Promise<string | null> {
   const res = await slackApi("chat.postMessage", { channel, thread_ts: threadTs, unfurl_links: false, ...msg });
@@ -121,7 +153,7 @@ export async function edit(channel: string, ts: string, msg: Msg): Promise<void>
  */
 export async function postSheet(targets: Array<string | null>, inputs: BuyerOfferInputs, defaulted: string[]): Promise<void> {
   for (const channel of targets.filter((c): c is string => Boolean(c))) {
-    const res = await slackApi("chat.postMessage", { channel, unfurl_links: false, ...sheetMessage(inputs, defaulted) });
+    const res = await slackApi("chat.postMessage", { channel, unfurl_links: false, ...(await sheetMessageWithRpa(inputs, defaulted)) });
     if (res.ok) return;
   }
 }

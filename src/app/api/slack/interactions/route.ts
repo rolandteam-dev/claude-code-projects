@@ -1,7 +1,7 @@
 import { NextResponse, after } from "next/server";
 import { canReview, isAllowedUser } from "@/lib/offers/config";
 import { cancelConvo, createJob, finishConvo, getConvo, getJob, reviewJob, setThread, type OfferJob } from "@/lib/offers/db";
-import { cancelledCard, confirmedCard, edit, postSheet, say, sheetMessage } from "@/lib/offers/convoMessages";
+import { cancelledCard, confirmedCard, edit, postSheet, say, sheetMessageWithRpa } from "@/lib/offers/convoMessages";
 import { slackUserName } from "@/lib/offers/people";
 import {
   postJobRoot,
@@ -131,7 +131,7 @@ async function handleConvoAction(payload: any, actionId: string, value: string) 
     return notice("That card is out of date or was already used. Use the latest card in this thread.");
   }
   if (done.cardTs) await edit(done.channelId, done.cardTs, confirmedCard(userId));
-  await say(done.channelId, done.threadTs, sheetMessage(done.snapshot.inputs, done.snapshot.defaulted));
+  await say(done.channelId, done.threadTs, await sheetMessageWithRpa(done.snapshot.inputs, done.snapshot.defaulted));
 }
 
 async function ephemeralTo(job: OfferJob | null, payload: any, text: string) {
