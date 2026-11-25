@@ -37,7 +37,7 @@ export function cross(pen: Pen, page: number, x: number, top: number, size = 8):
   pen.doc.getPage(page - 1).drawText("X", { x: x + 0.9, y: PAGE_H - (top + 0.793 * size) - 0.6, size: size + 0.5, font: pen.bold, color: INK });
 }
 
-/** "Jossue Munoz" / "Jossue Munoz & Jennifer Huglin" style split used by the two-buyer slots on the forms. */
+/** Buyers as one name per entry, for the two-buyer slots on the forms. */
 export function splitBuyers(buyerNames: string[] | undefined, clientName: string): string[] {
   if (buyerNames?.length) return buyerNames;
   return clientName.split(/\s+(?:and|&)\s+|\s*,\s*/i).map((n) => n.trim()).filter(Boolean);
