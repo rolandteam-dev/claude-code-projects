@@ -99,7 +99,7 @@ export function pondSentence(digest) {
   if (when === "on a date to be announced") {
     return "Nothing is being moved out of your name right now. These are the leads that will be moved to the team pond first once that starts, and you will be told the date before it does.";
   }
-  return `If you do not contact these, they will be moved out of your name to the team pond starting ${when.replace(/^from /, "")}.`;
+  return `If you do not contact these, they will be moved out of your name to the team pond starting the night of ${when.replace(/^from /, "")}.`;
 }
 
 const firstName = (digest) => String(digest.agent ?? "").trim().split(/\s+/)[0] || "there";
