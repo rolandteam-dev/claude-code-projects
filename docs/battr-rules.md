@@ -111,3 +111,10 @@ Lead/Attempted over 10 days at **5 / 8**; Spoke with Customer without a timefram
 Appointment Set **5 / 8**, Met with Customer **5 / 8**, Showing Homes **3 / 6**; Submitting Offers
 **2 / never**; Nurture without a timeframe **30 / 33**; NOCONTACT leads moved to Missed
 Opportunities. Nothing there is deleted; it waits for the parity check to pass.
+
+## 7. A warning is only good for the stretch of silence it was issued in
+
+The `Battr At Risk Since` stamp is never cleared. The audit therefore counts it only if the
+agent has not touched the lead since the stamp's audit (7 PM PT on the stamp date). A lead that
+was warned, worked, and later goes quiet again is warned again before it can be swept
+(`warningIsCurrent` in `scripts/battr/contact.mjs`). Added 25 Nov 2026 (Mike), before sweeping starts.

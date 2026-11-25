@@ -35,6 +35,32 @@ const resolveTimeframe = (person) => {
 const first = (...values) => values.find((v) => v !== undefined && v !== null && v !== "");
 
 /**
+ * Is the "At Risk Since" warning still the warning for THIS stretch of silence?
+ *
+ * The stamp is written once and never cleared. If the agent worked the lead after it was
+ * warned, that warning belongs to an earlier stretch: when the lead goes quiet again it
+ * must be warned again, not swept on the strength of a stamp from months ago.
+ *
+ * A stamp is a date ("2026-11-22"), written by the run that audits as of 7 PM PT that
+ * day, so a touch counts as AFTER it only once it is later than that moment. Anything
+ * unreadable is treated as not current: the safe direction is another warning, never a
+ * sweep nobody was told about.
+ *
+ * @param stamp        the raw stamp value ("2026-11-22" or a full timestamp)
+ * @param lastTouchMs  the lead's latest agent touch, in ms (0/null when none)
+ */
+export function warningIsCurrent(stamp, lastTouchMs) {
+  if (stamp === null || stamp === undefined || stamp === "") return false;
+  const text = String(stamp).trim();
+  let stampedAt = Date.parse(text);
+  if (!Number.isFinite(stampedAt)) return false;
+  // Date-only stamp: the audit instant is 7 PM Pacific that day, i.e. 02:00-03:00 UTC the
+  // next day. 27 hours past midnight UTC covers it with the later (standard-time) bound.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) stampedAt += 27 * 3600 * 1000;
+  return !(Number.isFinite(lastTouchMs) && lastTouchMs > stampedAt);
+}
+
+/**
  * @param person   raw FUB person
  * @param touch    { lastOutbound, lastInbound } epoch ms from the activity index
  * @param stamps   custom-field API names we resolved, e.g. { atRiskSince: 'customBattrAtRiskSince' }
@@ -102,6 +128,9 @@ export function normalizeContact(
         : null;
 
   const atRiskSinceKey = stamps.atRiskSince || "customBattrAtRiskSince";
+  const rawStamp = person[atRiskSinceKey] ?? null;
+  // The stamp the rules see: only a warning that is still current for this stretch of silence.
+  const currentStamp = warningIsCurrent(rawStamp, lastTouchMs) ? rawStamp : null;
 
   return {
     // identity
@@ -176,7 +205,7 @@ export function normalizeContact(
         // unresolved and shows up in the diagnostic rather than being invented.
         system_timeframe: first(person.timeframe, person.timeframeName, resolveTimeframe(person), null),
         system_timeframeId: first(person.timeframeId, null) ?? null,
-        customBattrAtRiskSince: person[atRiskSinceKey] ?? null,
+        customBattrAtRiskSince: currentStamp,
       },
     },
 
@@ -195,6 +224,9 @@ export function normalizeContact(
       person.timeframeId !== null &&
       person.timeframeId !== undefined &&
       TIMEFRAME_IDS[person.timeframeId] === undefined,
+
+    /** A stamp exists but the agent worked the lead after it: the lead needs a fresh warning. */
+    staleWarning: Boolean(rawStamp) && !currentStamp,
 
     // carried through for reporting and actions, not addressed by rules
     _raw: person,
