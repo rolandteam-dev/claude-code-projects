@@ -1243,7 +1243,9 @@ async function main() {
   for (const lead of atRisk) {
     if (only !== null && lead.id !== only) continue;
     const person = peopleById.get(lead.id);
-    const alreadyFlagged = fields.atRiskSince ? Boolean(person?.[fields.atRiskSince]) : false;
+    // Warned AND not worked since: a stamp older than the agent's last touch is a warning
+    // for an earlier stretch of silence, so the lead is warned again (see warningIsCurrent).
+    const alreadyFlagged = fields.atRiskSince ? Boolean(lead.contact?.custom_fields?.fub?.customBattrAtRiskSince) : false;
     if (alreadyFlagged) {
       actions.alreadyFlagged.push(lead);
       continue;
@@ -1275,7 +1277,9 @@ async function main() {
     }
     for (const lead of nudgePlan.send) {
       const person = peopleById.get(lead.id);
-      const alreadyFlagged = fields.atRiskSince ? Boolean(person?.[fields.atRiskSince]) : false;
+      // Warned AND not worked since: a stamp older than the agent's last touch is a warning
+    // for an earlier stretch of silence, so the lead is warned again (see warningIsCurrent).
+    const alreadyFlagged = fields.atRiskSince ? Boolean(lead.contact?.custom_fields?.fub?.customBattrAtRiskSince) : false;
 
       if (alreadyFlagged) {
         actions.alreadyFlagged.push(lead);
@@ -1329,7 +1333,7 @@ async function main() {
       !isExemptAgent(l.owner, rules) &&
       isSourceAudited(l.source) &&
       !hasAny(l.tags, rules.reportOnlyTags) &&
-      (!rules.requireWarningBeforeSweep || (fields.atRiskSince ? Boolean(peopleById.get(l.id)?.[fields.atRiskSince]) : false))
+      (!rules.requireWarningBeforeSweep || (fields.atRiskSince ? Boolean(l.contact?.custom_fields?.fub?.customBattrAtRiskSince) : false))
   );
   const sweepPlan =
     only === null
@@ -1377,10 +1381,9 @@ async function main() {
       // the agent and stamped the lead. Without this, a lead that has simply
       // been quiet a long time is taken away with no warning ever issued.
       if (rules.requireWarningBeforeSweep) {
-        const person = peopleById.get(lead.id);
-        const warned = fields.atRiskSince ? Boolean(person?.[fields.atRiskSince]) : false;
+        const warned = fields.atRiskSince ? Boolean(lead.contact?.custom_fields?.fub?.customBattrAtRiskSince) : false;
         if (!warned) {
-          actions.heldBack.push({ ...lead, holdReason: "never warned — interlock held the sweep" });
+          actions.heldBack.push({ ...lead, holdReason: lead.contact?.staleWarning ? "warned before, then worked — needs a fresh warning" : "never warned — interlock held the sweep" });
           continue;
         }
       }

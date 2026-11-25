@@ -20,7 +20,7 @@ import assert from "node:assert/strict";
 
 import { classify, buildTouchIndex, classifyForList, runCombinedList, isExemptAgent, readInboundEmails, findUnansweredInbound, runReportOnlyLists, foldTouches, DAY_MS } from "./classify.mjs";
 import { evaluateCondition, evaluateSet } from "./filters.mjs";
-import { normalizeContact } from "./contact.mjs";
+import { normalizeContact, warningIsCurrent } from "./contact.mjs";
 import { isDayAllowed } from "./schedule.mjs";
 import { planCaps, renderCapList } from "./caps.mjs";
 import { overdueDays } from "./parity.mjs";
@@ -1327,8 +1327,8 @@ check("the At Risk Since stamp survives a lead going compliant", () => {
   // 1. Idempotency keys on the stamp EXISTING, never on the previous status.
   assert.match(
     src,
-    /const alreadyFlagged = fields\.atRiskSince \? Boolean\(person\?\.\[fields\.atRiskSince\]\) : false;/,
-    "already-flagged must be a presence test on the field"
+    /const alreadyFlagged = fields\.atRiskSince \? Boolean\(lead\.contact\?\.custom_fields\?\.fub\?\.customBattrAtRiskSince\) : false;/,
+    "already-flagged must be a presence test on the (current) stamp field"
   );
 
   // 2. The stamp is written only when absent, so a returning lead keeps its
@@ -2805,6 +2805,52 @@ check("overdue means days past the lead's own line: 98 days on a 93-day list is 
   });
 }
 
+check("a warning only counts for the stretch of silence it was issued in", () => {
+  const T = (iso) => Date.parse(iso);
+  // Stamped 22 Nov (audit at 7 PM PT = 03:00Z on the 23rd). Never touched since: current.
+  assert.equal(warningIsCurrent("2026-11-22", T("2026-11-10T00:00:00Z")), true);
+  assert.equal(warningIsCurrent("2026-11-22", 0), true, "never touched at all");
+  // Agent called on the 24th: that warning is spent.
+  assert.equal(warningIsCurrent("2026-11-22", T("2026-11-24T17:00:00Z")), false);
+  // Touch on the stamp day BEFORE the 7 PM audit would have kept the lead off the list;
+  // one landing in the hours before the run still counts as before the audit instant.
+  assert.equal(warningIsCurrent("2026-11-22", T("2026-11-23T01:00:00Z")), true);
+  // No stamp, or one we cannot read, is never a warning.
+  assert.equal(warningIsCurrent(null, 0), false);
+  assert.equal(warningIsCurrent("", 0), false);
+  assert.equal(warningIsCurrent("not a date", 0), false);
+  assert.equal(warningIsCurrent("2026-11-22T10:00:00Z", T("2026-11-22T11:00:00Z")), false, "a full timestamp is compared as is");
+});
+
+check("warned, worked, quiet again: the old stamp does not let the lead be swept without a fresh warning", () => {
+  const person = (extra) => ({
+    id: 900, name: "Warned Then Worked", stage: "Nurture", assignedTo: "Nicole Miller", tags: [],
+    customBattrAtRiskSince: "2026-11-22", ...extra,
+  });
+  const worked = normalizeContact(person(), { lastOutbound: Date.parse("2026-11-24T18:00:00Z") }, {});
+  assert.equal(worked.custom_fields.fub.customBattrAtRiskSince, null, "stamp from before the call is not a warning");
+  assert.equal(worked.staleWarning, true);
+
+  const stillQuiet = normalizeContact(person(), { lastOutbound: Date.parse("2026-11-01T18:00:00Z") }, {});
+  assert.equal(stillQuiet.custom_fields.fub.customBattrAtRiskSince, "2026-11-22");
+  assert.equal(stillQuiet.staleWarning, false);
+
+  // And the list rule that makes a lead neglected needs the current stamp.
+  const monthly = lists.find((l) => /Monthly Nurture/.test(l.name));
+  const later = Date.parse("2027-03-01T12:00:00Z");
+  const asNeglected = classifyForList(normalizeContact({ ...person({ timeframeId: 3 }), stage: "Nurture" }, { lastOutbound: Date.parse("2026-11-01T18:00:00Z") }, {}), monthly, later);
+  const afterWork = classifyForList(normalizeContact({ ...person({ timeframeId: 3 }), stage: "Nurture" }, { lastOutbound: Date.parse("2026-11-24T18:00:00Z") }, {}), monthly, later);
+  assert.equal(asNeglected, "neglected");
+  assert.equal(afterWork, "at_risk", "back to at risk: it gets a new warning first");
+});
+
+check("the audit reads the CURRENT warning, not the raw stamp, for nudges and the sweep interlock", () => {
+  const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
+  assert.doesNotMatch(src, /Boolean\(person\?\.\[fields\.atRiskSince\]\)/, "no raw-stamp check left in the nudge or sweep gates");
+  assert.doesNotMatch(src, /Boolean\(peopleById\.get\(l\.id\)\?\.\[fields\.atRiskSince\]\)/);
+  assert.match(src, /lead\.contact\?\.custom_fields\?\.fub\?\.customBattrAtRiskSince/);
+});
+
 check("safeguards: Battr's rules, sweeping paused, caps and verification on; the kill switch still exists", () => {
   assert.equal(rules.forceDryRun, false, "live since 22 Nov 2026 (Mike); set true to hold everything again");
   assert.equal(rules.profile, "battr");
@@ -3639,7 +3685,7 @@ check("the state Battr owns is the state that went missing", () => {
   // off the FUB contact rather than keeping its own copy. If that ever changes
   // to a local store, this check is where the cost shows up.
   const src = readFileSync(join(HERE, "contact.mjs"), "utf8");
-  assert.match(src, /customBattrAtRiskSince: person\[atRiskSinceKey\]/, "the warning stamp is read from FUB, not held here");
+  assert.match(src, /const rawStamp = person\[atRiskSinceKey\] \?\? null;/, "the warning stamp is read from FUB, not held here");
 });
 
 
