@@ -10,6 +10,7 @@
  */
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import type { BuyerOfferInputs } from "../types";
+import { fillStandard, type RpaContext } from "./standard";
 import { BOX, FOOTER, P1, P2, P3, P5, RPA_PAGES, type Box, type TextBlank } from "./layout";
 
 const INK = rgb(0.05, 0.1, 0.55);
@@ -90,24 +91,6 @@ function check(ctx: Ctx, b: Box, on: boolean) {
   page.drawText("X", { x: b.x + 1.2, y: PAGE_H - b.top - 9.4, size: 7.5, font: ctx.bold, color: INK });
 }
 
-/** Greedy-wrap `value` into the given blanks; returns what did not fit. */
-function wrapInto(ctx: Ctx, blanks: TextBlank[], value: string): string {
-  const words = value.split(/\s+/).filter(Boolean);
-  let i = 0;
-  for (const b of blanks) {
-    const size = b.size ?? 9;
-    let line = "";
-    while (i < words.length) {
-      const next = line ? `${line} ${words[i]}` : words[i];
-      if (ctx.font.widthOfTextAtSize(next, size) > b.width) break;
-      line = next;
-      i++;
-    }
-    text(ctx, { ...b, size }, line);
-  }
-  return words.slice(i).join(" ");
-}
-
 export interface RpaFillResult {
   pdf: Uint8Array;
   /** Plain-English list of blanks the agent still has to complete. */
@@ -117,7 +100,7 @@ export interface RpaFillResult {
 }
 
 /** Which RPA blanks are filled from `inputs`, and which remain for the agent. */
-export async function fillRpa(blank: Uint8Array, inputs: BuyerOfferInputs, today: string): Promise<RpaFillResult> {
+export async function fillRpa(blank: Uint8Array, inputs: BuyerOfferInputs, today: string, rpaCtx?: RpaContext): Promise<RpaFillResult> {
   const doc = await PDFDocument.load(blank);
   if (doc.getPageCount() !== RPA_PAGES) {
     throw new Error(`RPA has ${doc.getPageCount()} pages, expected ${RPA_PAGES}: the form was revised, re-map src/lib/offers/rpa/layout.ts`);
@@ -155,10 +138,6 @@ export async function fillRpa(blank: Uint8Array, inputs: BuyerOfferInputs, today
   // Page 2: contingency periods and items that convey.
   if (financed && inputs.contingencies.includes("appraisal")) text(ctx, P2.appraisalDays, inputs.appraisalDays ? String(inputs.appraisalDays) : undefined);
   if (financed && inputs.contingencies.includes("loan")) text(ctx, P2.loanDays, inputs.loanDays ? String(inputs.loanDays) : undefined);
-  if (inputs.inclusions?.length) {
-    const left = wrapInto(ctx, P2.inclusionLines, inputs.inclusions.join(", "));
-    if (left) warnings.push(`Included items did not all fit on the form: add "${left}" by addendum.`);
-  }
 
   // Page 3: close of escrow and the due-diligence (inspection) period.
   text(ctx, P3.coeDate, usDate(inputs.closeDate));
@@ -167,16 +146,15 @@ export async function fillRpa(blank: Uint8Array, inputs: BuyerOfferInputs, today
   check(ctx, BOX.dueDiligenceIsNot, !inspection);
   if (inspection && inputs.inspectionDays) text(ctx, P3.dueDiligenceDays, String(inputs.inspectionDays));
 
-  // Page 5: seller credit toward closing costs, and who pays for the home warranty.
+  // Page 5: seller credit toward closing costs.
   if (inputs.sellerCredit) {
     check(ctx, BOX.closingCostDollars, true);
     text(ctx, P5.closingCostDollars, money(inputs.sellerCredit));
   }
-  if (inputs.homeWarranty) {
-    check(ctx, BOX.warrantyRequires, true);
-    check(ctx, BOX.warrantySeller, inputs.homeWarranty === "seller");
-    check(ctx, BOX.warrantyBuyer, inputs.homeWarranty === "buyer");
-  }
+
+  // The team's standard terms (pages 1-11): EMD delivery, compensation, escrow, inspections, fees, ...
+  const std = fillStandard({ doc, font: ctx.font, bold: ctx.bold }, inputs, rpaCtx, today);
+  warnings.push(...std.warnings);
 
   // Footer on every page: buyer names + property address.
   for (let p = 1; p <= RPA_PAGES; p++) {
@@ -195,15 +173,9 @@ export async function fillRpa(blank: Uint8Array, inputs: BuyerOfferInputs, today
     color: rgb(0.7, 0.1, 0.1),
   });
 
-  const stillToDo = [
-    "Method of earnest money and who holds it, and delivery days (Section 1A)",
-    "Escrow company and officer (Section 6A)",
-    "Buyer's broker compensation (Section 2)",
-    "Property APN, and loan-application / due-diligence days if not stated (Sections 1, 3A)",
-    "Buyer's broker/agent details, seller response deadline, and all signatures (pages 9-10)",
-  ];
-  if (!inputs.sellerCredit && !inputs.homeWarranty) stillToDo.push("Seller credit / home protection plan (Section 9) were not part of this offer");
+  const stillToDo = [...std.stillToDo];
   if (financed && inputs.downPaymentPercent === undefined) stillToDo.push("Loan amount: down payment was not stated");
+  stillToDo.push("Property APN (page 1)");
   if (county === "") stillToDo.push("County could not be read from the address");
   return { pdf: await doc.save(), stillToDo, warnings };
 }
