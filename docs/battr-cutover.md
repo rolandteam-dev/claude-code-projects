@@ -1,8 +1,7 @@
 # Battr cutover — Battr is cancelled; this engine is the only audit
 
 Battr's last run was 9 Oct 2026 and the subscription is cancelled (Mike, 17 Nov).
-**LIVE as of 22 Nov 2026 (Mike: "Yes, go live tonight").** Nudges write; sweeping is
-paused. Until then every nightly run was a dry run, so agents had not been warned for
+**LIVE as of 22 Nov 2026 (Mike: "Yes, go live tonight").** Nudges write; sweeping starts 1 Dec. Until then every nightly run was a dry run, so agents had not been warned for
 six weeks.
 
 ## Why existing Battr stamps are still honoured
@@ -22,7 +21,7 @@ Mike turned nudging live:
   env hook, and `BATTR_LIVE=true` still produces a dry run. Only `undo` can write.
 - `rules.profile: "battr"` — Battr's six lists and thresholds exactly (see `docs/battr-rules.md`).
   The 17 Nov stage rules are kept behind `"extended"`.
-- `rules.sweepsStartOn: "2027-01-01"` — the 20 Nov sweep start is paused.
+- `rules.sweepsStartOn: "2026-12-01"` — sweeping begins with the run that audits Tue 1 Dec (fires ~1-2 AM PT Wed 2 Dec). Set by Mike 25 Nov; agent emails say "starting the night of Tue, Dec 1" from now on.
 - **Pass 2 contact check** — every at-risk or neglected candidate has its texts AND emails read
   person by person; a lead with an agent touch in the window drops off; a lead that cannot be read
   is held as **unverified** and listed. One unreadable lead no longer holds the night.
@@ -44,14 +43,14 @@ recorded 7 Oct — there is no newer number); every flagged lead with a rule tha
 `docs/battr-rules.md`; few unverified leads, each with a stated reason; no cap tripped.
 Mike chose to go live on 22 Nov with the 50-a-night batch cap as the safeguard instead.
 
-Still open: `rules.sweepsStartOn` (paused, 2027-01-01 — un-pause once the backlog is warned),
+Still open:
 the stage-move rule (any stage change counts as work for now), and whether to switch
 `rules.profile` to `"extended"`.
 
 ## 3. First live night — what to expect
 - Nudges (note + stamp) on the **50 most overdue** at-risk leads, at most 10 per agent; the rest
   wait and are not listed in tonight's agent emails. About 4-5 nights to clear the backlog.
-- **Nothing is swept** (paused). Agent emails say sweeping starts "on a date to be announced".
+- **Nothing is swept before Dec 1.** Agent emails say sweeping starts "the night of Tue, Dec 1". Swept leads go to Money Time (lead 10 days old or newer) or Shark Tank (older), Battr's own rule.
 - Sweeps, once on, are capped at 30 per run and 25 per pond.
 - Agents get their per-agent emails (`BATTR_ALERT_CHANNEL`, default email).
 

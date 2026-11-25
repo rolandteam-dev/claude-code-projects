@@ -583,9 +583,9 @@ check("agent digests say plainly when leads will be moved: a date, the next nigh
   const base = { agent: "A", agentId: 1, atRisk: [], neglected: [{ id: 1, name: "X Lead", daysSinceTouch: 20 }], swept: [], unanswered: [] };
   const held = renderDigestText({ ...base, sweepsStartOn: "2026-11-20" });
   assert.match(held, /WAY OVERDUE \(1\)/);
-  assert.match(held, /moved out of your name to the team pond starting Fri, Nov 20/);
+  assert.match(held, /moved out of your name to the team pond starting the night of Fri, Nov 20/);
   assert.doesNotMatch(held, /next nightly check/);
-  assert.match(renderDigestHtml({ ...base, sweepsStartOn: "2026-11-20" }), /Way overdue \(1\)[\s\S]*starting Fri, Nov 20/);
+  assert.match(renderDigestHtml({ ...base, sweepsStartOn: "2026-11-20" }), /Way overdue \(1\)[\s\S]*starting the night of Fri, Nov 20/);
   assert.match(renderDigestText({ ...base, sweepsStartOn: null }), /at the next nightly check/);
   assert.doesNotMatch(held, /swept|sweeping/i, "no internal jargon in what an agent reads");
 });
@@ -2808,7 +2808,7 @@ check("overdue means days past the lead's own line: 98 days on a 93-day list is 
 check("safeguards: Battr's rules, sweeping paused, caps and verification on; the kill switch still exists", () => {
   assert.equal(rules.forceDryRun, false, "live since 22 Nov 2026 (Mike); set true to hold everything again");
   assert.equal(rules.profile, "battr");
-  assert.ok(rules.sweepsStartOn > "2026-12-31", "sweeping start stays paused");
+  assert.equal(rules.sweepsStartOn, "2026-12-01", "sweeping starts with the run that audits Tue 1 Dec (Mike, 25 Nov 2026)");
   assert.ok(rules.maxUnverifiedShare > 0 && rules.maxUnverifiedShare <= 0.5);
   const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
   assert.match(src, /rules\.forceDryRun === true \|\| process\.env\.BATTR_FORCE_DRY_RUN === "true"/, "both the in-code switch and the env hook");

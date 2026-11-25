@@ -330,7 +330,7 @@ export const rules = {
    * old Battr stamp are held back the same three days. Set to null to remove the gate.
    * PAUSED 19 Nov 2026: pushed out of this year until the audit matches Battr.
    */
-  sweepsStartOn: "2027-01-01", // PAUSED 19 Nov 2026 (was 20 Nov) until the parity work is signed off; move it to restart sweeping
+  sweepsStartOn: "2026-12-01", // Mike, 25 Nov 2026: sweeping begins with the run that audits Tue 1 Dec (it fires ~1-2 AM PT Wed 2 Dec). Before that: nudges only. Paused 19 Nov 2026 until the backlog was warned.
   nudgeDayFilter: "Every Day",
   sweepDayFilter: "Weekdays Excluding Monday",
 
