@@ -9,7 +9,8 @@
  */
 import { Resend } from "resend";
 import { combinedGuidePdfUrl, guideContact, relocationGuides } from "@/content/relocationGuides";
-import { homeownerFrom, listUnsubscribeMailtoHeaders } from "@/lib/homeowners/brand";
+import { homeownerFrom } from "@/lib/homeowners/brand";
+import { listUnsubscribeHeadersForEmail } from "@/lib/homeowners/unsubToken";
 
 function enabled(): boolean {
   return process.env.GUIDE_EMAIL_ENABLED !== "false";
@@ -116,7 +117,7 @@ export async function sendGuideEmail(to: {
       html: guideEmailHtml(to.firstName),
       text: guideEmailText(to.firstName),
       replyTo: guideContact.email,
-      headers: listUnsubscribeMailtoHeaders(),
+      headers: listUnsubscribeHeadersForEmail(to.email),
     });
     if (error) return { sent: false, reason: errMsg(error) };
     return { sent: true };

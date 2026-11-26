@@ -96,7 +96,7 @@ export function unsubscribeUrl(token: string): string {
 /** The mailbox a `List-Unsubscribe: mailto:` points at. Defaults to the reply
  * inbox; point HOMEOWNER_UNSUB_MAILTO at a monitored/auto-processing address to
  * fully automate mailto opt-outs. */
-function unsubMailto(): string {
+export function unsubMailto(): string {
   return (process.env.HOMEOWNER_UNSUB_MAILTO ?? "").trim() || homeownerBrand.email;
 }
 

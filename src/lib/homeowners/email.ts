@@ -19,8 +19,8 @@ import {
   homeownerFrom,
   unsubscribeUrl,
   listUnsubscribeHeaders,
-  listUnsubscribeMailtoHeaders,
 } from "./brand";
+import { listUnsubscribeHeadersForEmail } from "./unsubToken";
 import { latestEstimate, appreciation, type Homeowner } from "./store";
 
 const money = (n: number) =>
@@ -338,7 +338,7 @@ export async function sendCashOfferEmail(to: {
       html,
       text: cashOfferText(to),
       replyTo: homeownerBrand.email,
-      headers: listUnsubscribeMailtoHeaders(),
+      headers: listUnsubscribeHeadersForEmail(to.email),
     });
     if (error) return { sent: false, reason: errMsg(error) };
     return { sent: true };
