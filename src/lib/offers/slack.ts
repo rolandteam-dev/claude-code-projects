@@ -99,6 +99,8 @@ function textInput(blockId: string, label: string, opts: { optional?: boolean; m
   };
 }
 
+const STANDARD_CONTINGENCIES = ["inspection", "appraisal", "loan"] as const;
+
 /** The Phase 1 modal: a buyer offer. `channelId` rides along so the thread posts where it was asked. */
 export function buildBuyerModal(channelId: string): Block {
   return {
@@ -117,8 +119,7 @@ export function buildBuyerModal(channelId: string): Block {
         },
       },
       textInput("address", "Property address", { placeholder: "1234 Example St, Las Vegas NV 89xxx" }),
-      textInput("client_name", "Buyer name(s)"),
-      textInput("fub_person_id", "Follow Up Boss id", { optional: true, hint: "Digits from the FUB contact URL." }),
+      textInput("client_name", "Buyer name(s)", { hint: "Everyone on the offer, e.g. Mark Smith and Megan Smith." }),
       textInput("list_price", "List price", { placeholder: "850000" }),
       textInput("offer_price", "Offer price", { placeholder: "835000" }),
       {
@@ -132,11 +133,32 @@ export function buildBuyerModal(channelId: string): Block {
           options: FINANCING.map((f) => ({ text: plain(FINANCING_LABEL[f]), value: f })),
         },
       },
-      textInput("earnest_money", "Earnest money deposit", { placeholder: "10000" }),
+      textInput("down_payment_percent", "Down payment (%)", {
+        optional: true,
+        placeholder: "5",
+        hint: "Percent of the price. Required unless it is a cash offer. FHA is at least 3.5%.",
+      }),
+      {
+        type: "input",
+        block_id: "occupy",
+        label: plain("Will the buyers live in the home?"),
+        element: {
+          type: "static_select",
+          action_id: "v",
+          placeholder: plain("Page 1 of the contract asks"),
+          options: [
+            { text: plain("Yes, it will be their residence"), value: "yes" },
+            { text: plain("No (investment, second home)"), value: "no" },
+          ],
+        },
+      },
+      textInput("earnest_money", "Earnest money deposit", { optional: true, placeholder: "Blank = 1% of the price", hint: "The team's standard is 1%, wired within 3 business days." }),
       {
         type: "input",
         block_id: "close_date",
+        optional: true,
         label: plain("Close of escrow"),
+        hint: plain("Blank = 30 days out, moved to a Tue/Wed/Thu that isn't a holiday."),
         element: { type: "datepicker", action_id: "v" },
       },
       {
@@ -144,12 +166,43 @@ export function buildBuyerModal(channelId: string): Block {
         block_id: "contingencies",
         optional: true,
         label: plain("Contingencies"),
+        hint: plain("Inspection, appraisal and loan are pre-checked (the standard). Uncheck to waive one."),
         element: {
           type: "checkboxes",
           action_id: "v",
+          initial_options: STANDARD_CONTINGENCIES.map((c) => ({ text: plain(CONTINGENCY_LABEL[c]), value: c })),
           options: CONTINGENCIES.map((c) => ({ text: plain(CONTINGENCY_LABEL[c]), value: c })),
         },
       },
+      textInput("inspection_days", "Inspection / due diligence days", { optional: true, placeholder: "Blank = 10" }),
+      textInput("appraisal_days", "Appraisal days", { optional: true, placeholder: "Blank = 21" }),
+      textInput("loan_days", "Loan days", { optional: true, placeholder: "Blank = 30" }),
+      textInput("seller_credit", "Seller credit toward closing costs ($)", { optional: true, placeholder: "10000" }),
+      {
+        type: "input",
+        block_id: "home_warranty",
+        optional: true,
+        label: plain("Home warranty"),
+        hint: plain("Blank = the team's standard: seller pays (Achosa, up to $795)."),
+        element: {
+          type: "static_select",
+          action_id: "v",
+          placeholder: plain("Standard (seller pays)"),
+          options: [
+            { text: plain("Seller pays"), value: "seller" },
+            { text: plain("Buyer pays"), value: "buyer" },
+          ],
+        },
+      },
+      textInput("inclusions", "Items included with the sale", {
+        optional: true,
+        multiline: true,
+        placeholder: "refrigerator, washer, dryer, window coverings",
+        hint: "Separate with commas or new lines.",
+      }),
+      textInput("mls_number", "MLS number", { optional: true, hint: "Goes on the personal-property line of the contract." }),
+      textInput("agent_name", "Agent writing the offer", { optional: true, hint: "Blank = you." }),
+      textInput("fub_person_id", "Follow Up Boss id", { optional: true, hint: "Digits from the FUB contact URL." }),
       textInput("notes", "Notes for the drafter", {
         optional: true,
         multiline: true,
@@ -170,6 +223,10 @@ export function readModalValues(stateValues: Record<string, Record<string, any>>
     else if (el.type === "datepicker") out[blockId] = el.selected_date ?? undefined;
     else if (el.type === "checkboxes") out[blockId] = (el.selected_options ?? []).map((o: any) => String(o.value));
     else out[blockId] = el.value ?? undefined;
+  }
+  // The inclusions box is free text; the contract wants one item per entry.
+  if (typeof out.inclusions === "string") {
+    out.inclusions = out.inclusions.split(/[\n,;]+/).map((x) => x.trim()).filter(Boolean);
   }
   return out as RawBuyerForm;
 }

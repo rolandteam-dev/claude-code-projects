@@ -120,6 +120,8 @@ export interface RawBuyerForm {
   down_payment_percent?: string;
   home_warranty?: string;
   inclusions?: string[];
+  /** "yes" / "no": will the buyers live in the home. */
+  occupy?: string;
 }
 
 export type ValidationResult =
@@ -154,7 +156,11 @@ function isRealDate(ymd: string): boolean {
 const PRICE_RATIO_MIN = 0.6;
 const PRICE_RATIO_MAX = 1.4;
 
-export function validateBuyerForm(raw: RawBuyerForm, now: Date = new Date()): ValidationResult {
+/**
+ * `strict` is for the /offer form, where there is no follow-up question: a financed offer must state its down
+ * payment, and occupancy (RPA page 1) must be answered. The conversation asks for both itself.
+ */
+export function validateBuyerForm(raw: RawBuyerForm, now: Date = new Date(), opts: { strict?: boolean } = {}): ValidationResult {
   const errors: Record<string, string> = {};
 
   const address = (raw.address ?? "").trim();
@@ -246,6 +252,16 @@ export function validateBuyerForm(raw: RawBuyerForm, now: Date = new Date()): Va
   if (warrantyRaw === "seller" || warrantyRaw === "buyer") homeWarranty = warrantyRaw;
   else if (warrantyRaw) errors.home_warranty = "A home warranty is paid by the seller or the buyer.";
 
+  const occupyRaw = (raw.occupy ?? "").trim().toLowerCase();
+  let occupy: boolean | undefined;
+  if (occupyRaw === "yes") occupy = true;
+  else if (occupyRaw === "no") occupy = false;
+  else if (occupyRaw) errors.occupy = "Choose yes or no.";
+  if (opts.strict && occupy === undefined && !errors.occupy) errors.occupy = "Say whether the buyers will live in the home (page 1 of the contract asks).";
+  if (opts.strict && financing !== "cash" && FINANCING.includes(financing) && downPaymentPercent === undefined && !errors.down_payment_percent) {
+    errors.down_payment_percent = "Enter the down payment as a percent (a financed offer needs it).";
+  }
+
   const inclusions = (raw.inclusions ?? []).map((i) => i.trim()).filter(Boolean);
   if (inclusions.length > 20 || inclusions.some((i) => i.length > 60)) {
     errors.inclusions = "List up to 20 included items, each under 60 characters.";
@@ -273,6 +289,7 @@ export function validateBuyerForm(raw: RawBuyerForm, now: Date = new Date()): Va
       ...(downPaymentPercent !== undefined ? { downPaymentPercent } : {}),
       ...(homeWarranty ? { homeWarranty } : {}),
       ...(inclusions.length ? { inclusions } : {}),
+      ...(occupy !== undefined ? { occupy } : {}),
     },
   };
 }

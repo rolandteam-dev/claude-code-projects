@@ -11,7 +11,8 @@ import {
   slackApi,
   verifySlackSignature,
 } from "@/lib/offers/slack";
-import { validateBuyerForm } from "@/lib/offers/types";
+import { applyFormDefaults } from "@/lib/offers/terms";
+import { todayLasVegas, validateBuyerForm } from "@/lib/offers/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -52,7 +53,8 @@ async function handleSubmission(payload: any) {
   const userId: string = payload.user?.id ?? "";
   if (!isAllowedUser(userId)) return modalErrors({ address: "You're not set up to draft offers." });
 
-  const checked = validateBuyerForm(readModalValues(payload.view.state?.values ?? {}));
+  const filled = applyFormDefaults(readModalValues(payload.view.state?.values ?? {}), todayLasVegas());
+  const checked = validateBuyerForm(filled.raw, new Date(), { strict: true });
   if (!checked.ok) return modalErrors(checked.errors);
 
   let channelId: string | null = null;
@@ -68,7 +70,7 @@ async function handleSubmission(payload: any) {
     after(async () => {
       try {
         const name = typed.agentName ? null : await slackUserName(userId);
-        await postSheet([channelId, userId], { ...typed, ...(name ? { agentName: name } : {}) }, []);
+        await postSheet([channelId, userId], { ...typed, ...(name ? { agentName: name } : {}) }, filled.defaulted);
       } catch (e) {
         console.error("[offers] posting sheet failed", e);
       }

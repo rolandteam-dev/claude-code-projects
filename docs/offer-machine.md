@@ -107,17 +107,18 @@ read them.
 
 Find a Slack user id: profile → ⋮ → Copy member ID. Channel id: channel name → About.
 
-### 3. Defaults (placeholders today)
+### 3. Defaults (the team's standard terms)
 
-`src/content/offerDefaults.ts` holds the terms the bot fills when an agent
-doesn't state them (earnest money %, close-of-escrow days, contingencies and
-their day counts). **They are placeholders, not the team's standard terms.** Every
-card and sheet says so while `OFFER_DEFAULTS_ARE_PLACEHOLDERS` is `true`.
+`src/content/offerDefaults.ts` holds the team's real standard terms, as given by the
+transaction coordinator: earnest money 1%, close of escrow 30 days out (moved to the next
+Tue/Wed/Thu that isn't a holiday), inspection/appraisal/loan 10/21/30 days, plus the rest of
+the standard RPA (EMD delivery, compensation, escrow, inspections, fees, home protection,
+disclosures, additional terms) and the BBRA terms. The bot fills them when an agent doesn't
+state a term and labels them "(default)". Where her email and her filled offer disagreed, the
+filled offer is followed and the spot is marked in that file for her to confirm.
 
-To switch to the real ones: edit the values from the transaction coordinator's
-template, then set the flag to `false`. Also useful from her: the list of things
-she most often has to chase agents for. That decides what the bot should treat as
-"required" (the list in `resolveTerms`).
+Broker details and agent license numbers are **not** in the repo (it is public). They live in
+the private Blob store as `config/brokerage.json`; see "Forms packet" in CLAUDE.md.
 
 ## What it doesn't do (yet)
 
@@ -129,8 +130,11 @@ she most often has to chase agents for. That decides what the bot should treat a
 - **The down payment is never defaulted.** For a financed offer the bot always asks
   if it wasn't stated. The only down-payment rules built in are FHA's 3.5% floor
   and "no down payment on cash"; other loan programs' minimums are not checked.
-- **The `/offer` form lacks the newer fields** (down payment, warranty, included
-  items). Use the chat flow for those.
+- **The `/offer` form** now has every field the chat flow reads (down payment, occupancy,
+  seller credit, home warranty, included items, contingency days, MLS number, agent).
+  Earnest money and close of escrow may be left blank for the team's standard; the
+  contingencies come pre-checked. It does not look the property up in the MLS, so the list
+  price is typed.
 - **Buyer offers only.** Counters and seller-side review are not built.
 - **Names and prices go to the Claude API.** Messages (client names, addresses,
   prices) are sent to Anthropic to be read. Confirm that's acceptable with the
