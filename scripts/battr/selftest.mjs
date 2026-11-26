@@ -590,6 +590,20 @@ check("agent digests say plainly when leads will be moved: a date, the next nigh
   assert.doesNotMatch(held, /swept|sweeping/i, "no internal jargon in what an agent reads");
 });
 
+check("every agent email carries the sweep start date until sweeping runs, and only once", () => {
+  const quiet = { agent: "Patty Cierley", agentId: 1, atRisk: [{ id: 1, name: "A Lead", daysSinceTouch: 40 }], neglected: [], swept: [], unanswered: [] };
+  const notice = /Heads up: starting the night of Tue, Dec 1, any lead that has been flagged and still has not been contacted will be moved out of your name to the team pond\./;
+  assert.match(renderDigestText({ ...quiet, sweepsStartOn: "2026-12-01" }), notice);
+  assert.match(renderDigestHtml({ ...quiet, sweepsStartOn: "2026-12-01" }), notice);
+  // Already running, or no date: no heads-up.
+  assert.doesNotMatch(renderDigestText({ ...quiet, sweepsStartOn: null }), /Heads up/);
+  assert.doesNotMatch(renderDigestText({ ...quiet, sweepsStartOn: "2027-01-01" }), /Heads up/, "a paused date is not announced");
+  // An agent with way-overdue leads is told in that section, not twice.
+  const overdue = renderDigestText({ ...quiet, neglected: [{ id: 2, name: "Old Lead", daysSinceTouch: 90 }], sweepsStartOn: "2026-12-01" });
+  assert.doesNotMatch(overdue, /Heads up/);
+  assert.match(overdue, /starting the night of Tue, Dec 1/);
+});
+
 check("Submitting Offers is nudge-only; Listing Agreement, Active Listing and Under Contract are not audited", () => {
   const offers = lists.find((l) => l.name === "💼 Submitting Offers (nudge only)");
   assert.deepEqual(offers.neglected_filters.groups, [], "no neglected tier, so it can never be swept");

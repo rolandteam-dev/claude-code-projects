@@ -102,6 +102,17 @@ export function pondSentence(digest) {
   return `If you do not contact these, they will be moved out of your name to the team pond starting the night of ${when.replace(/^from /, "")}.`;
 }
 
+/**
+ * The heads-up every agent gets until sweeping starts: the date, in plain words. Agents whose
+ * email already has a "way overdue" section are told there, so they are not told twice.
+ * Nothing when sweeping is already running, or when no date has been set.
+ */
+export function sweepNotice(digest) {
+  const when = sweepWhen(digest);
+  if (!when.startsWith("from ") || digest.neglected?.length) return "";
+  return `Heads up: starting the night of ${when.replace(/^from /, "")}, any lead that has been flagged and still has not been contacted will be moved out of your name to the team pond.`;
+}
+
 const firstName = (digest) => String(digest.agent ?? "").trim().split(/\s+/)[0] || "there";
 
 const quiet = (r) =>
@@ -123,6 +134,7 @@ const HOW_IT_WORKS = [
 /** Plain-text digest. Short on purpose — agents read this on a phone. */
 export function renderDigestText(digest) {
   const parts = [`Hi ${firstName(digest)},`, "", ADMIN_MESSAGE, ""];
+  if (sweepNotice(digest)) parts.push(sweepNotice(digest), "");
 
   // Ordered by urgency: someone who reached out and heard nothing, then the
   // ones furthest behind, then the ones on the clock, then — last, as a record —
@@ -165,6 +177,7 @@ export function renderDigestHtml(digest) {
   return [
     `<p>Hi ${esc(firstName(digest))},</p>`,
     `<p><strong>${esc(ADMIN_MESSAGE)}</strong></p>`,
+    sweepNotice(digest) ? `<p>${esc(sweepNotice(digest))}</p>` : "",
     digest.unanswered?.length
       ? `<h3>They contacted you and nobody has called them back (${digest.unanswered.length})</h3><p style="color:#666">Call these first.</p>${waitList(digest.unanswered)}`
       : "",
