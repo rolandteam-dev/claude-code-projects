@@ -11,7 +11,8 @@
  */
 import { Resend } from "resend";
 import { rebateContact, rebateOffer } from "@/content/newConstructionRebate";
-import { homeownerFrom, listUnsubscribeMailtoHeaders } from "@/lib/homeowners/brand";
+import { homeownerFrom } from "@/lib/homeowners/brand";
+import { listUnsubscribeHeadersForEmail } from "@/lib/homeowners/unsubToken";
 
 /** The three next-steps, shared by the HTML and plain-text bodies. */
 const REBATE_STEPS: [string, string][] = [
@@ -134,7 +135,7 @@ export async function sendRebateEmail(to: {
       html: rebateEmailHtml(to.firstName),
       text: rebateEmailText(to.firstName),
       replyTo: rebateContact.email,
-      headers: listUnsubscribeMailtoHeaders(),
+      headers: listUnsubscribeHeadersForEmail(to.email),
     });
     if (error) return { sent: false, reason: errMsg(error) };
     return { sent: true };
