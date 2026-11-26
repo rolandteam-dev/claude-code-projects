@@ -13,6 +13,7 @@ import {
   FINANCING,
   FINANCING_LABEL,
   formatMoney,
+  parseMoney,
   validateBuyerForm,
   type BuyerOfferInputs,
   type Contingency,
@@ -253,6 +254,35 @@ export function resolveTerms(s: StatedTerms, ctx: ResolveContext): ResolvedTerms
   const checked = validateBuyerForm(raw, new Date(`${ctx.today}T20:00:00Z`));
   if (!checked.ok) return { missing, errors: checked.errors, inputs: null, display, defaulted };
   return { missing, errors: null, inputs: { ...checked.inputs, buyerNames: buyers, ...(s.occupy !== undefined ? { occupy: s.occupy } : {}) }, display, defaulted };
+}
+
+/**
+ * The /offer form lets earnest money and close of escrow be left blank: fill them from the team's standard
+ * (and say so), exactly as the conversation does. Returns the labels that came from defaults.
+ */
+export function applyFormDefaults(raw: RawBuyerForm, today: string): { raw: RawBuyerForm; defaulted: string[] } {
+  const out: RawBuyerForm = { ...raw };
+  const defaulted: string[] = [];
+  const offer = parseMoney(raw.offer_price);
+  if (!(raw.earnest_money ?? "").trim() && offer) {
+    out.earnest_money = String(roundTo100((offer * offerDefaults.earnestMoneyPercent) / 100));
+    defaulted.push("Earnest money");
+  }
+  if (!(raw.close_date ?? "").trim()) {
+    out.close_date = standardCloseDate(today, offerDefaults.closeOfEscrowDays);
+    defaulted.push("Close of escrow");
+  }
+  const days = [
+    ["inspection_days", "inspectionDays", "inspection"],
+    ["appraisal_days", "appraisalDays", "appraisal"],
+    ["loan_days", "loanDays", "loan"],
+  ] as const;
+  for (const [rawKey, defKey, contingency] of days) {
+    if (!(raw[rawKey] ?? "").trim() && (out.contingencies ?? []).includes(contingency)) {
+      out[rawKey] = String(offerDefaults[defKey]);
+    }
+  }
+  return { raw: out, defaulted };
 }
 
 /** One message asking for everything still missing. */

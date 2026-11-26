@@ -23,7 +23,7 @@ import { draftLink, verifyDraftLink } from "../../src/lib/offers/rpa/store.ts";
 import { findAgent, parseBrokerage } from "../../src/lib/offers/forms/brokerage.ts";
 import { splitBuyers } from "../../src/lib/offers/forms/draw.ts";
 import { dollarsInWords, parseAddress } from "../../src/lib/offers/rpa/fill.ts";
-import { verifySlackSignature, jobMessage, readModalValues, esc } from "../../src/lib/offers/slack.ts";
+import { verifySlackSignature, jobMessage, readModalValues, esc, buildBuyerModal } from "../../src/lib/offers/slack.ts";
 import { isAllowedUser, canReview, safeEqual } from "../../src/lib/offers/config.ts";
 import {
   resolveTerms,
@@ -35,6 +35,7 @@ import {
   pickListing,
   questionText,
   joinNames,
+  applyFormDefaults,
 } from "../../src/lib/offers/terms.ts";
 
 let passed = 0;
@@ -651,6 +652,54 @@ test("occupancy is asked for, never defaulted, and carried onto the inputs", () 
   assert.equal(resolveTerms({ ...MEGAN, occupy: false }, c).inputs.occupy, false);
   assert.equal(sanitizeExtraction({ occupy: "yes" }).terms.occupy, undefined); // only a real boolean counts
   assert.equal(sanitizeExtraction({ occupy: false }).terms.occupy, false);
+});
+
+test("the /offer form: strict mode asks for down payment and occupancy, lenient mode does not", () => {
+  const raw = { ...good };
+  const lenient = validateBuyerForm(raw, NOW);
+  assert.ok(lenient.ok);
+  const strict = validateBuyerForm(raw, NOW, { strict: true });
+  assert.ok(!strict.ok);
+  assert.ok(strict.errors.occupy && strict.errors.down_payment_percent);
+  assert.ok(validateBuyerForm({ ...raw, occupy: "yes", down_payment_percent: "5" }, NOW, { strict: true }).ok);
+  const cash = validateBuyerForm({ ...raw, financing: "cash", contingencies: ["inspection"], occupy: "no" }, NOW, { strict: true });
+  assert.ok(cash.ok); // cash: no down payment needed
+  assert.equal(cash.inputs.occupy, false);
+  assert.ok(validateBuyerForm({ ...raw, occupy: "maybe" }, NOW).errors.occupy);
+});
+
+test("the /offer form: blank earnest money / close date / day counts come from the team's standard", () => {
+  const f = applyFormDefaults(
+    { ...good, earnest_money: "", close_date: "", offer_price: "835000", contingencies: ["inspection", "loan"] },
+    "2026-11-24",
+  );
+  assert.equal(f.raw.earnest_money, "8400"); // 1% of 835,000 to the nearest $100
+  assert.equal(f.raw.close_date, "2026-12-24");
+  assert.deepEqual(f.defaulted, ["Earnest money", "Close of escrow"]);
+  assert.equal(f.raw.inspection_days, "10");
+  assert.equal(f.raw.loan_days, "30");
+  assert.equal(f.raw.appraisal_days, undefined); // appraisal not selected, no days
+  const stated = applyFormDefaults({ ...good, inspection_days: "7" }, "2026-11-24");
+  assert.deepEqual(stated.defaulted, []); // everything typed: nothing defaulted
+  assert.equal(stated.raw.inspection_days, "7"); // typed days are never overwritten
+});
+
+test("the /offer form modal: unique block ids, readable back, standard contingencies pre-checked", () => {
+  const view = buildBuyerModal("C1");
+  const ids = view.blocks.filter((b) => b.type === "input").map((b) => b.block_id);
+  assert.equal(new Set(ids).size, ids.length);
+  assert.ok(view.blocks.length <= 100);
+  for (const id of ["down_payment_percent", "occupy", "seller_credit", "home_warranty", "inclusions", "agent_name", "inspection_days", "appraisal_days", "loan_days", "mls_number"]) {
+    assert.ok(ids.includes(id), `modal has ${id}`);
+  }
+  const cont = view.blocks.find((b) => b.block_id === "contingencies").element;
+  assert.deepEqual(cont.initial_options.map((o) => o.value), ["inspection", "appraisal", "loan"]);
+  const values = readModalValues({
+    inclusions: { v: { type: "plain_text_input", value: "refrigerator, washer\n dryer; window coverings" } },
+    occupy: { v: { type: "static_select", selected_option: { value: "yes" } } },
+  });
+  assert.deepEqual(values.inclusions, ["refrigerator", "washer", "dryer", "window coverings"]);
+  assert.equal(values.occupy, "yes");
 });
 
 console.log(`offers selftest: ${passed} passed${process.exitCode ? " (with failures)" : ""}`);
