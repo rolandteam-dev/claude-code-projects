@@ -128,7 +128,13 @@ export function normalizeContact(
         : null;
 
   const atRiskSinceKey = stamps.atRiskSince || "customBattrAtRiskSince";
-  const rawStamp = person[atRiskSinceKey] ?? null;
+  const lastNudgedKey = stamps.lastNudged || "customBattrLastNudged";
+  // The warning is the stamp, or failing that the date we last nudged. Something outside this
+  // engine clears `Battr At Risk Since` on leads after they are warned (seen 23-26 Nov 2026:
+  // the stamp was null on leads nudged the night before, so the same leads were warned again
+  // every night, and nothing could ever become sweepable). `Battr Last Nudged` is ours alone and
+  // survives, so it stands in for the stamp. A lead is still re-warned once the agent has worked it.
+  const rawStamp = person[atRiskSinceKey] || person[lastNudgedKey] || null;
   // The stamp the rules see: only a warning that is still current for this stretch of silence.
   const currentStamp = warningIsCurrent(rawStamp, lastTouchMs) ? rawStamp : null;
 

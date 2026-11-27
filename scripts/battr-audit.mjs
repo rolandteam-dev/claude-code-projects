@@ -1436,7 +1436,7 @@ async function main() {
         pondName: pond.name,
         daysSinceTouch: lead.daysSinceTouch,
         source: lead.source,
-        atRiskSince: fields.atRiskSince ? person?.[fields.atRiskSince] : null,
+        atRiskSince: lead.contact?.custom_fields?.fub?.customBattrAtRiskSince ?? (fields.atRiskSince ? person?.[fields.atRiskSince] : null),
       };
 
       try {
