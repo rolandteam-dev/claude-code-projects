@@ -2858,6 +2858,25 @@ check("warned, worked, quiet again: the old stamp does not let the lead be swept
   assert.equal(afterWork, "at_risk", "back to at risk: it gets a new warning first");
 });
 
+check("a lead nudged last night is not nudged again even when the stamp has been wiped", () => {
+  // 23-26 Nov 2026: leads carried `Battr Last Nudged` but no `Battr At Risk Since`, and were
+  // re-warned every night. The last-nudged date now stands in for the stamp.
+  const base = { id: 901, name: "Wiped Stamp", stage: "Nurture", assignedTo: "Nicole Miller", tags: [], customBattrAtRiskSince: null };
+  const quiet = { lastOutbound: Date.parse("2026-11-01T18:00:00Z") };
+  const nudged = normalizeContact({ ...base, customBattrLastNudged: "2026-11-25" }, quiet, {});
+  assert.equal(nudged.custom_fields.fub.customBattrAtRiskSince, "2026-11-25", "warned: not nudged again");
+  assert.equal(nudged.staleWarning, false);
+  const never = normalizeContact(base, quiet, {});
+  assert.equal(never.custom_fields.fub.customBattrAtRiskSince, null, "never warned: still nudged");
+  // The agent worked it after the nudge: warned again next time it goes quiet.
+  const worked = normalizeContact({ ...base, customBattrLastNudged: "2026-11-25" }, { lastOutbound: Date.parse("2026-11-27T18:00:00Z") }, {});
+  assert.equal(worked.custom_fields.fub.customBattrAtRiskSince, null);
+  assert.equal(worked.staleWarning, true);
+  // The stamp still wins when both exist.
+  const both = normalizeContact({ ...base, customBattrAtRiskSince: "2026-11-20", customBattrLastNudged: "2026-11-25" }, quiet, {});
+  assert.equal(both.custom_fields.fub.customBattrAtRiskSince, "2026-11-20");
+});
+
 check("the audit reads the CURRENT warning, not the raw stamp, for nudges and the sweep interlock", () => {
   const src = readFileSync(join(ROOT, "scripts", "battr-audit.mjs"), "utf8");
   assert.doesNotMatch(src, /Boolean\(person\?\.\[fields\.atRiskSince\]\)/, "no raw-stamp check left in the nudge or sweep gates");
@@ -3699,7 +3718,7 @@ check("the state Battr owns is the state that went missing", () => {
   // off the FUB contact rather than keeping its own copy. If that ever changes
   // to a local store, this check is where the cost shows up.
   const src = readFileSync(join(HERE, "contact.mjs"), "utf8");
-  assert.match(src, /const rawStamp = person\[atRiskSinceKey\] \?\? null;/, "the warning stamp is read from FUB, not held here");
+  assert.match(src, /const rawStamp = person\[atRiskSinceKey\] \|\| person\[lastNudgedKey\] \|\| null;/, "the warning stamp is read from FUB, not held here");
 });
 
 
